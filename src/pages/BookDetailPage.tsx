@@ -1,264 +1,430 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useState } from 'react'
+import type { ReactNode } from 'react'
 import {
   ArrowLeft,
+  ArrowRight,
   BookCopy,
-  BookOpen,
-  Bookmark,
-  CircleAlert,
-  CircleCheck,
-  ClipboardList,
-  CopyPlus,
-  Dot,
-  Ellipsis,
-  FileText,
-  History,
+  BookMarked,
+  Calendar,
+  Eye,
+  Hash,
+  Languages,
+  Library,
+  MapPin,
+  Plus,
   Printer,
-  Star,
+  ScanBarcode,
+  Share2,
+  SquarePen,
+  Tag,
+  Trash2,
   UserRound,
 } from 'lucide-react'
-import loginCover from '../assets/login.avif'
+import bookCoverPlaceholder from '../assets/login.avif'
 
 type BookDetailPageProps = {
   isDarkMode: boolean
   onBack: () => void
 }
 
-type TabKey = 'Copies' | 'Borrow History' | 'Reviews (12)' | 'Details'
-type CopyStatus = 'Available' | 'Borrowed'
-type CopyCondition = 'Good' | 'Fair' | 'Excellent'
+type DetailItem = {
+  label: string
+  value: string
+  icon: ReactNode
+}
 
-type CopyRow = {
+type HistoryItem = {
+  name: string
+  borrowedOn: string
+  status: 'Returned' | 'Overdue'
+  avatar: string
+}
+
+type OverviewItem = {
+  label: string
+  value: string
+  icon: ReactNode
+  tone?: 'default' | 'good'
+}
+
+type DetailTab = 'overview' | 'copies' | 'history' | 'reviews'
+
+type CopyItem = {
   copyId: string
   barcode: string
   location: string
-  status: CopyStatus
-  condition: CopyCondition
-  addedDate: string
+  status: 'Available' | 'On Loan'
 }
 
-const copies: CopyRow[] = [
-  { copyId: 'BK-2026-0001', barcode: '10000001', location: 'Main Library - Shelf A3', status: 'Available', condition: 'Good', addedDate: 'Apr 12, 2026' },
-  { copyId: 'BK-2026-0002', barcode: '10000002', location: 'Main Library - Shelf A3', status: 'Borrowed', condition: 'Good', addedDate: 'Apr 12, 2026' },
-  { copyId: 'BK-2026-0003', barcode: '10000003', location: 'Main Library - Shelf A3', status: 'Borrowed', condition: 'Fair', addedDate: 'Apr 12, 2026' },
-  { copyId: 'BK-2026-0004', barcode: '10000004', location: 'Main Library - Shelf A3', status: 'Available', condition: 'Good', addedDate: 'Apr 12, 2026' },
-  { copyId: 'BK-2026-0005', barcode: '10000005', location: 'Main Library - Shelf A3', status: 'Available', condition: 'Excellent', addedDate: 'Apr 12, 2026' },
+type BorrowLogItem = {
+  borrower: string
+  borrowedOn: string
+  returnedOn: string
+  status: 'Returned' | 'Overdue'
+}
+
+type ReviewItem = {
+  reviewer: string
+  rating: number
+  comment: string
+  date: string
+}
+
+const detailItems: DetailItem[] = [
+  { label: 'Author', value: 'James Clear', icon: <UserRound size={14} /> },
+  { label: 'Publisher', value: 'Avery', icon: <Library size={14} /> },
+  { label: 'Published Year', value: '2018', icon: <Calendar size={14} /> },
+  { label: 'Category', value: 'Self-Help', icon: <Tag size={14} /> },
+  { label: 'ISBN', value: '978-0735211292', icon: <Hash size={14} /> },
+  { label: 'Language', value: 'English', icon: <Languages size={14} /> },
+  { label: 'Pages', value: '320', icon: <BookMarked size={14} /> },
+  { label: 'Added On', value: 'May 12, 2024', icon: <Calendar size={14} /> },
+  { label: 'Shelf Location', value: 'A-12-04', icon: <MapPin size={14} /> },
 ]
 
-function card(isDarkMode: boolean) {
-  return isDarkMode ? 'rounded-xl border border-slate-700 bg-[#0b1738]' : 'rounded-xl border border-slate-200 bg-white'
-}
+const recentHistory: HistoryItem[] = [
+  { name: 'Michael Johnson', borrowedOn: 'Borrowed on May 10, 2024', status: 'Returned', avatar: '👨🏻' },
+  { name: 'Sarah Williams', borrowedOn: 'Borrowed on Apr 28, 2024', status: 'Returned', avatar: '👩🏻' },
+  { name: 'David Brown', borrowedOn: 'Borrowed on Apr 15, 2024', status: 'Returned', avatar: '👨🏽' },
+  { name: 'Emily Davis', borrowedOn: 'Borrowed on Apr 02, 2024', status: 'Returned', avatar: '👩🏽' },
+  { name: 'James Wilson', borrowedOn: 'Borrowed on Mar 20, 2024', status: 'Overdue', avatar: '👨🏾' },
+]
 
-function soft(isDarkMode: boolean) {
-  return isDarkMode ? 'rounded-lg border border-slate-700 bg-[#0f1f49]' : 'rounded-lg border border-slate-200 bg-slate-50/50'
-}
+const overviewItems: OverviewItem[] = [
+  { label: 'Format', value: 'Paperback', icon: <BookCopy size={14} /> },
+  { label: 'Condition', value: 'Good', icon: <Tag size={14} />, tone: 'good' },
+  { label: 'Dimensions', value: '5.5 x 0.8 x 8.3 inches', icon: <Hash size={14} /> },
+  { label: 'Barcode', value: 'BK000123456', icon: <ScanBarcode size={14} /> },
+  { label: 'Weight', value: '0.45 kg', icon: <BookMarked size={14} /> },
+  { label: 'Edition', value: '1st Edition', icon: <Library size={14} /> },
+]
 
-function statusPill(status: CopyStatus) {
-  return status === 'Available'
-    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
-    : 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
-}
+const copyItems: CopyItem[] = [
+  { copyId: 'BK-000123-01', barcode: 'BK000123456', location: 'A-12-04', status: 'Available' },
+  { copyId: 'BK-000123-02', barcode: 'BK000123457', location: 'A-12-04', status: 'On Loan' },
+  { copyId: 'BK-000123-03', barcode: 'BK000123458', location: 'A-12-04', status: 'Available' },
+  { copyId: 'BK-000123-04', barcode: 'BK000123459', location: 'A-12-04', status: 'On Loan' },
+  { copyId: 'BK-000123-05', barcode: 'BK000123460', location: 'A-12-04', status: 'Available' },
+]
 
-function conditionPill(condition: CopyCondition) {
-  if (condition === 'Excellent') return 'bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300'
-  if (condition === 'Fair') return 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
-  return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
+const borrowLogs: BorrowLogItem[] = [
+  { borrower: 'Michael Johnson', borrowedOn: 'May 10, 2024', returnedOn: 'May 20, 2024', status: 'Returned' },
+  { borrower: 'Sarah Williams', borrowedOn: 'Apr 28, 2024', returnedOn: 'May 08, 2024', status: 'Returned' },
+  { borrower: 'James Wilson', borrowedOn: 'Mar 20, 2024', returnedOn: '-', status: 'Overdue' },
+]
+
+const reviewItems: ReviewItem[] = [
+  { reviewer: 'Anna Cruz', rating: 5, comment: 'Very practical and easy to apply.', date: 'Apr 24, 2024' },
+  { reviewer: 'Mark Lee', rating: 4, comment: 'Great framework for habit tracking.', date: 'Apr 12, 2024' },
+  { reviewer: 'John Rivera', rating: 5, comment: 'Highly recommended for students.', date: 'Mar 30, 2024' },
+]
+
+function getHistoryStatusClass(status: HistoryItem['status']) {
+  if (status === 'Returned') return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
+  return 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
 }
 
 export function BookDetailPage({ isDarkMode, onBack }: BookDetailPageProps) {
-  const [activeTab, setActiveTab] = useState<TabKey>('Copies')
-
-  const stats = useMemo(() => {
-    const available = copies.filter((copy) => copy.status === 'Available').length
-    const borrowed = copies.filter((copy) => copy.status === 'Borrowed').length
-    return { total: copies.length, available, borrowed, reserved: 0, lost: 0 }
-  }, [])
+  const [activeTab, setActiveTab] = useState<DetailTab>('overview')
+  const cardClass = isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-[#e9ecf5] bg-white'
+  const softCardClass = isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-[#e9ecf5] bg-[#fafbff]'
 
   return (
-    <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
-      <section className="space-y-4 p-5">
-        <div className="flex items-center gap-2 text-sm">
-          <button type="button" onClick={onBack} className="inline-flex items-center gap-1 font-semibold text-violet-600 hover:underline">
-            <ArrowLeft size={14} /> Back
-          </button>
-          <span className={isDarkMode ? 'text-slate-500' : 'text-slate-400'}>&gt;</span>
-          <button type="button" onClick={onBack} className={`font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Books</button>
-          <span className={isDarkMode ? 'text-slate-500' : 'text-slate-400'}>&gt;</span>
-          <span className="font-semibold">Book Details</span>
+    <div className={`min-h-0 flex-1 overflow-auto p-4 md:p-5 ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f6f7fb] text-[#161a2d]'}`}>
+      <section className="w-full p-5">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <button
+              type="button"
+              onClick={onBack}
+              className={`inline-flex items-center gap-1.5 text-sm font-semibold ${isDarkMode ? 'text-slate-300 hover:text-slate-100' : 'text-[#606a8a] hover:text-[#3f4ba0]'}`}
+            >
+              <ArrowLeft size={14} />
+              Back to Books
+            </button>
+            <h2 className={`mt-1 text-[42px] font-bold tracking-tight ${isDarkMode ? 'text-slate-100' : 'text-[#15182a]'}`}>Atomic Habits</h2>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className={`inline-flex h-10 items-center gap-2 rounded-xl border px-4 text-sm font-semibold ${isDarkMode ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20' : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}`}
+            >
+              <SquarePen size={14} />
+              Edit Book
+            </button>
+            <button
+              type="button"
+              className={`inline-flex h-10 items-center gap-2 rounded-xl border px-4 text-sm font-semibold ${isDarkMode ? 'border-rose-500/40 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20' : 'border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100'}`}
+            >
+              <Trash2 size={14} />
+              Delete Book
+            </button>
+          </div>
         </div>
 
-        <div className="grid gap-4 xl:grid-cols-[1fr_360px]">
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
           <main className="space-y-4">
-            <section className={`${card(isDarkMode)} p-4`}>
-              <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
-                <aside>
-                  <img src={loginCover} alt="Book cover" className="h-[470px] w-[260px] rounded-lg border border-slate-200 object-cover dark:border-slate-700" />
-                  <div className="mt-4 flex gap-2">
-                    <button type="button" className="inline-flex h-10 items-center gap-2 rounded-lg bg-violet-600 px-4 text-sm font-semibold text-white hover:bg-violet-700"><BookOpen size={14} />Edit Book</button>
-                    <button type="button" className={`inline-flex h-10 items-center gap-2 rounded-lg border px-4 text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}><Printer size={14} />Print Label</button>
-                  </div>
-                </aside>
+            <article className={`rounded-2xl border p-5 shadow-[0_16px_35px_-30px_rgba(99,102,241,0.35)] ${cardClass}`}>
+              <div className="grid gap-5 lg:grid-cols-[282px_1fr]">
+                <img
+                  src={bookCoverPlaceholder}
+                  alt="Book cover placeholder"
+                  className={`mx-auto h-[340px] w-full max-w-[260px] rounded-xl object-cover ${isDarkMode ? 'border border-slate-700' : 'border border-[#d8dce9]'}`}
+                />
 
-                <div className="min-w-0 space-y-4">
-                  <div className="max-w-[820px] space-y-2">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <h1 className={`text-2xl font-bold leading-tight tracking-tight ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>The Power of Habit</h1>
-                      <div className={`rounded-lg border px-3 py-1.5 text-right ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-slate-50'}`}>
-                        <p className={`text-[11px] uppercase tracking-wide ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Author</p>
-                        <p className="text-sm font-semibold">Charles Duhigg</p>
+                <div>
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                    <span className={`rounded-md px-2.5 py-1 text-xs font-semibold ${isDarkMode ? 'bg-emerald-500/15 text-emerald-200' : 'bg-emerald-50 text-emerald-700'}`}>ID: BK-000123</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">In Catalog</span>
+                      <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700 dark:bg-blue-500/15 dark:text-blue-300">English</span>
+                    </div>
+                  </div>
+
+                  <p className={`text-xl font-semibold ${isDarkMode ? 'text-slate-200' : 'text-[#2f3960]'}`}>Tiny Changes, Remarkable Results</p>
+                  <p className={`mt-1 text-sm ${isDarkMode ? 'text-slate-400' : 'text-[#6b769c]'}`}>Practical guide to building good habits and eliminating bad ones through small daily improvements.</p>
+
+                  <div className="mt-4 grid gap-3 xl:grid-cols-2">
+                    <div className={`rounded-xl border p-3 ${softCardClass}`}>
+                      <p className={`mb-2 text-xs font-semibold uppercase tracking-[0.1em] ${isDarkMode ? 'text-slate-400' : 'text-[#6b769c]'}`}>Book Information</p>
+                      <div className="space-y-2.5">
+                        {detailItems.slice(0, 5).map((item) => (
+                          <div key={item.label} className="flex items-center gap-2 text-sm">
+                            <span className={isDarkMode ? 'text-slate-400' : 'text-[#616c92]'}>{item.icon}</span>
+                            <span className={`min-w-[100px] ${isDarkMode ? 'text-slate-400' : 'text-[#616c92]'}`}>{item.label}</span>
+                            <span className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-[#27304d]'}`}>
+                              {item.label === 'Category' ? (
+                                <span className={`rounded-md px-2 py-0.5 text-xs font-semibold ${isDarkMode ? 'bg-emerald-500/15 text-emerald-200' : 'bg-emerald-50 text-emerald-700'}`}>{item.value}</span>
+                              ) : (
+                                item.value
+                              )}
+                            </span>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                    <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Why We Do What We Do in Life and Business</p>
+                    <div className={`rounded-xl border p-3 ${softCardClass}`}>
+                      <p className={`mb-2 text-xs font-semibold uppercase tracking-[0.1em] ${isDarkMode ? 'text-slate-400' : 'text-[#6b769c]'}`}>Catalog Information</p>
+                      <div className="space-y-2.5">
+                        {detailItems.slice(5).map((item) => (
+                          <div key={item.label} className="flex items-center gap-2 text-sm">
+                            <span className={isDarkMode ? 'text-slate-400' : 'text-[#616c92]'}>{item.icon}</span>
+                            <span className={`min-w-[100px] ${isDarkMode ? 'text-slate-400' : 'text-[#616c92]'}`}>{item.label}</span>
+                            <span className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-[#27304d]'}`}>{item.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className={`mt-4 rounded-xl border p-3 ${softCardClass}`}>
+                    <p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-300' : 'text-[#3b4365]'}`}>Tags</p>
                     <div className="mt-2 flex flex-wrap gap-2">
-                      {['Self-Help', 'Psychology', 'Personal Development'].map((tag) => (
-                        <span key={tag} className={`rounded-full px-3 py-1 text-xs font-semibold ${isDarkMode ? 'bg-violet-500/20 text-violet-300' : 'bg-violet-100 text-violet-700'}`}>{tag}</span>
+                      {['Habits', 'Productivity', 'Self-Improvement'].map((tag) => (
+                        <span key={tag} className={`rounded-md px-2.5 py-1 text-xs font-semibold ${isDarkMode ? 'bg-emerald-500/15 text-emerald-200' : 'bg-emerald-50 text-emerald-700'}`}>{tag}</span>
                       ))}
+                      <button
+                        type="button"
+                        className={`grid h-6 w-6 place-items-center rounded-md text-xs font-bold ${isDarkMode ? 'bg-slate-700 text-slate-200 hover:bg-slate-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                      >
+                        +
+                      </button>
                     </div>
-                  </div>
-
-                  <div className={`grid gap-3 border-t pt-4 md:grid-cols-3 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
-                    <div className="space-y-3 text-sm">
-                      <p><span className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>ISBN</span><br /><span className="font-semibold">978-0812981605</span></p>
-                      <p><span className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Publisher</span><br /><span className="font-semibold">Random House</span></p>
-                      <p><span className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Language</span><br /><span className="font-semibold">English</span></p>
-                    </div>
-                    <div className={`space-y-3 border-x px-3 text-sm ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
-                      <p><span className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Publication Year</span><br /><span className="font-semibold">2012</span></p>
-                      <p><span className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Pages</span><br /><span className="font-semibold">408</span></p>
-                      <p><span className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Format</span><br /><span className="font-semibold">Hardcover</span></p>
-                    </div>
-                    <div className="space-y-3 text-sm">
-                      <p><span className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Call Number</span><br /><span className="font-semibold">158.1 DUH</span></p>
-                      <p><span className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Added Date</span><br /><span className="font-semibold">Apr 12, 2026</span></p>
-                      <p><span className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Added By</span><br /><span className="font-semibold">Admin User</span></p>
-                    </div>
-                  </div>
-
-                  <div className={`${soft(isDarkMode)} p-4`}>
-                    <h3 className="mb-2 text-2xl font-bold">About the Book</h3>
-                    <p className={`${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                      Drawing on cutting-edge neuroscience, psychology, and sociology, Charles Duhigg explores the science of habit and how it can be transformed.
-                      The book reveals how habits work, why they exist, and how to change them.
-                    </p>
-                    <button type="button" className="mt-3 text-sm font-semibold text-violet-600 hover:underline">Read more</button>
                   </div>
                 </div>
               </div>
-            </section>
+            </article>
 
-            <section className={`${card(isDarkMode)} overflow-hidden`}>
-              <div className={`flex flex-wrap gap-6 border-b px-4 pt-3 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
-                {[['Copies', <BookCopy key="c" size={14} />], ['Borrow History', <History key="h" size={14} />], ['Reviews (12)', <Star key="s" size={14} />], ['Details', <FileText key="f" size={14} />]].map(([name, icon]) => {
-                  const tab = name as TabKey
-                  const active = activeTab === tab
-                  return (
-                    <button key={tab} type="button" onClick={() => setActiveTab(tab)} className={`inline-flex items-center gap-2 border-b-2 pb-3 text-sm font-semibold ${active ? 'border-violet-600 text-violet-600' : 'border-transparent text-slate-500'}`}>
-                      {icon}
-                      {tab}
-                    </button>
-                  )
-                })}
+            <article className={`rounded-2xl border p-4 ${cardClass}`}>
+              <div className={`-mx-4 -mt-4 mb-4 rounded-t-2xl border-b px-4 py-3 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-[#e9ecf5] bg-[#f8faff]'}`}>
+                <div className="flex flex-wrap gap-2">
+                {[
+                  { id: 'overview', label: 'Overview' },
+                  { id: 'copies', label: 'Copies (5)' },
+                  { id: 'history', label: 'Borrow History' },
+                  { id: 'reviews', label: 'Reviews (12)' },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveTab(tab.id as DetailTab)}
+                    className={`rounded-md px-3 py-1.5 text-sm font-semibold transition ${
+                      activeTab === tab.id
+                        ? isDarkMode
+                          ? 'bg-emerald-500 text-white shadow-[0_8px_18px_-12px_rgba(16,185,129,0.8)]'
+                          : 'bg-emerald-600 text-white shadow-[0_8px_18px_-12px_rgba(5,150,105,0.75)]'
+                        : isDarkMode
+                          ? 'border border-slate-700 bg-[#0b1738] text-slate-300 hover:bg-slate-800'
+                          : 'border border-slate-200 bg-white text-[#49567e] hover:bg-slate-50'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+                </div>
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="min-w-[920px] w-full text-left text-sm">
-                  <thead className={isDarkMode ? 'bg-[#0f1f49] text-slate-300' : 'bg-slate-50 text-slate-600'}>
-                    <tr>
-                      <th className="px-4 py-3 font-semibold">Copy ID</th>
-                      <th className="px-3 py-3 font-semibold">Barcode</th>
-                      <th className="px-3 py-3 font-semibold">Location</th>
-                      <th className="px-3 py-3 font-semibold">Status</th>
-                      <th className="px-3 py-3 font-semibold">Condition</th>
-                      <th className="px-3 py-3 font-semibold">Date Added</th>
-                      <th className="px-3 py-3 font-semibold text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {copies.map((row) => (
-                      <tr key={row.copyId} className={`border-t ${isDarkMode ? 'border-slate-700 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}>
-                        <td className="px-4 py-3 font-semibold">{row.copyId}</td>
-                        <td className={`px-3 py-3 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{row.barcode}</td>
-                        <td className={`px-3 py-3 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{row.location}</td>
-                        <td className="px-3 py-3"><span className={`rounded-md px-2 py-1 text-xs font-semibold ${statusPill(row.status)}`}>{row.status}</span></td>
-                        <td className="px-3 py-3"><span className={`rounded-md px-2 py-1 text-xs font-semibold ${conditionPill(row.condition)}`}>{row.condition}</span></td>
-                        <td className={`px-3 py-3 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{row.addedDate}</td>
-                        <td className="px-3 py-3 text-right"><button type="button" className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border ${isDarkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}><Ellipsis size={14} /></button></td>
-                      </tr>
+              {activeTab === 'overview' ? (
+                <div className="pt-4">
+                  <h4 className={`text-base font-bold ${isDarkMode ? 'text-slate-100' : 'text-[#1d2240]'}`}>Description</h4>
+                  <p className={`mt-2 max-w-[820px] text-sm leading-relaxed ${isDarkMode ? 'text-slate-300' : 'text-[#566084]'}`}>
+                    An easy and proven way to build good habits and break bad ones. Atomic Habits reveals
+                    practical strategies that will teach you exactly how to form good habits, break bad
+                    ones, and master the tiny behaviors that lead to remarkable results.
+                  </p>
+
+                  <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    {overviewItems.map((item) => (
+                      <div key={item.label} className="flex items-center gap-2 text-sm">
+                        <span className={isDarkMode ? 'text-slate-400' : 'text-[#647099]'}>{item.icon}</span>
+                        <span className={isDarkMode ? 'text-slate-400' : 'text-[#647099]'}>{item.label}</span>
+                        <span className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-[#242d4b]'}`}>
+                          {item.tone === 'good' ? (
+                            <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
+                              {item.value}
+                            </span>
+                          ) : (
+                            item.value
+                          )}
+                        </span>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className={`border-t px-4 py-3 text-sm ${isDarkMode ? 'border-slate-700 text-slate-300' : 'border-slate-200 text-slate-600'}`}>Showing 1 to 5 of 5 copies</div>
-            </section>
+                  </div>
+                </div>
+              ) : null}
+
+              {activeTab === 'copies' ? (
+                <div className="pt-4">
+                  <div className="grid gap-2">
+                    {copyItems.map((copy) => (
+                      <div key={copy.copyId} className={`rounded-xl border p-3 ${softCardClass}`}>
+                        <div className="flex items-center justify-between">
+                          <p className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-[#1d2240]'}`}>{copy.copyId}</p>
+                          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${copy.status === 'Available' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'}`}>{copy.status}</span>
+                        </div>
+                        <p className={`mt-1 text-sm ${isDarkMode ? 'text-slate-300' : 'text-[#4c5678]'}`}>Barcode: {copy.barcode}</p>
+                        <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-[#697398]'}`}>Location: {copy.location}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {activeTab === 'history' ? (
+                <div className="pt-4">
+                  <div className="grid gap-2">
+                    {borrowLogs.map((log) => (
+                      <div key={`${log.borrower}-${log.borrowedOn}`} className={`rounded-xl border p-3 ${softCardClass}`}>
+                        <div className="flex items-center justify-between">
+                          <p className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-[#1d2240]'}`}>{log.borrower}</p>
+                          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${getHistoryStatusClass(log.status)}`}>{log.status}</span>
+                        </div>
+                        <p className={`mt-1 text-sm ${isDarkMode ? 'text-slate-300' : 'text-[#4c5678]'}`}>Borrowed: {log.borrowedOn}</p>
+                        <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-[#697398]'}`}>Returned: {log.returnedOn}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {activeTab === 'reviews' ? (
+                <div className="pt-4">
+                  <div className="grid gap-2">
+                    {reviewItems.map((review) => (
+                      <div key={`${review.reviewer}-${review.date}`} className={`rounded-xl border p-3 ${softCardClass}`}>
+                        <div className="flex items-center justify-between">
+                          <p className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-[#1d2240]'}`}>{review.reviewer}</p>
+                          <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-[#6b769c]'}`}>{'★'.repeat(review.rating)}</p>
+                        </div>
+                        <p className={`mt-1 text-sm ${isDarkMode ? 'text-slate-300' : 'text-[#4c5678]'}`}>{review.comment}</p>
+                        <p className={`mt-1 text-xs ${isDarkMode ? 'text-slate-400' : 'text-[#6b769c]'}`}>{review.date}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </article>
           </main>
 
           <aside className="space-y-4">
-            <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-gradient-to-br from-[#0b1738] to-[#182d62]' : 'border-slate-200 bg-gradient-to-br from-[#0f1e44] to-[#132f71] text-white'}`}>
-              <h3 className="text-2xl font-bold text-white">Availability</h3>
-              <div className="mt-4 flex items-start justify-between gap-3">
-                <div className="grid h-40 w-40 place-items-center rounded-full border-[10px] border-emerald-500/90">
-                  <div className="text-center">
-                    <p className="text-5xl font-black text-white">{stats.total}</p>
-                    <p className="text-sm text-white/80">Total Copies</p>
-                  </div>
-                </div>
-                <div className="space-y-2 pt-1 text-sm text-white">
-                  <p className="flex items-center justify-between gap-2"><span className="inline-flex items-center gap-2"><Dot size={20} className="text-emerald-400" />Available</span><span className="font-semibold">{stats.available}</span></p>
-                  <p className="flex items-center justify-between gap-2"><span className="inline-flex items-center gap-2"><Dot size={20} className="text-amber-400" />Borrowed</span><span className="font-semibold">{stats.borrowed}</span></p>
-                  <p className="flex items-center justify-between gap-2"><span className="inline-flex items-center gap-2"><Dot size={20} className="text-blue-400" />Reserved</span><span className="font-semibold">{stats.reserved}</span></p>
-                  <p className="flex items-center justify-between gap-2"><span className="inline-flex items-center gap-2"><Dot size={20} className="text-rose-400" />Lost / Damaged</span><span className="font-semibold">{stats.lost}</span></p>
-                </div>
-              </div>
-              <div className="mt-4 rounded-lg bg-emerald-500/20 p-3 text-sm font-semibold text-emerald-200">
-                <span className="inline-flex items-center gap-2"><CircleCheck size={15} />The book is available</span>
-              </div>
-            </section>
-
-            <section className={`${card(isDarkMode)} p-4`}>
+            <article className={`rounded-2xl border p-4 ${cardClass}`}>
               <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-2xl font-bold">Current Borrower</h3>
-                <button type="button" className="text-sm font-semibold text-violet-600 hover:underline">View All</button>
+                <h4 className={`text-[22px] font-medium leading-none ${isDarkMode ? 'text-slate-100' : 'text-[#1d2240]'}`}>Availability Status</h4>
+                <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">Available</span>
               </div>
-
-              <div className="space-y-3">
-                {[['Juan Dela Cruz', 'STU-2026-001', 'May 1, 2026', 'May 15, 2026', 'Due in 9 days'], ['Maria Santos', 'STU-2026-002', 'May 2, 2026', 'May 16, 2026', 'Due in 10 days']].map(([name, id, borrowedOn, dueDate, due]) => (
-                  <article key={id as string} className={`${soft(isDarkMode)} p-3`}>
-                    <div className="mb-2 flex items-center gap-2">
-                      <span className={`grid h-9 w-9 place-items-center rounded-full ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}><UserRound size={16} /></span>
-                      <div>
-                        <p className="font-semibold">{name as string}</p>
-                        <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{id as string}</p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 text-sm">
-                      <div><p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Borrowed on</p><p className="font-semibold">{borrowedOn as string}</p></div>
-                      <div><p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Due date</p><p className="font-semibold">{dueDate as string}</p></div>
-                      <div className="flex items-center justify-end"><span className="rounded-md bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700">{due as string}</span></div>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </section>
-
-            <section className={`${card(isDarkMode)} p-4`}>
-              <h3 className="mb-3 text-2xl font-bold">Actions</h3>
-              <div className="space-y-2">
+              <div className="grid gap-2 sm:grid-cols-3 xl:grid-cols-3">
                 {[
-                  ['Borrow This Book', <BookOpen key="a1" size={15} className="text-emerald-600" />],
-                  ['Reserve This Book', <Bookmark key="a2" size={15} className="text-violet-600" />],
-                  ['Add New Copy', <CopyPlus key="a3" size={15} className="text-blue-600" />],
-                  ['Edit Book Details', <FileText key="a4" size={15} className="text-amber-600" />],
-                  ['Print Book Details', <ClipboardList key="a5" size={15} className="text-fuchsia-600" />],
-                ].map(([label, icon]) => (
-                  <button key={label as string} type="button" className={`inline-flex h-10 w-full items-center justify-between rounded-lg border px-3 text-sm font-semibold ${isDarkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}>
-                    <span className="inline-flex items-center gap-2">{icon as ReactNode}{label as string}</span>
-                    <span>{'>'}</span>
-                  </button>
+                  ['Total Copies', '5', 'text-[#1d2240]'],
+                  ['Available Copies', '3', 'text-emerald-600'],
+                  ['On Loan', '2', 'text-amber-600'],
+                ].map(([label, value, tone]) => (
+                  <div key={label as string} className={`rounded-xl border px-3 py-3 text-center ${softCardClass}`}>
+                    <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-[#69739a]'}`}>{label as string}</p>
+                    <p className={`mt-1 text-[24px] font-black ${isDarkMode ? 'text-slate-100' : tone}`}>{value as string}</p>
+                  </div>
                 ))}
-                <button type="button" className={`inline-flex h-10 w-full items-center gap-2 rounded-lg border px-3 text-sm font-semibold ${isDarkMode ? 'border-rose-700/40 text-rose-300 hover:bg-rose-900/20' : 'border-rose-200 text-rose-600 hover:bg-rose-50'}`}>
-                  <CircleAlert size={15} /> Mark as Lost / Damaged
+              </div>
+            </article>
+
+            <article className={`rounded-2xl border p-4 ${cardClass}`}>
+              <h4 className={`mb-3 text-[22px] font-medium leading-none ${isDarkMode ? 'text-slate-100' : 'text-[#1d2240]'}`}>Quick Actions</h4>
+
+              <button
+                type="button"
+                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-green-500 text-sm font-semibold text-white shadow-[0_12px_24px_-16px_rgba(5,150,105,0.8)] hover:brightness-105"
+              >
+                <ArrowRight size={15} />
+                Borrow Book
+              </button>
+
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <button type="button" className={`inline-flex h-10 items-center justify-center gap-2 rounded-xl border text-sm font-semibold ${softCardClass}`}>
+                  <Plus size={15} />
+                  Add Copy
+                </button>
+                <button type="button" className={`inline-flex h-10 items-center justify-center gap-2 rounded-xl border text-sm font-semibold ${softCardClass}`}>
+                  <SquarePen size={15} />
+                  Edit Book
+                </button>
+                <button type="button" className={`inline-flex h-10 items-center justify-center gap-2 rounded-xl border text-sm font-semibold ${softCardClass}`}>
+                  <Printer size={15} />
+                  Print Details
+                </button>
+                <button type="button" className={`inline-flex h-10 items-center justify-center gap-2 rounded-xl border text-sm font-semibold ${softCardClass}`}>
+                  <Eye size={15} />
+                  View in Catalog
+                </button>
+                <button type="button" className={`inline-flex h-10 items-center justify-center gap-2 rounded-xl border text-sm font-semibold sm:col-span-2 ${softCardClass}`}>
+                  <Share2 size={15} />
+                  Share Book
                 </button>
               </div>
-            </section>
+            </article>
+
+            <article className={`rounded-2xl border p-4 ${cardClass}`}>
+              <div className="mb-3 flex items-center justify-between">
+                <h4 className={`text-[22px] font-medium leading-none ${isDarkMode ? 'text-slate-100' : 'text-[#1d2240]'}`}>Recent Borrow History</h4>
+                <button type="button" className="text-sm font-semibold text-emerald-600 hover:underline">View All</button>
+              </div>
+
+              <div className="space-y-2">
+                {recentHistory.map((item) => (
+                  <div key={`${item.name}-${item.borrowedOn}`} className={`flex items-center justify-between gap-2 rounded-xl border p-2.5 ${softCardClass}`}>
+                    <div className="flex items-center gap-2.5">
+                      <span className={`grid h-9 w-9 place-items-center rounded-full text-base ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                        {item.avatar}
+                      </span>
+                      <div>
+                        <p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-100' : 'text-[#1f2643]'}`}>{item.name}</p>
+                        <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-[#6a7498]'}`}>{item.borrowedOn}</p>
+                      </div>
+                    </div>
+                    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${getHistoryStatusClass(item.status)}`}>{item.status}</span>
+                  </div>
+                ))}
+              </div>
+            </article>
           </aside>
         </div>
       </section>
