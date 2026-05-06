@@ -1,0 +1,243 @@
+import { useState } from 'react'
+import { ChevronDown, Download, Grid2x2, List, MoreHorizontal, Printer, RotateCcw, Search, UserPlus, Users } from 'lucide-react'
+
+type MemberType = 'Student' | 'Teacher' | 'Staff' | 'Visitor'
+type MemberStatus = 'Active' | 'Overdue' | 'Inactive'
+
+type MemberRow = {
+  id: number
+  name: string
+  email: string
+  memberId: string
+  type: MemberType
+  department: string
+  yearOrRole: string
+  contact: string
+  borrowed: number
+  status: MemberStatus
+  avatar: string
+}
+
+type MembersPageProps = {
+  isDarkMode: boolean
+}
+
+const stats = [
+  { label: 'All Members', value: '1,245', active: true },
+  { label: 'Students', value: '890', active: false },
+  { label: 'Teachers', value: '180', active: false },
+  { label: 'Staff', value: '120', active: false },
+  { label: 'Visitors', value: '55', active: false },
+]
+
+const members: MemberRow[] = [
+  { id: 1, name: 'Juan Dela Cruz', email: 'juan.delacruz@email.com', memberId: 'STU-2026-001', type: 'Student', department: 'BS Computer Science', yearOrRole: '3rd Year', contact: '0917 123 4567', borrowed: 2, status: 'Active', avatar: '👨🏻' },
+  { id: 2, name: 'Maria Santos', email: 'maria.santos@email.com', memberId: 'STU-2026-002', type: 'Student', department: 'BS Education', yearOrRole: '2nd Year', contact: '0921 456 7890', borrowed: 1, status: 'Active', avatar: '👩🏻' },
+  { id: 3, name: 'Pedro Reyes', email: 'pedro.reyes@email.com', memberId: 'STU-2026-003', type: 'Student', department: 'BS Information Tech', yearOrRole: '4th Year', contact: '0999 555 1212', borrowed: 0, status: 'Active', avatar: '👨🏽' },
+  { id: 4, name: 'Ana Lim', email: 'ana.lim@email.com', memberId: 'STU-2026-004', type: 'Student', department: 'BS Psychology', yearOrRole: '1st Year', contact: '0916 888 3434', borrowed: 3, status: 'Overdue', avatar: '👩🏽' },
+  { id: 5, name: 'Mark Anthony Villanueva', email: 'mark.villanueva@school.edu', memberId: 'TCH-2026-001', type: 'Teacher', department: 'Mathematics', yearOrRole: 'Department', contact: '0918 222 3344', borrowed: 1, status: 'Active', avatar: '👨🏾' },
+  { id: 6, name: 'Grace Mendoza', email: 'grace.mendoza@school.edu', memberId: 'TCH-2026-002', type: 'Teacher', department: 'English', yearOrRole: 'Department', contact: '0927 333 4455', borrowed: 0, status: 'Active', avatar: '👩🏾' },
+  { id: 7, name: 'Rogelio Cruz', email: 'rogelio.cruz@school.edu', memberId: 'STA-2026-001', type: 'Staff', department: 'Library Staff', yearOrRole: 'Support', contact: '0915 777 8899', borrowed: 0, status: 'Active', avatar: '👨‍💼' },
+  { id: 8, name: 'Liza Montero', email: 'liza.montero@school.edu', memberId: 'STA-2026-002', type: 'Staff', department: 'Administrative', yearOrRole: 'Department', contact: '0933 444 5566', borrowed: 0, status: 'Active', avatar: '👩‍💼' },
+  { id: 9, name: 'Visitor - Alex Tan', email: 'alextan@gmail.com', memberId: 'VIS-2026-001', type: 'Visitor', department: 'Visitor', yearOrRole: 'Guest', contact: '0906 123 7890', borrowed: 0, status: 'Inactive', avatar: '🧑🏻' },
+  { id: 10, name: 'Visitor - Joy Reyes', email: 'joy.reyes@gmail.com', memberId: 'VIS-2026-002', type: 'Visitor', department: 'Visitor', yearOrRole: 'Guest', contact: '0912 654 0987', borrowed: 0, status: 'Inactive', avatar: '🧑🏽' },
+]
+
+function getTypeClass(type: MemberType) {
+  if (type === 'Student') return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
+  if (type === 'Teacher') return 'bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300'
+  if (type === 'Staff') return 'bg-violet-50 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300'
+  return 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
+}
+
+function getStatusClass(status: MemberStatus) {
+  if (status === 'Active') return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
+  if (status === 'Overdue') return 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
+  return 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
+}
+
+export function MembersPage({ isDarkMode }: MembersPageProps) {
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
+
+  return (
+    <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
+      <section className="p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h2 className={`text-4xl font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Members</h2>
+            <p className={`mt-1 text-base ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Manage student, teacher, staff and visitor records.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-semibold text-white hover:bg-emerald-700">
+              <UserPlus size={15} />
+              Add Member
+            </button>
+            <button type="button" className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
+              <Download size={15} />
+              Export
+            </button>
+            <button type="button" className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
+              <Printer size={15} />
+              Print ID
+            </button>
+          </div>
+        </div>
+
+        <div className={`mt-5 overflow-x-auto rounded-xl border ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+          <div className={`flex min-w-[880px] items-center gap-2 px-3 py-3 ${isDarkMode ? 'bg-[#0b1738]' : 'bg-white'}`}>
+            {stats.map((item) => (
+              <button
+                key={item.label}
+                type="button"
+                className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold ${
+                  item.active
+                    ? 'border border-emerald-600 bg-emerald-600 text-white'
+                    : isDarkMode
+                      ? 'border border-slate-700 bg-[#0f1f49] text-slate-300 hover:bg-slate-800'
+                      : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <Users size={15} />
+                {item.label}
+                <span className={`rounded-full px-2 py-0.5 text-xs ${item.active ? 'bg-emerald-500 text-white' : isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
+                  {item.value}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className={`mt-4 overflow-hidden rounded-xl border ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+          <div className={`flex flex-wrap items-center gap-3 border-b p-3 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+            <label className={`group flex h-11 min-w-[280px] flex-1 items-center rounded-xl border px-3 ${isDarkMode ? 'border-slate-700 focus-within:border-emerald-500' : 'border-slate-200 focus-within:border-emerald-500'}`}>
+              <Search size={16} className={`mr-2 ${isDarkMode ? 'text-slate-500 group-focus-within:text-emerald-400' : 'text-slate-400 group-focus-within:text-emerald-600'}`} />
+              <input className={`w-full bg-transparent text-sm outline-none ${isDarkMode ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400'}`} placeholder="Search by name, member ID, email, or contact..." />
+            </label>
+            {['Member Type: All', 'Status: All', 'Department / Course: All'].map((label, idx) => (
+              <div key={label} className="relative">
+                <select className={`h-11 appearance-none rounded-xl border py-2 pl-3 pr-9 text-sm outline-none ${
+                  idx === 0 ? 'min-w-[150px]' : idx === 1 ? 'min-w-[130px]' : 'min-w-[220px]'
+                } ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
+                  <option>{label}</option>
+                </select>
+                <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+              </div>
+            ))}
+            <button type="button" className={`inline-flex h-11 items-center gap-2 rounded-xl border px-4 text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
+              <RotateCcw size={15} />
+              Reset
+            </button>
+            <div className="ml-auto flex gap-1">
+              <button
+                type="button"
+                onClick={() => setViewMode('list')}
+                className={`grid h-11 w-11 place-items-center rounded-xl ${viewMode === 'list' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : isDarkMode ? 'border border-slate-700 text-slate-300' : 'border border-slate-200 text-slate-600'}`}
+              >
+                <List size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('grid')}
+                className={`grid h-11 w-11 place-items-center rounded-xl ${viewMode === 'grid' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : isDarkMode ? 'border border-slate-700 text-slate-300' : 'border border-slate-200 text-slate-600'}`}
+              >
+                <Grid2x2 size={16} />
+              </button>
+            </div>
+          </div>
+
+          {viewMode === 'list' ? (
+            <div className={isDarkMode ? 'overflow-x-auto bg-[#0b1738]' : 'overflow-x-auto bg-white'}>
+              <table className="min-w-[1080px] w-full text-left text-sm">
+                <thead className={isDarkMode ? 'bg-[#0f1f49] text-slate-300' : 'bg-slate-50 text-slate-600'}>
+                  <tr>
+                    <th className="px-4 py-3 font-semibold"><input type="checkbox" /></th>
+                    <th className="px-3 py-3 font-semibold">Member</th>
+                    <th className="px-3 py-3 font-semibold">Member ID</th>
+                    <th className="px-3 py-3 font-semibold">Type</th>
+                    <th className="px-3 py-3 font-semibold">Course / Department</th>
+                    <th className="px-3 py-3 font-semibold">Contact</th>
+                    <th className="px-3 py-3 font-semibold">Borrowed</th>
+                    <th className="px-3 py-3 font-semibold">Status</th>
+                    <th className="px-3 py-3 font-semibold text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {members.map((member) => (
+                    <tr key={member.id} className={`border-t transition-colors duration-150 ${isDarkMode ? 'border-slate-700 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}>
+                      <td className="px-4 py-3 align-top"><input type="checkbox" /></td>
+                      <td className="px-3 py-3">
+                        <div className="flex items-start gap-3">
+                          <span className={`grid h-11 w-11 place-items-center rounded-full text-lg ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>{member.avatar}</span>
+                          <div>
+                            <p className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{member.name}</p>
+                            <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{member.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className={`px-3 py-3 font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{member.memberId}</td>
+                      <td className="px-3 py-3">
+                        <span className={`rounded-md px-2 py-1 text-xs font-semibold ${getTypeClass(member.type)}`}>{member.type}</span>
+                      </td>
+                      <td className="px-3 py-3">
+                        <p className={`font-medium ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{member.department}</p>
+                        <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{member.yearOrRole}</p>
+                      </td>
+                      <td className={`px-3 py-3 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{member.contact}</td>
+                      <td className={`px-3 py-3 font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{member.borrowed}</td>
+                      <td className="px-3 py-3">
+                        <span className={`rounded-md px-2 py-1 text-xs font-semibold ${getStatusClass(member.status)}`}>{member.status}</span>
+                      </td>
+                      <td className="px-3 py-3 text-right">
+                        <button type="button" className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border ${isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
+                          <MoreHorizontal size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className={`grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5 ${isDarkMode ? 'bg-[#0b1738]' : 'bg-white'}`}>
+              {members.map((member) => (
+                <article key={member.id} className={`flex h-full flex-col rounded-xl border p-3 transition-all duration-200 hover:-translate-y-0.5 ${
+                  isDarkMode
+                    ? 'border-slate-700 bg-[#0f1f49] hover:border-emerald-500/60 hover:shadow-[0_12px_24px_-16px_rgba(16,185,129,0.45)]'
+                    : 'border-slate-200 bg-white hover:border-emerald-200 hover:shadow-[0_12px_24px_-16px_rgba(15,23,42,0.35)]'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <span className={`grid h-11 w-11 place-items-center rounded-full text-lg ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>{member.avatar}</span>
+                    <span className={`rounded-md px-2 py-1 text-xs font-semibold ${getStatusClass(member.status)}`}>{member.status}</span>
+                  </div>
+                  <div className="mt-3">
+                    <p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{member.name}</p>
+                    <p className={`mt-1 text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{member.email}</p>
+                    <p className={`mt-2 text-xs font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{member.memberId}</p>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between">
+                    <span className={`rounded-md px-2 py-1 text-xs font-semibold ${getTypeClass(member.type)}`}>{member.type}</span>
+                    <span className={`text-xs font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{member.borrowed} borrowed</span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+
+          <div className={`flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm ${isDarkMode ? 'border-slate-700 text-slate-300' : 'border-slate-200 text-slate-600'}`}>
+            <p>Showing 1 to 10 of 1,245 members</p>
+            <div className="flex items-center gap-2">
+              <select className={`h-9 rounded-lg border px-3 text-sm ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
+                <option>10 per page</option>
+              </select>
+              <button type="button" className={`grid h-9 w-9 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}>{'<'}</button>
+              <button type="button" className="grid h-9 w-9 place-items-center rounded-lg bg-emerald-50 font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">1</button>
+              <button type="button" className={`grid h-9 w-9 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}>2</button>
+              <button type="button" className={`grid h-9 w-9 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}>3</button>
+              <button type="button" className={`grid h-9 w-9 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}>{'>'}</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  )
+}
