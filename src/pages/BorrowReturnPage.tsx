@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CalendarDays, ChevronDown, Ellipsis, IdCard, Mail, Phone, Search } from 'lucide-react'
+import { ChevronDown, Ellipsis, IdCard, Mail, Phone, Search } from 'lucide-react'
 
 type BorrowReturnPageProps = {
   isDarkMode: boolean
@@ -34,14 +34,13 @@ const borrowedRows: BorrowedRow[] = [
   { id: 2, member: 'Maria Santos', memberId: 'STU-2026-002', book: 'The Psychology of Money', copyId: 'BK-2026-0003', borrowDate: 'May 2, 2026', dueDate: 'May 16, 2026', status: 'Active', avatar: '👩🏻' },
   { id: 3, member: 'Ana Lim', memberId: 'STU-2026-004', book: 'Thinking, Fast and Slow', copyId: 'BK-2026-0005', borrowDate: 'May 3, 2026', dueDate: 'May 17, 2026', status: 'Overdue', avatar: '👩🏽' },
   { id: 4, member: 'Mark Anthony', memberId: 'TCH-2026-001', book: 'Deep Work', copyId: 'BK-2026-0002', borrowDate: 'May 4, 2026', dueDate: 'May 18, 2026', status: 'Active', avatar: '👨🏾' },
-  { id: 5, member: 'Grace Mendoza', memberId: 'TCH-2026-002', book: 'The 5 AM Club', copyId: 'BK-2026-0006', borrowDate: 'May 5, 2026', dueDate: 'May 19, 2026', status: 'Active', avatar: '👩🏾' },
-  { id: 6, member: 'Pedro Reyes', memberId: 'STU-2026-003', book: "The Subtle Art of Not Giving a F*ck", copyId: 'BK-2026-0004', borrowDate: 'May 5, 2026', dueDate: 'May 19, 2026', status: 'Active', avatar: '👨🏽' },
 ]
 
 const returnedRows: ReturnedRow[] = [
   { id: 1, member: 'Liza Montero', memberId: 'STA-2026-002', book: 'Rich Dad Poor Dad', copyId: 'BK-2026-0008', returnedDate: 'May 6, 2026 10:30 AM', fine: '₱0.00', fineType: 'paid', avatar: '👩‍💼' },
   { id: 2, member: 'Visitor - Alex Tan', memberId: 'VIS-2026-001', book: 'The Power of Habit', copyId: 'BK-2026-0009', returnedDate: 'May 6, 2026 09:15 AM', fine: '₱0.00', fineType: 'paid', avatar: '🧑🏻' },
   { id: 3, member: 'Visitor - Joy Reyes', memberId: 'VIS-2026-002', book: 'How to Win Friends and Influence People', copyId: 'BK-2026-0010', returnedDate: 'May 5, 2026 04:45 PM', fine: '₱25.00', fineType: 'due', avatar: '🧑🏽' },
+  { id: 4, member: 'Rogelio Cruz', memberId: 'STA-2026-001', book: 'Start With Why', copyId: 'BK-2026-0011', returnedDate: 'May 5, 2026 02:20 PM', fine: '₱0.00', fineType: 'paid', avatar: '👨‍💼' },
 ]
 
 function getStatusClass(status: BorrowedRow['status']) {
@@ -57,6 +56,8 @@ function getFineClass(type: ReturnedRow['fineType']) {
 
 export function BorrowReturnPage({ isDarkMode }: BorrowReturnPageProps) {
   const [activeTab, setActiveTab] = useState<'borrow' | 'return'>('borrow')
+  const [borrowDate, setBorrowDate] = useState('2026-05-06')
+  const [dueDate, setDueDate] = useState('2026-05-20')
 
   return (
     <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
@@ -89,22 +90,26 @@ export function BorrowReturnPage({ isDarkMode }: BorrowReturnPageProps) {
               </div>
 
               <div className={`rounded-xl border p-3 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-slate-50/40'}`}>
-                <div className="grid gap-3 md:grid-cols-[1.4fr_1fr]">
-                  <div className="flex items-center gap-3">
+                <div className="grid gap-3 md:grid-cols-[1.25fr_1fr_auto_auto] md:items-center">
+                  <div className="flex min-w-0 items-center gap-3">
                     <span className={`grid h-10 w-10 place-items-center rounded-full ${isDarkMode ? 'bg-slate-800' : 'bg-white'}`}>👩🏻</span>
-                    <div>
-                      <p className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Maria Santos</p>
-                      <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>STU-2026-002 • Student</p>
+                    <div className="min-w-0">
+                      <p className={`truncate font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Maria Santos</p>
+                      <p className={`truncate text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>STU-2026-002 • Student</p>
                     </div>
                   </div>
-                  <div className="grid gap-1 text-xs">
+                  <div className="grid min-w-0 gap-1 text-xs">
                     <p className={`flex items-center gap-2 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}><Phone size={13} />0921 456 7890</p>
-                    <p className={`flex items-center gap-2 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}><Mail size={13} />maria.santos@email.com</p>
+                    <p className={`flex min-w-0 items-center gap-2 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}><Mail size={13} /><span className="truncate">maria.santos@email.com</span></p>
                   </div>
-                </div>
-                <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
-                  <div><p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Borrowed Books</p><p className={`text-base font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>1</p></div>
-                  <div><p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Available Limit</p><p className={`text-base font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>4 / 5</p></div>
+                  <div className="text-xs md:min-w-[84px] md:text-center">
+                    <p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Borrowed Books</p>
+                    <p className={`text-base font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>1</p>
+                  </div>
+                  <div className="text-xs md:min-w-[96px] md:text-center">
+                    <p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Available Limit</p>
+                    <p className={`text-base font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>4 / 5</p>
+                  </div>
                 </div>
               </div>
 
@@ -137,17 +142,25 @@ export function BorrowReturnPage({ isDarkMode }: BorrowReturnPageProps) {
               <div className="grid gap-3 md:grid-cols-2">
                 <div>
                   <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>3. Borrow Date</p>
-                  <div className={`flex h-11 items-center gap-2 rounded-xl border px-3 text-sm ${isDarkMode ? 'border-slate-700 text-slate-200' : 'border-slate-200 text-slate-700'}`}>
-                    <CalendarDays size={15} />
-                    May 6, 2026
-                  </div>
+                  <label className={`flex h-11 items-center rounded-xl border px-3 text-sm ${isDarkMode ? 'border-slate-700 text-slate-200' : 'border-slate-200 text-slate-700'}`}>
+                    <input
+                      type="date"
+                      value={borrowDate}
+                      onChange={(event) => setBorrowDate(event.target.value)}
+                      className={`date-input w-full bg-transparent outline-none ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}
+                    />
+                  </label>
                 </div>
                 <div>
                   <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>4. Due Date</p>
-                  <div className={`flex h-11 items-center gap-2 rounded-xl border px-3 text-sm ${isDarkMode ? 'border-slate-700 text-slate-200' : 'border-slate-200 text-slate-700'}`}>
-                    <CalendarDays size={15} />
-                    May 20, 2026
-                  </div>
+                  <label className={`flex h-11 items-center rounded-xl border px-3 text-sm ${isDarkMode ? 'border-slate-700 text-slate-200' : 'border-slate-200 text-slate-700'}`}>
+                    <input
+                      type="date"
+                      value={dueDate}
+                      onChange={(event) => setDueDate(event.target.value)}
+                      className={`date-input w-full bg-transparent outline-none ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}
+                    />
+                  </label>
                   <p className="mt-1 text-xs font-semibold text-emerald-600">Borrowing period: 14 days</p>
                 </div>
               </div>
@@ -169,10 +182,10 @@ export function BorrowReturnPage({ isDarkMode }: BorrowReturnPageProps) {
             <article className={`overflow-hidden rounded-xl border ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
               <div className={`flex items-center justify-between border-b px-4 py-3 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
                 <div>
-                  <h3 className={`text-xl font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Current Borrowed Books (6)</h3>
+                  <h3 className={`text-xl font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Current Borrowed Books (4)</h3>
                   <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Books currently borrowed by members.</p>
                 </div>
-                <button type="button" className={`inline-flex h-10 items-center gap-2 rounded-xl border px-4 text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>View All Transactions</button>
+                <button type="button" className="text-sm font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-[760px] w-full text-left text-sm">
@@ -210,10 +223,10 @@ export function BorrowReturnPage({ isDarkMode }: BorrowReturnPageProps) {
             <article className={`overflow-hidden rounded-xl border ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
               <div className={`flex items-center justify-between border-b px-4 py-3 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
                 <div>
-                  <h3 className={`text-xl font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Recent Returned (3)</h3>
+                  <h3 className={`text-xl font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Recent Returned (4)</h3>
                   <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Recently returned books.</p>
                 </div>
-                <button type="button" className={`inline-flex h-10 items-center gap-2 rounded-xl border px-4 text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>View All Returned</button>
+                <button type="button" className="text-sm font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-[760px] w-full text-left text-sm">

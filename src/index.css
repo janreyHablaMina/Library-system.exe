@@ -67,3 +67,8 @@ body {
 .dashboard-dark [class~="text-rose-600"] {
   color: #fb7185 !important;
 }
+
+.dashboard-dark .date-input::-webkit-calendar-picker-indicator {
+  filter: invert(0.85);
+  opacity: 0.9;
+}
