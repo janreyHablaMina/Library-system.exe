@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { ArrowLeft, ArrowRight, Bell, BookOpen, BookPlus, Bookmark, Clock3, FileText, Mail, MessageCircle, Moon, Search, Sun, Undo2, UserPlus, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import heroImage from './assets/login.avif'
+import { BooksPage } from './pages/BooksPage'
 
 type LoginFormState = {
   username: string
@@ -12,7 +13,6 @@ type LoginFormState = {
 
 type NavItem = {
   label: string
-  active?: boolean
 }
 
 const initialState: LoginFormState = {
@@ -22,7 +22,7 @@ const initialState: LoginFormState = {
 }
 
 const navItems: NavItem[] = [
-  { label: 'Overview', active: true },
+  { label: 'Overview' },
   { label: 'Books' },
   { label: 'Members' },
   { label: 'Authors' },
@@ -100,6 +100,7 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [activePage, setActivePage] = useState<NavItem['label']>('Books')
   const profileMenuRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -188,8 +189,9 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
             {navItems.map((item) => (
               <button
                 key={item.label}
+                onClick={() => setActivePage(item.label)}
                 className={
-                  item.active
+                  item.label === activePage
                     ? `flex w-full items-center rounded-lg py-2 font-semibold ${dashboardTheme.navActive} ${sidebarCollapsed ? 'justify-center px-2' : 'gap-2 px-3'}`
                     : `flex w-full items-center rounded-lg py-2 ${dashboardTheme.navIdle} ${sidebarCollapsed ? 'justify-center px-2' : 'gap-2 px-3'}`
                 }
@@ -287,6 +289,9 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
             </div>
           </header>
 
+          {activePage === 'Books' ? (
+            <BooksPage />
+          ) : (
           <div className={`min-h-0 flex-1 overflow-auto p-4 ${dashboardTheme.contentBg}`}>
             <section className="p-5">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -599,6 +604,7 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
               </article>
             </section>
           </div>
+          )}
         </section>
       </div>
     </main>
