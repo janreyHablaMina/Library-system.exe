@@ -60,9 +60,9 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
   }, [])
 
   return (
-    <main className="min-h-screen bg-white p-0 text-slate-800">
-      <div className="flex min-h-screen w-full overflow-hidden border border-slate-200 bg-white">
-        <aside className={`hidden shrink-0 border-r border-slate-200 bg-white transition-all duration-200 lg:flex lg:flex-col ${sidebarCollapsed ? 'w-20' : 'w-64'}`}>
+    <main className="h-screen overflow-hidden bg-white p-0 text-slate-800">
+      <div className="flex h-full w-full overflow-hidden border border-slate-200 bg-white">
+        <aside className={`hidden h-full shrink-0 border-r border-slate-200 bg-white transition-all duration-200 lg:flex lg:flex-col ${sidebarCollapsed ? 'w-20' : 'w-64'}`}>
           <div className={`border-b border-slate-200 py-6 ${sidebarCollapsed ? 'px-3' : 'px-6'}`}>
             <h1 className={`font-black italic tracking-tight text-[#2f5bff] ${sidebarCollapsed ? 'text-2xl text-center' : 'text-4xl'}`}>infoLib</h1>
             {!sidebarCollapsed ? <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">Library Management System</p> : null}
@@ -89,8 +89,8 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
           </div>
         </aside>
 
-        <section className="flex min-w-0 flex-1 flex-col">
-          <header className="flex h-20 items-center border-b border-slate-200 bg-white px-5">
+        <section className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <header className="sticky top-0 z-20 flex h-20 items-center border-b border-slate-200 bg-white px-5">
             <div className="flex w-full items-center gap-4">
               <button
                 type="button"
