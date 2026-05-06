@@ -5,6 +5,7 @@ import type { LucideIcon } from 'lucide-react'
 import heroImage from './assets/login.avif'
 import { BooksPage } from './pages/BooksPage'
 import { MembersPage } from './pages/MembersPage'
+import { BorrowReturnPage } from './pages/BorrowReturnPage'
 
 type LoginFormState = {
   username: string
@@ -294,6 +295,8 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
             <BooksPage isDarkMode={isDarkMode} />
           ) : activePage === 'Members' ? (
             <MembersPage isDarkMode={isDarkMode} />
+          ) : activePage === 'Borrow / Return' ? (
+            <BorrowReturnPage isDarkMode={isDarkMode} />
           ) : (
           <div className={`min-h-0 flex-1 overflow-auto p-4 ${dashboardTheme.contentBg}`}>
             <section className="p-5">
