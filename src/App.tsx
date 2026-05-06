@@ -1,6 +1,6 @@
 ﻿import { useEffect, useRef, useState } from 'react'
-import type { FormEvent, ReactNode } from 'react'
-import { ArrowLeft, ArrowRight, Bell, Mail, MessageCircle, Moon, Search, Sun } from 'lucide-react'
+import type { FormEvent } from 'react'
+import { ArrowLeft, ArrowRight, Bell, BookOpen, BookPlus, Bookmark, Clock3, FileText, Mail, MessageCircle, Moon, Search, Sun, Undo2, UserPlus, Users } from 'lucide-react'
 import heroImage from './assets/login.avif'
 
 type LoginFormState = {
@@ -12,19 +12,6 @@ type LoginFormState = {
 type NavItem = {
   label: string
   active?: boolean
-}
-
-type StatCard = {
-  title: string
-  value: string
-  delta: string
-  deltaTone: 'up' | 'down'
-}
-
-type ActivityItem = {
-  time: string
-  title: string
-  subtitle: string
 }
 
 const initialState: LoginFormState = {
@@ -43,35 +30,6 @@ const navItems: NavItem[] = [
   { label: 'Reports' },
   { label: 'Settings' },
 ]
-
-const statCards: StatCard[] = [
-  { title: 'Total Books', value: '6,619', delta: '+12 this month', deltaTone: 'up' },
-  { title: 'Available Books', value: '5,547', delta: '+18 this month', deltaTone: 'up' },
-  { title: 'Borrowed Books', value: '320', delta: '+8 this month', deltaTone: 'up' },
-  { title: 'Overdue Books', value: '45', delta: '+5 from yesterday', deltaTone: 'down' },
-  { title: 'Total Members', value: '1,245', delta: '+25 this month', deltaTone: 'up' },
-  { title: 'New Books', value: '12', delta: '+12 this month', deltaTone: 'up' },
-]
-
-const todayActivity: ActivityItem[] = [
-  { time: '1:02 PM', title: 'New book added', subtitle: '"Philippine Constitution"' },
-  { time: '12:45 PM', title: 'Book borrowed', subtitle: 'by Maria Santos' },
-  { time: '11:30 AM', title: 'Book returned', subtitle: 'by Juan Dela Cruz' },
-  { time: '10:15 AM', title: 'New member added', subtitle: 'Pedro Reyes' },
-  { time: '9:05 AM', title: 'Book borrowed', subtitle: 'by Ana Lim' },
-]
-
-function Panel({ title, action, children }: { title: string; action?: string; children: ReactNode }) {
-  return (
-    <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <header className="mb-3 flex items-center justify-between">
-        <h3 className="text-base font-bold text-slate-800">{title}</h3>
-        {action ? <button className="text-xs font-semibold text-blue-600 hover:text-blue-700">{action}</button> : null}
-      </header>
-      {children}
-    </section>
-  )
-}
 
 function DashboardShell({ onLogout }: { onLogout: () => void }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false)
@@ -102,9 +60,9 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
   }, [])
 
   return (
-    <main className="min-h-screen bg-[#f3f5fb] p-0 text-slate-800">
+    <main className="min-h-screen bg-white p-0 text-slate-800">
       <div className="flex min-h-screen w-full overflow-hidden border border-slate-200 bg-white">
-        <aside className={`hidden shrink-0 border-r border-slate-200 bg-slate-50 transition-all duration-200 lg:flex lg:flex-col ${sidebarCollapsed ? 'w-20' : 'w-64'}`}>
+        <aside className={`hidden shrink-0 border-r border-slate-200 bg-white transition-all duration-200 lg:flex lg:flex-col ${sidebarCollapsed ? 'w-20' : 'w-64'}`}>
           <div className={`border-b border-slate-200 py-6 ${sidebarCollapsed ? 'px-3' : 'px-6'}`}>
             <h1 className={`font-black italic tracking-tight text-[#2f5bff] ${sidebarCollapsed ? 'text-2xl text-center' : 'text-4xl'}`}>infoLib</h1>
             {!sidebarCollapsed ? <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">Library Management System</p> : null}
@@ -143,7 +101,7 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
               >
                 {sidebarCollapsed ? <ArrowRight size={20} strokeWidth={2.2} /> : <ArrowLeft size={20} strokeWidth={2.2} />}
               </button>
-              <form className="group flex h-12 w-[520px] items-center rounded-full border border-slate-200 bg-slate-50 px-4 focus-within:border-emerald-500" role="search">
+              <form className="group flex h-12 w-[520px] items-center rounded-full border border-slate-200 bg-white px-4 focus-within:border-emerald-500" role="search">
                 <label htmlFor="header-search" className="sr-only">Search library records</label>
                 <Search size={16} className="mr-3 text-slate-400 transition-colors group-focus-within:text-emerald-600" />
                 <input
@@ -212,52 +170,181 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
             </div>
           </header>
 
-          <div className="min-h-0 flex-1 space-y-4 overflow-auto p-4">
-            <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-              <h2 className="text-3xl font-black text-slate-900">Good morning, Admin!</h2>
-              <p className="mt-1 text-sm text-slate-500">Here is what is happening in your library today.</p>
+          <div className="min-h-0 flex-1 overflow-auto bg-[#f8fafc] p-4">
+            <section className="p-5">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <h2 className="text-3xl font-black text-slate-900">Good morning, Admin! 👋</h2>
+                  <p className="mt-1 text-sm text-slate-500">Here&apos;s what&apos;s happening in your library today.</p>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  <button type="button" className="flex min-w-[160px] items-center gap-3 rounded-xl border border-slate-100 bg-white px-5 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                    <BookPlus size={18} className="text-emerald-600" />
+                    Add Book
+                  </button>
+                  <button type="button" className="flex min-w-[160px] items-center gap-3 rounded-xl border border-slate-100 bg-white px-5 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                    <ArrowRight size={18} className="text-emerald-600" />
+                    Borrow Book
+                  </button>
+                  <button type="button" className="flex min-w-[160px] items-center gap-3 rounded-xl border border-slate-100 bg-white px-5 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                    <Undo2 size={18} className="text-amber-500" />
+                    Return Book
+                  </button>
+                  <button type="button" className="flex min-w-[160px] items-center gap-3 rounded-xl border border-slate-100 bg-white px-5 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                    <UserPlus size={18} className="text-emerald-600" />
+                    Add Member
+                  </button>
+                </div>
+              </div>
             </section>
 
-            <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
-              {statCards.map((card) => (
-                <article key={card.title} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                  <p className="text-xs font-semibold text-slate-500">{card.title}</p>
-                  <p className="mt-1 text-3xl font-black text-slate-900">{card.value}</p>
-                  <p className={card.deltaTone === 'up' ? 'mt-1 text-xs font-semibold text-emerald-600' : 'mt-1 text-xs font-semibold text-rose-600'}>{card.delta}</p>
-                </article>
-              ))}
+            <section className="grid gap-3 px-5 pb-3 sm:grid-cols-2 xl:grid-cols-6">
+              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)]">
+                <div className="mb-2 flex items-center gap-3">
+                  <div className="rounded-lg bg-emerald-50 p-2"><BookOpen size={18} className="text-emerald-600" /></div>
+                  <p className="text-sm font-semibold text-slate-600">Total Books</p>
+                </div>
+                <p className="text-3xl font-extrabold text-slate-900">6,619</p>
+                <p className="mt-1 text-sm font-semibold text-emerald-600">↑ 12 this month</p>
+                <svg viewBox="0 0 100 16" aria-hidden="true" className="mt-3 -mx-4 h-5 w-[calc(100%+2rem)]">
+                  <path d="M0 10 L12 11 L22 8 L32 9 L42 7 L52 10 L62 8 L72 9 L82 6 L100 5" fill="none" stroke="#2563eb" strokeOpacity="0.22" strokeWidth="4.2" strokeLinecap="round" />
+                  <path d="M0 10 L12 11 L22 8 L32 9 L42 7 L52 10 L62 8 L72 9 L82 6 L100 5" fill="none" stroke="#2563eb" strokeWidth="1.8" strokeLinecap="round" />
+                </svg>
+              </article>
+              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)]">
+                <div className="mb-2 flex items-center gap-3">
+                  <div className="rounded-lg bg-emerald-50 p-2"><Bookmark size={18} className="text-emerald-600" /></div>
+                  <p className="text-sm font-semibold text-slate-600">Available Books</p>
+                </div>
+                <p className="text-3xl font-extrabold text-slate-900">5,547</p>
+                <p className="mt-1 text-sm font-semibold text-emerald-600">↑ 18 this month</p>
+                <svg viewBox="0 0 100 16" aria-hidden="true" className="mt-3 -mx-4 h-5 w-[calc(100%+2rem)]">
+                  <path d="M0 9 L12 8 L22 10 L32 7 L42 9 L52 6 L62 8 L72 5 L82 7 L100 4" fill="none" stroke="#22c55e" strokeOpacity="0.22" strokeWidth="4.2" strokeLinecap="round" />
+                  <path d="M0 9 L12 8 L22 10 L32 7 L42 9 L52 6 L62 8 L72 5 L82 7 L100 4" fill="none" stroke="#22c55e" strokeWidth="1.8" strokeLinecap="round" />
+                </svg>
+              </article>
+              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)]">
+                <div className="mb-2 flex items-center gap-3">
+                  <div className="rounded-lg bg-amber-50 p-2"><Undo2 size={18} className="text-amber-500" /></div>
+                  <p className="text-sm font-semibold text-slate-600">Borrowed Books</p>
+                </div>
+                <p className="text-3xl font-extrabold text-slate-900">320</p>
+                <p className="mt-1 text-sm font-semibold text-amber-500">+ 8 this month</p>
+                <svg viewBox="0 0 100 16" aria-hidden="true" className="mt-3 -mx-4 h-5 w-[calc(100%+2rem)]">
+                  <path d="M0 10 L12 9 L22 11 L32 8 L42 10 L52 7 L62 9 L72 8 L82 6 L100 7" fill="none" stroke="#f59e0b" strokeOpacity="0.22" strokeWidth="4.2" strokeLinecap="round" />
+                  <path d="M0 10 L12 9 L22 11 L32 8 L42 10 L52 7 L62 9 L72 8 L82 6 L100 7" fill="none" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" />
+                </svg>
+              </article>
+              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)]">
+                <div className="mb-2 flex items-center gap-3">
+                  <div className="rounded-lg bg-rose-50 p-2"><Clock3 size={18} className="text-rose-500" /></div>
+                  <p className="text-sm font-semibold text-slate-600">Overdue Books</p>
+                </div>
+                <p className="text-3xl font-extrabold text-slate-900">45</p>
+                <p className="mt-1 text-sm font-semibold text-rose-500">+ 5 from yesterday</p>
+                <svg viewBox="0 0 100 16" aria-hidden="true" className="mt-3 -mx-4 h-5 w-[calc(100%+2rem)]">
+                  <path d="M0 11 L12 8 L22 10 L32 6 L42 9 L52 7 L62 10 L72 6 L82 8 L100 7" fill="none" stroke="#ef4444" strokeOpacity="0.22" strokeWidth="4.2" strokeLinecap="round" />
+                  <path d="M0 11 L12 8 L22 10 L32 6 L42 9 L52 7 L62 10 L72 6 L82 8 L100 7" fill="none" stroke="#ef4444" strokeWidth="1.8" strokeLinecap="round" />
+                </svg>
+              </article>
+              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)]">
+                <div className="mb-2 flex items-center gap-3">
+                  <div className="rounded-lg bg-emerald-50 p-2"><Users size={18} className="text-emerald-600" /></div>
+                  <p className="text-sm font-semibold text-slate-600">Total Members</p>
+                </div>
+                <p className="text-3xl font-extrabold text-slate-900">1,245</p>
+                <p className="mt-1 text-sm font-semibold text-emerald-600">↑ 25 this month</p>
+                <svg viewBox="0 0 100 16" aria-hidden="true" className="mt-3 -mx-4 h-5 w-[calc(100%+2rem)]">
+                  <path d="M0 10 L12 7 L22 9 L32 6 L42 8 L52 7 L62 9 L72 6 L82 8 L100 5" fill="none" stroke="#8b5cf6" strokeOpacity="0.22" strokeWidth="4.2" strokeLinecap="round" />
+                  <path d="M0 10 L12 7 L22 9 L32 6 L42 8 L52 7 L62 9 L72 6 L82 8 L100 5" fill="none" stroke="#8b5cf6" strokeWidth="1.8" strokeLinecap="round" />
+                </svg>
+              </article>
+              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)]">
+                <div className="mb-2 flex items-center gap-3">
+                  <div className="rounded-lg bg-emerald-50 p-2"><BookPlus size={18} className="text-emerald-600" /></div>
+                  <p className="text-sm font-semibold text-slate-600">New Books</p>
+                </div>
+                <p className="text-3xl font-extrabold text-slate-900">12</p>
+                <p className="mt-1 text-sm font-semibold text-emerald-600">↑ 12 this month</p>
+                <svg viewBox="0 0 100 16" aria-hidden="true" className="mt-3 -mx-4 h-5 w-[calc(100%+2rem)]">
+                  <path d="M0 11 L12 9 L22 10 L32 8 L42 9 L52 7 L62 8 L72 6 L82 7 L100 5" fill="none" stroke="#14b8a6" strokeOpacity="0.22" strokeWidth="4.2" strokeLinecap="round" />
+                  <path d="M0 11 L12 9 L22 10 L32 8 L42 9 L52 7 L62 8 L72 6 L82 7 L100 5" fill="none" stroke="#14b8a6" strokeWidth="1.8" strokeLinecap="round" />
+                </svg>
+              </article>
             </section>
 
-            <section className="grid gap-3 xl:grid-cols-3">
-              <Panel title="Recent Borrowed Books" action="View all">
-                <div className="space-y-3 text-sm">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-2"><span>Sosyolohiya sa Filipino</span><span className="text-slate-500">May 6, 2026</span></div>
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-2"><span>Understanding Philippine Social Realities</span><span className="text-slate-500">May 5, 2026</span></div>
-                  <div className="flex items-center justify-between"><span>Filipino Values Today</span><span className="text-slate-500">May 3, 2026</span></div>
+            <section className="grid gap-3 px-5 pb-3 xl:grid-cols-3">
+              <article className="rounded-xl border border-slate-100 bg-white p-4 xl:col-span-1">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-2xl font-bold text-slate-800">Recent Borrowed Books</h3>
+                  <button className="text-sm font-semibold text-emerald-700">View all</button>
                 </div>
-              </Panel>
+                <div className="space-y-4 text-sm">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3"><span>Sosyolohiya sa Filipino</span><span className="rounded bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">May 6, 2026</span></div>
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3"><span>Understanding Philippine social realities</span><span className="rounded bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">May 5, 2026</span></div>
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3"><span>The conjugal dictatorship...</span><span className="rounded bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">May 4, 2026</span></div>
+                  <div className="flex items-center justify-between"><span>Filipino values today</span><span className="rounded bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">May 3, 2026</span></div>
+                </div>
+              </article>
 
-              <Panel title="Overdue Returns" action="View all">
-                <div className="space-y-3 text-sm">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-2"><span>How to read a newspaper</span><span className="rounded bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-600">5 days</span></div>
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-2"><span>Peryodismo sa Pilipino</span><span className="rounded bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-600">3 days</span></div>
-                  <div className="flex items-center justify-between"><span>Sociology in the Philippines</span><span className="rounded bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-600">1 day</span></div>
+              <article className="rounded-xl border border-slate-100 bg-white p-4 xl:col-span-1">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-2xl font-bold text-slate-800">Overdue Returns</h3>
+                  <button className="text-sm font-semibold text-emerald-700">View all</button>
                 </div>
-              </Panel>
+                <div className="space-y-4 text-sm">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3"><span>How to read a newspaper</span><span className="rounded bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-600">5 days</span></div>
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3"><span>Peryodismo sa Pilipino</span><span className="rounded bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-600">3 days</span></div>
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3"><span>Ulat ng unang pambansang...</span><span className="rounded bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-600">2 days</span></div>
+                  <div className="flex items-center justify-between"><span>Sociology in the Philippine setting</span><span className="rounded bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-600">1 day</span></div>
+                </div>
+              </article>
 
-              <Panel title="Today's Activity" action="View all">
-                <div className="space-y-3 text-sm">
-                  {todayActivity.map((item) => (
-                    <div key={`${item.time}-${item.title}`} className="flex gap-3">
-                      <span className="w-12 shrink-0 text-xs font-semibold text-slate-500">{item.time}</span>
-                      <div>
-                        <p className="font-semibold text-slate-700">{item.title}</p>
-                        <p className="text-slate-500">{item.subtitle}</p>
-                      </div>
-                    </div>
-                  ))}
+              <article className="rounded-xl border border-slate-100 bg-white p-4 xl:col-span-1">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-2xl font-bold text-slate-800">Today&apos;s Activity</h3>
+                  <button className="text-sm font-semibold text-emerald-700">View all</button>
                 </div>
-              </Panel>
+                <div className="space-y-3 text-sm">
+                  <p><span className="font-semibold text-slate-500">1:02 PM</span> New book added</p>
+                  <p><span className="font-semibold text-slate-500">12:45 PM</span> Book borrowed</p>
+                  <p><span className="font-semibold text-slate-500">11:30 AM</span> Book returned</p>
+                  <p><span className="font-semibold text-slate-500">10:15 AM</span> New member added</p>
+                  <p><span className="font-semibold text-slate-500">9:05 AM</span> Book borrowed</p>
+                </div>
+              </article>
+            </section>
+
+            <section className="grid gap-3 px-5 pb-5 xl:grid-cols-4">
+              <article className="rounded-xl border border-slate-100 bg-white p-4">
+                <h3 className="mb-3 text-xl font-bold text-slate-800">Most Borrowed Categories</h3>
+                <div className="space-y-2 text-sm text-slate-600">
+                  <p>Sociology 35% (452)</p><p>History 28% (361)</p><p>Education 17% (219)</p><p>Language 12% (154)</p><p>Others 8% (102)</p>
+                </div>
+              </article>
+              <article className="rounded-xl border border-slate-100 bg-white p-4">
+                <h3 className="mb-3 text-xl font-bold text-slate-800">Low Stock / Missing Copies</h3>
+                <div className="space-y-2 text-sm text-slate-600">
+                  <p>The life-style of the Badjaos</p><p>Badjaw</p><p>Sulu studies 1</p><p>The food and culture of the Tausug</p>
+                </div>
+              </article>
+              <article className="rounded-xl border border-slate-100 bg-white p-4">
+                <h3 className="mb-3 text-xl font-bold text-slate-800">Quick Reports</h3>
+                <div className="space-y-3 text-sm">
+                  <p className="flex items-center gap-2"><FileText size={14} />Books by Category</p>
+                  <p className="flex items-center gap-2"><FileText size={14} />Top Borrowed Books</p>
+                  <p className="flex items-center gap-2"><FileText size={14} />Overdue Books Report</p>
+                  <p className="flex items-center gap-2"><FileText size={14} />Monthly Activities</p>
+                </div>
+              </article>
+              <article className="rounded-xl border border-slate-100 bg-white p-4">
+                <h3 className="mb-3 text-xl font-bold text-slate-800">Upcoming Due Dates</h3>
+                <div className="space-y-2 text-sm">
+                  <p className="flex items-center justify-between"><span>Sosyolohiya sa Filipino</span><span className="rounded bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-600">May 11, 2026</span></p>
+                  <p className="flex items-center justify-between"><span>Filipino values today</span><span className="rounded bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-600">May 10, 2026</span></p>
+                  <p className="flex items-center justify-between"><span>Understanding Philippine...</span><span className="rounded bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-600">May 9, 2026</span></p>
+                </div>
+              </article>
             </section>
           </div>
         </section>
@@ -364,6 +451,14 @@ function App() {
 }
 
 export default App
+
+
+
+
+
+
+
+
 
 
 
