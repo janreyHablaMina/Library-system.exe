@@ -290,7 +290,7 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
           </header>
 
           {activePage === 'Books' ? (
-            <BooksPage />
+            <BooksPage isDarkMode={isDarkMode} />
           ) : (
           <div className={`min-h-0 flex-1 overflow-auto p-4 ${dashboardTheme.contentBg}`}>
             <section className="p-5">
