@@ -6,6 +6,7 @@ import heroImage from './assets/login.avif'
 import { BooksPage } from './pages/BooksPage'
 import { MembersPage } from './pages/MembersPage'
 import { BorrowReturnPage } from './pages/BorrowReturnPage'
+import { TransactionsPage } from './pages/TransactionsPage'
 
 type LoginFormState = {
   username: string
@@ -296,7 +297,9 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
           ) : activePage === 'Members' ? (
             <MembersPage isDarkMode={isDarkMode} />
           ) : activePage === 'Borrow / Return' ? (
-            <BorrowReturnPage isDarkMode={isDarkMode} />
+            <BorrowReturnPage isDarkMode={isDarkMode} onOpenTransactions={() => setActivePage('All Transactions')} />
+          ) : activePage === 'All Transactions' ? (
+            <TransactionsPage isDarkMode={isDarkMode} onBack={() => setActivePage('Borrow / Return')} />
           ) : (
           <div className={`min-h-0 flex-1 overflow-auto p-4 ${dashboardTheme.contentBg}`}>
             <section className="p-5">

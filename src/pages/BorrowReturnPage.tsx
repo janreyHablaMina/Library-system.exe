@@ -3,6 +3,7 @@ import { ChevronDown, Ellipsis, IdCard, Mail, Phone, Search } from 'lucide-react
 
 type BorrowReturnPageProps = {
   isDarkMode: boolean
+  onOpenTransactions: () => void
 }
 
 type BorrowedRow = {
@@ -54,7 +55,7 @@ function getFineClass(type: ReturnedRow['fineType']) {
     : 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
 }
 
-export function BorrowReturnPage({ isDarkMode }: BorrowReturnPageProps) {
+export function BorrowReturnPage({ isDarkMode, onOpenTransactions }: BorrowReturnPageProps) {
   const [activeTab, setActiveTab] = useState<'borrow' | 'return'>('borrow')
   const [borrowDate, setBorrowDate] = useState('2026-05-06')
   const [dueDate, setDueDate] = useState('2026-05-20')
@@ -185,7 +186,7 @@ export function BorrowReturnPage({ isDarkMode }: BorrowReturnPageProps) {
                   <h3 className={`text-xl font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Current Borrowed Books (4)</h3>
                   <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Books currently borrowed by members.</p>
                 </div>
-                <button type="button" className="text-sm font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
+                <button type="button" onClick={onOpenTransactions} className="text-sm font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-[760px] w-full text-left text-sm">
@@ -226,7 +227,7 @@ export function BorrowReturnPage({ isDarkMode }: BorrowReturnPageProps) {
                   <h3 className={`text-xl font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Recent Returned (4)</h3>
                   <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Recently returned books.</p>
                 </div>
-                <button type="button" className="text-sm font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
+                <button type="button" onClick={onOpenTransactions} className="text-sm font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-[760px] w-full text-left text-sm">
