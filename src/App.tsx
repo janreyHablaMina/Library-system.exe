@@ -7,6 +7,7 @@ import { BooksPage } from './pages/BooksPage'
 import { MembersPage } from './pages/MembersPage'
 import { BorrowReturnPage } from './pages/BorrowReturnPage'
 import { TransactionsPage } from './pages/TransactionsPage'
+import { BookDetailPage } from './pages/BookDetailPage'
 
 type LoginFormState = {
   username: string
@@ -104,6 +105,7 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [activePage, setActivePage] = useState<NavItem['label']>('Books')
+  const [isBookDetailOpen, setIsBookDetailOpen] = useState(false)
   const profileMenuRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -192,7 +194,12 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
             {navItems.map((item) => (
               <button
                 key={item.label}
-                onClick={() => setActivePage(item.label)}
+                onClick={() => {
+                  setActivePage(item.label)
+                  if (item.label !== 'Books') {
+                    setIsBookDetailOpen(false)
+                  }
+                }}
                 className={
                   item.label === activePage
                     ? `flex w-full items-center rounded-lg py-2 font-semibold ${dashboardTheme.navActive} ${sidebarCollapsed ? 'justify-center px-2' : 'gap-2 px-3'}`
@@ -293,7 +300,11 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
           </header>
 
           {activePage === 'Books' ? (
-            <BooksPage isDarkMode={isDarkMode} />
+            isBookDetailOpen ? (
+              <BookDetailPage isDarkMode={isDarkMode} onBack={() => setIsBookDetailOpen(false)} />
+            ) : (
+              <BooksPage isDarkMode={isDarkMode} onOpenBookDetail={() => setIsBookDetailOpen(true)} />
+            )
           ) : activePage === 'Members' ? (
             <MembersPage isDarkMode={isDarkMode} />
           ) : activePage === 'Borrow / Return' ? (

@@ -18,6 +18,7 @@ type BookRow = {
 
 type BooksPageProps = {
   isDarkMode: boolean
+  onOpenBookDetail: () => void
 }
 
 const stats = [
@@ -62,7 +63,7 @@ function getCategoryClass(category: string) {
   }
 }
 
-export function BooksPage({ isDarkMode }: BooksPageProps) {
+export function BooksPage({ isDarkMode, onOpenBookDetail }: BooksPageProps) {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
 
   return (
@@ -178,7 +179,7 @@ export function BooksPage({ isDarkMode }: BooksPageProps) {
                         <div className="flex items-start gap-3">
                           <span className={`grid h-12 w-9 place-items-center rounded text-xl ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>{book.cover}</span>
                           <div>
-                            <p className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{book.title}</p>
+                            <button type="button" onClick={onOpenBookDetail} className={`text-left font-semibold hover:underline ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{book.title}</button>
                             <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>ISBN: {book.isbn}</p>
                           </div>
                         </div>
@@ -220,7 +221,7 @@ export function BooksPage({ isDarkMode }: BooksPageProps) {
                   </div>
 
                   <div className="mt-3">
-                    <p className={`line-clamp-2 text-sm font-semibold leading-5 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{book.title}</p>
+                    <button type="button" onClick={onOpenBookDetail} className={`line-clamp-2 text-left text-sm font-semibold leading-5 hover:underline ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{book.title}</button>
                     <p className={`mt-1.5 text-xs font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{book.author}</p>
                     <p className={`mt-1 text-xs font-medium ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>ISBN: {book.isbn}</p>
                   </div>
