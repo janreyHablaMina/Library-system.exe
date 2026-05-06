@@ -273,44 +273,121 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
               </article>
             </section>
 
-            <section className="grid gap-3 px-5 pb-3 xl:grid-cols-3">
-              <article className="rounded-xl border border-slate-100 bg-white p-4 xl:col-span-1">
-                <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-2xl font-bold text-slate-800">Recent Borrowed Books</h3>
-                  <button className="text-sm font-semibold text-emerald-700">View all</button>
+            <section className="grid gap-3 px-5 pb-4 xl:grid-cols-[40fr_35fr_25fr]">
+              <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)]">
+                <div className="flex items-center justify-between px-4 py-3">
+                  <h3 className="text-base font-bold text-slate-800">Recent Borrowed Books</h3>
+                  <button className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
                 </div>
-                <div className="space-y-4 text-sm">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3"><span>Sosyolohiya sa Filipino</span><span className="rounded bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">May 6, 2026</span></div>
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3"><span>Understanding Philippine social realities</span><span className="rounded bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">May 5, 2026</span></div>
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3"><span>The conjugal dictatorship...</span><span className="rounded bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">May 4, 2026</span></div>
-                  <div className="flex items-center justify-between"><span>Filipino values today</span><span className="rounded bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">May 3, 2026</span></div>
+                <div>
+                  <div className="grid grid-cols-1 gap-2 border-b border-slate-100 px-4 py-2.5 transition-colors duration-150 hover:bg-slate-50 md:grid-cols-[40px_1.8fr_1fr_auto] md:items-center">
+                    <div className="grid h-11 w-8 place-items-center rounded-md border border-slate-200 bg-slate-50 text-base">📘</div>
+                    <div><p className="text-sm leading-snug font-semibold text-slate-900">Sosyolohiya sa Filipino</p><p className="text-xs text-slate-500">Kahayon, Alicia H.</p></div>
+                    <div><p className="text-[11px] font-semibold text-slate-500">Borrowed by</p><p className="text-sm font-semibold text-slate-700">Maria Santos</p></div>
+                    <span className="w-fit rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">May 6, 2026</span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2 border-b border-slate-100 px-4 py-2.5 transition-colors duration-150 hover:bg-slate-50 md:grid-cols-[40px_1.8fr_1fr_auto] md:items-center">
+                    <div className="grid h-11 w-8 place-items-center rounded-md border border-slate-200 bg-slate-50 text-base">📕</div>
+                    <div><p className="text-sm leading-snug font-semibold text-slate-900">Understanding Philippine social realities through the Filipino family</p><p className="text-xs text-slate-500">Ramirez, Mina M.</p></div>
+                    <div><p className="text-[11px] font-semibold text-slate-500">Borrowed by</p><p className="text-sm font-semibold text-slate-700">Juan Dela Cruz</p></div>
+                    <span className="w-fit rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">May 5, 2026</span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2 border-b border-slate-100 px-4 py-2.5 transition-colors duration-150 hover:bg-slate-50 md:grid-cols-[40px_1.8fr_1fr_auto] md:items-center">
+                    <div className="grid h-11 w-8 place-items-center rounded-md border border-slate-200 bg-slate-50 text-base">📗</div>
+                    <div><p className="text-sm leading-snug font-semibold text-slate-900">The conjugal dictatorship of Ferdinand and Imelda Marcos I</p><p className="text-xs text-slate-500">Mijares, Primitivo</p></div>
+                    <div><p className="text-[11px] font-semibold text-slate-500">Borrowed by</p><p className="text-sm font-semibold text-slate-700">Pedro Reyes</p></div>
+                    <span className="w-fit rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">May 4, 2026</span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2 border-b border-slate-100 px-4 py-2.5 transition-colors duration-150 hover:bg-slate-50 md:grid-cols-[40px_1.8fr_1fr_auto] md:items-center">
+                    <div className="grid h-11 w-8 place-items-center rounded-md border border-slate-200 bg-slate-50 text-base">📙</div>
+                    <div><p className="text-sm leading-snug font-semibold text-slate-900">Filipino values today</p><p className="text-xs text-slate-500">Timberza, Florentino T.</p></div>
+                    <div><p className="text-[11px] font-semibold text-slate-500">Borrowed by</p><p className="text-sm font-semibold text-slate-700">Ana Lim</p></div>
+                    <span className="w-fit rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">May 3, 2026</span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2 px-4 py-2.5 transition-colors duration-150 hover:bg-slate-50 md:grid-cols-[40px_1.8fr_1fr_auto] md:items-center">
+                    <div className="grid h-11 w-8 place-items-center rounded-md border border-slate-200 bg-slate-50 text-base">📓</div>
+                    <div><p className="text-sm leading-snug font-semibold text-slate-900">The fateful years</p><p className="text-xs text-slate-500">Agoncillo, Teodoro A.</p></div>
+                    <div><p className="text-[11px] font-semibold text-slate-500">Borrowed by</p><p className="text-sm font-semibold text-slate-700">Carlo Garcia</p></div>
+                    <span className="w-fit rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">May 2, 2026</span>
+                  </div>
                 </div>
               </article>
 
-              <article className="rounded-xl border border-slate-100 bg-white p-4 xl:col-span-1">
-                <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-2xl font-bold text-slate-800">Overdue Returns</h3>
-                  <button className="text-sm font-semibold text-emerald-700">View all</button>
+              <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)]">
+                <div className="flex items-center justify-between px-4 py-3">
+                  <h3 className="text-base font-bold text-slate-800">Overdue Returns</h3>
+                  <button className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
                 </div>
-                <div className="space-y-4 text-sm">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3"><span>How to read a newspaper</span><span className="rounded bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-600">5 days</span></div>
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3"><span>Peryodismo sa Pilipino</span><span className="rounded bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-600">3 days</span></div>
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3"><span>Ulat ng unang pambansang...</span><span className="rounded bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-600">2 days</span></div>
-                  <div className="flex items-center justify-between"><span>Sociology in the Philippine setting</span><span className="rounded bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-600">1 day</span></div>
+                <div>
+                  <div className="grid grid-cols-1 gap-2 border-b border-slate-100 px-4 py-3 transition-colors duration-150 hover:bg-slate-50 md:grid-cols-[1.8fr_1fr_auto] md:items-center">
+                    <div><p className="text-sm leading-snug font-semibold text-slate-900">How to read a newspaper</p><p className="text-xs text-slate-500">Dale, Edgar</p></div>
+                    <p className="text-sm font-semibold text-slate-700">Maria Santos</p>
+                    <span className="w-fit rounded-md bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-600">5 days</span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2 border-b border-slate-100 px-4 py-3 transition-colors duration-150 hover:bg-slate-50 md:grid-cols-[1.8fr_1fr_auto] md:items-center">
+                    <div><p className="text-sm leading-snug font-semibold text-slate-900">Peryodismo sa Pilipino</p><p className="text-xs text-slate-500">Landicho, Domingo G.</p></div>
+                    <p className="text-sm font-semibold text-slate-700">Juan Dela Cruz</p>
+                    <span className="w-fit rounded-md bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-600">3 days</span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2 border-b border-slate-100 px-4 py-3 transition-colors duration-150 hover:bg-slate-50 md:grid-cols-[1.8fr_1fr_auto] md:items-center">
+                    <div><p className="text-sm leading-snug font-semibold text-slate-900">Ulat ng unang pambansang kumperensya sa sikolohiyang Pilipino</p><p className="text-xs text-slate-500">Pambansang Samahan sa Sikolohiyang Pilipino</p></div>
+                    <p className="text-sm font-semibold text-slate-700">Pedro Reyes</p>
+                    <span className="w-fit rounded-md bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-600">2 days</span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2 px-4 py-3 transition-colors duration-150 hover:bg-slate-50 md:grid-cols-[1.8fr_1fr_auto] md:items-center">
+                    <div><p className="text-sm leading-snug font-semibold text-slate-900">Sociology in the Philippine setting</p><p className="text-xs text-slate-500">Hunt, Chester L.</p></div>
+                    <p className="text-sm font-semibold text-slate-700">Ana Lim</p>
+                    <span className="w-fit rounded-md bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-600">1 day</span>
+                  </div>
                 </div>
               </article>
 
-              <article className="rounded-xl border border-slate-100 bg-white p-4 xl:col-span-1">
-                <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-2xl font-bold text-slate-800">Today&apos;s Activity</h3>
-                  <button className="text-sm font-semibold text-emerald-700">View all</button>
+              <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)]">
+                <div className="mb-3 flex items-center justify-between pb-3">
+                  <h3 className="text-base font-bold text-slate-800">Today&apos;s Activity</h3>
+                  <button className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
                 </div>
-                <div className="space-y-3 text-sm">
-                  <p><span className="font-semibold text-slate-500">1:02 PM</span> New book added</p>
-                  <p><span className="font-semibold text-slate-500">12:45 PM</span> Book borrowed</p>
-                  <p><span className="font-semibold text-slate-500">11:30 AM</span> Book returned</p>
-                  <p><span className="font-semibold text-slate-500">10:15 AM</span> New member added</p>
-                  <p><span className="font-semibold text-slate-500">9:05 AM</span> Book borrowed</p>
+                <div className="space-y-0">
+                  <div className="-mx-4 grid grid-cols-[44px_1fr_auto] items-start gap-2 border-b border-slate-100 px-4 py-2.5 transition-colors duration-150 hover:bg-slate-50">
+                    <div className="grid h-10 w-10 place-items-center rounded-full bg-emerald-50 text-xl text-emerald-700">📖</div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">New book added</p>
+                      <p className="text-xs font-medium text-slate-500">&quot;Philippine Constitution&quot;</p>
+                    </div>
+                    <p className="pt-1 text-right text-xs font-semibold text-slate-500">May 6, 2026<br />1:02 PM</p>
+                  </div>
+                  <div className="-mx-4 grid grid-cols-[44px_1fr_auto] items-start gap-2 border-b border-slate-100 px-4 py-2.5 transition-colors duration-150 hover:bg-slate-50">
+                    <div className="grid h-10 w-10 place-items-center rounded-full bg-amber-50 text-xl text-amber-600">↩</div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">Book borrowed</p>
+                      <p className="text-xs font-medium text-slate-500">by Maria Santos</p>
+                    </div>
+                    <p className="pt-1 text-right text-xs font-semibold text-slate-500">May 6, 2026<br />12:45 PM</p>
+                  </div>
+                  <div className="-mx-4 grid grid-cols-[44px_1fr_auto] items-start gap-2 border-b border-slate-100 px-4 py-2.5 transition-colors duration-150 hover:bg-slate-50">
+                    <div className="grid h-10 w-10 place-items-center rounded-full bg-emerald-50 text-xl text-emerald-700">⟳</div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">Book returned</p>
+                      <p className="text-xs font-medium text-slate-500">by Juan Dela Cruz</p>
+                    </div>
+                    <p className="pt-1 text-right text-xs font-semibold text-slate-500">May 6, 2026<br />11:30 AM</p>
+                  </div>
+                  <div className="-mx-4 grid grid-cols-[44px_1fr_auto] items-start gap-2 border-b border-slate-100 px-4 py-2.5 transition-colors duration-150 hover:bg-slate-50">
+                    <div className="grid h-10 w-10 place-items-center rounded-full bg-emerald-50 text-xl text-emerald-700">👤</div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">New member added</p>
+                      <p className="text-xs font-medium text-slate-500">Pedro Reyes</p>
+                    </div>
+                    <p className="pt-1 text-right text-xs font-semibold text-slate-500">May 6, 2026<br />10:15 AM</p>
+                  </div>
+                  <div className="-mx-4 grid grid-cols-[44px_1fr_auto] items-start gap-2 px-4 py-2.5 transition-colors duration-150 hover:bg-slate-50">
+                    <div className="grid h-10 w-10 place-items-center rounded-full bg-amber-50 text-xl text-amber-600">↩</div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">Book borrowed</p>
+                      <p className="text-xs font-medium text-slate-500">by Ana Lim</p>
+                    </div>
+                    <p className="pt-1 text-right text-xs font-semibold text-slate-500">May 6, 2026<br />9:05 AM</p>
+                  </div>
                 </div>
               </article>
             </section>
