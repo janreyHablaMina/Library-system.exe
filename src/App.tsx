@@ -1,6 +1,6 @@
-﻿import { useState } from 'react'
+﻿import { useEffect, useRef, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
-import { ArrowLeft, ArrowRight, Bell, MessageCircle, Moon, Search, Sun } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Bell, Mail, MessageCircle, Moon, Search, Sun } from 'lucide-react'
 import heroImage from './assets/login.avif'
 
 type LoginFormState = {
@@ -77,6 +77,29 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const profileMenuRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!profileMenuRef.current?.contains(event.target as Node)) {
+        setIsProfileOpen(false)
+      }
+    }
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsProfileOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handlePointerDown)
+    document.addEventListener('keydown', handleEscape)
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown)
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [])
 
   return (
     <main className="min-h-screen bg-[#f3f5fb] p-0 text-slate-800">
@@ -120,14 +143,16 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
               >
                 {sidebarCollapsed ? <ArrowRight size={20} strokeWidth={2.2} /> : <ArrowLeft size={20} strokeWidth={2.2} />}
               </button>
-              <div className="group flex h-12 w-[520px] items-center rounded-full border border-slate-200 bg-slate-50 px-4 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100">
+              <form className="group flex h-12 w-[520px] items-center rounded-full border border-slate-200 bg-slate-50 px-4 focus-within:border-emerald-500" role="search">
+                <label htmlFor="header-search" className="sr-only">Search library records</label>
                 <Search size={16} className="mr-3 text-slate-400 transition-colors group-focus-within:text-emerald-600" />
                 <input
-                  type="text"
+                  id="header-search"
+                  type="search"
                   placeholder="Search books, members, authors, categories..."
                   className="w-full bg-transparent text-sm font-light text-slate-700 placeholder:font-light placeholder:text-slate-400 outline-none"
                 />
-              </div>
+              </form>
               <div className="ml-auto flex items-center gap-4">
                 <div className="hidden items-center gap-2 lg:flex">
                   <button
@@ -139,23 +164,20 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
                   >
                     {isDarkMode ? <Sun size={18} strokeWidth={1.9} /> : <Moon size={18} strokeWidth={1.9} />}
                   </button>
-                  <button type="button" className="relative rounded-lg p-2 text-slate-600 hover:bg-slate-100">
+                  <button type="button" className="relative rounded-lg p-2 text-slate-600 hover:bg-slate-100" aria-label="Open messages">
                     <MessageCircle size={18} strokeWidth={1.9} />
-                    <span className="absolute -right-0.5 -top-0.5 grid h-4 w-4 place-items-center rounded-full bg-red-500 text-[10px] font-bold text-white">3</span>
+                    <span aria-hidden="true" className="absolute -right-0.5 -top-0.5 grid h-4 w-4 place-items-center rounded-full bg-red-500 text-[10px] font-bold text-white">3</span>
                   </button>
-                  <button type="button" className="relative rounded-lg p-2 text-slate-600 hover:bg-slate-100">
-                    <svg viewBox="0 0 20 20" aria-hidden="true" className="h-5 w-5">
-                      <rect x="2.5" y="4.5" width="15" height="11" rx="2" fill="none" stroke="currentColor" strokeWidth="1.6" />
-                      <path d="m3.5 6 6.5 5 6.5-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    <span className="absolute -right-0.5 -top-0.5 grid h-4 w-4 place-items-center rounded-full bg-red-500 text-[10px] font-bold text-white">5</span>
+                  <button type="button" className="relative rounded-lg p-2 text-slate-600 hover:bg-slate-100" aria-label="Open inbox">
+                    <Mail size={18} strokeWidth={1.9} />
+                    <span aria-hidden="true" className="absolute -right-0.5 -top-0.5 grid h-4 w-4 place-items-center rounded-full bg-red-500 text-[10px] font-bold text-white">5</span>
                   </button>
-                  <button type="button" className="relative rounded-lg p-2 text-slate-600 hover:bg-slate-100">
+                  <button type="button" className="relative rounded-lg p-2 text-slate-600 hover:bg-slate-100" aria-label="Open notifications">
                     <Bell size={18} strokeWidth={1.9} />
-                    <span className="absolute -right-0.5 -top-0.5 grid h-4 w-4 place-items-center rounded-full bg-red-500 text-[10px] font-bold text-white">2</span>
+                    <span aria-hidden="true" className="absolute -right-0.5 -top-0.5 grid h-4 w-4 place-items-center rounded-full bg-red-500 text-[10px] font-bold text-white">2</span>
                   </button>
                 </div>
-                <div className="relative hidden items-center gap-3 border-l border-slate-200 pl-4 md:flex">
+                <div ref={profileMenuRef} className="relative hidden items-center gap-3 border-l border-slate-200 pl-4 md:flex">
                   <div className="grid h-11 w-11 place-items-center rounded-full bg-gradient-to-br from-blue-100 to-violet-200 text-xl">👨🏻</div>
                   <div>
                     <p className="text-sm font-bold text-slate-800">Admin User</p>
@@ -167,16 +189,18 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
                     className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-slate-100"
                     aria-expanded={isProfileOpen}
                     aria-haspopup="menu"
+                    aria-controls="profile-menu"
                   >
                     <svg viewBox="0 0 20 20" aria-hidden="true" className="h-4 w-4">
                       <path d="M5.5 7.5 10 12l4.5-4.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </button>
                   {isProfileOpen ? (
-                    <div className="absolute right-0 top-14 z-20 w-36 rounded-lg border border-slate-200 bg-white p-1 shadow-lg">
+                    <div id="profile-menu" role="menu" className="absolute right-0 top-14 z-20 w-36 rounded-lg border border-slate-200 bg-white p-1 shadow-lg">
                       <button
                         type="button"
                         onClick={onLogout}
+                        role="menuitem"
                         className="w-full rounded-md px-3 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-100"
                       >
                         Logout
@@ -340,6 +364,7 @@ function App() {
 }
 
 export default App
+
 
 
 
