@@ -199,7 +199,7 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
             </section>
 
             <section className="grid gap-3 px-5 pb-3 sm:grid-cols-2 xl:grid-cols-6">
-              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)]">
+              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)]">
                 <div className="mb-2 flex items-center gap-3">
                   <div className="rounded-lg bg-emerald-50 p-2"><BookOpen size={18} className="text-emerald-600" /></div>
                   <p className="text-sm font-semibold text-slate-600">Total Books</p>
@@ -211,7 +211,7 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
                   <path d="M0 10 L12 11 L22 8 L32 9 L42 7 L52 10 L62 8 L72 9 L82 6 L100 5" fill="none" stroke="#2563eb" strokeWidth="1.8" strokeLinecap="round" />
                 </svg>
               </article>
-              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)]">
+              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)]">
                 <div className="mb-2 flex items-center gap-3">
                   <div className="rounded-lg bg-emerald-50 p-2"><Bookmark size={18} className="text-emerald-600" /></div>
                   <p className="text-sm font-semibold text-slate-600">Available Books</p>
@@ -223,7 +223,7 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
                   <path d="M0 9 L12 8 L22 10 L32 7 L42 9 L52 6 L62 8 L72 5 L82 7 L100 4" fill="none" stroke="#22c55e" strokeWidth="1.8" strokeLinecap="round" />
                 </svg>
               </article>
-              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)]">
+              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)]">
                 <div className="mb-2 flex items-center gap-3">
                   <div className="rounded-lg bg-amber-50 p-2"><Undo2 size={18} className="text-amber-500" /></div>
                   <p className="text-sm font-semibold text-slate-600">Borrowed Books</p>
@@ -235,7 +235,7 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
                   <path d="M0 10 L12 9 L22 11 L32 8 L42 10 L52 7 L62 9 L72 8 L82 6 L100 7" fill="none" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" />
                 </svg>
               </article>
-              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)]">
+              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)]">
                 <div className="mb-2 flex items-center gap-3">
                   <div className="rounded-lg bg-rose-50 p-2"><Clock3 size={18} className="text-rose-500" /></div>
                   <p className="text-sm font-semibold text-slate-600">Overdue Books</p>
@@ -247,7 +247,7 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
                   <path d="M0 11 L12 8 L22 10 L32 6 L42 9 L52 7 L62 10 L72 6 L82 8 L100 7" fill="none" stroke="#ef4444" strokeWidth="1.8" strokeLinecap="round" />
                 </svg>
               </article>
-              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)]">
+              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)]">
                 <div className="mb-2 flex items-center gap-3">
                   <div className="rounded-lg bg-emerald-50 p-2"><Users size={18} className="text-emerald-600" /></div>
                   <p className="text-sm font-semibold text-slate-600">Total Members</p>
@@ -259,7 +259,7 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
                   <path d="M0 10 L12 7 L22 9 L32 6 L42 8 L52 7 L62 9 L72 6 L82 8 L100 5" fill="none" stroke="#8b5cf6" strokeWidth="1.8" strokeLinecap="round" />
                 </svg>
               </article>
-              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)]">
+              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)]">
                 <div className="mb-2 flex items-center gap-3">
                   <div className="rounded-lg bg-emerald-50 p-2"><BookPlus size={18} className="text-emerald-600" /></div>
                   <p className="text-sm font-semibold text-slate-600">New Books</p>
@@ -393,33 +393,112 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
             </section>
 
             <section className="grid gap-3 px-5 pb-5 xl:grid-cols-4">
-              <article className="rounded-xl border border-slate-100 bg-white p-4">
-                <h3 className="mb-3 text-xl font-bold text-slate-800">Most Borrowed Categories</h3>
-                <div className="space-y-2 text-sm text-slate-600">
-                  <p>Sociology 35% (452)</p><p>History 28% (361)</p><p>Education 17% (219)</p><p>Language 12% (154)</p><p>Others 8% (102)</p>
+              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)]">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-base font-bold text-slate-800">Most Borrowed Categories</h3>
+                  <button className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
+                </div>
+                <div className="flex min-h-[220px] items-center">
+                  <div className="grid w-full gap-4 md:grid-cols-[190px_1fr] md:items-center md:justify-center">
+                  <div className="mx-auto h-36 w-36 rounded-full bg-[conic-gradient(#10b981_0_35%,#34d399_35%_63%,#6ee7b7_63%_80%,#059669_80%_92%,#d1d5db_92%_100%)] p-7">
+                    <div className="h-full w-full rounded-full bg-white" />
+                  </div>
+                    <div className="mx-auto w-full max-w-[220px] space-y-2.5 text-xs text-slate-600">
+                    <p className="flex items-center justify-between gap-2"><span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />Sociology</span><span className="font-semibold text-slate-700">35% (452)</span></p>
+                    <p className="flex items-center justify-between gap-2"><span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />History</span><span className="font-semibold text-slate-700">28% (361)</span></p>
+                    <p className="flex items-center justify-between gap-2"><span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-emerald-300" />Education</span><span className="font-semibold text-slate-700">17% (219)</span></p>
+                    <p className="flex items-center justify-between gap-2"><span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-emerald-700/70" />Language</span><span className="font-semibold text-slate-700">12% (154)</span></p>
+                    <p className="flex items-center justify-between gap-2"><span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-slate-300" />Others</span><span className="font-semibold text-slate-700">8% (102)</span></p>
+                  </div>
+                </div>
                 </div>
               </article>
-              <article className="rounded-xl border border-slate-100 bg-white p-4">
-                <h3 className="mb-3 text-xl font-bold text-slate-800">Low Stock / Missing Copies</h3>
-                <div className="space-y-2 text-sm text-slate-600">
-                  <p>The life-style of the Badjaos</p><p>Badjaw</p><p>Sulu studies 1</p><p>The food and culture of the Tausug</p>
+              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)]">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-base font-bold text-slate-800">Low Stock / Missing Copies</h3>
+                  <button className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
+                </div>
+                <div className="space-y-2.5 text-xs">
+                  <div className="flex items-start justify-between gap-3 rounded-md px-1 py-1 transition-colors duration-150 hover:bg-slate-50">
+                    <div className="min-w-0">
+                      <p className="flex items-center gap-2 text-sm font-semibold text-slate-800"><span className="h-2.5 w-2.5 rounded-full bg-amber-500" />The life-style of the Badjaos</p>
+                      <p className="pl-4 text-xs text-slate-500">Available: 1 / Total: 2</p>
+                    </div>
+                    <span className="rounded-md bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-600">Low</span>
+                  </div>
+                  <div className="flex items-start justify-between gap-3 rounded-md px-1 py-1 transition-colors duration-150 hover:bg-slate-50">
+                    <div className="min-w-0">
+                      <p className="flex items-center gap-2 text-sm font-semibold text-slate-800"><span className="h-2.5 w-2.5 rounded-full bg-amber-500" />Badjaw</p>
+                      <p className="pl-4 text-xs text-slate-500">Available: 1 / Total: 2</p>
+                    </div>
+                    <span className="rounded-md bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-600">Low</span>
+                  </div>
+                  <div className="flex items-start justify-between gap-3 rounded-md px-1 py-1 transition-colors duration-150 hover:bg-slate-50">
+                    <div className="min-w-0">
+                      <p className="flex items-center gap-2 text-sm font-semibold text-slate-800"><span className="h-2.5 w-2.5 rounded-full bg-rose-500" />Sulu studies 1</p>
+                      <p className="pl-4 text-xs text-slate-500">Available: 0 / Total: 1</p>
+                    </div>
+                    <span className="rounded-md bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-600">Out</span>
+                  </div>
+                  <div className="flex items-start justify-between gap-3 rounded-md px-1 py-1 transition-colors duration-150 hover:bg-slate-50">
+                    <div className="min-w-0">
+                      <p className="flex items-center gap-2 text-sm font-semibold text-slate-800"><span className="h-2.5 w-2.5 rounded-full bg-amber-500" />The food and culture of the Tausug</p>
+                      <p className="pl-4 text-xs text-slate-500">Available: 1 / Total: 2</p>
+                    </div>
+                    <span className="rounded-md bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-600">Low</span>
+                  </div>
                 </div>
               </article>
-              <article className="rounded-xl border border-slate-100 bg-white p-4">
-                <h3 className="mb-3 text-xl font-bold text-slate-800">Quick Reports</h3>
-                <div className="space-y-3 text-sm">
-                  <p className="flex items-center gap-2"><FileText size={14} />Books by Category</p>
-                  <p className="flex items-center gap-2"><FileText size={14} />Top Borrowed Books</p>
-                  <p className="flex items-center gap-2"><FileText size={14} />Overdue Books Report</p>
-                  <p className="flex items-center gap-2"><FileText size={14} />Monthly Activities</p>
+              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)]">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-base font-bold text-slate-800">Quick Reports</h3>
+                </div>
+                <div className="space-y-1">
+                  <button type="button" className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left transition-colors duration-150 hover:bg-slate-50">
+                    <span className="flex items-center gap-2 text-sm font-semibold text-slate-700"><span className="grid h-7 w-7 place-items-center rounded-full bg-emerald-50 text-emerald-700"><FileText size={13} /></span>Books by Category</span>
+                    <span className="text-slate-500">›</span>
+                  </button>
+                  <button type="button" className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left transition-colors duration-150 hover:bg-slate-50">
+                    <span className="flex items-center gap-2 text-sm font-semibold text-slate-700"><span className="grid h-7 w-7 place-items-center rounded-full bg-emerald-50 text-emerald-700"><FileText size={13} /></span>Top Borrowed Books</span>
+                    <span className="text-slate-500">›</span>
+                  </button>
+                  <button type="button" className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left transition-colors duration-150 hover:bg-slate-50">
+                    <span className="flex items-center gap-2 text-sm font-semibold text-slate-700"><span className="grid h-7 w-7 place-items-center rounded-full bg-emerald-50 text-emerald-700"><FileText size={13} /></span>Overdue Books Report</span>
+                    <span className="text-slate-500">›</span>
+                  </button>
+                  <button type="button" className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left transition-colors duration-150 hover:bg-slate-50">
+                    <span className="flex items-center gap-2 text-sm font-semibold text-slate-700"><span className="grid h-7 w-7 place-items-center rounded-full bg-emerald-50 text-emerald-700"><FileText size={13} /></span>Monthly Activities</span>
+                    <span className="text-slate-500">›</span>
+                  </button>
                 </div>
               </article>
-              <article className="rounded-xl border border-slate-100 bg-white p-4">
-                <h3 className="mb-3 text-xl font-bold text-slate-800">Upcoming Due Dates</h3>
-                <div className="space-y-2 text-sm">
-                  <p className="flex items-center justify-between"><span>Sosyolohiya sa Filipino</span><span className="rounded bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-600">May 11, 2026</span></p>
-                  <p className="flex items-center justify-between"><span>Filipino values today</span><span className="rounded bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-600">May 10, 2026</span></p>
-                  <p className="flex items-center justify-between"><span>Understanding Philippine...</span><span className="rounded bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-600">May 9, 2026</span></p>
+              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)]">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-base font-bold text-slate-800">Upcoming Due Dates</h3>
+                  <button className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-start justify-between gap-3 rounded-md px-2 py-2 transition-colors duration-150 hover:bg-slate-50">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-800">Sosyolohiya sa Filipino</p>
+                      <p className="text-xs font-medium text-slate-500">Maria Santos</p>
+                    </div>
+                    <span className="rounded-md bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-600">May 11, 2026</span>
+                  </div>
+                  <div className="flex items-start justify-between gap-3 rounded-md px-2 py-2 transition-colors duration-150 hover:bg-slate-50">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-800">Filipino values today</p>
+                      <p className="text-xs font-medium text-slate-500">Juan Dela Cruz</p>
+                    </div>
+                    <span className="rounded-md bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-600">May 10, 2026</span>
+                  </div>
+                  <div className="flex items-start justify-between gap-3 rounded-md px-2 py-2 transition-colors duration-150 hover:bg-slate-50">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-800">Understanding Philippine...</p>
+                      <p className="text-xs font-medium text-slate-500">Pedro Reyes</p>
+                    </div>
+                    <span className="rounded-md bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-600">May 9, 2026</span>
+                  </div>
                 </div>
               </article>
             </section>
