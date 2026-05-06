@@ -1,6 +1,7 @@
 ﻿import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { ArrowLeft, ArrowRight, Bell, BookOpen, BookPlus, Bookmark, Clock3, FileText, Mail, MessageCircle, Moon, Search, Sun, Undo2, UserPlus, Users } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import heroImage from './assets/login.avif'
 
 type LoginFormState = {
@@ -29,6 +30,70 @@ const navItems: NavItem[] = [
   { label: 'Borrow / Return' },
   { label: 'Reports' },
   { label: 'Settings' },
+]
+
+type ActivityItem = {
+  title: string
+  detail: string
+  date: string
+  time: string
+  icon: string
+  iconClass: string
+}
+
+const todayActivityItems: ActivityItem[] = [
+  {
+    title: 'New book added',
+    detail: '"Philippine Constitution"',
+    date: 'May 6, 2026',
+    time: '1:02 PM',
+    icon: '📖',
+    iconClass: 'bg-emerald-50 text-emerald-700',
+  },
+  {
+    title: 'Book borrowed',
+    detail: 'by Maria Santos',
+    date: 'May 6, 2026',
+    time: '12:45 PM',
+    icon: '↩',
+    iconClass: 'bg-amber-50 text-amber-600',
+  },
+  {
+    title: 'Book returned',
+    detail: 'by Juan Dela Cruz',
+    date: 'May 6, 2026',
+    time: '11:30 AM',
+    icon: '⟳',
+    iconClass: 'bg-emerald-50 text-emerald-700',
+  },
+  {
+    title: 'New member added',
+    detail: 'Pedro Reyes',
+    date: 'May 6, 2026',
+    time: '10:15 AM',
+    icon: '👤',
+    iconClass: 'bg-emerald-50 text-emerald-700',
+  },
+  {
+    title: 'Book borrowed',
+    detail: 'by Ana Lim',
+    date: 'May 6, 2026',
+    time: '9:05 AM',
+    icon: '↩',
+    iconClass: 'bg-amber-50 text-amber-600',
+  },
+]
+
+type QuickReportItem = {
+  label: string
+  icon: LucideIcon
+}
+
+const quickReportItems: QuickReportItem[] = [
+  { label: 'Books by Category', icon: FileText },
+  { label: 'Top Borrowed Books', icon: FileText },
+  { label: 'Overdue Books Report', icon: FileText },
+  { label: 'Monthly Activities', icon: FileText },
 ]
 
 function DashboardShell({ onLogout }: { onLogout: () => void }) {
@@ -274,7 +339,7 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
             </section>
 
             <section className="grid gap-3 px-5 pb-4 xl:grid-cols-[40fr_35fr_25fr]">
-              <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)]">
+              <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)]">
                 <div className="flex items-center justify-between px-4 py-3">
                   <h3 className="text-base font-bold text-slate-800">Recent Borrowed Books</h3>
                   <button className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
@@ -313,7 +378,7 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
                 </div>
               </article>
 
-              <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)]">
+              <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)]">
                 <div className="flex items-center justify-between px-4 py-3">
                   <h3 className="text-base font-bold text-slate-800">Overdue Returns</h3>
                   <button className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
@@ -342,58 +407,33 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
                 </div>
               </article>
 
-              <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)]">
+              <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)]">
                 <div className="mb-3 flex items-center justify-between pb-3">
                   <h3 className="text-base font-bold text-slate-800">Today&apos;s Activity</h3>
                   <button className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
                 </div>
                 <div className="space-y-0">
-                  <div className="-mx-4 grid grid-cols-[44px_1fr_auto] items-start gap-2 border-b border-slate-100 px-4 py-2.5 transition-colors duration-150 hover:bg-slate-50">
-                    <div className="grid h-10 w-10 place-items-center rounded-full bg-emerald-50 text-xl text-emerald-700">📖</div>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">New book added</p>
-                      <p className="text-xs font-medium text-slate-500">&quot;Philippine Constitution&quot;</p>
+                  {todayActivityItems.map((item, idx) => (
+                    <div
+                      key={`${item.title}-${item.time}`}
+                      className={`-mx-4 grid grid-cols-[44px_1fr_auto] items-start gap-2 px-4 py-2.5 transition-colors duration-150 hover:bg-slate-50 ${
+                        idx < todayActivityItems.length - 1 ? 'border-b border-slate-100' : ''
+                      }`}
+                    >
+                      <div className={`grid h-10 w-10 place-items-center rounded-full text-xl ${item.iconClass}`}>{item.icon}</div>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">{item.title}</p>
+                        <p className="text-xs font-medium text-slate-500">{item.detail}</p>
+                      </div>
+                      <p className="pt-1 text-right text-xs font-semibold text-slate-500">{item.date}<br />{item.time}</p>
                     </div>
-                    <p className="pt-1 text-right text-xs font-semibold text-slate-500">May 6, 2026<br />1:02 PM</p>
-                  </div>
-                  <div className="-mx-4 grid grid-cols-[44px_1fr_auto] items-start gap-2 border-b border-slate-100 px-4 py-2.5 transition-colors duration-150 hover:bg-slate-50">
-                    <div className="grid h-10 w-10 place-items-center rounded-full bg-amber-50 text-xl text-amber-600">↩</div>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">Book borrowed</p>
-                      <p className="text-xs font-medium text-slate-500">by Maria Santos</p>
-                    </div>
-                    <p className="pt-1 text-right text-xs font-semibold text-slate-500">May 6, 2026<br />12:45 PM</p>
-                  </div>
-                  <div className="-mx-4 grid grid-cols-[44px_1fr_auto] items-start gap-2 border-b border-slate-100 px-4 py-2.5 transition-colors duration-150 hover:bg-slate-50">
-                    <div className="grid h-10 w-10 place-items-center rounded-full bg-emerald-50 text-xl text-emerald-700">⟳</div>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">Book returned</p>
-                      <p className="text-xs font-medium text-slate-500">by Juan Dela Cruz</p>
-                    </div>
-                    <p className="pt-1 text-right text-xs font-semibold text-slate-500">May 6, 2026<br />11:30 AM</p>
-                  </div>
-                  <div className="-mx-4 grid grid-cols-[44px_1fr_auto] items-start gap-2 border-b border-slate-100 px-4 py-2.5 transition-colors duration-150 hover:bg-slate-50">
-                    <div className="grid h-10 w-10 place-items-center rounded-full bg-emerald-50 text-xl text-emerald-700">👤</div>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">New member added</p>
-                      <p className="text-xs font-medium text-slate-500">Pedro Reyes</p>
-                    </div>
-                    <p className="pt-1 text-right text-xs font-semibold text-slate-500">May 6, 2026<br />10:15 AM</p>
-                  </div>
-                  <div className="-mx-4 grid grid-cols-[44px_1fr_auto] items-start gap-2 px-4 py-2.5 transition-colors duration-150 hover:bg-slate-50">
-                    <div className="grid h-10 w-10 place-items-center rounded-full bg-amber-50 text-xl text-amber-600">↩</div>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">Book borrowed</p>
-                      <p className="text-xs font-medium text-slate-500">by Ana Lim</p>
-                    </div>
-                    <p className="pt-1 text-right text-xs font-semibold text-slate-500">May 6, 2026<br />9:05 AM</p>
-                  </div>
+                  ))}
                 </div>
               </article>
             </section>
 
             <section className="grid gap-3 px-5 pb-5 xl:grid-cols-4">
-              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)]">
+              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)]">
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className="text-base font-bold text-slate-800">Most Borrowed Categories</h3>
                   <button className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
@@ -413,7 +453,7 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
                 </div>
                 </div>
               </article>
-              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)]">
+              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)]">
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className="text-base font-bold text-slate-800">Low Stock / Missing Copies</h3>
                   <button className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
@@ -449,30 +489,34 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
                   </div>
                 </div>
               </article>
-              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)]">
+              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)]">
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className="text-base font-bold text-slate-800">Quick Reports</h3>
                 </div>
                 <div className="space-y-1">
-                  <button type="button" className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left transition-colors duration-150 hover:bg-slate-50">
-                    <span className="flex items-center gap-2 text-sm font-semibold text-slate-700"><span className="grid h-7 w-7 place-items-center rounded-full bg-emerald-50 text-emerald-700"><FileText size={13} /></span>Books by Category</span>
-                    <span className="text-slate-500">›</span>
-                  </button>
-                  <button type="button" className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left transition-colors duration-150 hover:bg-slate-50">
-                    <span className="flex items-center gap-2 text-sm font-semibold text-slate-700"><span className="grid h-7 w-7 place-items-center rounded-full bg-emerald-50 text-emerald-700"><FileText size={13} /></span>Top Borrowed Books</span>
-                    <span className="text-slate-500">›</span>
-                  </button>
-                  <button type="button" className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left transition-colors duration-150 hover:bg-slate-50">
-                    <span className="flex items-center gap-2 text-sm font-semibold text-slate-700"><span className="grid h-7 w-7 place-items-center rounded-full bg-emerald-50 text-emerald-700"><FileText size={13} /></span>Overdue Books Report</span>
-                    <span className="text-slate-500">›</span>
-                  </button>
-                  <button type="button" className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left transition-colors duration-150 hover:bg-slate-50">
-                    <span className="flex items-center gap-2 text-sm font-semibold text-slate-700"><span className="grid h-7 w-7 place-items-center rounded-full bg-emerald-50 text-emerald-700"><FileText size={13} /></span>Monthly Activities</span>
-                    <span className="text-slate-500">›</span>
-                  </button>
+                  {quickReportItems.map((item) => {
+                    const ItemIcon = item.icon
+
+                    return (
+                      <button
+                        key={item.label}
+                        type="button"
+                        className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left transition-colors duration-150 hover:bg-slate-50"
+                        aria-label={item.label}
+                      >
+                        <span className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                          <span className="grid h-7 w-7 place-items-center rounded-full bg-emerald-50 text-emerald-700">
+                            <ItemIcon size={13} />
+                          </span>
+                          {item.label}
+                        </span>
+                        <span className="text-slate-500">›</span>
+                      </button>
+                    )
+                  })}
                 </div>
               </article>
-              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)]">
+              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)]">
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className="text-base font-bold text-slate-800">Upcoming Due Dates</h3>
                   <button className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
