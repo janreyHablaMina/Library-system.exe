@@ -13,3 +13,57 @@ body {
   min-height: 100vh;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
+
+.dashboard-dark [class~="text-slate-900"],
+.dashboard-dark [class~="text-slate-800"],
+.dashboard-dark [class~="text-slate-700"] {
+  color: #dbe5f3 !important;
+}
+
+.dashboard-dark [class~="text-slate-600"],
+.dashboard-dark [class~="text-slate-500"] {
+  color: #8ea0bb !important;
+}
+
+.dashboard-dark .hover\:bg-slate-50:hover {
+  background-color: rgba(148, 163, 184, 0.12) !important;
+}
+
+.dashboard-dark .hover\:bg-slate-100:hover {
+  background-color: rgba(148, 163, 184, 0.16) !important;
+}
+
+/* Soften row/card separators in dark mode */
+.dashboard-dark [class~="border-slate-100"] {
+  border-color: rgba(148, 163, 184, 0.14) !important;
+}
+
+.dashboard-dark [class~="border-slate-200"] {
+  border-color: rgba(148, 163, 184, 0.18) !important;
+}
+
+/* Tone down bright icon chip backgrounds in dark mode */
+.dashboard-dark [class~="bg-emerald-50"] {
+  background-color: rgba(16, 185, 129, 0.14) !important;
+}
+
+.dashboard-dark [class~="bg-amber-50"] {
+  background-color: rgba(245, 158, 11, 0.14) !important;
+}
+
+.dashboard-dark [class~="bg-rose-50"] {
+  background-color: rgba(244, 63, 94, 0.14) !important;
+}
+
+/* Slightly soften accent icon/text colors */
+.dashboard-dark [class~="text-emerald-700"] {
+  color: #4fd1a1 !important;
+}
+
+.dashboard-dark [class~="text-amber-600"] {
+  color: #f0b55a !important;
+}
+
+.dashboard-dark [class~="text-rose-600"] {
+  color: #fb7185 !important;
+}

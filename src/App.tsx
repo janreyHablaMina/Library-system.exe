@@ -124,13 +124,65 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
     }
   }, [])
 
+  const dashboardTheme = isDarkMode
+    ? {
+        main: 'bg-slate-950 text-slate-100',
+        frame: 'border-slate-800 bg-slate-950',
+        aside: 'border-slate-800 bg-[#070f23]',
+        asideTitle: 'text-emerald-400',
+        asideSub: 'text-slate-400',
+        navActive: 'bg-emerald-500/16 text-emerald-300',
+        navIdle: 'text-slate-300 hover:bg-slate-800',
+        header: 'border-slate-800 bg-[#0a1430]',
+        search: 'border-slate-700 bg-[#0a1430]',
+        searchIcon: 'text-slate-500 group-focus-within:text-emerald-400',
+        searchInput: 'text-slate-100 placeholder:text-slate-500',
+        iconBtn: 'text-slate-300 hover:bg-slate-800',
+        profileBorder: 'border-slate-700',
+        profileName: 'text-slate-100',
+        profileRole: 'text-slate-400',
+        contentBg: 'bg-[#020617]',
+        greetingTitle: 'text-slate-100',
+        greetingSub: 'text-slate-400',
+        quickAction: 'border-slate-700 bg-[#0b1738] text-slate-100 hover:bg-[#132146]',
+        cardPanel: 'border-slate-700 bg-[#0a1633]',
+        cardTitle: 'text-slate-100',
+        cardText: 'text-slate-300',
+        cardMuted: 'text-slate-500',
+      }
+    : {
+        main: 'bg-white text-slate-800',
+        frame: 'border-slate-200 bg-white',
+        aside: 'border-slate-200 bg-white',
+        asideTitle: 'text-[#2f5bff]',
+        asideSub: 'text-slate-500',
+        navActive: 'bg-blue-100 text-blue-700',
+        navIdle: 'text-slate-600 hover:bg-slate-100',
+        header: 'border-slate-200 bg-white',
+        search: 'border-slate-200 bg-white',
+        searchIcon: 'text-slate-400 group-focus-within:text-emerald-600',
+        searchInput: 'text-slate-700 placeholder:text-slate-400',
+        iconBtn: 'text-slate-600 hover:bg-slate-100',
+        profileBorder: 'border-slate-200',
+        profileName: 'text-slate-800',
+        profileRole: 'text-slate-500',
+        contentBg: 'bg-[#f8fafc]',
+        greetingTitle: 'text-slate-900',
+        greetingSub: 'text-slate-500',
+        quickAction: 'border-slate-100 bg-white text-slate-700 hover:bg-slate-50',
+        cardPanel: 'border-slate-100 bg-white',
+        cardTitle: 'text-slate-800',
+        cardText: 'text-slate-700',
+        cardMuted: 'text-slate-500',
+      }
+
   return (
-    <main className="h-screen overflow-hidden bg-white p-0 text-slate-800">
-      <div className="flex h-full w-full overflow-hidden border border-slate-200 bg-white">
-        <aside className={`hidden h-full shrink-0 border-r border-slate-200 bg-white transition-all duration-200 lg:flex lg:flex-col ${sidebarCollapsed ? 'w-20' : 'w-64'}`}>
-          <div className={`border-b border-slate-200 py-6 ${sidebarCollapsed ? 'px-3' : 'px-6'}`}>
-            <h1 className={`font-black italic tracking-tight text-[#2f5bff] ${sidebarCollapsed ? 'text-2xl text-center' : 'text-4xl'}`}>infoLib</h1>
-            {!sidebarCollapsed ? <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">Library Management System</p> : null}
+    <main className={`h-screen overflow-hidden p-0 ${dashboardTheme.main} ${isDarkMode ? 'dashboard-dark' : ''}`}>
+      <div className={`flex h-full w-full overflow-hidden border ${dashboardTheme.frame}`}>
+        <aside className={`hidden h-full shrink-0 border-r transition-all duration-200 lg:flex lg:flex-col ${dashboardTheme.aside} ${sidebarCollapsed ? 'w-20' : 'w-64'}`}>
+          <div className={`border-b py-6 ${dashboardTheme.aside} ${sidebarCollapsed ? 'px-3' : 'px-6'}`}>
+            <h1 className={`font-black italic tracking-tight ${dashboardTheme.asideTitle} ${sidebarCollapsed ? 'text-2xl text-center' : 'text-4xl'}`}>infoLib</h1>
+            {!sidebarCollapsed ? <p className={`mt-1 text-[10px] font-bold uppercase tracking-[0.08em] ${dashboardTheme.asideSub}`}>Library Management System</p> : null}
           </div>
           <nav className={`flex-1 space-y-1 py-5 text-sm ${sidebarCollapsed ? 'px-2' : 'px-4'}`}>
             {navItems.map((item) => (
@@ -138,8 +190,8 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
                 key={item.label}
                 className={
                   item.active
-                    ? `flex w-full items-center rounded-lg bg-blue-100 py-2 font-semibold text-blue-700 ${sidebarCollapsed ? 'justify-center px-2' : 'gap-2 px-3'}`
-                    : `flex w-full items-center rounded-lg py-2 text-slate-600 hover:bg-slate-100 ${sidebarCollapsed ? 'justify-center px-2' : 'gap-2 px-3'}`
+                    ? `flex w-full items-center rounded-lg py-2 font-semibold ${dashboardTheme.navActive} ${sidebarCollapsed ? 'justify-center px-2' : 'gap-2 px-3'}`
+                    : `flex w-full items-center rounded-lg py-2 ${dashboardTheme.navIdle} ${sidebarCollapsed ? 'justify-center px-2' : 'gap-2 px-3'}`
                 }
                 type="button"
                 title={sidebarCollapsed ? item.label : undefined}
@@ -149,31 +201,31 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
               </button>
             ))}
           </nav>
-          <div className={`border-t border-slate-200 ${sidebarCollapsed ? 'p-2' : 'p-4'}`}>
-            {!sidebarCollapsed ? <p className="text-xs text-slate-500">© 2026 infoLib</p> : null}
+          <div className={`border-t ${dashboardTheme.profileBorder} ${sidebarCollapsed ? 'p-2' : 'p-4'}`}>
+            {!sidebarCollapsed ? <p className={`text-xs ${dashboardTheme.profileRole}`}>© 2026 infoLib</p> : null}
           </div>
         </aside>
 
         <section className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-20 flex h-20 items-center border-b border-slate-200 bg-white px-5">
+          <header className={`sticky top-0 z-20 flex h-20 items-center border-b px-5 ${dashboardTheme.header}`}>
             <div className="flex w-full items-center gap-4">
               <button
                 type="button"
                 onClick={() => setSidebarCollapsed((value) => !value)}
-                className="grid h-10 w-10 place-items-center rounded-lg text-slate-700 hover:bg-slate-100"
+                className={`grid h-10 w-10 place-items-center rounded-lg ${dashboardTheme.iconBtn}`}
                 aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
                 title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               >
                 {sidebarCollapsed ? <ArrowRight size={20} strokeWidth={2.2} /> : <ArrowLeft size={20} strokeWidth={2.2} />}
               </button>
-              <form className="group flex h-12 w-[520px] items-center rounded-full border border-slate-200 bg-white px-4 focus-within:border-emerald-500" role="search">
+              <form className={`group flex h-12 w-[520px] items-center rounded-full border px-4 focus-within:border-emerald-500 ${dashboardTheme.search}`} role="search">
                 <label htmlFor="header-search" className="sr-only">Search library records</label>
-                <Search size={16} className="mr-3 text-slate-400 transition-colors group-focus-within:text-emerald-600" />
+                <Search size={16} className={`mr-3 transition-colors ${dashboardTheme.searchIcon}`} />
                 <input
                   id="header-search"
                   type="search"
                   placeholder="Search books, members, authors, categories..."
-                  className="w-full bg-transparent text-sm font-light text-slate-700 placeholder:font-light placeholder:text-slate-400 outline-none"
+                  className={`w-full bg-transparent text-sm font-light placeholder:font-light outline-none ${dashboardTheme.searchInput}`}
                 />
               </form>
               <div className="ml-auto flex items-center gap-4">
@@ -181,35 +233,35 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
                   <button
                     type="button"
                     onClick={() => setIsDarkMode((value) => !value)}
-                    className="rounded-lg p-2 text-slate-600 hover:bg-slate-100"
+                    className={`rounded-lg p-2 ${dashboardTheme.iconBtn}`}
                     aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
                     title={isDarkMode ? 'Light mode' : 'Dark mode'}
                   >
                     {isDarkMode ? <Sun size={18} strokeWidth={1.9} /> : <Moon size={18} strokeWidth={1.9} />}
                   </button>
-                  <button type="button" className="relative rounded-lg p-2 text-slate-600 hover:bg-slate-100" aria-label="Open messages">
+                  <button type="button" className={`relative rounded-lg p-2 ${dashboardTheme.iconBtn}`} aria-label="Open messages">
                     <MessageCircle size={18} strokeWidth={1.9} />
                     <span aria-hidden="true" className="absolute -right-0.5 -top-0.5 grid h-4 w-4 place-items-center rounded-full bg-red-500 text-[10px] font-bold text-white">3</span>
                   </button>
-                  <button type="button" className="relative rounded-lg p-2 text-slate-600 hover:bg-slate-100" aria-label="Open inbox">
+                  <button type="button" className={`relative rounded-lg p-2 ${dashboardTheme.iconBtn}`} aria-label="Open inbox">
                     <Mail size={18} strokeWidth={1.9} />
                     <span aria-hidden="true" className="absolute -right-0.5 -top-0.5 grid h-4 w-4 place-items-center rounded-full bg-red-500 text-[10px] font-bold text-white">5</span>
                   </button>
-                  <button type="button" className="relative rounded-lg p-2 text-slate-600 hover:bg-slate-100" aria-label="Open notifications">
+                  <button type="button" className={`relative rounded-lg p-2 ${dashboardTheme.iconBtn}`} aria-label="Open notifications">
                     <Bell size={18} strokeWidth={1.9} />
                     <span aria-hidden="true" className="absolute -right-0.5 -top-0.5 grid h-4 w-4 place-items-center rounded-full bg-red-500 text-[10px] font-bold text-white">2</span>
                   </button>
                 </div>
-                <div ref={profileMenuRef} className="relative hidden items-center gap-3 border-l border-slate-200 pl-4 md:flex">
+                <div ref={profileMenuRef} className={`relative hidden items-center gap-3 border-l pl-4 md:flex ${dashboardTheme.profileBorder}`}>
                   <div className="grid h-11 w-11 place-items-center rounded-full bg-gradient-to-br from-blue-100 to-violet-200 text-xl">👨🏻</div>
                   <div>
-                    <p className="text-sm font-bold text-slate-800">Admin User</p>
-                    <p className="text-xs text-slate-500">Librarian</p>
+                    <p className={`text-sm font-bold ${dashboardTheme.profileName}`}>Admin User</p>
+                    <p className={`text-xs ${dashboardTheme.profileRole}`}>Librarian</p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setIsProfileOpen((value) => !value)}
-                    className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-slate-100"
+                    className={`grid h-8 w-8 place-items-center rounded-lg ${dashboardTheme.iconBtn}`}
                     aria-expanded={isProfileOpen}
                     aria-haspopup="menu"
                     aria-controls="profile-menu"
@@ -235,27 +287,27 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
             </div>
           </header>
 
-          <div className="min-h-0 flex-1 overflow-auto bg-[#f8fafc] p-4">
+          <div className={`min-h-0 flex-1 overflow-auto p-4 ${dashboardTheme.contentBg}`}>
             <section className="p-5">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div>
-                  <h2 className="text-3xl font-black text-slate-900">Good morning, Admin! 👋</h2>
-                  <p className="mt-1 text-sm text-slate-500">Here&apos;s what&apos;s happening in your library today.</p>
+                  <h2 className={`text-3xl font-black ${dashboardTheme.greetingTitle}`}>Good morning, Admin! 👋</h2>
+                  <p className={`mt-1 text-sm ${dashboardTheme.greetingSub}`}>Here&apos;s what&apos;s happening in your library today.</p>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                  <button type="button" className="flex min-w-[160px] items-center gap-3 rounded-xl border border-slate-100 bg-white px-5 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                  <button type="button" className={`flex min-w-[160px] items-center gap-3 rounded-xl border px-5 py-3 text-sm font-medium ${dashboardTheme.quickAction}`}>
                     <BookPlus size={18} className="text-emerald-600" />
                     Add Book
                   </button>
-                  <button type="button" className="flex min-w-[160px] items-center gap-3 rounded-xl border border-slate-100 bg-white px-5 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                  <button type="button" className={`flex min-w-[160px] items-center gap-3 rounded-xl border px-5 py-3 text-sm font-medium ${dashboardTheme.quickAction}`}>
                     <ArrowRight size={18} className="text-emerald-600" />
                     Borrow Book
                   </button>
-                  <button type="button" className="flex min-w-[160px] items-center gap-3 rounded-xl border border-slate-100 bg-white px-5 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                  <button type="button" className={`flex min-w-[160px] items-center gap-3 rounded-xl border px-5 py-3 text-sm font-medium ${dashboardTheme.quickAction}`}>
                     <Undo2 size={18} className="text-amber-500" />
                     Return Book
                   </button>
-                  <button type="button" className="flex min-w-[160px] items-center gap-3 rounded-xl border border-slate-100 bg-white px-5 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                  <button type="button" className={`flex min-w-[160px] items-center gap-3 rounded-xl border px-5 py-3 text-sm font-medium ${dashboardTheme.quickAction}`}>
                     <UserPlus size={18} className="text-emerald-600" />
                     Add Member
                   </button>
@@ -264,7 +316,7 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
             </section>
 
             <section className="grid gap-3 px-5 pb-3 sm:grid-cols-2 xl:grid-cols-6">
-              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)]">
+              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-2 flex items-center gap-3">
                   <div className="rounded-lg bg-emerald-50 p-2"><BookOpen size={18} className="text-emerald-600" /></div>
                   <p className="text-sm font-semibold text-slate-600">Total Books</p>
@@ -276,7 +328,7 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
                   <path d="M0 10 L12 11 L22 8 L32 9 L42 7 L52 10 L62 8 L72 9 L82 6 L100 5" fill="none" stroke="#2563eb" strokeWidth="1.8" strokeLinecap="round" />
                 </svg>
               </article>
-              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)]">
+              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-2 flex items-center gap-3">
                   <div className="rounded-lg bg-emerald-50 p-2"><Bookmark size={18} className="text-emerald-600" /></div>
                   <p className="text-sm font-semibold text-slate-600">Available Books</p>
@@ -288,7 +340,7 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
                   <path d="M0 9 L12 8 L22 10 L32 7 L42 9 L52 6 L62 8 L72 5 L82 7 L100 4" fill="none" stroke="#22c55e" strokeWidth="1.8" strokeLinecap="round" />
                 </svg>
               </article>
-              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)]">
+              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-2 flex items-center gap-3">
                   <div className="rounded-lg bg-amber-50 p-2"><Undo2 size={18} className="text-amber-500" /></div>
                   <p className="text-sm font-semibold text-slate-600">Borrowed Books</p>
@@ -300,7 +352,7 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
                   <path d="M0 10 L12 9 L22 11 L32 8 L42 10 L52 7 L62 9 L72 8 L82 6 L100 7" fill="none" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" />
                 </svg>
               </article>
-              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)]">
+              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-2 flex items-center gap-3">
                   <div className="rounded-lg bg-rose-50 p-2"><Clock3 size={18} className="text-rose-500" /></div>
                   <p className="text-sm font-semibold text-slate-600">Overdue Books</p>
@@ -312,7 +364,7 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
                   <path d="M0 11 L12 8 L22 10 L32 6 L42 9 L52 7 L62 10 L72 6 L82 8 L100 7" fill="none" stroke="#ef4444" strokeWidth="1.8" strokeLinecap="round" />
                 </svg>
               </article>
-              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)]">
+              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-2 flex items-center gap-3">
                   <div className="rounded-lg bg-emerald-50 p-2"><Users size={18} className="text-emerald-600" /></div>
                   <p className="text-sm font-semibold text-slate-600">Total Members</p>
@@ -324,7 +376,7 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
                   <path d="M0 10 L12 7 L22 9 L32 6 L42 8 L52 7 L62 9 L72 6 L82 8 L100 5" fill="none" stroke="#8b5cf6" strokeWidth="1.8" strokeLinecap="round" />
                 </svg>
               </article>
-              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)]">
+              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-2 flex items-center gap-3">
                   <div className="rounded-lg bg-emerald-50 p-2"><BookPlus size={18} className="text-emerald-600" /></div>
                   <p className="text-sm font-semibold text-slate-600">New Books</p>
@@ -339,9 +391,9 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
             </section>
 
             <section className="grid gap-3 px-5 pb-4 xl:grid-cols-[40fr_35fr_25fr]">
-              <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)]">
+              <article className={`overflow-hidden rounded-2xl border shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="flex items-center justify-between px-4 py-3">
-                  <h3 className="text-base font-bold text-slate-800">Recent Borrowed Books</h3>
+                  <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Recent Borrowed Books</h3>
                   <button className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
                 </div>
                 <div>
@@ -378,9 +430,9 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
                 </div>
               </article>
 
-              <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)]">
+              <article className={`overflow-hidden rounded-2xl border shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="flex items-center justify-between px-4 py-3">
-                  <h3 className="text-base font-bold text-slate-800">Overdue Returns</h3>
+                  <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Overdue Returns</h3>
                   <button className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
                 </div>
                 <div>
@@ -407,9 +459,9 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
                 </div>
               </article>
 
-              <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)]">
+              <article className={`rounded-2xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-3 flex items-center justify-between pb-3">
-                  <h3 className="text-base font-bold text-slate-800">Today&apos;s Activity</h3>
+                  <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Today&apos;s Activity</h3>
                   <button className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
                 </div>
                 <div className="space-y-0">
@@ -433,9 +485,9 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
             </section>
 
             <section className="grid gap-3 px-5 pb-5 xl:grid-cols-4">
-              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)]">
+              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-base font-bold text-slate-800">Most Borrowed Categories</h3>
+                  <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Most Borrowed Categories</h3>
                   <button className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
                 </div>
                 <div className="flex min-h-[220px] items-center">
@@ -453,34 +505,34 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
                 </div>
                 </div>
               </article>
-              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)]">
+              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-base font-bold text-slate-800">Low Stock / Missing Copies</h3>
+                  <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Low Stock / Missing Copies</h3>
                   <button className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
                 </div>
-                <div className="space-y-2.5 text-xs">
-                  <div className="flex items-start justify-between gap-3 rounded-md px-1 py-1 transition-colors duration-150 hover:bg-slate-50">
+                <div className="space-y-0 text-xs">
+                  <div className="flex items-start justify-between gap-3 border-b border-slate-100 rounded-md px-1 py-2 transition-colors duration-150 hover:bg-slate-50">
                     <div className="min-w-0">
                       <p className="flex items-center gap-2 text-sm font-semibold text-slate-800"><span className="h-2.5 w-2.5 rounded-full bg-amber-500" />The life-style of the Badjaos</p>
                       <p className="pl-4 text-xs text-slate-500">Available: 1 / Total: 2</p>
                     </div>
                     <span className="rounded-md bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-600">Low</span>
                   </div>
-                  <div className="flex items-start justify-between gap-3 rounded-md px-1 py-1 transition-colors duration-150 hover:bg-slate-50">
+                  <div className="flex items-start justify-between gap-3 border-b border-slate-100 rounded-md px-1 py-2 transition-colors duration-150 hover:bg-slate-50">
                     <div className="min-w-0">
                       <p className="flex items-center gap-2 text-sm font-semibold text-slate-800"><span className="h-2.5 w-2.5 rounded-full bg-amber-500" />Badjaw</p>
                       <p className="pl-4 text-xs text-slate-500">Available: 1 / Total: 2</p>
                     </div>
                     <span className="rounded-md bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-600">Low</span>
                   </div>
-                  <div className="flex items-start justify-between gap-3 rounded-md px-1 py-1 transition-colors duration-150 hover:bg-slate-50">
+                  <div className="flex items-start justify-between gap-3 border-b border-slate-100 rounded-md px-1 py-2 transition-colors duration-150 hover:bg-slate-50">
                     <div className="min-w-0">
                       <p className="flex items-center gap-2 text-sm font-semibold text-slate-800"><span className="h-2.5 w-2.5 rounded-full bg-rose-500" />Sulu studies 1</p>
                       <p className="pl-4 text-xs text-slate-500">Available: 0 / Total: 1</p>
                     </div>
                     <span className="rounded-md bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-600">Out</span>
                   </div>
-                  <div className="flex items-start justify-between gap-3 rounded-md px-1 py-1 transition-colors duration-150 hover:bg-slate-50">
+                  <div className="flex items-start justify-between gap-3 rounded-md px-1 py-2 transition-colors duration-150 hover:bg-slate-50">
                     <div className="min-w-0">
                       <p className="flex items-center gap-2 text-sm font-semibold text-slate-800"><span className="h-2.5 w-2.5 rounded-full bg-amber-500" />The food and culture of the Tausug</p>
                       <p className="pl-4 text-xs text-slate-500">Available: 1 / Total: 2</p>
@@ -489,11 +541,11 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
                   </div>
                 </div>
               </article>
-              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)]">
+              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-base font-bold text-slate-800">Quick Reports</h3>
+                  <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Quick Reports</h3>
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-0">
                   {quickReportItems.map((item) => {
                     const ItemIcon = item.icon
 
@@ -501,7 +553,7 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
                       <button
                         key={item.label}
                         type="button"
-                        className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left transition-colors duration-150 hover:bg-slate-50"
+                        className="flex w-full items-center justify-between border-b border-slate-100 last:border-b-0 rounded-md px-2 py-2 text-left transition-colors duration-150 hover:bg-slate-50"
                         aria-label={item.label}
                       >
                         <span className="flex items-center gap-2 text-sm font-semibold text-slate-700">
@@ -516,20 +568,20 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
                   })}
                 </div>
               </article>
-              <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)]">
+              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-base font-bold text-slate-800">Upcoming Due Dates</h3>
+                  <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Upcoming Due Dates</h3>
                   <button className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
                 </div>
-                <div className="space-y-1">
-                  <div className="flex items-start justify-between gap-3 rounded-md px-2 py-2 transition-colors duration-150 hover:bg-slate-50">
+                <div className="space-y-0">
+                  <div className="flex items-start justify-between gap-3 border-b border-slate-100 rounded-md px-2 py-2 transition-colors duration-150 hover:bg-slate-50">
                     <div>
                       <p className="text-sm font-semibold text-slate-800">Sosyolohiya sa Filipino</p>
                       <p className="text-xs font-medium text-slate-500">Maria Santos</p>
                     </div>
                     <span className="rounded-md bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-600">May 11, 2026</span>
                   </div>
-                  <div className="flex items-start justify-between gap-3 rounded-md px-2 py-2 transition-colors duration-150 hover:bg-slate-50">
+                  <div className="flex items-start justify-between gap-3 border-b border-slate-100 rounded-md px-2 py-2 transition-colors duration-150 hover:bg-slate-50">
                     <div>
                       <p className="text-sm font-semibold text-slate-800">Filipino values today</p>
                       <p className="text-xs font-medium text-slate-500">Juan Dela Cruz</p>
