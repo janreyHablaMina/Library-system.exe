@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { ChevronDown, Download, Grid2x2, List, MoreHorizontal, Printer, RotateCcw, Search, UserPlus, Users } from 'lucide-react'
+import type { FormEvent } from 'react'
+import { ChevronDown, Download, Grid2x2, List, Mail, MoreHorizontal, Phone, Printer, RotateCcw, Search, UserPlus, Users, X } from 'lucide-react'
 
 type MemberType = 'Student' | 'Teacher' | 'Staff' | 'Visitor'
 type MemberStatus = 'Active' | 'Overdue' | 'Inactive'
@@ -20,6 +21,28 @@ type MemberRow = {
 
 type MembersPageProps = {
   isDarkMode: boolean
+}
+
+type MemberFormState = {
+  fullName: string
+  memberType: string
+  memberId: string
+  courseDepartment: string
+  contactNumber: string
+  email: string
+  address: string
+  status: string
+}
+
+const initialFormState: MemberFormState = {
+  fullName: '',
+  memberType: '',
+  memberId: '',
+  courseDepartment: '',
+  contactNumber: '',
+  email: '',
+  address: '',
+  status: 'Active',
 }
 
 const stats = [
@@ -58,6 +81,22 @@ function getStatusClass(status: MemberStatus) {
 
 export function MembersPage({ isDarkMode }: MembersPageProps) {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [memberForm, setMemberForm] = useState<MemberFormState>(initialFormState)
+
+  const handleMemberFormChange = (field: keyof MemberFormState, value: string) => {
+    setMemberForm((previous) => ({ ...previous, [field]: value }))
+  }
+
+  const closeAddModal = () => {
+    setIsAddModalOpen(false)
+    setMemberForm(initialFormState)
+  }
+
+  const handleSaveMember = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    closeAddModal()
+  }
 
   return (
     <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
@@ -68,7 +107,7 @@ export function MembersPage({ isDarkMode }: MembersPageProps) {
             <p className={`mt-1 text-base ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Manage student, teacher, staff and visitor records.</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button type="button" className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-semibold text-white hover:bg-emerald-700">
+            <button type="button" onClick={() => setIsAddModalOpen(true)} className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-semibold text-white hover:bg-emerald-700">
               <UserPlus size={15} />
               Add Member
             </button>
@@ -238,6 +277,101 @@ export function MembersPage({ isDarkMode }: MembersPageProps) {
           </div>
         </div>
       </section>
+
+      {isAddModalOpen ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/45 p-4 backdrop-blur-[1px]">
+          <section className={`w-full max-w-4xl rounded-2xl border shadow-2xl ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+            <div className={`flex items-start justify-between border-b px-6 py-5 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+              <div>
+                <h3 className={`text-3xl font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Add New Member</h3>
+                <p className={`mt-1 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Create a new library member profile.</p>
+              </div>
+              <button type="button" onClick={closeAddModal} className={`grid h-10 w-10 place-items-center rounded-xl border ${isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveMember} className="space-y-5 px-6 py-5">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Full Name <span className="text-rose-500">*</span></label>
+                  <input value={memberForm.fullName} onChange={(event) => handleMemberFormChange('fullName', event.target.value)} placeholder="Enter full name" className={`h-11 w-full rounded-xl border px-3 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500' : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400'}`} />
+                </div>
+                <div>
+                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Member Type <span className="text-rose-500">*</span></label>
+                  <div className="relative">
+                    <select value={memberForm.memberType} onChange={(event) => handleMemberFormChange('memberType', event.target.value)} className={`h-11 w-full appearance-none rounded-xl border pl-3 pr-10 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100' : 'border-slate-200 bg-white text-slate-700'}`}>
+                      <option value="">Select member type</option>
+                      <option value="Student">Student</option>
+                      <option value="Teacher">Teacher</option>
+                      <option value="Staff">Staff</option>
+                      <option value="Visitor">Visitor</option>
+                    </select>
+                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                  </div>
+                </div>
+                <div>
+                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Member ID / Student ID <span className="text-rose-500">*</span></label>
+                  <input value={memberForm.memberId} onChange={(event) => handleMemberFormChange('memberId', event.target.value)} placeholder="Enter member ID" className={`h-11 w-full rounded-xl border px-3 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500' : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400'}`} />
+                </div>
+                <div>
+                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Course / Department</label>
+                  <input value={memberForm.courseDepartment} onChange={(event) => handleMemberFormChange('courseDepartment', event.target.value)} placeholder="Select course / department" className={`h-11 w-full rounded-xl border px-3 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500' : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400'}`} />
+                </div>
+                <div>
+                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Contact Number</label>
+                  <div className={`flex h-11 items-center rounded-xl border px-3 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                    <Phone size={15} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />
+                    <input value={memberForm.contactNumber} onChange={(event) => handleMemberFormChange('contactNumber', event.target.value)} placeholder="Enter contact number" className={`ml-2 w-full bg-transparent text-sm outline-none ${isDarkMode ? 'text-slate-100 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400'}`} />
+                  </div>
+                </div>
+                <div>
+                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Email Address</label>
+                  <div className={`flex h-11 items-center rounded-xl border px-3 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                    <Mail size={15} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />
+                    <input value={memberForm.email} onChange={(event) => handleMemberFormChange('email', event.target.value)} placeholder="Enter email address" className={`ml-2 w-full bg-transparent text-sm outline-none ${isDarkMode ? 'text-slate-100 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400'}`} />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Address</label>
+                <textarea value={memberForm.address} onChange={(event) => handleMemberFormChange('address', event.target.value)} maxLength={200} placeholder="Enter complete address" className={`min-h-24 w-full rounded-xl border px-3 py-2 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500' : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400'}`} />
+                <p className={`mt-1 text-right text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{memberForm.address.length} / 200</p>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Profile Photo</label>
+                  <div className="flex items-center gap-3">
+                    <div className={`grid h-10 w-10 place-items-center rounded-full ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
+                      <Users size={16} />
+                    </div>
+                    <button type="button" className={`h-10 rounded-lg border px-4 text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>Upload Photo</button>
+                    <span className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>JPG, PNG (Max 2MB)</span>
+                  </div>
+                </div>
+                <div>
+                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Status <span className="text-rose-500">*</span></label>
+                  <div className="relative">
+                    <select value={memberForm.status} onChange={(event) => handleMemberFormChange('status', event.target.value)} className={`h-11 w-full appearance-none rounded-xl border pl-3 pr-10 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100' : 'border-slate-200 bg-white text-slate-700'}`}>
+                      <option value="Active">Active</option>
+                      <option value="Inactive">Inactive</option>
+                      <option value="Overdue">Overdue</option>
+                    </select>
+                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-3 pt-1 sm:grid-cols-2">
+                <button type="button" onClick={closeAddModal} className={`h-11 rounded-xl border text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>Cancel</button>
+                <button type="submit" className="h-11 rounded-xl bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-700">Save Member</button>
+              </div>
+            </form>
+          </section>
+        </div>
+      ) : null}
     </div>
   )
 }
