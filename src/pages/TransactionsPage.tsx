@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 type TransactionsPageProps = {
   isDarkMode: boolean
   onBack: () => void
+  onOpenTransactionDetail: (id: string) => void
 }
 
 type TransactionType = 'Borrow' | 'Return'
@@ -47,7 +48,7 @@ function getStatusClass(status: TransactionStatus) {
   return 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
 }
 
-export function TransactionsPage({ isDarkMode, onBack }: TransactionsPageProps) {
+export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail }: TransactionsPageProps) {
   const [activeTab, setActiveTab] = useState<TransactionTab>('all')
 
   const counts = useMemo(() => {
@@ -211,7 +212,11 @@ export function TransactionsPage({ isDarkMode, onBack }: TransactionsPageProps) 
               </thead>
               <tbody>
                 {filteredTransactions.map((row) => (
-                  <tr key={row.id} className={`border-t ${isDarkMode ? 'border-slate-700 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}>
+                  <tr
+                    key={row.id}
+                    onClick={() => onOpenTransactionDetail(row.id)}
+                    className={`border-t cursor-pointer transition-colors ${isDarkMode ? 'border-slate-700 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}
+                  >
                     <td className={`px-4 py-3 font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{row.id}</td>
                     <td className="px-3 py-3"><span className={`rounded-md px-2 py-1 text-xs font-semibold ${getTypeClass(row.type)}`}>{row.type}</span></td>
                     <td className="px-3 py-3">

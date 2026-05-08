@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { ArrowLeft, ArrowRight, Bell, BookOpen, BookPlus, Bookmark, Clock3, FileText, Mail, MessageCircle, Moon, Search, Sun, Undo2, UserPlus, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -8,6 +8,7 @@ import { MembersPage } from './pages/MembersPage'
 import { BorrowReturnPage } from './pages/BorrowReturnPage'
 import { TransactionsPage } from './pages/TransactionsPage'
 import { BookDetailPage } from './pages/BookDetailPage'
+import { TransactionDetailPage } from './pages/TransactionDetailPage'
 
 type LoginFormState = {
   username: string
@@ -106,6 +107,8 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [activePage, setActivePage] = useState<NavItem['label']>('Books')
   const [isBookDetailOpen, setIsBookDetailOpen] = useState(false)
+  const [isTransactionDetailOpen, setIsTransactionDetailOpen] = useState(false)
+  const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null)
   const profileMenuRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -198,6 +201,9 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
                   setActivePage(item.label)
                   if (item.label !== 'Books') {
                     setIsBookDetailOpen(false)
+                  }
+                  if (item.label !== 'All Transactions' && item.label !== 'Borrow / Return') {
+                    setIsTransactionDetailOpen(false)
                   }
                 }}
                 className={
@@ -310,7 +316,22 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
           ) : activePage === 'Borrow / Return' ? (
             <BorrowReturnPage isDarkMode={isDarkMode} onOpenTransactions={() => setActivePage('All Transactions')} />
           ) : activePage === 'All Transactions' ? (
-            <TransactionsPage isDarkMode={isDarkMode} onBack={() => setActivePage('Borrow / Return')} />
+            isTransactionDetailOpen ? (
+              <TransactionDetailPage
+                isDarkMode={isDarkMode}
+                onBack={() => setIsTransactionDetailOpen(false)}
+                transactionId={selectedTransactionId || undefined}
+              />
+            ) : (
+              <TransactionsPage
+                isDarkMode={isDarkMode}
+                onBack={() => setActivePage('Borrow / Return')}
+                onOpenTransactionDetail={(id) => {
+                  setSelectedTransactionId(id)
+                  setIsTransactionDetailOpen(true)
+                }}
+              />
+            )
           ) : (
           <div className={`min-h-0 flex-1 overflow-auto p-4 ${dashboardTheme.contentBg}`}>
             <section className="p-5">
