@@ -17,10 +17,12 @@ import {
   XCircle,
   CalendarClock,
   StickyNote,
-  UserCheck
+  UserCheck,
+  MapPin
 } from 'lucide-react'
 import { useState } from 'react'
-import bookCover from '../assets/login.avif' // Reusing existing asset for placeholder
+import sarahAvatar from '../assets/sarah_avatar.png'
+import bookCover from '../assets/login.avif'
 
 type TransactionDetailPageProps = {
   isDarkMode: boolean
@@ -37,8 +39,8 @@ export function TransactionDetailPage({ isDarkMode, onBack }: TransactionDetailP
   const valueClass = isDarkMode ? 'text-slate-100' : 'text-slate-800'
 
   return (
-    <div className={`min-h-0 flex-1 overflow-auto p-4 md:p-6 ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
-      <section className="mx-auto max-w-7xl space-y-6">
+    <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
+      <section className="p-5 space-y-6">
         {/* Header Actions */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-1">
@@ -52,7 +54,7 @@ export function TransactionDetailPage({ isDarkMode, onBack }: TransactionDetailP
             <div className="flex items-center gap-3">
               <h2 className="text-2xl font-bold tracking-tight">Borrow Transaction Details</h2>
               <span className={`rounded-md px-2 py-0.5 text-xs font-bold ${isDarkMode ? 'bg-indigo-500/20 text-indigo-300' : 'bg-indigo-50 text-indigo-600'}`}>
-                ID: TRX-2026-0042
+                ID: TRX-000123
               </span>
             </div>
           </div>
@@ -68,105 +70,86 @@ export function TransactionDetailPage({ isDarkMode, onBack }: TransactionDetailP
           </div>
         </div>
 
-        {/* Info Grid */}
-        <div className="grid gap-6 lg:grid-cols-[1fr_1fr_0.8fr]">
-          {/* Borrower Info */}
-          <div className={`rounded-2xl border p-5 shadow-sm ${cardClass}`}>
-            <h3 className="mb-4 text-sm font-bold uppercase tracking-wider opacity-70">Borrower Information</h3>
-            <div className="flex items-start gap-4">
-              <div className="relative">
-                <div className="h-20 w-20 overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-100 to-purple-100 text-3xl grid place-items-center">
-                  👩🏻‍💼
-                </div>
-                <div className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full border-4 border-white bg-emerald-500 dark:border-slate-900" />
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <p className="text-xl font-bold">Sarah Williams</p>
-                  <span className={`rounded-md px-2 py-0.5 text-[10px] font-bold ${isDarkMode ? 'bg-indigo-500/20 text-indigo-300' : 'bg-indigo-50 text-indigo-600'}`}>MEM-00045</span>
-                </div>
-                <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${isDarkMode ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-50 text-emerald-600'}`}>
-                   Active Member
-                </span>
-                <div className="mt-4 grid gap-x-8 gap-y-3 sm:grid-cols-1">
-                   <div className="flex items-center gap-3 text-sm">
-                      <Mail size={14} className="opacity-50" />
-                      <span className={labelClass}>Email</span>
-                      <span className={`ml-auto font-medium ${valueClass}`}>sarah.williams@example.com</span>
-                   </div>
-                   <div className="flex items-center gap-3 text-sm">
-                      <Phone size={14} className="opacity-50" />
-                      <span className={labelClass}>Phone</span>
-                      <span className={`ml-auto font-medium ${valueClass}`}>+1 (555) 123-4567</span>
-                   </div>
-                   <div className="flex items-center gap-3 text-sm">
-                      <User size={14} className="opacity-50" />
-                      <span className={labelClass}>Member Type</span>
-                      <span className={`ml-auto font-medium ${valueClass}`}>Regular Member</span>
-                   </div>
-                   <div className="flex items-center gap-3 text-sm">
-                      <Calendar size={14} className="opacity-50" />
-                      <span className={labelClass}>Member Since</span>
-                      <span className={`ml-auto font-medium ${valueClass}`}>Jan 15, 2024</span>
-                   </div>
+        {/* Top Row: Info and Status Cards */}
+        <div className="grid gap-6 lg:grid-cols-[2.4fr_1fr]">
+          {/* Main Information Card (Borrower & Book combined) */}
+          <div className={`rounded-2xl border shadow-sm overflow-hidden grid lg:grid-cols-[45%_55%] divide-x ${isDarkMode ? 'border-slate-800 bg-[#0a1633] divide-slate-800' : 'border-slate-100 bg-white divide-slate-100'}`}>
+            {/* Borrower Info Section */}
+            <div className="p-6">
+              <h3 className="mb-6 text-sm font-bold uppercase tracking-wider opacity-70">Borrower Information</h3>
+              <div className="flex items-center gap-6 mb-8">
+                <img src={sarahAvatar} alt="Sarah Williams" className="h-24 w-24 rounded-full object-cover border-2 border-white shadow-md dark:border-slate-800" />
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-3">
+                    <p className="text-xl font-bold">Sarah Williams</p>
+                    <span className={`rounded-md px-2.5 py-0.5 text-xs font-semibold ${isDarkMode ? 'bg-indigo-500/20 text-indigo-300' : 'bg-[#e0e7ff] text-[#4338ca]'}`}>MEM-00045</span>
+                  </div>
+                  <span className={`inline-flex items-center gap-1 rounded-md px-3 py-1 text-[11px] font-bold ${isDarkMode ? 'bg-emerald-500/20 text-emerald-400' : 'bg-[#f0fdf4] text-[#166534]'}`}>
+                     Active Member
+                  </span>
                 </div>
               </div>
+              <div className="space-y-4">
+                 {[
+                   { icon: <Mail size={16} />, label: 'Email', value: 'sarah.williams@example.com' },
+                   { icon: <Phone size={16} />, label: 'Phone', value: '+1 (555) 123-4567' },
+                   { icon: <User size={16} />, label: 'Member Type', value: 'Regular Member' },
+                   { icon: <Calendar size={16} />, label: 'Member Since', value: 'Jan 15, 2024' },
+                   { icon: <MapPin size={16} />, label: 'Address', value: '123 Library St, Cityville, CA 90210' },
+                 ].map((item) => (
+                   <div key={item.label} className="flex items-center text-sm">
+                     <span className={`flex items-center gap-3 w-40 font-medium ${labelClass}`}>
+                       <span className="opacity-60">{item.icon}</span>
+                       {item.label}
+                     </span>
+                     <span className={`font-semibold ${valueClass}`}>{item.value}</span>
+                   </div>
+                 ))}
+              </div>
             </div>
-            <div className={`mt-5 flex items-start gap-3 rounded-xl p-3 text-sm ${subCardClass}`}>
-               <Info size={16} className="mt-0.5 opacity-40" />
-               <div>
-                  <p className={labelClass}>Address</p>
-                  <p className={`font-medium ${valueClass}`}>123 Library St, Cityville, CA 90210</p>
-               </div>
-            </div>
-          </div>
 
-          {/* Book Info */}
-          <div className={`rounded-2xl border p-5 shadow-sm ${cardClass}`}>
-            <h3 className="mb-4 text-sm font-bold uppercase tracking-wider opacity-70">Book Information</h3>
-            <div className="flex gap-5">
-              <div className="w-32 shrink-0 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800">
-                <img src={bookCover} alt="Atomic Habits" className="h-full w-full object-cover" />
-              </div>
-              <div className="flex-1 space-y-4">
-                <div>
-                  <h4 className="text-xl font-bold">Atomic Habits</h4>
-                  <p className={`text-sm ${labelClass}`}>Tiny Changes, Remarkable Results</p>
-                  <span className={`mt-2 inline-block rounded-md px-2 py-0.5 text-[10px] font-bold ${isDarkMode ? 'bg-indigo-500/20 text-indigo-300' : 'bg-indigo-50 text-indigo-600'}`}>BK-000123</span>
+            {/* Book Info Section */}
+            <div className="p-6">
+              <h3 className="mb-6 text-sm font-bold uppercase tracking-wider opacity-70">Book Information</h3>
+              <div className="flex gap-8">
+                <div className="w-40 shrink-0 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                  <img src={bookCover} alt="Atomic Habits" className="h-full w-full object-cover" />
                 </div>
-                <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="flex-1 space-y-5">
                   <div>
-                    <p className={labelClass}>Author</p>
-                    <p className={`font-semibold ${valueClass}`}>James Clear</p>
+                    <h4 className="text-xl font-bold">Atomic Habits</h4>
+                    <p className={`text-sm ${labelClass}`}>Tiny Changes, Remarkable Results</p>
+                    <span className={`mt-2 inline-block rounded-md px-2.5 py-0.5 text-xs font-semibold ${isDarkMode ? 'bg-indigo-500/20 text-indigo-300' : 'bg-[#e0e7ff] text-[#4338ca]'}`}>BK-000123</span>
                   </div>
-                  <div>
-                    <p className={labelClass}>Category</p>
-                    <p className={`font-semibold ${valueClass}`}>Self-Help</p>
-                  </div>
-                  <div>
-                    <p className={labelClass}>ISBN</p>
-                    <p className={`font-semibold ${valueClass}`}>978-0735211292</p>
-                  </div>
-                  <div>
-                    <p className={labelClass}>Publisher</p>
-                    <p className={`font-semibold ${valueClass}`}>Avery</p>
-                  </div>
-                  <div>
-                    <p className={labelClass}>Pages</p>
-                    <p className={`font-semibold ${valueClass}`}>320</p>
+                  <div className="space-y-4">
+                     {[
+                       { icon: <UserCheck size={16} />, label: 'Author', value: 'James Clear' },
+                       { icon: <FileText size={16} />, label: 'Category', value: 'Self-Help' },
+                       { icon: <Info size={16} />, label: 'ISBN', value: '978-0735211292' },
+                       { icon: <StickyNote size={16} />, label: 'Publisher', value: 'Avery' },
+                       { icon: <Calendar size={16} />, label: 'Pages', value: '320' },
+                     ].map((item) => (
+                       <div key={item.label} className="flex items-center text-sm">
+                         <span className={`flex items-center gap-3 w-36 font-medium ${labelClass}`}>
+                           <span className="opacity-60">{item.icon}</span>
+                           {item.label}
+                         </span>
+                         <span className={`font-semibold ${valueClass}`}>{item.value}</span>
+                       </div>
+                     ))}
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Transaction Status */}
-          <div className={`rounded-2xl border p-5 shadow-sm ${cardClass}`}>
-            <div className="mb-4 flex items-center justify-between">
+          {/* Transaction Status Card */}
+          <div className={`rounded-2xl border p-6 shadow-sm ${cardClass}`}>
+            <div className="mb-6 flex items-center justify-between">
               <h3 className="text-sm font-bold uppercase tracking-wider opacity-70">Transaction Status</h3>
               <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-bold text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">Borrowed</span>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 text-sm">
                   <CalendarClock size={16} className="opacity-40" />
@@ -181,7 +164,7 @@ export function TransactionDetailPage({ isDarkMode, onBack }: TransactionDetailP
                 </div>
                 <div className="text-right">
                    <p className={`text-sm font-semibold ${valueClass}`}>May 24, 2024</p>
-                   <p className="text-[10px] font-bold text-amber-500">2 days remaining</p>
+                   <p className={`mt-1 inline-block rounded-md px-2 py-0.5 text-[10px] font-bold ${isDarkMode ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-50 text-amber-600'}`}>2 days remaining</p>
                 </div>
               </div>
               <div className="flex items-center justify-between">
@@ -198,7 +181,7 @@ export function TransactionDetailPage({ isDarkMode, onBack }: TransactionDetailP
                 </div>
                 <p className="text-sm font-bold text-emerald-600">$0.00</p>
               </div>
-              <div className="mt-4 flex items-center justify-between rounded-xl bg-indigo-50/50 p-3 dark:bg-indigo-500/5">
+              <div className="mt-6 flex items-center justify-between rounded-xl border border-indigo-50 bg-indigo-50/30 p-3 dark:border-indigo-500/10 dark:bg-indigo-500/5">
                 <div className="flex items-center gap-3 text-sm">
                   <Info size={16} className="text-indigo-500" />
                   <span className={`font-semibold ${isDarkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>Status</span>
@@ -209,10 +192,10 @@ export function TransactionDetailPage({ isDarkMode, onBack }: TransactionDetailP
           </div>
         </div>
 
+        {/* Lower Content Grid */}
         <div className="grid gap-6 lg:grid-cols-[1.8fr_1fr]">
           {/* Left Column: Timeline & Notes */}
           <div className="space-y-6">
-             {/* Timeline */}
             <div className={`rounded-2xl border shadow-sm ${cardClass}`}>
               <div className="border-b border-slate-100 px-5 py-4 dark:border-slate-800">
                 <div className="flex items-center gap-6">
@@ -240,7 +223,7 @@ export function TransactionDetailPage({ isDarkMode, onBack }: TransactionDetailP
                       { icon: <UserCheck size={14} />, title: 'Book Borrowed', desc: 'borrowed "Atomic Habits"', date: 'May 10, 2024 10:30 AM', user: 'by Admin User', color: 'indigo' },
                       { icon: <Calendar size={14} />, title: 'Due Date Set', desc: 'Due date set to May 24, 2024', date: 'May 10, 2024 10:30 AM', user: 'by Admin User', color: 'amber' },
                       { icon: <Send size={14} />, title: 'Reminder Sent', desc: 'Due date reminder sent to member email', date: 'May 20, 2024 09:00 AM', user: 'by System', color: 'blue' },
-                      { icon: <RotateCcw size={14} />, title: 'Book Returned', desc: 'Not yet returned', date: '-', user: 'Pending', color: 'slate', isPending: true },
+                      { icon: <RotateCcw size={14} />, title: 'Book Returned', desc: 'Not yet returned', date: '-', user: 'Pending', color: 'slate' },
                     ].map((step, idx, arr) => (
                       <div key={step.title} className="relative flex gap-4">
                         {idx !== arr.length - 1 && (
@@ -261,9 +244,7 @@ export function TransactionDetailPage({ isDarkMode, onBack }: TransactionDetailP
                           </div>
                           <div className="text-right">
                              <p className="text-xs font-semibold">{step.date}</p>
-                          </div>
-                          <div className="min-w-[100px] text-right">
-                             <span className={`rounded-md px-2 py-0.5 text-[10px] font-medium ${isDarkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-50 text-slate-500'}`}>{step.user}</span>
+                             <span className={`mt-1 inline-block rounded-md px-2 py-0.5 text-[10px] font-medium ${isDarkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-50 text-slate-500'}`}>{step.user}</span>
                           </div>
                         </div>
                       </div>
@@ -288,36 +269,10 @@ export function TransactionDetailPage({ isDarkMode, onBack }: TransactionDetailP
                 )}
               </div>
             </div>
-
-            {/* Fine Calculation */}
-            <div className={`rounded-2xl border p-5 shadow-sm ${cardClass}`}>
-              <h3 className="mb-4 text-sm font-bold uppercase tracking-wider opacity-70">Fine Calculation</h3>
-              <div className="flex flex-wrap items-center justify-between gap-6">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-12 text-sm">
-                    <span className={`w-28 ${labelClass}`}>Fine per day</span>
-                    <span className={`font-semibold ${valueClass}`}>$0.50</span>
-                  </div>
-                  <div className="flex items-center gap-12 text-sm">
-                    <span className={`w-28 ${labelClass}`}>Days overdue</span>
-                    <span className="font-bold text-emerald-600">0 days</span>
-                  </div>
-                  <div className="flex items-center gap-12 text-sm">
-                    <span className={`w-28 ${labelClass}`}>Fine amount</span>
-                    <span className="font-bold text-emerald-600">$0.00</span>
-                  </div>
-                </div>
-                <div className={`flex flex-col items-center justify-center rounded-2xl p-6 text-center ${isDarkMode ? 'bg-emerald-500/10' : 'bg-emerald-50'}`}>
-                   <p className={`text-[10px] font-bold uppercase tracking-widest ${isDarkMode ? 'text-emerald-400' : 'text-emerald-700'}`}>Total Fine</p>
-                   <p className={`text-3xl font-black ${isDarkMode ? 'text-emerald-400' : 'text-emerald-700'}`}>$0.00</p>
-                </div>
-              </div>
-            </div>
           </div>
 
-          {/* Right Column: Actions & Details */}
+          {/* Right Column: Actions & Previous Transactions */}
           <div className="space-y-6">
-            {/* Quick Actions */}
             <div className={`rounded-2xl border p-5 shadow-sm ${cardClass}`}>
               <h3 className="mb-4 text-sm font-bold uppercase tracking-wider opacity-70">Quick Actions</h3>
               <div className="grid gap-3">
@@ -344,7 +299,6 @@ export function TransactionDetailPage({ isDarkMode, onBack }: TransactionDetailP
               </div>
             </div>
 
-            {/* Previous Transactions */}
             <div className={`rounded-2xl border p-5 shadow-sm ${cardClass}`}>
               <div className="mb-4 flex items-center justify-between">
                  <h3 className="text-sm font-bold uppercase tracking-wider opacity-70">Previous Transactions</h3>
