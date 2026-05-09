@@ -32,11 +32,11 @@ type TransactionDetailPageProps = {
 
 export function TransactionDetailPage({ isDarkMode, onBack }: TransactionDetailPageProps) {
   const [activeTab, setActiveTab] = useState<'timeline' | 'notes'>('timeline')
-
-  const cardClass = isDarkMode ? 'border-slate-800 bg-[#0a1633]' : 'border-slate-100 bg-white'
+  const cardClass = isDarkMode ? 'border-slate-800 bg-[#0a1633]' : 'border-slate-200 bg-white'
   const subCardClass = isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-50 bg-[#f9fafb]'
   const labelClass = isDarkMode ? 'text-slate-400' : 'text-slate-500'
   const valueClass = isDarkMode ? 'text-slate-100' : 'text-slate-800'
+  const borderClass = isDarkMode ? 'border-slate-800' : 'border-slate-200'
 
   return (
     <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
@@ -73,7 +73,7 @@ export function TransactionDetailPage({ isDarkMode, onBack }: TransactionDetailP
         {/* Top Row: Info and Status Cards */}
         <div className="grid gap-6 lg:grid-cols-[2.4fr_1fr]">
           {/* Main Information Card (Borrower & Book combined) */}
-          <div className={`rounded-2xl border shadow-sm overflow-hidden grid lg:grid-cols-[45%_55%] divide-x ${isDarkMode ? 'border-slate-800 bg-[#0a1633] divide-slate-800' : 'border-slate-100 bg-white divide-slate-100'}`}>
+          <div className={`rounded-2xl border shadow-sm overflow-hidden grid lg:grid-cols-[45%_55%] divide-x ${isDarkMode ? 'border-slate-800 bg-[#0a1633] divide-slate-800' : 'border-slate-200 bg-white divide-slate-200'}`}>
             {/* Borrower Info Section */}
             <div className="p-6">
               <h3 className="mb-6 text-sm font-bold uppercase tracking-wider opacity-70">Borrower Information</h3>
@@ -144,7 +144,7 @@ export function TransactionDetailPage({ isDarkMode, onBack }: TransactionDetailP
           </div>
 
           {/* Transaction Status Card */}
-          <div className={`rounded-2xl border p-6 shadow-sm ${cardClass}`}>
+          <div className={`rounded-2xl border p-6 shadow-sm flex flex-col ${cardClass}`}>
             <div className="mb-6 flex items-center justify-between">
               <h3 className="text-sm font-bold uppercase tracking-wider opacity-70">Transaction Status</h3>
               <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-bold text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">Borrowed</span>
@@ -179,9 +179,11 @@ export function TransactionDetailPage({ isDarkMode, onBack }: TransactionDetailP
                   <CreditCard size={16} className="opacity-40" />
                   <span className={labelClass}>Fine / Penalty</span>
                 </div>
-                <p className="text-sm font-bold text-emerald-600">$0.00</p>
+                <p className="text-sm font-bold text-emerald-600">₱0.00</p>
               </div>
-              <div className="mt-6 flex items-center justify-between rounded-xl border border-indigo-50 bg-indigo-50/30 p-3 dark:border-indigo-500/10 dark:bg-indigo-500/5">
+            </div>
+            <div className="mt-auto pt-6">
+              <div className="flex items-center justify-between rounded-xl border border-indigo-50 bg-indigo-50/30 p-3 dark:border-indigo-500/10 dark:bg-indigo-500/5">
                 <div className="flex items-center gap-3 text-sm">
                   <Info size={16} className="text-indigo-500" />
                   <span className={`font-semibold ${isDarkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>Status</span>
@@ -192,136 +194,156 @@ export function TransactionDetailPage({ isDarkMode, onBack }: TransactionDetailP
           </div>
         </div>
 
-        {/* Lower Content Grid */}
-        <div className="grid gap-6 lg:grid-cols-[1.8fr_1fr]">
-          {/* Left Column: Timeline & Notes */}
-          <div className="space-y-6">
-            <div className={`rounded-2xl border shadow-sm ${cardClass}`}>
-              <div className="border-b border-slate-100 px-5 py-4 dark:border-slate-800">
-                <div className="flex items-center gap-6">
-                  <button
-                    onClick={() => setActiveTab('timeline')}
-                    className={`relative py-1 text-sm font-bold transition-colors ${activeTab === 'timeline' ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
-                  >
-                    Transaction Timeline
-                    {activeTab === 'timeline' && <span className="absolute -bottom-[17px] left-0 h-1 w-full rounded-full bg-indigo-600" />}
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('notes')}
-                    className={`relative py-1 text-sm font-bold transition-colors ${activeTab === 'notes' ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
-                  >
-                    Notes
-                    {activeTab === 'notes' && <span className="absolute -bottom-[17px] left-0 h-1 w-full rounded-full bg-indigo-600" />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="p-6">
-                {activeTab === 'timeline' ? (
-                  <div className="space-y-8">
-                    {[
-                      { icon: <UserCheck size={14} />, title: 'Book Borrowed', desc: 'borrowed "Atomic Habits"', date: 'May 10, 2024 10:30 AM', user: 'by Admin User', color: 'indigo' },
-                      { icon: <Calendar size={14} />, title: 'Due Date Set', desc: 'Due date set to May 24, 2024', date: 'May 10, 2024 10:30 AM', user: 'by Admin User', color: 'amber' },
-                      { icon: <Send size={14} />, title: 'Reminder Sent', desc: 'Due date reminder sent to member email', date: 'May 20, 2024 09:00 AM', user: 'by System', color: 'blue' },
-                      { icon: <RotateCcw size={14} />, title: 'Book Returned', desc: 'Not yet returned', date: '-', user: 'Pending', color: 'slate' },
-                    ].map((step, idx, arr) => (
-                      <div key={step.title} className="relative flex gap-4">
-                        {idx !== arr.length - 1 && (
-                          <div className="absolute left-[15px] top-8 h-8 w-0.5 bg-slate-100 dark:bg-slate-800" />
-                        )}
-                        <div className={`grid h-8 w-8 place-items-center rounded-full border-4 border-white shadow-sm dark:border-slate-900 ${
-                          step.color === 'indigo' ? 'bg-indigo-50 text-indigo-600' :
-                          step.color === 'amber' ? 'bg-amber-50 text-amber-600' :
-                          step.color === 'blue' ? 'bg-blue-50 text-blue-600' :
-                          'bg-slate-100 text-slate-400'
-                        }`}>
-                          {step.icon}
-                        </div>
-                        <div className="flex flex-1 flex-wrap items-start justify-between gap-2">
-                          <div className="space-y-0.5">
-                            <p className="text-sm font-bold">{step.title}</p>
-                            <p className={`text-xs ${labelClass}`}>{step.desc}</p>
-                          </div>
-                          <div className="text-right">
-                             <p className="text-xs font-semibold">{step.date}</p>
-                             <span className={`mt-1 inline-block rounded-md px-2 py-0.5 text-[10px] font-medium ${isDarkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-50 text-slate-500'}`}>{step.user}</span>
-                          </div>
-                        </div>
+        {/* Middle Row: Timeline and Notes Combined + Quick Actions */}
+        <div className="grid gap-6 lg:grid-cols-[2.4fr_1fr]">
+          {/* Timeline & Notes Consolidated Card */}
+          <div className={`rounded-2xl border shadow-sm overflow-hidden grid lg:grid-cols-[1.8fr_1fr] divide-x ${isDarkMode ? 'border-slate-800 bg-[#0a1633] divide-slate-800' : 'border-slate-200 bg-white divide-slate-200'}`}>
+            {/* Timeline Section */}
+            <div className="p-6">
+              <h3 className="mb-8 text-sm font-bold uppercase tracking-wider opacity-70">Transaction Timeline</h3>
+              <div className="space-y-10">
+                {[
+                  { icon: <UserCheck size={16} />, title: 'Book Borrowed', desc: 'borrowed "Atomic Habits"', date: 'May 10, 2024 10:30 AM', user: 'by Admin User', color: 'indigo' },
+                  { icon: <Calendar size={16} />, title: 'Due Date Set', desc: 'Due date set to May 24, 2024', date: 'May 10, 2024 10:30 AM', user: 'by Admin User', color: 'amber' },
+                  { icon: <Send size={16} />, title: 'Reminder Sent', desc: 'Due date reminder sent to member email', date: 'May 20, 2024 09:00 AM', user: 'by System', color: 'blue' },
+                  { icon: <RotateCcw size={16} />, title: 'Book Returned', desc: 'Not yet returned', date: '-', user: 'Pending', color: 'slate' },
+                ].map((step, idx, arr) => (
+                  <div key={step.title} className="relative flex gap-6">
+                    {idx !== arr.length - 1 && (
+                      <div className={`absolute left-[19px] top-10 h-10 w-0.5 ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200'}`} />
+                    )}
+                    <div className={`z-10 grid h-10 w-10 shrink-0 place-items-center rounded-full border-2 ${
+                      isDarkMode 
+                        ? 'bg-slate-900 border-slate-700 text-slate-100 shadow-[0_0_15px_rgba(0,0,0,0.5)]' 
+                        : 'bg-[#1e293b] border-[#1e293b] text-white shadow-md'
+                    }`}>
+                      {step.icon}
+                    </div>
+                    <div className="flex flex-1 flex-wrap items-start justify-between gap-4">
+                      <div className="space-y-1">
+                        <p className="text-base font-bold leading-tight">{step.title}</p>
+                        <p className={`text-xs ${labelClass}`}>{step.desc}</p>
                       </div>
-                    ))}
+                      <div className="text-right space-y-1">
+                         <p className="text-xs font-bold">{step.date}</p>
+                         <span className={`inline-block rounded-md px-2 py-0.5 text-[10px] font-bold ${isDarkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>{step.user}</span>
+                      </div>
+                    </div>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                     <div className={`rounded-xl border p-4 ${subCardClass}`}>
-                        <div className="mb-2 flex items-center justify-between">
-                           <div className="flex items-center gap-2">
-                              <StickyNote size={14} className="text-amber-500" />
-                              <p className="text-sm font-bold">Admin Note</p>
-                           </div>
-                           <p className={`text-[10px] ${labelClass}`}>May 10, 2024 10:35 AM</p>
-                        </div>
-                        <p className="text-sm leading-relaxed opacity-80">Member requested this book for personal development. No damage observed on borrow.</p>
-                     </div>
-                     <button className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 p-3 text-sm font-medium text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800/50">
-                        + Add a note
-                     </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Notes Section */}
+            <div className="p-6">
+              <h3 className="mb-6 text-sm font-bold uppercase tracking-wider opacity-70">Notes</h3>
+              <div className={`rounded-xl border p-4 mb-6 ${subCardClass}`}>
+                <p className="text-sm leading-relaxed opacity-80">Member requested this book for personal development. No damage observed on borrow.</p>
+              </div>
+              <div className={`mt-4 border-t pt-4 ${borderClass}`}>
+                <p className="text-[10px] font-bold uppercase tracking-wider opacity-60 mb-3">Added By</p>
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-full bg-purple-600 flex items-center justify-center text-white text-[10px] font-bold">AU</div>
+                  <div>
+                    <p className="text-xs font-bold">Admin User</p>
+                    <p className={`text-[10px] ${labelClass}`}>May 10, 2024 10:35 AM</p>
                   </div>
-                )}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Right Column: Actions & Previous Transactions */}
-          <div className="space-y-6">
-            <div className={`rounded-2xl border p-5 shadow-sm ${cardClass}`}>
-              <h3 className="mb-4 text-sm font-bold uppercase tracking-wider opacity-70">Quick Actions</h3>
-              <div className="grid gap-3">
-                <button className="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-200 transition-all hover:bg-indigo-700 hover:shadow-indigo-300 dark:shadow-none">
-                  <CheckCircle2 size={18} />
-                  Mark as Returned
-                </button>
-                <button className={`flex items-center justify-center gap-2 rounded-xl border py-2.5 text-sm font-bold transition-colors ${isDarkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}>
-                  <Calendar size={18} className="opacity-50" />
-                  Extend Due Date
-                </button>
-                <button className={`flex items-center justify-center gap-2 rounded-xl border py-2.5 text-sm font-bold transition-colors ${isDarkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}>
-                  <Send size={18} className="opacity-50" />
-                  Send Reminder
-                </button>
-                <button className={`flex items-center justify-center gap-2 rounded-xl border py-2.5 text-sm font-bold transition-colors ${isDarkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}>
-                  <StickyNote size={18} className="opacity-50" />
-                  Add Note
-                </button>
-                <button className={`mt-2 flex items-center justify-center gap-2 rounded-xl border border-rose-100 py-2.5 text-sm font-bold text-rose-500 transition-colors ${isDarkMode ? 'border-rose-500/20 bg-rose-500/5 hover:bg-rose-500/10' : 'bg-rose-50/50 hover:bg-rose-50'}`}>
-                  <XCircle size={18} />
-                  Cancel Transaction
-                </button>
+          {/* Quick Actions Card */}
+          <div className={`rounded-2xl border p-6 shadow-sm ${cardClass}`}>
+            <h3 className="mb-6 text-sm font-bold uppercase tracking-wider opacity-70">Quick Actions</h3>
+            <div className="grid gap-3">
+              <button className="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-indigo-200 transition-all hover:bg-indigo-700 hover:shadow-indigo-300 dark:shadow-none">
+                <CheckCircle2 size={18} />
+                Mark as Returned
+              </button>
+              <button className={`flex items-center justify-center gap-2 rounded-xl border py-3 text-sm font-bold transition-colors ${isDarkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}>
+                <Calendar size={18} className="opacity-50" />
+                Extend Due Date
+              </button>
+              <button className={`flex items-center justify-center gap-2 rounded-xl border py-3 text-sm font-bold transition-colors ${isDarkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}>
+                <Send size={18} className="opacity-50" />
+                Send Reminder
+              </button>
+              <button className={`flex items-center justify-center gap-2 rounded-xl border py-3 text-sm font-bold transition-colors ${isDarkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}>
+                <StickyNote size={18} className="opacity-50" />
+                Add Note
+              </button>
+              <button className={`mt-4 flex items-center justify-center gap-2 rounded-xl border border-rose-100 py-3 text-sm font-bold text-rose-500 transition-colors ${isDarkMode ? 'border-rose-500/20 bg-rose-500/5 hover:bg-rose-500/10' : 'bg-rose-50/50 hover:bg-rose-50'}`}>
+                <XCircle size={18} />
+                Cancel Transaction
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Row: Fine Calculation & Previous Transactions */}
+        <div className="grid gap-6 lg:grid-cols-[1.1fr_1.4fr]">
+          {/* Fine Calculation Card */}
+          <div className={`rounded-2xl border p-6 shadow-sm ${cardClass}`}>
+            <h3 className="mb-8 text-sm font-bold uppercase tracking-wider opacity-70">Fine Calculation</h3>
+            <div className="flex items-center justify-between gap-8">
+              <div className="flex-1 space-y-4">
+                <div className="flex items-center justify-between text-sm">
+                  <span className={labelClass}>Fine per day</span>
+                  <span className={`font-semibold ${valueClass}`}>₱0.50</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className={labelClass}>Days overdue</span>
+                  <span className="font-bold text-emerald-600">0 days</span>
+                </div>
+                <div className={`flex items-center justify-between text-sm pt-2 border-t ${borderClass}`}>
+                  <span className="font-bold">Fine amount</span>
+                  <span className="font-black text-emerald-600">₱0.00</span>
+                </div>
+              </div>
+              <div className={`flex flex-col items-center justify-center rounded-2xl px-6 py-5 text-center shrink-0 ${isDarkMode ? 'bg-emerald-500/10' : 'bg-[#f0fdf4]'}`}>
+                 <p className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${isDarkMode ? 'text-emerald-400' : 'text-[#166534]'}`}>Total Fine</p>
+                 <p className={`text-2xl font-black ${isDarkMode ? 'text-emerald-400' : 'text-[#166534]'}`}>₱0.00</p>
               </div>
             </div>
+          </div>
 
-            <div className={`rounded-2xl border p-5 shadow-sm ${cardClass}`}>
-              <div className="mb-4 flex items-center justify-between">
-                 <h3 className="text-sm font-bold uppercase tracking-wider opacity-70">Previous Transactions</h3>
-                 <button className="text-[10px] font-bold text-indigo-600 hover:underline">View All</button>
-              </div>
-              <div className="space-y-3">
-                {[
-                  { title: 'The Psychology of Money', date: 'Apr 10, 2024', status: 'Returned', statusColor: 'emerald' },
-                  { title: 'Deep Work', date: 'Mar 05, 2024', status: 'Returned', statusColor: 'emerald' },
-                ].map((tx) => (
-                  <div key={tx.title} className={`flex items-center justify-between rounded-xl border p-3 ${subCardClass}`}>
-                    <div className="space-y-0.5">
-                      <p className="text-sm font-bold truncate max-w-[150px]">{tx.title}</p>
-                      <p className={`text-[10px] ${labelClass}`}>{tx.date}</p>
-                    </div>
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                      tx.statusColor === 'emerald' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-rose-50 text-rose-600'
-                    }`}>
-                      {tx.status}
-                    </span>
-                  </div>
-                ))}
-              </div>
+          {/* Previous Transactions Card */}
+          <div className={`rounded-2xl border p-6 shadow-sm ${cardClass}`}>
+            <div className="mb-6 flex items-center justify-between">
+               <h3 className="text-sm font-bold uppercase tracking-wider opacity-70">Previous Transactions</h3>
+               <button className="text-[11px] font-bold text-indigo-600 hover:underline">View All</button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className={`text-[11px] font-bold uppercase tracking-wider ${labelClass} opacity-60 text-left`}>
+                    <th className="pb-4 font-bold">Book Title</th>
+                    <th className="pb-4 font-bold">Borrow Date</th>
+                    <th className="pb-4 font-bold">Return Date</th>
+                    <th className="pb-4 font-bold">Status</th>
+                  </tr>
+                </thead>
+                <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-200'}`}>
+                  {[
+                    { title: 'The Psychology of Money', borrow: 'Apr 10, 2024', return: 'Apr 18, 2024', status: 'Returned' },
+                    { title: 'Deep Work', borrow: 'Mar 05, 2024', return: 'Mar 12, 2024', status: 'Returned' },
+                  ].map((tx) => (
+                    <tr key={tx.title}>
+                      <td className="py-3.5 text-sm font-bold truncate max-w-[180px]">{tx.title}</td>
+                      <td className={`py-3.5 text-xs font-semibold ${labelClass}`}>{tx.borrow}</td>
+                      <td className={`py-3.5 text-xs font-semibold ${labelClass}`}>{tx.return}</td>
+                      <td className="py-3.5">
+                        <span className={`rounded-md px-2 py-0.5 text-[10px] font-bold ${
+                          isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600'
+                        }`}>
+                          {tx.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
