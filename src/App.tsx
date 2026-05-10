@@ -9,6 +9,7 @@ import { BorrowReturnPage } from './pages/BorrowReturnPage'
 import { TransactionsPage } from './pages/TransactionsPage'
 import { BookDetailPage } from './pages/BookDetailPage'
 import { TransactionDetailPage } from './pages/TransactionDetailPage'
+import { ReportsPage } from './pages/ReportsPage'
 
 type LoginFormState = {
   username: string
@@ -332,6 +333,8 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
                 }}
               />
             )
+          ) : activePage === 'Reports' ? (
+            <ReportsPage isDarkMode={isDarkMode} />
           ) : (
           <div className={`min-h-0 flex-1 overflow-auto p-4 ${dashboardTheme.contentBg}`}>
             <section className="p-5">
