@@ -207,10 +207,10 @@ export function BooksPage({ isDarkMode, onOpenBookDetail }: BooksPageProps) {
           ) : (
             <div className={`grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-6 ${isDarkMode ? 'bg-[#0b1738]' : 'bg-white'}`}>
               {books.map((book) => (
-                <article key={book.id} className={`flex h-full flex-col rounded-xl border p-3 transition-all duration-200 hover:-translate-y-0.5 ${
+                <article key={book.id} className={`flex h-full flex-col rounded-xl border p-3 transition-all duration-200 ${
                   isDarkMode
-                    ? 'border-slate-700 bg-[#0f1f49] hover:border-emerald-500/60 hover:shadow-[0_12px_24px_-16px_rgba(16,185,129,0.45)]'
-                    : 'border-slate-200 bg-white hover:border-emerald-200 hover:shadow-[0_12px_24px_-16px_rgba(15,23,42,0.35)]'
+                    ? 'border-slate-700 bg-[#0f1f49] hover:border-emerald-500/60'
+                    : 'border-slate-200 bg-white hover:border-emerald-200'
                 }`}>
                   <div className="flex items-start justify-between">
                     <span className={`grid h-24 w-16 place-items-center rounded-lg text-4xl ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>{book.cover}</span>
