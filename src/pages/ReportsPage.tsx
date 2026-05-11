@@ -61,7 +61,7 @@ type ReportsPageProps = {
 }
 
 export function ReportsPage({ isDarkMode }: ReportsPageProps) {
-  const cardClass = isDarkMode ? 'border-slate-700 bg-[#0a1633]' : 'border-slate-200 bg-white'
+  const cardClass = isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'
   const labelClass = isDarkMode ? 'text-slate-400' : 'text-slate-500'
   const mainText = isDarkMode ? 'text-white' : 'text-slate-900'
   const tableHeaderBg = isDarkMode ? 'bg-[#0f1f49]' : 'bg-slate-50'
@@ -100,7 +100,7 @@ export function ReportsPage({ isDarkMode }: ReportsPageProps) {
         {/* 1st ROW: STATS (Direct Render) */}
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
            {/* Card 1 */}
-           <div className={`flex items-center gap-5 rounded-2xl border p-7 shadow-sm ${cardClass}`}>
+           <div className={`flex items-center gap-5 rounded-xl border p-7 ${cardClass}`}>
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
                 <BookOpen size={20} />
               </div>
@@ -114,7 +114,7 @@ export function ReportsPage({ isDarkMode }: ReportsPageProps) {
               </div>
            </div>
            {/* Card 2 */}
-           <div className={`flex items-center gap-5 rounded-2xl border p-7 shadow-sm ${cardClass}`}>
+           <div className={`flex items-center gap-5 rounded-xl border p-7 ${cardClass}`}>
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
                 <Users size={20} />
               </div>
@@ -128,7 +128,7 @@ export function ReportsPage({ isDarkMode }: ReportsPageProps) {
               </div>
            </div>
            {/* Card 3 */}
-           <div className={`flex items-center gap-5 rounded-2xl border p-7 shadow-sm ${cardClass}`}>
+           <div className={`flex items-center gap-5 rounded-xl border p-7 ${cardClass}`}>
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400">
                 <Clock size={20} />
               </div>
@@ -142,7 +142,7 @@ export function ReportsPage({ isDarkMode }: ReportsPageProps) {
               </div>
            </div>
            {/* Card 4 */}
-           <div className={`flex items-center gap-5 rounded-2xl border p-7 shadow-sm ${cardClass}`}>
+           <div className={`flex items-center gap-5 rounded-xl border p-7 ${cardClass}`}>
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400">
                 <RotateCcw size={20} />
               </div>
@@ -156,7 +156,7 @@ export function ReportsPage({ isDarkMode }: ReportsPageProps) {
               </div>
            </div>
            {/* Card 5 */}
-           <div className={`flex items-center gap-5 rounded-2xl border p-7 shadow-sm ${cardClass}`}>
+           <div className={`flex items-center gap-5 rounded-xl border p-7 ${cardClass}`}>
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400">
                 <BadgeDollarSign size={20} />
               </div>
@@ -173,7 +173,7 @@ export function ReportsPage({ isDarkMode }: ReportsPageProps) {
 
         {/* 2nd ROW: CHARTS */}
         <div className="grid gap-6 lg:grid-cols-[3fr_1fr_1fr]">
-          <div className={`rounded-2xl border p-6 shadow-sm flex flex-col ${cardClass}`}>
+          <div className={`rounded-xl border p-6 flex flex-col ${cardClass}`}>
             <div className="mb-6 flex items-center justify-between">
               <div className="space-y-1">
                 <h3 className="text-sm font-bold">Borrowing Activity</h3>
@@ -206,7 +206,7 @@ export function ReportsPage({ isDarkMode }: ReportsPageProps) {
             </div>
           </div>
 
-          <div className={`rounded-2xl border p-6 shadow-sm flex flex-col items-center ${cardClass}`}>
+          <div className={`rounded-xl border p-6 flex flex-col items-center ${cardClass}`}>
             <h3 className="mb-6 text-sm font-bold w-full text-left">Most Borrowed</h3>
             <div className="h-[150px] w-full mb-6">
               <ResponsiveContainer width="100%" height="100%">
@@ -228,7 +228,7 @@ export function ReportsPage({ isDarkMode }: ReportsPageProps) {
             </div>
           </div>
 
-          <div className={`rounded-2xl border p-6 shadow-sm flex flex-col items-center ${cardClass}`}>
+          <div className={`rounded-xl border p-6 flex flex-col items-center ${cardClass}`}>
             <h3 className="mb-6 text-sm font-bold w-full text-left">By Category</h3>
             <div className="h-[150px] w-full mb-6">
               <ResponsiveContainer width="100%" height="100%">
@@ -254,7 +254,7 @@ export function ReportsPage({ isDarkMode }: ReportsPageProps) {
         {/* 3rd ROW: TABLES */}
         <div className="grid gap-6 lg:grid-cols-5">
            {/* Overdue Table */}
-           <div className={`lg:col-span-3 rounded-xl border overflow-hidden shadow-sm flex flex-col ${cardClass}`}>
+           <div className={`lg:col-span-3 rounded-xl border overflow-hidden flex flex-col ${cardClass}`}>
               <div className="flex items-center justify-between p-5">
                  <div className="flex items-center gap-2">
                     <TriangleAlert size={18} className="text-rose-500" />
@@ -277,18 +277,16 @@ export function ReportsPage({ isDarkMode }: ReportsPageProps) {
                   </thead>
                   <tbody className="">
                     {[
-                      { name: 'Ana Lim', id: 'STU-2026-004', book: 'Thinking, Fast and Slow', author: 'Daniel Kahneman', due: 'May 17, 2026', days: '3 days', fine: 'PHP 15.00' },
-                      { name: 'Michael Johnson', id: 'MEM-2026-015', book: 'The Intelligent Investor', author: 'Benjamin Graham', due: 'May 15, 2026', days: '5 days', fine: 'PHP 25.00' },
-                      { name: 'Peter Parker', id: 'MEM-2026-011', book: 'Start With Why', author: 'Simon Sinek', due: 'May 12, 2026', days: '8 days', fine: 'PHP 40.00' },
-                      { name: 'Sophia Reyes', id: 'STU-2026-007', book: 'Atomic Habits', author: 'James Clear', due: 'May 10, 2026', days: '10 days', fine: 'PHP 50.00' },
-                      { name: 'Mark Anthony', id: 'TCH-2026-001', book: 'Deep Work', author: 'Cal Newport', due: 'May 8, 2026', days: '12 days', fine: 'PHP 60.00' },
+                      { name: 'Ana Lim', id: 'STU-2026-004', book: 'Thinking, Fast and Slow', author: 'Daniel Kahneman', due: 'May 17, 2026', days: '3 days', fine: 'PHP 15.00', avatar: '\u{1F469}\u{1F3FD}' },
+                      { name: 'Michael Johnson', id: 'MEM-2026-015', book: 'The Intelligent Investor', author: 'Benjamin Graham', due: 'May 15, 2026', days: '5 days', fine: 'PHP 25.00', avatar: '\u{1F468}\u{1F3FB}' },
+                      { name: 'Peter Parker', id: 'MEM-2026-011', book: 'Start With Why', author: 'Simon Sinek', due: 'May 12, 2026', days: '8 days', fine: 'PHP 40.00', avatar: '\u{1F468}\u{1F3FD}' },
+                      { name: 'Sophia Reyes', id: 'STU-2026-007', book: 'Atomic Habits', author: 'James Clear', due: 'May 10, 2026', days: '10 days', fine: 'PHP 50.00', avatar: '\u{1F469}\u{1F3FB}' },
+                      { name: 'Mark Anthony', id: 'TCH-2026-001', book: 'Deep Work', author: 'Cal Newport', due: 'May 8, 2026', days: '12 days', fine: 'PHP 60.00', avatar: '\u{1F468}\u{1F3FE}' },
                     ].map((row) => (
                       <tr key={row.id} className={`border-t transition-colors ${isDarkMode ? 'border-slate-700 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}>
                         <td className="px-6 py-4">
                            <div className="flex items-center gap-3">
-                              <div className={`h-10 w-10 rounded-full flex items-center justify-center text-xs font-bold border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200 text-slate-700'}`}>
-                                 {row.name.split(' ').map(n => n[0]).join('')}
-                              </div>
+                              <span className={`grid h-11 w-11 place-items-center rounded-full text-lg ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>{row.avatar}</span>
                               <div>
                                 <p className="text-sm font-medium">{row.name}</p>
                                 <p className={`text-xs ${labelClass}`}>{row.id}</p>
@@ -319,7 +317,7 @@ export function ReportsPage({ isDarkMode }: ReportsPageProps) {
            </div>
 
            {/* Top Members Table */}
-           <div className={`lg:col-span-2 rounded-xl border overflow-hidden shadow-sm flex flex-col ${cardClass}`}>
+           <div className={`lg:col-span-2 rounded-xl border overflow-hidden flex flex-col ${cardClass}`}>
               <div className="flex items-center justify-between p-5">
                  <div className="flex items-center gap-2">
                     <h3 className="text-sm font-bold">Top Members (Most Borrowed)</h3>
@@ -340,18 +338,16 @@ export function ReportsPage({ isDarkMode }: ReportsPageProps) {
                   </thead>
                   <tbody className="">
                     {[
-                      { name: 'Juan Dela Cruz', id: 'STU-2026-001', b: 12, r: 11, o: 1 },
-                      { name: 'Maria Santos', id: 'STU-2026-002', b: 9, r: 9, o: 0 },
-                      { name: 'Liza Montero', id: 'STA-2026-002', b: 8, r: 7, o: 1 },
-                      { name: 'Alex Tan', id: 'VIS-2026-001', b: 7, r: 7, o: 0 },
-                      { name: 'Ana Lim', id: 'STU-2026-004', b: 6, r: 5, o: 1 },
+                      { name: 'Juan Dela Cruz', id: 'STU-2026-001', b: 12, r: 11, o: 1, avatar: '\u{1F468}\u{1F3FB}' },
+                      { name: 'Maria Santos', id: 'STU-2026-002', b: 9, r: 9, o: 0, avatar: '\u{1F469}\u{1F3FB}' },
+                      { name: 'Liza Montero', id: 'STA-2026-002', b: 8, r: 7, o: 1, avatar: '\u{1F469}\u{200D}\u{1F4BC}' },
+                      { name: 'Alex Tan', id: 'VIS-2026-001', b: 7, r: 7, o: 0, avatar: '\u{1F9D1}\u{1F3FB}' },
+                      { name: 'Ana Lim', id: 'STU-2026-004', b: 6, r: 5, o: 1, avatar: '\u{1F469}\u{1F3FD}' },
                     ].map((row) => (
                       <tr key={row.id} className={`border-t transition-colors ${isDarkMode ? 'border-slate-700 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}>
                         <td className="px-6 py-4">
                            <div className="flex items-center gap-3">
-                              <div className={`h-10 w-10 rounded-full flex items-center justify-center text-xs font-bold border ${isDarkMode ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' : 'bg-indigo-50 border-indigo-100 text-indigo-700'}`}>
-                                 {row.name.split(' ').map(n => n[0]).join('')}
-                              </div>
+                              <span className={`grid h-11 w-11 place-items-center rounded-full text-lg ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>{row.avatar}</span>
                               <div>
                                 <p className="text-sm font-medium">{row.name}</p>
                                 <p className={`text-[10px] ${labelClass}`}>{row.id}</p>
