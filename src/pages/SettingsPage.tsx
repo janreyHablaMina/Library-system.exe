@@ -20,6 +20,7 @@ import {
   KeyRound,
   Library,
   Mail,
+  MessageCircle,
   PenLine,
   Monitor,
   Moon,
@@ -27,6 +28,7 @@ import {
   Pencil,
   RotateCcw,
   Search,
+  Send,
   Settings2,
   Shield,
   Sun,
@@ -176,6 +178,54 @@ type PenaltyRuleListRow = {
   status: 'Active' | 'Inactive'
   icon: LucideIcon
   color: 'amber' | 'rose' | 'violet' | 'orange' | 'blue'
+}
+
+type NotificationSettingsState = {
+  enableNotifications: boolean
+  defaultLanguage: string
+  dateFormat: string
+  timeFormat: string
+  enableQuietHours: boolean
+  quietStartTime: string
+  quietEndTime: string
+  timezone: string
+}
+
+type NotificationPreferenceRow = {
+  key: string
+  label: string
+  description: string
+  icon: LucideIcon
+  color: 'violet' | 'amber' | 'emerald' | 'blue' | 'orange'
+  inApp: boolean
+  email: boolean
+  sms: boolean
+  push: boolean
+}
+
+type NotificationTemplateRow = {
+  key: string
+  templateName: string
+  description: string
+  notificationType: string
+  subject: string
+  lastUpdated: string
+  updatedBy: string
+  enabled: boolean
+  icon: LucideIcon
+  color: 'violet' | 'amber' | 'emerald' | 'blue' | 'orange' | 'rose' | 'cyan'
+  channels: Array<'email' | 'sms' | 'push'>
+}
+
+type DeliveryChannelRow = {
+  key: string
+  channel: string
+  description: string
+  status: 'Active' | 'Inactive'
+  isDefault: boolean
+  lastTested: string
+  icon: LucideIcon
+  color: 'violet' | 'emerald' | 'blue' | 'amber' | 'green'
 }
 
 type Option = {
@@ -451,6 +501,85 @@ const penaltyRuleListRows: PenaltyRuleListRow[] = [
   { fineType: 'Reservation Late Fine', applyFinePer: 'Per Day', fineAmount: '$ 0.25', gracePeriod: '1 day', maxFineAmount: '$ 10.00', status: 'Inactive', icon: CalendarDays, color: 'blue' },
 ]
 
+const notificationLanguageOptions: Option[] = [
+  { value: 'English', label: 'English' },
+  { value: 'Filipino', label: 'Filipino' },
+]
+
+const notificationDateFormatOptions: Option[] = [
+  { value: 'MM/DD/YYYY', label: 'MM/DD/YYYY' },
+  { value: 'DD/MM/YYYY', label: 'DD/MM/YYYY' },
+]
+
+const notificationTimeFormatOptions: Option[] = [
+  { value: '12 Hour (AM/PM)', label: '12 Hour (AM/PM)' },
+  { value: '24 Hour', label: '24 Hour' },
+]
+
+const quietTimeOptions: Option[] = [
+  { value: '10:00 PM', label: '10:00 PM' },
+  { value: '11:00 PM', label: '11:00 PM' },
+  { value: '12:00 AM', label: '12:00 AM' },
+  { value: '07:00 AM', label: '07:00 AM' },
+  { value: '08:00 AM', label: '08:00 AM' },
+]
+
+const timezoneOptions: Option[] = [
+  { value: '(GMT+08:00) Asia/Manila', label: '(GMT+08:00) Asia/Manila' },
+  { value: '(GMT+08:00) Asia/Singapore', label: '(GMT+08:00) Asia/Singapore' },
+]
+
+const initialNotificationSettings: NotificationSettingsState = {
+  enableNotifications: true,
+  defaultLanguage: 'English',
+  dateFormat: 'MM/DD/YYYY',
+  timeFormat: '12 Hour (AM/PM)',
+  enableQuietHours: true,
+  quietStartTime: '10:00 PM',
+  quietEndTime: '07:00 AM',
+  timezone: '(GMT+08:00) Asia/Manila',
+}
+
+const initialNotificationPreferences: NotificationPreferenceRow[] = [
+  { key: 'due-date-reminder', label: 'Due Date Reminder', description: 'Remind member before a book is due.', icon: CalendarDays, color: 'violet', inApp: true, email: true, sms: false, push: true },
+  { key: 'overdue-notification', label: 'Overdue Notification', description: 'Notify when a book is overdue.', icon: Clock3, color: 'amber', inApp: true, email: true, sms: true, push: true },
+  { key: 'reservation-confirmation', label: 'Reservation Confirmation', description: 'Notify when a reservation is confirmed.', icon: CircleAlert, color: 'emerald', inApp: true, email: true, sms: false, push: true },
+  { key: 'reservation-cancellation', label: 'Reservation Cancellation', description: 'Notify when a reservation is cancelled.', icon: CircleAlert, color: 'blue', inApp: true, email: true, sms: false, push: false },
+  { key: 'fine-payment-receipt', label: 'Fine Payment Receipt', description: 'Send receipt after fine payment.', icon: Mail, color: 'orange', inApp: false, email: true, sms: false, push: false },
+]
+
+const templateTypeOptions: Option[] = [
+  { value: 'All Notification Types', label: 'All Notification Types' },
+  { value: 'Due Date Reminder', label: 'Due Date Reminder' },
+  { value: 'Overdue Notification', label: 'Overdue Notification' },
+  { value: 'Reservation Confirmation', label: 'Reservation Confirmation' },
+]
+
+const templatePageSizeOptions: Option[] = [
+  { value: '10 / page', label: '10 / page' },
+  { value: '20 / page', label: '20 / page' },
+  { value: '50 / page', label: '50 / page' },
+]
+
+const initialNotificationTemplates: NotificationTemplateRow[] = [
+  { key: 'due-date-reminder', templateName: 'Due Date Reminder', description: 'Remind member before a book is due.', notificationType: 'Due Date Reminder', subject: 'Reminder: Book due on {{due_date}}', lastUpdated: 'May 12, 2024', updatedBy: 'Admin User', enabled: true, icon: CalendarDays, color: 'violet', channels: ['email', 'sms', 'push'] },
+  { key: 'overdue-notification', templateName: 'Overdue Notification', description: 'Notify when a book is overdue.', notificationType: 'Overdue Notification', subject: 'Overdue Alert: {{title}} is overdue', lastUpdated: 'May 10, 2024', updatedBy: 'Admin User', enabled: true, icon: Clock3, color: 'amber', channels: ['email', 'sms', 'push'] },
+  { key: 'reservation-confirmation', templateName: 'Reservation Confirmation', description: 'Notify when a reservation is confirmed.', notificationType: 'Reservation Confirmation', subject: 'Your reservation for {{title}} is confirmed', lastUpdated: 'May 8, 2024', updatedBy: 'Admin User', enabled: true, icon: CircleAlert, color: 'emerald', channels: ['email', 'push'] },
+  { key: 'reservation-cancellation', templateName: 'Reservation Cancellation', description: 'Notify when a reservation is cancelled.', notificationType: 'Reservation Cancellation', subject: 'Reservation cancelled for {{title}}', lastUpdated: 'May 6, 2024', updatedBy: 'Admin User', enabled: true, icon: CircleAlert, color: 'blue', channels: ['email', 'sms', 'push'] },
+  { key: 'fine-payment-receipt', templateName: 'Fine Payment Receipt', description: 'Send receipt after fine payment.', notificationType: 'Fine Payment Receipt', subject: 'Receipt for fine payment', lastUpdated: 'May 5, 2024', updatedBy: 'Admin User', enabled: true, icon: Mail, color: 'orange', channels: ['email'] },
+  { key: 'welcome-member', templateName: 'Welcome New Member', description: 'Welcome email for new members.', notificationType: 'General', subject: 'Welcome to {{library_name}}!', lastUpdated: 'Apr 30, 2024', updatedBy: 'Admin User', enabled: false, icon: UsersRound, color: 'rose', channels: ['email'] },
+  { key: 'system-announcement', templateName: 'System Announcement', description: 'Send important library announcements.', notificationType: 'Announcement', subject: 'Important Announcement', lastUpdated: 'Apr 28, 2024', updatedBy: 'Admin User', enabled: true, icon: Bell, color: 'cyan', channels: ['email', 'push'] },
+]
+
+const initialDeliveryChannels: DeliveryChannelRow[] = [
+  { key: 'email', channel: 'Email', description: 'Send notifications via email.', status: 'Active', isDefault: true, lastTested: 'May 12, 2024 10:30 AM', icon: Mail, color: 'violet' },
+  { key: 'sms', channel: 'SMS', description: 'Send notifications via SMS.', status: 'Active', isDefault: false, lastTested: 'May 12, 2024 10:28 AM', icon: MessageCircle, color: 'emerald' },
+  { key: 'in-app', channel: 'In-App', description: 'Send notifications inside the system.', status: 'Active', isDefault: true, lastTested: 'May 12, 2024 10:25 AM', icon: Bell, color: 'blue' },
+  { key: 'push', channel: 'Push Notification', description: 'Send push notifications to mobile app.', status: 'Active', isDefault: false, lastTested: 'May 12, 2024 10:20 AM', icon: Upload, color: 'amber' },
+  { key: 'whatsapp', channel: 'WhatsApp', description: 'Send notifications via WhatsApp.', status: 'Inactive', isDefault: false, lastTested: 'Never', icon: MessageCircle, color: 'green' },
+  { key: 'telegram', channel: 'Telegram', description: 'Send notifications via Telegram.', status: 'Inactive', isDefault: false, lastTested: 'Never', icon: Send, color: 'violet' },
+]
+
 type InputFieldProps = {
   label: string
   value: string
@@ -541,7 +670,44 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
   const [usersRoleTab, setUsersRoleTab] = useState<'Users' | 'Roles'>('Users')
   const [booksBorrowingTab, setBooksBorrowingTab] = useState<'Book Settings' | 'Borrowing Settings' | 'Return Settings' | 'Reservation Settings'>('Book Settings')
   const [membershipPenaltyTab, setMembershipPenaltyTab] = useState<'Membership Types' | 'Penalty Rules'>('Membership Types')
+  const [notificationsTab, setNotificationsTab] = useState<'Notification Settings' | 'Notification Templates' | 'Delivery Channels'>('Notification Settings')
   const [booksBorrowingSettings, setBooksBorrowingSettings] = useState(initialBooksBorrowingSettings)
+  const [notificationSettings, setNotificationSettings] = useState(initialNotificationSettings)
+  const [notificationPreferences, setNotificationPreferences] = useState(initialNotificationPreferences)
+  const [notificationTemplates, setNotificationTemplates] = useState(initialNotificationTemplates)
+  const [deliveryChannels] = useState(initialDeliveryChannels)
+  const [templateSearch, setTemplateSearch] = useState('')
+  const [templateTypeFilter, setTemplateTypeFilter] = useState('All Notification Types')
+  const [templatePageSize, setTemplatePageSize] = useState('10 / page')
+  const [smtpHost, setSmtpHost] = useState('smtp.gmail.com')
+  const [smtpPort, setSmtpPort] = useState('587')
+  const [smtpUsername, setSmtpUsername] = useState('infolib.system@gmail.com')
+  const [smtpPassword, setSmtpPassword] = useState('••••••••••••')
+  const [smtpEncryption, setSmtpEncryption] = useState('TLS')
+  const [smtpUseAuth, setSmtpUseAuth] = useState(true)
+  const [senderName, setSenderName] = useState('InfoLib Library System')
+  const [senderEmail, setSenderEmail] = useState('infolib.system@gmail.com')
+  const [replyToEmail, setReplyToEmail] = useState('support@infolib.com')
+  const [testEmailTo, setTestEmailTo] = useState('admin@infolib.com')
+  const [emailNotificationsEnabled, setEmailNotificationsEnabled] = useState(true)
+  const [queueEmailsEnabled, setQueueEmailsEnabled] = useState(true)
+  const [retryFailedEmailsEnabled, setRetryFailedEmailsEnabled] = useState(true)
+  const [securityTab, setSecurityTab] = useState<'Authentication' | 'Password Policy' | 'Session Management' | 'IP Restrictions' | 'Other Settings'>('Authentication')
+  const [enable2FA, setEnable2FA] = useState(true)
+  const [twoFaAdmins, setTwoFaAdmins] = useState(true)
+  const [twoFaLibrarians, setTwoFaLibrarians] = useState(true)
+  const [twoFaStaff, setTwoFaStaff] = useState(false)
+  const [twoFaMembers, setTwoFaMembers] = useState(false)
+  const [maxLoginAttempts, setMaxLoginAttempts] = useState('5 Attempts')
+  const [lockoutDuration, setLockoutDuration] = useState('30 Minutes')
+  const [captchaOnLogin, setCaptchaOnLogin] = useState(true)
+  const [rememberMeEnabled, setRememberMeEnabled] = useState(true)
+  const [accountVerificationEnabled, setAccountVerificationEnabled] = useState(false)
+  const [backupSchedule, setBackupSchedule] = useState('Daily')
+  const [backupTime, setBackupTime] = useState('02:00 AM')
+  const [backupRetention, setBackupRetention] = useState('30 Days')
+  const [includeAttachments, setIncludeAttachments] = useState(true)
+  const [emailBackupSummary, setEmailBackupSummary] = useState(true)
   const [userSearch, setUserSearch] = useState('')
   const [userRoleFilter, setUserRoleFilter] = useState('all')
   const [userStatusFilter, setUserStatusFilter] = useState('all')
@@ -567,6 +733,15 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
   const updateBooksBorrowing = <Key extends keyof BooksBorrowingSettings>(key: Key, value: BooksBorrowingSettings[Key]) => {
     setBooksBorrowingSettings((previous) => ({ ...previous, [key]: value }))
   }
+  const updateNotificationSettings = <Key extends keyof NotificationSettingsState>(key: Key, value: NotificationSettingsState[Key]) => {
+    setNotificationSettings((previous) => ({ ...previous, [key]: value }))
+  }
+  const updateNotificationPreferenceChannel = (rowKey: string, channel: 'inApp' | 'email' | 'sms' | 'push', value: boolean) => {
+    setNotificationPreferences((previous) => previous.map((item) => (item.key === rowKey ? { ...item, [channel]: value } : item)))
+  }
+  const updateTemplateEnabled = (rowKey: string, value: boolean) => {
+    setNotificationTemplates((previous) => previous.map((item) => (item.key === rowKey ? { ...item, enabled: value } : item)))
+  }
 
   const libraryItems = settingsMenuItems.filter((item) => item.group === 'LIBRARY')
   const systemItems = settingsMenuItems.filter((item) => item.group === 'SYSTEM')
@@ -576,6 +751,12 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
     const roleMatch = userRoleFilter === 'all' || user.role === userRoleFilter
     const statusMatch = userStatusFilter === 'all' || user.status === userStatusFilter
     return searchMatch && roleMatch && statusMatch
+  })
+  const filteredNotificationTemplates = notificationTemplates.filter((template) => {
+    const q = templateSearch.trim().toLowerCase()
+    const searchMatch = !q || template.templateName.toLowerCase().includes(q) || template.subject.toLowerCase().includes(q)
+    const typeMatch = templateTypeFilter === 'All Notification Types' || template.notificationType === templateTypeFilter
+    return searchMatch && typeMatch
   })
 
   return (
@@ -675,8 +856,16 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
                       ? 'Manage system users and their roles and permissions.'
                     : activeSettingsMenu === 'Books & Borrowing'
                       ? 'Configure book management and circulation settings.'
-                      : activeSettingsMenu === 'Membership & Penalties'
+                    : activeSettingsMenu === 'Membership & Penalties'
                         ? 'Configure membership types and penalty rules for overdue materials.'
+                      : activeSettingsMenu === 'Notifications'
+                        ? 'Configure system notification preferences and templates.'
+                      : activeSettingsMenu === 'Email & SMTP'
+                        ? 'Configure SMTP settings to send emails and system notifications.'
+                      : activeSettingsMenu === 'Security'
+                        ? 'Manage security settings to protect your library system and data.'
+                      : activeSettingsMenu === 'Backup'
+                        ? 'Create and manage backups of your library system data. Backups help you restore your system in case of data loss.'
                       : 'Manage your system preferences and configurations.'}
                 </p>
               </div>
@@ -1950,7 +2139,623 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
               </section>
             ) : null}
 
-            {activeSettingsMenu !== 'General' && activeSettingsMenu !== 'Library Profile' && activeSettingsMenu !== 'Users & Roles' && activeSettingsMenu !== 'Books & Borrowing' && activeSettingsMenu !== 'Membership & Penalties' ? (
+            {activeSettingsMenu === 'Notifications' ? (
+              <section className={`rounded-2xl border p-0 ${cardClass}`}>
+                <div className="px-6 pt-4">
+                  <div className={`flex items-center gap-6 border-b ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                    {(['Notification Settings', 'Notification Templates', 'Delivery Channels'] as const).map((tab) => (
+                      <button
+                        key={tab}
+                        type="button"
+                        onClick={() => setNotificationsTab(tab)}
+                        className={`border-b-2 px-1 pb-3 text-sm font-semibold ${notificationsTab === tab ? 'border-indigo-600 text-indigo-600' : isDarkMode ? 'border-transparent text-slate-300' : 'border-transparent text-slate-700'}`}
+                      >
+                        {tab}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {notificationsTab === 'Notification Settings' ? (
+                  <div className="space-y-4 p-6">
+                    <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                      <p className="flex items-center gap-2 text-sm font-semibold"><Settings2 size={15} className="text-indigo-600" />General Notification Settings</p>
+                      <p className={`mt-1 text-sm ${textMutedClass}`}>Configure how and when notifications are sent.</p>
+
+                      <div className="mt-4 grid gap-4 md:grid-cols-4">
+                        <div>
+                          <p className="text-sm font-semibold">Enable Notifications</p>
+                          <div className="mt-3">
+                            <SwitchField checked={notificationSettings.enableNotifications} onChange={(value) => updateNotificationSettings('enableNotifications', value)} isDarkMode={isDarkMode} />
+                          </div>
+                          <p className={`mt-2 text-xs ${textMutedClass}`}>Enable or disable all system notifications.</p>
+                        </div>
+                        <SelectField label="Default Language" value={notificationSettings.defaultLanguage} onChange={(value) => updateNotificationSettings('defaultLanguage', value)} options={notificationLanguageOptions} isDarkMode={isDarkMode} />
+                        <SelectField label="Date Format" value={notificationSettings.dateFormat} onChange={(value) => updateNotificationSettings('dateFormat', value)} options={notificationDateFormatOptions} isDarkMode={isDarkMode} />
+                        <SelectField label="Time Format" value={notificationSettings.timeFormat} onChange={(value) => updateNotificationSettings('timeFormat', value)} options={notificationTimeFormatOptions} isDarkMode={isDarkMode} />
+                      </div>
+                    </section>
+
+                    <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                      <p className="flex items-center gap-2 text-sm font-semibold"><Bell size={15} className="text-indigo-600" />Notification Preferences</p>
+                      <p className={`mt-1 text-sm ${textMutedClass}`}>Choose which events should trigger notifications.</p>
+
+                      <div className={`mt-4 overflow-hidden rounded-xl border ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                        <div className={`grid grid-cols-[1.9fr_0.65fr_0.65fr_0.65fr_0.65fr_0.45fr] gap-3 border-b px-4 py-3 text-[13px] font-semibold ${isDarkMode ? 'border-slate-700 bg-[#0b1738] text-slate-200' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
+                          <p>Notification Type</p><p>In-App</p><p>Email</p><p>SMS</p><p>Push</p><p>Actions</p>
+                        </div>
+                        {notificationPreferences.map((row) => {
+                          const RowIcon = row.icon
+                          const iconBg =
+                            row.color === 'violet'
+                              ? isDarkMode ? 'bg-violet-500/20 text-violet-200' : 'bg-violet-100 text-violet-700'
+                              : row.color === 'amber'
+                                ? isDarkMode ? 'bg-amber-500/20 text-amber-200' : 'bg-amber-100 text-amber-700'
+                                : row.color === 'emerald'
+                                  ? isDarkMode ? 'bg-emerald-500/20 text-emerald-200' : 'bg-emerald-100 text-emerald-700'
+                                  : row.color === 'blue'
+                                    ? isDarkMode ? 'bg-blue-500/20 text-blue-200' : 'bg-blue-100 text-blue-700'
+                                    : isDarkMode ? 'bg-orange-500/20 text-orange-200' : 'bg-orange-100 text-orange-700'
+                          return (
+                            <div key={row.key} className={`grid grid-cols-[1.9fr_0.65fr_0.65fr_0.65fr_0.65fr_0.45fr] items-center gap-3 border-b px-4 py-3 last:border-b-0 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                              <div className="flex items-center gap-3">
+                                <span className={`grid h-8 w-8 place-items-center rounded-lg ${iconBg}`}><RowIcon size={14} /></span>
+                                <div>
+                                  <p className="text-sm font-semibold">{row.label}</p>
+                                  <p className={`text-xs ${textMutedClass}`}>{row.description}</p>
+                                </div>
+                              </div>
+                              <SwitchField checked={row.inApp} onChange={(value) => updateNotificationPreferenceChannel(row.key, 'inApp', value)} isDarkMode={isDarkMode} />
+                              <SwitchField checked={row.email} onChange={(value) => updateNotificationPreferenceChannel(row.key, 'email', value)} isDarkMode={isDarkMode} />
+                              <SwitchField checked={row.sms} onChange={(value) => updateNotificationPreferenceChannel(row.key, 'sms', value)} isDarkMode={isDarkMode} />
+                              <SwitchField checked={row.push} onChange={(value) => updateNotificationPreferenceChannel(row.key, 'push', value)} isDarkMode={isDarkMode} />
+                              <button type="button" className={`grid h-8 w-8 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 text-indigo-300 hover:bg-slate-800' : 'border-slate-200 text-indigo-600 hover:bg-indigo-50'}`}><Pencil size={14} /></button>
+                            </div>
+                          )
+                        })}
+                      </div>
+                      <button type="button" className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-700">
+                        <Plus size={14} />
+                        Add Custom Notification
+                      </button>
+                    </section>
+
+                    <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                      <p className="flex items-center gap-2 text-sm font-semibold"><Clock3 size={15} className="text-indigo-600" />Quiet Hours</p>
+                      <p className={`mt-1 text-sm ${textMutedClass}`}>Set the time range when notifications should not be sent.</p>
+                      <div className="mt-4 grid gap-4 md:grid-cols-4">
+                        <div>
+                          <p className="text-sm font-semibold">Enable Quiet Hours</p>
+                          <p className={`mt-1 text-xs ${textMutedClass}`}>Disable non-urgent notifications during this time.</p>
+                          <div className="mt-2"><SwitchField checked={notificationSettings.enableQuietHours} onChange={(value) => updateNotificationSettings('enableQuietHours', value)} isDarkMode={isDarkMode} /></div>
+                        </div>
+                        <SelectField label="Start Time" value={notificationSettings.quietStartTime} onChange={(value) => updateNotificationSettings('quietStartTime', value)} options={quietTimeOptions} isDarkMode={isDarkMode} />
+                        <SelectField label="End Time" value={notificationSettings.quietEndTime} onChange={(value) => updateNotificationSettings('quietEndTime', value)} options={quietTimeOptions} isDarkMode={isDarkMode} />
+                        <SelectField label="Timezone" value={notificationSettings.timezone} onChange={(value) => updateNotificationSettings('timezone', value)} options={timezoneOptions} isDarkMode={isDarkMode} />
+                      </div>
+                    </section>
+
+                    <div className={`rounded-xl border px-4 py-3 text-sm ${isDarkMode ? 'border-indigo-500/40 bg-indigo-500/10 text-indigo-200' : 'border-indigo-200 bg-indigo-50 text-indigo-700'}`}>
+                      <p className="flex items-center gap-2 font-semibold"><CircleAlert size={15} />Note</p>
+                      <p className="mt-1">Notifications marked as urgent will still be sent even during quiet hours.</p>
+                    </div>
+                  </div>
+                ) : notificationsTab === 'Notification Templates' ? (
+                  <div className="space-y-4 p-6">
+                    <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="relative w-[320px]">
+                            <Search size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${textMutedClass}`} />
+                            <input
+                              value={templateSearch}
+                              onChange={(event) => setTemplateSearch(event.target.value)}
+                              placeholder="Search templates..."
+                              className={`h-10 w-full rounded-xl border px-3 pr-9 text-[14px] outline-none transition-colors ${
+                                isDarkMode
+                                  ? 'border-slate-700 bg-[#0b1738] text-slate-100 placeholder:text-slate-500 focus:border-emerald-500'
+                                  : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400 focus:border-emerald-500'
+                              }`}
+                            />
+                          </div>
+                          <div className="w-[220px]">
+                            <SelectField label="" value={templateTypeFilter} onChange={setTemplateTypeFilter} options={templateTypeOptions} isDarkMode={isDarkMode} />
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <button type="button" className={`inline-flex h-10 items-center gap-2 rounded-xl border px-4 text-sm font-semibold transition-colors ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-50'}`}>
+                            <Settings2 size={14} />
+                            Filters
+                          </button>
+                          <button type="button" className="inline-flex h-10 items-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-indigo-700">
+                            <Plus size={14} />
+                            Create Template
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className={`mt-4 overflow-hidden rounded-xl border ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                        <div className={`grid grid-cols-[1.5fr_1.1fr_0.8fr_1.7fr_0.9fr_0.7fr_0.7fr] gap-3 border-b px-4 py-3 text-[13px] font-semibold ${isDarkMode ? 'border-slate-700 bg-[#0b1738] text-slate-200' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
+                          <p>Template Name</p><p>Notification Type</p><p>Channels</p><p>Subject</p><p>Last Updated</p><p>Status</p><p>Actions</p>
+                        </div>
+                        {filteredNotificationTemplates.map((row) => {
+                          const RowIcon = row.icon
+                          const iconBg =
+                            row.color === 'violet'
+                              ? isDarkMode ? 'bg-violet-500/20 text-violet-200' : 'bg-violet-100 text-violet-700'
+                              : row.color === 'amber'
+                                ? isDarkMode ? 'bg-amber-500/20 text-amber-200' : 'bg-amber-100 text-amber-700'
+                                : row.color === 'emerald'
+                                  ? isDarkMode ? 'bg-emerald-500/20 text-emerald-200' : 'bg-emerald-100 text-emerald-700'
+                                  : row.color === 'blue'
+                                    ? isDarkMode ? 'bg-blue-500/20 text-blue-200' : 'bg-blue-100 text-blue-700'
+                                    : row.color === 'orange'
+                                      ? isDarkMode ? 'bg-orange-500/20 text-orange-200' : 'bg-orange-100 text-orange-700'
+                                      : row.color === 'rose'
+                                        ? isDarkMode ? 'bg-rose-500/20 text-rose-200' : 'bg-rose-100 text-rose-700'
+                                        : isDarkMode ? 'bg-cyan-500/20 text-cyan-200' : 'bg-cyan-100 text-cyan-700'
+                          return (
+                            <div key={row.key} className={`grid grid-cols-[1.5fr_1.1fr_0.8fr_1.7fr_0.9fr_0.7fr_0.7fr] items-center gap-3 border-b px-4 py-3 last:border-b-0 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                              <div className="flex items-center gap-3">
+                                <span className={`grid h-9 w-9 place-items-center rounded-lg ${iconBg}`}><RowIcon size={15} /></span>
+                                <div>
+                                  <p className="text-sm font-semibold">{row.templateName}</p>
+                                  <p className={`text-xs ${textMutedClass}`}>{row.description}</p>
+                                </div>
+                              </div>
+                              <p><span className={`rounded-md px-2 py-0.5 text-xs font-semibold ${iconBg}`}>{row.notificationType}</span></p>
+                              <div className="flex items-center gap-1">
+                                {row.channels.includes('email') ? <span className={`grid h-6 w-6 place-items-center rounded-md ${isDarkMode ? 'bg-indigo-500/20 text-indigo-200' : 'bg-indigo-100 text-indigo-700'}`}><Mail size={12} /></span> : null}
+                                {row.channels.includes('sms') ? <span className={`grid h-6 w-6 place-items-center rounded-md ${isDarkMode ? 'bg-emerald-500/20 text-emerald-200' : 'bg-emerald-100 text-emerald-700'}`}><MessageCircle size={12} /></span> : null}
+                                {row.channels.includes('push') ? <span className={`grid h-6 w-6 place-items-center rounded-md ${isDarkMode ? 'bg-amber-500/20 text-amber-200' : 'bg-amber-100 text-amber-700'}`}><Bell size={12} /></span> : null}
+                              </div>
+                              <p className="text-sm">{row.subject}</p>
+                              <div>
+                                <p className="text-sm font-semibold">{row.lastUpdated}</p>
+                                <p className={`text-xs ${textMutedClass}`}>by {row.updatedBy}</p>
+                              </div>
+                              <SwitchField checked={row.enabled} onChange={(value) => updateTemplateEnabled(row.key, value)} isDarkMode={isDarkMode} />
+                              <div className="flex items-center gap-2">
+                                <button type="button" className={`grid h-8 w-8 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 text-indigo-300 hover:bg-slate-800' : 'border-slate-200 text-indigo-600 hover:bg-indigo-50'}`}><Pencil size={14} /></button>
+                                <button type="button" className={`grid h-8 w-8 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 text-rose-300 hover:bg-slate-800' : 'border-slate-200 text-rose-600 hover:bg-rose-50'}`}><Trash2 size={14} /></button>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+
+                      <div className="mt-4 flex items-center justify-between">
+                        <p className={`text-sm ${textMutedClass}`}>Showing 1 to {filteredNotificationTemplates.length} of {filteredNotificationTemplates.length} templates</p>
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2">
+                            <button type="button" className={`grid h-8 w-8 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-300 text-slate-600 hover:bg-slate-50'}`}><ChevronLeft size={14} /></button>
+                            <button type="button" className="grid h-8 min-w-8 place-items-center rounded-lg bg-indigo-600 px-2 text-sm font-semibold text-white">1</button>
+                            <button type="button" className={`grid h-8 w-8 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-300 text-slate-600 hover:bg-slate-50'}`}><ChevronRight size={14} /></button>
+                          </div>
+                          <div className="w-[120px]">
+                            <SelectField label="" value={templatePageSize} onChange={setTemplatePageSize} options={templatePageSizeOptions} isDarkMode={isDarkMode} />
+                          </div>
+                        </div>
+                      </div>
+                    </section>
+
+                    <div className={`rounded-xl border px-4 py-3 text-sm ${isDarkMode ? 'border-indigo-500/40 bg-indigo-500/10 text-indigo-200' : 'border-indigo-200 bg-indigo-50 text-indigo-700'}`}>
+                      <p className="flex items-center gap-2 font-semibold"><CircleAlert size={15} />Note</p>
+                      <p className="mt-1">You can use variables in templates like {'{{member_name}}'}, {'{{title}}'}, {'{{due_date}}'}, {'{{fine_amount}}'}, {'{{library_name}}'}.</p>
+                      <p className="mt-1">These will be replaced with actual values when the notification is sent.</p>
+                    </div>
+                  </div>
+                ) : notificationsTab === 'Delivery Channels' ? (
+                  <div className="space-y-4 p-6">
+                    <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="flex items-center gap-2 text-sm font-semibold"><Bell size={15} className="text-indigo-600" />Configured Channels</p>
+                          <p className={`mt-1 text-sm ${textMutedClass}`}>Enable and configure different delivery channels for sending notifications.</p>
+                        </div>
+                        <button type="button" className="inline-flex h-10 items-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-indigo-700">
+                          <Plus size={14} />
+                          Add Channel
+                        </button>
+                      </div>
+
+                      <div className={`mt-4 overflow-hidden rounded-xl border ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                        <div className={`grid grid-cols-[1fr_1.4fr_0.7fr_0.6fr_0.9fr_0.6fr] gap-3 border-b px-4 py-3 text-[13px] font-semibold ${isDarkMode ? 'border-slate-700 bg-[#0b1738] text-slate-200' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
+                          <p>Channel</p><p>Description</p><p>Status</p><p>Default</p><p>Last Tested</p><p>Actions</p>
+                        </div>
+                        {deliveryChannels.map((row) => {
+                          const RowIcon = row.icon
+                          const iconBg =
+                            row.color === 'violet'
+                              ? isDarkMode ? 'bg-violet-500/20 text-violet-200' : 'bg-violet-100 text-violet-700'
+                              : row.color === 'emerald'
+                                ? isDarkMode ? 'bg-emerald-500/20 text-emerald-200' : 'bg-emerald-100 text-emerald-700'
+                                : row.color === 'blue'
+                                  ? isDarkMode ? 'bg-blue-500/20 text-blue-200' : 'bg-blue-100 text-blue-700'
+                                  : row.color === 'amber'
+                                    ? isDarkMode ? 'bg-amber-500/20 text-amber-200' : 'bg-amber-100 text-amber-700'
+                                    : isDarkMode ? 'bg-green-500/20 text-green-200' : 'bg-green-100 text-green-700'
+                          return (
+                            <div key={row.key} className={`grid grid-cols-[1fr_1.4fr_0.7fr_0.6fr_0.9fr_0.6fr] items-center gap-3 border-b px-4 py-3 last:border-b-0 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                              <div className="flex items-center gap-2">
+                                <span className={`grid h-8 w-8 place-items-center rounded-lg ${iconBg}`}><RowIcon size={14} /></span>
+                                <span className="text-sm font-semibold">{row.channel}</span>
+                              </div>
+                              <p className={`text-sm ${textMutedClass}`}>{row.description}</p>
+                              <p><span className={`rounded-md px-2 py-0.5 text-xs font-semibold ${row.status === 'Active' ? isDarkMode ? 'bg-emerald-500/20 text-emerald-200' : 'bg-emerald-100 text-emerald-700' : isDarkMode ? 'bg-slate-600 text-slate-200' : 'bg-slate-100 text-slate-700'}`}>{row.status}</span></p>
+                              <p className="text-sm font-semibold">{row.isDefault ? '★' : '–'}</p>
+                              <p className="text-sm">{row.lastTested}</p>
+                              <div className="flex items-center gap-2">
+                                <button type="button" className={`grid h-8 w-8 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 text-indigo-300 hover:bg-slate-800' : 'border-slate-200 text-indigo-600 hover:bg-indigo-50'}`}><Pencil size={14} /></button>
+                                <button type="button" className={`grid h-8 w-8 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 text-rose-300 hover:bg-slate-800' : 'border-slate-200 text-rose-600 hover:bg-rose-50'}`}><Trash2 size={14} /></button>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </section>
+
+                    <div className="grid gap-4 xl:grid-cols-[1.3fr_1fr]">
+                      <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                        <p className="flex items-center gap-2 text-sm font-semibold"><RotateCcw size={15} className="text-indigo-600" />Fallback Order</p>
+                        <p className={`mt-1 text-sm ${textMutedClass}`}>Set the order in which notifications will be sent if the primary channel fails.</p>
+                        <div className="mt-4 space-y-2">
+                          {['Email', 'In-App', 'SMS'].map((item, idx) => (
+                            <div key={item} className={`flex items-center justify-between rounded-lg border px-3 py-2 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+                              <div className="flex items-center gap-3">
+                                <span className="text-sm">⋮⋮</span>
+                                <span className={`grid h-6 w-6 place-items-center rounded-full text-xs font-semibold ${isDarkMode ? 'bg-indigo-500/20 text-indigo-200' : 'bg-indigo-100 text-indigo-700'}`}>{idx + 1}</span>
+                                <span className="text-sm font-semibold">{item}</span>
+                              </div>
+                              <button type="button" className={`text-sm ${textMutedClass}`}>×</button>
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+
+                      <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-indigo-500/30 bg-indigo-500/10' : 'border-indigo-200 bg-indigo-50'}`}>
+                        <p className="flex items-center gap-2 text-sm font-semibold"><CircleAlert size={15} className="text-indigo-600" />About Delivery Channels</p>
+                        <p className={`mt-2 text-sm ${isDarkMode ? 'text-indigo-200' : 'text-indigo-700'}`}>The default channel will be used first to send notifications. If it fails, the system will try the channels in the fallback order.</p>
+                        <p className={`mt-3 text-sm ${isDarkMode ? 'text-indigo-200' : 'text-indigo-700'}`}>Make sure to test each channel after configuration to ensure notifications are delivered successfully.</p>
+                        <button type="button" className={`mt-4 inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-sm font-semibold ${isDarkMode ? 'border-indigo-400 text-indigo-200 hover:bg-indigo-500/10' : 'border-indigo-400 text-indigo-700 hover:bg-indigo-100'}`}>
+                          <Wrench size={14} />
+                          Test All Channels
+                        </button>
+                      </section>
+                    </div>
+
+                    <div className={`rounded-xl border px-4 py-3 text-sm ${isDarkMode ? 'border-indigo-500/40 bg-indigo-500/10 text-indigo-200' : 'border-indigo-200 bg-indigo-50 text-indigo-700'}`}>
+                      <p className="flex items-center gap-2 font-semibold"><CircleAlert size={15} />Note</p>
+                      <p className="mt-1">Changes to delivery channels will apply to all notification templates and preferences.</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-6">
+                    <section className={`rounded-xl border p-6 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                      <h4 className="text-[20px] font-semibold tracking-tight">{notificationsTab}</h4>
+                      <p className={`mt-2 text-sm ${textMutedClass}`}>This section is ready next. We can implement templates and channel gateways in the same style.</p>
+                    </section>
+                  </div>
+                )}
+              </section>
+            ) : null}
+
+            {activeSettingsMenu === 'Email & SMTP' ? (
+              <section className={`rounded-2xl border p-0 ${cardClass}`}>
+                <div className="p-6">
+                  <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_500px]">
+                    <div className="space-y-4">
+                      <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                        <p className="flex items-center gap-2 text-sm font-semibold"><Mail size={15} className="text-indigo-600" />SMTP Configuration</p>
+                        <p className={`mt-1 text-sm ${textMutedClass}`}>Configure your SMTP server details to send emails.</p>
+
+                        <div className="mt-4 grid gap-4 md:grid-cols-2">
+                          <InputField label="SMTP Host" value={smtpHost} onChange={setSmtpHost} isDarkMode={isDarkMode} />
+                          <InputField label="Port" value={smtpPort} onChange={setSmtpPort} isDarkMode={isDarkMode} />
+                        </div>
+
+                        <div className="mt-4">
+                          <InputField label="Username" value={smtpUsername} onChange={setSmtpUsername} isDarkMode={isDarkMode} />
+                        </div>
+
+                        <div className="mt-4">
+                          <InputField label="Password" value={smtpPassword} onChange={setSmtpPassword} isDarkMode={isDarkMode} rightIcon={Eye} />
+                        </div>
+
+                        <div className="mt-4 grid gap-4 md:grid-cols-2">
+                          <SelectField label="Encryption" value={smtpEncryption} onChange={setSmtpEncryption} options={[{ value: 'TLS', label: 'TLS' }, { value: 'SSL', label: 'SSL' }, { value: 'None', label: 'None' }]} isDarkMode={isDarkMode} />
+                          <div className="flex items-center gap-3 pt-7">
+                            <input id="smtp-auth" type="checkbox" checked={smtpUseAuth} onChange={(event) => setSmtpUseAuth(event.target.checked)} className="h-4 w-4 rounded border-slate-300 text-indigo-600 accent-indigo-600" />
+                            <label htmlFor="smtp-auth" className="text-sm font-semibold">Use Authentication</label>
+                          </div>
+                        </div>
+
+                        <div className={`mt-6 border-t pt-5 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                          <p className="flex items-center gap-2 text-sm font-semibold"><UserCog size={15} className="text-indigo-600" />Sender Information</p>
+                          <p className={`mt-1 text-sm ${textMutedClass}`}>Set the default sender details for all outgoing emails.</p>
+
+                          <div className="mt-4 grid gap-4 md:grid-cols-2">
+                            <InputField label="Sender Name" value={senderName} onChange={setSenderName} isDarkMode={isDarkMode} />
+                            <InputField label="Sender Email" value={senderEmail} onChange={setSenderEmail} isDarkMode={isDarkMode} />
+                          </div>
+                          <div className="mt-4">
+                            <InputField label="Reply-To Email (Optional)" value={replyToEmail} onChange={setReplyToEmail} isDarkMode={isDarkMode} hint="Replies to emails will be sent to this address." />
+                          </div>
+                        </div>
+                      </section>
+
+                      <div className={`rounded-xl border px-4 py-3 text-sm ${isDarkMode ? 'border-indigo-500/40 bg-indigo-500/10 text-indigo-200' : 'border-indigo-200 bg-indigo-50 text-indigo-700'}`}>
+                        <p className="flex items-center gap-2 font-semibold"><CircleAlert size={15} />Note</p>
+                        <p className="mt-1">Ensure your SMTP credentials are correct. Incorrect settings may prevent emails from being sent.</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                        <p className="flex items-center gap-2 text-sm font-semibold"><CircleAlert size={15} className="text-emerald-600" />SMTP Connection Status</p>
+                        <div className="mt-3 inline-flex rounded-md bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-700">Connected</div>
+                        <p className={`mt-2 text-sm ${textMutedClass}`}>Last tested: May 12, 2024 10:30 AM</p>
+                        <button type="button" className={`mt-4 inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-sm font-semibold ${isDarkMode ? 'border-indigo-500/70 text-indigo-200 hover:bg-indigo-500/10' : 'border-indigo-400 text-indigo-700 hover:bg-indigo-50'}`}>
+                          <RotateCcw size={14} />
+                          Test Connection Again
+                        </button>
+                      </section>
+
+                      <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                        <p className="flex items-center gap-2 text-sm font-semibold"><Send size={15} className="text-indigo-600" />Test Email</p>
+                        <p className={`mt-1 text-sm ${textMutedClass}`}>Send a test email to verify your SMTP configuration.</p>
+                        <div className="mt-4">
+                          <InputField label="Send Test Email To" value={testEmailTo} onChange={setTestEmailTo} isDarkMode={isDarkMode} />
+                        </div>
+                        <button type="button" className="mt-3 inline-flex h-10 items-center gap-2 rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-indigo-700">
+                          <Send size={14} />
+                          Send Test Email
+                        </button>
+                      </section>
+
+                      <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                        <p className="flex items-center gap-2 text-sm font-semibold"><Settings2 size={15} className="text-indigo-600" />Email Features</p>
+                        <div className="mt-4 space-y-4">
+                          <div className={`flex items-center justify-between border-b pb-3 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                            <div><p className="text-sm font-semibold">Enable Email Notifications</p><p className={`text-xs ${textMutedClass}`}>Enable sending emails for notifications and alerts.</p></div>
+                            <SwitchField checked={emailNotificationsEnabled} onChange={setEmailNotificationsEnabled} isDarkMode={isDarkMode} />
+                          </div>
+                          <div className={`flex items-center justify-between border-b pb-3 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                            <div><p className="text-sm font-semibold">Queue Emails</p><p className={`text-xs ${textMutedClass}`}>Store emails in queue if SMTP is temporarily unavailable.</p></div>
+                            <SwitchField checked={queueEmailsEnabled} onChange={setQueueEmailsEnabled} isDarkMode={isDarkMode} />
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <div><p className="text-sm font-semibold">Retry Failed Emails</p><p className={`text-xs ${textMutedClass}`}>Automatically retry failed emails.</p></div>
+                            <SwitchField checked={retryFailedEmailsEnabled} onChange={setRetryFailedEmailsEnabled} isDarkMode={isDarkMode} />
+                          </div>
+                        </div>
+                      </section>
+
+                      <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                        <p className="flex items-center gap-2 text-sm font-semibold"><Mail size={15} className="text-indigo-600" />Email Templates</p>
+                        <p className={`mt-1 text-sm ${textMutedClass}`}>Manage and customize email templates for different notifications.</p>
+                        <button type="button" className={`mt-4 inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-sm font-semibold ${isDarkMode ? 'border-indigo-500/70 text-indigo-200 hover:bg-indigo-500/10' : 'border-indigo-400 text-indigo-700 hover:bg-indigo-50'}`}>
+                          Go to Templates
+                          <ChevronRight size={14} />
+                        </button>
+                      </section>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            ) : null}
+
+            {activeSettingsMenu === 'Security' ? (
+              <section className={`rounded-2xl border p-0 ${cardClass}`}>
+                <div className="px-6 pt-4">
+                  <div className={`flex items-center gap-6 border-b ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                    {(['Authentication', 'Password Policy', 'Session Management', 'IP Restrictions', 'Other Settings'] as const).map((tab) => (
+                      <button
+                        key={tab}
+                        type="button"
+                        onClick={() => setSecurityTab(tab)}
+                        className={`border-b-2 px-1 pb-3 text-sm font-semibold ${securityTab === tab ? 'border-indigo-600 text-indigo-600' : isDarkMode ? 'border-transparent text-slate-300' : 'border-transparent text-slate-700'}`}
+                      >
+                        {tab}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {securityTab === 'Authentication' ? (
+                  <div className="space-y-4 p-6">
+                    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
+                      <div className="space-y-4">
+                        <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="flex items-center gap-2 text-sm font-semibold"><Shield size={15} className="text-indigo-600" />Two-Factor Authentication (2FA)</p>
+                              <p className={`mt-1 text-sm ${textMutedClass}`}>Add an extra layer of security by requiring a verification code in addition to password.</p>
+                            </div>
+                            <SwitchField checked={enable2FA} onChange={setEnable2FA} isDarkMode={isDarkMode} />
+                          </div>
+
+                          <div className={`mt-4 rounded-lg border p-3 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-slate-50'}`}>
+                            <p className="text-sm font-semibold">Applies To</p>
+                            <div className="mt-3 flex flex-wrap items-center gap-5">
+                              <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={twoFaAdmins} onChange={(e) => setTwoFaAdmins(e.target.checked)} className="h-4 w-4 accent-indigo-600" />Administrators</label>
+                              <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={twoFaLibrarians} onChange={(e) => setTwoFaLibrarians(e.target.checked)} className="h-4 w-4 accent-indigo-600" />Librarians</label>
+                              <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={twoFaStaff} onChange={(e) => setTwoFaStaff(e.target.checked)} className="h-4 w-4 accent-indigo-600" />Staff</label>
+                              <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={twoFaMembers} onChange={(e) => setTwoFaMembers(e.target.checked)} className="h-4 w-4 accent-indigo-600" />Members</label>
+                            </div>
+                          </div>
+                        </section>
+
+                        <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                          <p className="flex items-center gap-2 text-sm font-semibold"><Shield size={15} className="text-emerald-600" />Login Security</p>
+                          <p className={`mt-1 text-sm ${textMutedClass}`}>Configure login attempt limits and account lockout settings.</p>
+                          <div className="mt-4 grid gap-4 md:grid-cols-2">
+                            <SelectField label="Maximum Login Attempts" value={maxLoginAttempts} onChange={setMaxLoginAttempts} options={[{ value: '3 Attempts', label: '3 Attempts' }, { value: '5 Attempts', label: '5 Attempts' }, { value: '10 Attempts', label: '10 Attempts' }]} isDarkMode={isDarkMode} />
+                            <SelectField label="Lockout Duration" value={lockoutDuration} onChange={setLockoutDuration} options={[{ value: '15 Minutes', label: '15 Minutes' }, { value: '30 Minutes', label: '30 Minutes' }, { value: '60 Minutes', label: '60 Minutes' }]} isDarkMode={isDarkMode} />
+                          </div>
+                        </section>
+
+                        <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                          <div className="flex items-center justify-between"><div><p className="text-sm font-semibold">CAPTCHA on Login</p><p className={`text-xs ${textMutedClass}`}>Enable CAPTCHA verification on the login page to prevent automated attacks.</p></div><SwitchField checked={captchaOnLogin} onChange={setCaptchaOnLogin} isDarkMode={isDarkMode} /></div>
+                        </section>
+                        <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                          <div className="flex items-center justify-between"><div><p className="text-sm font-semibold">Remember Me</p><p className={`text-xs ${textMutedClass}`}>Allow users to stay signed in on trusted devices.</p></div><SwitchField checked={rememberMeEnabled} onChange={setRememberMeEnabled} isDarkMode={isDarkMode} /></div>
+                        </section>
+                        <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                          <div className="flex items-center justify-between"><div><p className="text-sm font-semibold">Account Verification</p><p className={`text-xs ${textMutedClass}`}>Require email verification for new user registrations.</p></div><SwitchField checked={accountVerificationEnabled} onChange={setAccountVerificationEnabled} isDarkMode={isDarkMode} /></div>
+                        </section>
+                      </div>
+
+                      <div className="space-y-4">
+                        <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                          <p className="flex items-center gap-2 text-sm font-semibold"><Shield size={15} className="text-indigo-600" />Security Overview</p>
+                          <div className="mt-3 space-y-2 text-sm">
+                            <p className="flex items-center gap-2"><span className="text-emerald-600">●</span>Your system is secure</p>
+                            <p className="flex items-center gap-2"><span className="text-emerald-600">●</span>SSL/TLS is enabled</p>
+                            <p className="flex items-center gap-2"><span className="text-emerald-600">●</span>Strong password policy is active</p>
+                            <p className="flex items-center gap-2"><span className="text-amber-600">▲</span>2FA is not enabled for all user roles</p>
+                          </div>
+                        </section>
+
+                        <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                          <div className="flex items-center justify-between"><p className="flex items-center gap-2 text-sm font-semibold"><Monitor size={15} className="text-indigo-600" />Active Sessions</p><span className={`rounded-md px-2 py-1 text-xs font-semibold ${isDarkMode ? 'bg-indigo-500/20 text-indigo-200' : 'bg-indigo-100 text-indigo-700'}`}>3 Active</span></div>
+                          <div className="mt-3 space-y-3 text-sm">
+                            <div className="flex items-center justify-between"><div><p className="font-semibold">Chrome on Windows</p><p className={textMutedClass}>192.168.1.10 • May 12, 2024 10:30 AM</p></div><span className={`rounded-md px-2 py-1 text-xs font-semibold ${isDarkMode ? 'bg-indigo-500/20 text-indigo-200' : 'bg-indigo-100 text-indigo-700'}`}>Current Session</span></div>
+                            <div className="flex items-center justify-between"><div><p className="font-semibold">Mobile App on Android</p><p className={textMutedClass}>192.168.1.15 • May 12, 2024 09:15 AM</p></div><button className={`rounded-md border px-2 py-1 text-xs ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>End Session</button></div>
+                            <div className="flex items-center justify-between"><div><p className="font-semibold">Safari on macOS</p><p className={textMutedClass}>192.168.1.8 • May 11, 2024 04:45 PM</p></div><button className={`rounded-md border px-2 py-1 text-xs ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>End Session</button></div>
+                          </div>
+                          <button type="button" className="mt-3 text-sm font-semibold text-indigo-600 hover:text-indigo-700">View All Sessions</button>
+                        </section>
+
+                        <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                          <p className="flex items-center gap-2 text-sm font-semibold"><CircleAlert size={15} className="text-indigo-600" />Security Tips</p>
+                          <ul className={`mt-3 space-y-2 text-sm ${textMutedClass}`}>
+                            <li>Use strong passwords and change them regularly.</li>
+                            <li>Enable Two-Factor Authentication for all admin users.</li>
+                            <li>Log out from shared or public devices.</li>
+                            <li>Keep your system and plugins up to date.</li>
+                          </ul>
+                          <button type="button" className={`mt-4 inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-sm font-semibold ${isDarkMode ? 'border-indigo-500/70 text-indigo-200 hover:bg-indigo-500/10' : 'border-indigo-400 text-indigo-700 hover:bg-indigo-50'}`}>
+                            <CircleAlert size={14} />
+                            Learn More
+                          </button>
+                        </section>
+                      </div>
+                    </div>
+
+                    <div className={`rounded-xl border px-4 py-3 text-sm ${isDarkMode ? 'border-indigo-500/40 bg-indigo-500/10 text-indigo-200' : 'border-indigo-200 bg-indigo-50 text-indigo-700'}`}>
+                      <p className="flex items-center gap-2 font-semibold"><CircleAlert size={15} />Note</p>
+                      <p className="mt-1">Changes made in security settings may require users to log in again or verify their accounts.</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-6">
+                    <section className={`rounded-xl border p-6 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                      <h4 className="text-[20px] font-semibold tracking-tight">{securityTab}</h4>
+                      <p className={`mt-2 text-sm ${textMutedClass}`}>This section is ready next. We can implement this tab in the same style.</p>
+                    </section>
+                  </div>
+                )}
+              </section>
+            ) : null}
+
+            {activeSettingsMenu === 'Backup' ? (
+              <section className={`rounded-2xl border p-0 ${cardClass}`}>
+                <div className="space-y-4 p-6">
+                  <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_520px]">
+                    <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                      <p className="flex items-center gap-2 text-sm font-semibold"><RotateCcw size={15} className="text-indigo-600" />Backup Settings</p>
+                      <div className="mt-4 grid gap-4 md:grid-cols-2">
+                        <SelectField label="Backup Schedule" value={backupSchedule} onChange={setBackupSchedule} options={[{ value: 'Daily', label: 'Daily' }, { value: 'Weekly', label: 'Weekly' }, { value: 'Monthly', label: 'Monthly' }]} isDarkMode={isDarkMode} />
+                        <SelectField label="Backup Time" value={backupTime} onChange={setBackupTime} options={[{ value: '02:00 AM', label: '02:00 AM' }, { value: '03:00 AM', label: '03:00 AM' }, { value: '04:00 AM', label: '04:00 AM' }]} isDarkMode={isDarkMode} />
+                      </div>
+                      <div className="mt-4">
+                        <SelectField label="Backup Retention" value={backupRetention} onChange={setBackupRetention} options={[{ value: '7 Days', label: '7 Days' }, { value: '30 Days', label: '30 Days' }, { value: '90 Days', label: '90 Days' }]} isDarkMode={isDarkMode} />
+                        <p className={`mt-1 text-xs ${textMutedClass}`}>Backups older than the retention period will be deleted automatically.</p>
+                      </div>
+                      <div className="mt-5 space-y-3">
+                        <div className="flex items-center justify-between"><div><p className="text-sm font-semibold">Include Attachments & Documents</p><p className={`text-xs ${textMutedClass}`}>Backup uploaded files and documents.</p></div><SwitchField checked={includeAttachments} onChange={setIncludeAttachments} isDarkMode={isDarkMode} /></div>
+                        <div className="flex items-center justify-between"><div><p className="text-sm font-semibold">Email Backup Summary</p><p className={`text-xs ${textMutedClass}`}>Send email notification after backup is completed.</p></div><SwitchField checked={emailBackupSummary} onChange={setEmailBackupSummary} isDarkMode={isDarkMode} /></div>
+                      </div>
+                    </section>
+
+                    <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                      <p className="flex items-center gap-2 text-sm font-semibold"><Upload size={15} className="text-indigo-600" />Manual Backup</p>
+                      <p className={`mt-1 text-sm ${textMutedClass}`}>Create a backup of your library system data immediately.</p>
+                      <div className={`mt-4 rounded-lg border p-3 ${isDarkMode ? 'border-indigo-500/30 bg-indigo-500/10 text-indigo-200' : 'border-indigo-200 bg-indigo-50 text-indigo-700'}`}>
+                        This will backup all system data including books, members, transactions, settings, and more.
+                      </div>
+                      <button type="button" className="mt-4 inline-flex h-10 items-center gap-2 rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-indigo-700">
+                        <Upload size={14} />
+                        Create Backup Now
+                      </button>
+                    </section>
+                  </div>
+
+                  <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
+                    <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                      <p className="text-[20px] font-semibold">Backup History</p>
+                      <div className={`mt-4 overflow-hidden rounded-xl border ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                        <div className={`grid grid-cols-[1.1fr_0.8fr_0.95fr_0.7fr_0.8fr_0.7fr] gap-3 border-b px-4 py-3 text-[13px] font-semibold ${isDarkMode ? 'border-slate-700 bg-[#0b1738] text-slate-200' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
+                          <p>Backup Name</p><p>Type</p><p>Date & Time</p><p>Size</p><p>Status</p><p>Actions</p>
+                        </div>
+                        {[
+                          ['Daily Backup', 'Manual', 'May 12, 2024 02:05 AM', '245.8 MB'],
+                          ['Daily Backup', 'Scheduled', 'May 11, 2024 02:00 AM', '243.1 MB'],
+                          ['Daily Backup', 'Scheduled', 'May 10, 2024 02:00 AM', '241.7 MB'],
+                          ['Daily Backup', 'Scheduled', 'May 9, 2024 02:00 AM', '240.5 MB'],
+                          ['Daily Backup', 'Scheduled', 'May 8, 2024 02:00 AM', '239.9 MB'],
+                        ].map((row, idx) => (
+                          <div key={`${row[0]}-${idx}`} className={`grid grid-cols-[1.1fr_0.8fr_0.95fr_0.7fr_0.8fr_0.7fr] items-center gap-3 border-b px-4 py-3 last:border-b-0 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                            <div><p className="text-sm font-semibold">{row[0]}</p><p className={`text-xs ${textMutedClass}`}>{row[1]}</p></div>
+                            <p><span className={`rounded-md px-2 py-0.5 text-xs font-semibold ${row[1] === 'Manual' ? isDarkMode ? 'bg-violet-500/20 text-violet-200' : 'bg-violet-100 text-violet-700' : isDarkMode ? 'bg-blue-500/20 text-blue-200' : 'bg-blue-100 text-blue-700'}`}>{row[1]}</span></p>
+                            <p className="text-sm">{row[2]}</p>
+                            <p className="text-sm">{row[3]}</p>
+                            <p><span className={`rounded-md px-2 py-0.5 text-xs font-semibold ${isDarkMode ? 'bg-emerald-500/20 text-emerald-200' : 'bg-emerald-100 text-emerald-700'}`}>Completed</span></p>
+                            <div className="flex items-center gap-2">
+                              <button type="button" className={`grid h-8 w-8 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 text-indigo-300 hover:bg-slate-800' : 'border-slate-200 text-indigo-600 hover:bg-indigo-50'}`}><ChevronDown size={14} /></button>
+                              <button type="button" className={`grid h-8 w-8 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 text-rose-300 hover:bg-slate-800' : 'border-slate-200 text-rose-600 hover:bg-rose-50'}`}><Trash2 size={14} /></button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <button type="button" className="mt-3 text-sm font-semibold text-indigo-600 hover:text-indigo-700">View All Backups</button>
+                    </section>
+
+                    <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                      <p className="text-[20px] font-semibold">Backup Storage</p>
+                      <div className="mt-4 grid place-items-center">
+                        <div className={`grid h-44 w-44 place-items-center rounded-full border-[18px] ${isDarkMode ? 'border-indigo-500/70 text-slate-100' : 'border-indigo-500 text-slate-800'}`}>
+                          <div className="text-center">
+                            <p className="text-2xl font-bold">1.24 GB</p>
+                            <p className={`text-xs ${textMutedClass}`}>Used</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-4 space-y-2 text-sm">
+                        <p className="flex items-center justify-between"><span>Used Space</span><span>1.24 GB (62%)</span></p>
+                        <p className="flex items-center justify-between"><span>Available Space</span><span>760 MB (38%)</span></p>
+                        <p className="flex items-center justify-between"><span>Total Storage</span><span>2.0 GB</span></p>
+                      </div>
+                      <div className={`mt-4 rounded-lg border p-3 text-sm ${isDarkMode ? 'border-indigo-500/30 bg-indigo-500/10 text-indigo-200' : 'border-indigo-200 bg-indigo-50 text-indigo-700'}`}>
+                        Storage is calculated based on all backups.
+                      </div>
+                      <button type="button" className={`mt-4 inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-sm font-semibold ${isDarkMode ? 'border-indigo-500/70 text-indigo-200 hover:bg-indigo-500/10' : 'border-indigo-400 text-indigo-700 hover:bg-indigo-50'}`}>
+                        <Settings2 size={14} />
+                        Manage Storage
+                      </button>
+                    </section>
+                  </div>
+
+                  <div className={`rounded-xl border px-4 py-3 text-sm ${isDarkMode ? 'border-indigo-500/40 bg-indigo-500/10 text-indigo-200' : 'border-indigo-200 bg-indigo-50 text-indigo-700'}`}>
+                    <p className="flex items-center gap-2 font-semibold"><CircleAlert size={15} />Note</p>
+                    <p className="mt-1">Ensure backups are stored securely. We recommend downloading important backups and storing them in a safe location.</p>
+                  </div>
+                </div>
+              </section>
+            ) : null}
+
+            {activeSettingsMenu !== 'General' && activeSettingsMenu !== 'Library Profile' && activeSettingsMenu !== 'Users & Roles' && activeSettingsMenu !== 'Books & Borrowing' && activeSettingsMenu !== 'Membership & Penalties' && activeSettingsMenu !== 'Notifications' && activeSettingsMenu !== 'Email & SMTP' && activeSettingsMenu !== 'Security' && activeSettingsMenu !== 'Backup' ? (
               <section className={`rounded-2xl border p-6 ${cardClass}`}>
                 <h4 className="text-[20px] font-semibold tracking-tight">{activeSettingsMenu}</h4>
                 <p className={`mt-2 text-sm ${textMutedClass}`}>This tab is ready for implementation next.</p>
