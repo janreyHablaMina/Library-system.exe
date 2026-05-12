@@ -30,8 +30,10 @@ import {
   Settings2,
   Shield,
   Sun,
+  TriangleAlert,
   Trash2,
   Upload,
+  User,
   UserRound,
   UserCog,
   UsersRound,
@@ -125,6 +127,55 @@ type BooksBorrowingSettings = {
   blockBorrowingIfMembershipExpired: boolean
   minimumDaysBetweenLoans: string
   allowStaffOverrideLoanPolicy: boolean
+  returnGracePeriodDays: string
+  fineCalculationMethod: string
+  fineAmountPerDay: string
+  maximumFineAmount: string
+  allowBookReturnAfterDueDate: boolean
+  clearReservationOnReturn: boolean
+  autoCalculateFineOnReturn: boolean
+  updateBookAvailabilityOnReturn: boolean
+  allowFineWaiver: boolean
+  finePaymentRequiredForReturn: boolean
+  fineRounding: string
+  receiptOnFinePayment: boolean
+  allowReservations: boolean
+  maxReservationsPerMember: string
+  reservationExpiryDays: string
+  notifyBeforeExpiryHours: string
+  onlyAllowReservationIfNoCopyAvailable: boolean
+  allowReservationOnLostDamagedCopies: boolean
+  allowReservationOnReferenceBooks: boolean
+  allowReservationOnUpcomingBooks: boolean
+  queueType: string
+  autoCancelReservation: boolean
+  nextReservationAfterCancellation: boolean
+  queuePriority: string
+  reservationConfirmationNotification: boolean
+  reservationExpiryReminderNotification: boolean
+  reservationCancellationAlertNotification: boolean
+  bookReadyNotification: boolean
+}
+
+type MembershipTypeRow = {
+  type: string
+  description: string
+  maxBooks: string
+  loanPeriodDays: string
+  fineExempt: boolean
+  icon: LucideIcon
+  color: 'violet' | 'emerald' | 'amber' | 'blue' | 'slate'
+}
+
+type PenaltyRuleListRow = {
+  fineType: string
+  applyFinePer: string
+  fineAmount: string
+  gracePeriod: string
+  maxFineAmount: string
+  status: 'Active' | 'Inactive'
+  icon: LucideIcon
+  color: 'amber' | 'rose' | 'violet' | 'orange' | 'blue'
 }
 
 type Option = {
@@ -309,6 +360,28 @@ const reminderOptions: Option[] = [
   { value: '3 days before', label: '3 days before' },
 ]
 
+const fineCalculationOptions: Option[] = [
+  { value: 'Per Day', label: 'Per Day' },
+  { value: 'Per Hour', label: 'Per Hour' },
+  { value: 'Fixed Fee', label: 'Fixed Fee' },
+]
+
+const fineRoundingOptions: Option[] = [
+  { value: '$0.10', label: '$0.10' },
+  { value: '$0.25', label: '$0.25' },
+  { value: '$0.50', label: '$0.50' },
+]
+
+const queueTypeOptions: Option[] = [
+  { value: 'FIFO (First In First Out)', label: 'FIFO (First In First Out)' },
+  { value: 'LIFO (Last In First Out)', label: 'LIFO (Last In First Out)' },
+]
+
+const queuePriorityOptions: Option[] = [
+  { value: 'By Reservation Date', label: 'By Reservation Date' },
+  { value: 'By Member Type', label: 'By Member Type' },
+]
+
 const initialBooksBorrowingSettings: BooksBorrowingSettings = {
   accessionFormat: 'ACC-(YYYY)-(#####)',
   defaultLanguage: 'English',
@@ -332,7 +405,51 @@ const initialBooksBorrowingSettings: BooksBorrowingSettings = {
   blockBorrowingIfMembershipExpired: true,
   minimumDaysBetweenLoans: '0',
   allowStaffOverrideLoanPolicy: true,
+  returnGracePeriodDays: '1',
+  fineCalculationMethod: 'Per Day',
+  fineAmountPerDay: '0.50',
+  maximumFineAmount: '25.00',
+  allowBookReturnAfterDueDate: true,
+  clearReservationOnReturn: true,
+  autoCalculateFineOnReturn: true,
+  updateBookAvailabilityOnReturn: true,
+  allowFineWaiver: true,
+  finePaymentRequiredForReturn: false,
+  fineRounding: '$0.10',
+  receiptOnFinePayment: true,
+  allowReservations: true,
+  maxReservationsPerMember: '5',
+  reservationExpiryDays: '2',
+  notifyBeforeExpiryHours: '24',
+  onlyAllowReservationIfNoCopyAvailable: true,
+  allowReservationOnLostDamagedCopies: false,
+  allowReservationOnReferenceBooks: false,
+  allowReservationOnUpcomingBooks: true,
+  queueType: 'FIFO (First In First Out)',
+  autoCancelReservation: true,
+  nextReservationAfterCancellation: true,
+  queuePriority: 'By Reservation Date',
+  reservationConfirmationNotification: true,
+  reservationExpiryReminderNotification: true,
+  reservationCancellationAlertNotification: true,
+  bookReadyNotification: true,
 }
+
+const membershipTypeRows: MembershipTypeRow[] = [
+  { type: 'Student', description: 'For enrolled students', maxBooks: '5', loanPeriodDays: '14', fineExempt: false, icon: UserRound, color: 'violet' },
+  { type: 'Faculty', description: 'For teaching staff', maxBooks: '10', loanPeriodDays: '30', fineExempt: false, icon: UserCog, color: 'emerald' },
+  { type: 'Staff', description: 'For library and administrative staff', maxBooks: '8', loanPeriodDays: '21', fineExempt: false, icon: User, color: 'amber' },
+  { type: 'Member', description: 'For regular library members', maxBooks: '5', loanPeriodDays: '14', fineExempt: true, icon: UserRound, color: 'blue' },
+  { type: 'Guest', description: 'For guest users', maxBooks: '2', loanPeriodDays: '7', fineExempt: false, icon: User, color: 'slate' },
+]
+
+const penaltyRuleListRows: PenaltyRuleListRow[] = [
+  { fineType: 'Overdue Fine', applyFinePer: 'Per Day', fineAmount: '$ 0.50', gracePeriod: '1 day', maxFineAmount: '$ 25.00', status: 'Active', icon: Clock3, color: 'amber' },
+  { fineType: 'Lost Item Fine', applyFinePer: 'Per Item', fineAmount: '$ 20.00', gracePeriod: '0 days', maxFineAmount: '$ 100.00', status: 'Active', icon: BookOpen, color: 'rose' },
+  { fineType: 'Damaged Item Fine', applyFinePer: 'Per Item', fineAmount: '$ 15.00', gracePeriod: '0 days', maxFineAmount: '$ 75.00', status: 'Active', icon: Wrench, color: 'violet' },
+  { fineType: 'Fine Waived (Staff)', applyFinePer: 'Per Day', fineAmount: '$ 0.00', gracePeriod: '0 days', maxFineAmount: '$ 0.00', status: 'Active', icon: UserCog, color: 'orange' },
+  { fineType: 'Reservation Late Fine', applyFinePer: 'Per Day', fineAmount: '$ 0.25', gracePeriod: '1 day', maxFineAmount: '$ 10.00', status: 'Inactive', icon: CalendarDays, color: 'blue' },
+]
 
 type InputFieldProps = {
   label: string
@@ -423,6 +540,7 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
   const [libraryProfile, setLibraryProfile] = useState(initialLibraryProfile)
   const [usersRoleTab, setUsersRoleTab] = useState<'Users' | 'Roles'>('Users')
   const [booksBorrowingTab, setBooksBorrowingTab] = useState<'Book Settings' | 'Borrowing Settings' | 'Return Settings' | 'Reservation Settings'>('Book Settings')
+  const [membershipPenaltyTab, setMembershipPenaltyTab] = useState<'Membership Types' | 'Penalty Rules'>('Membership Types')
   const [booksBorrowingSettings, setBooksBorrowingSettings] = useState(initialBooksBorrowingSettings)
   const [userSearch, setUserSearch] = useState('')
   const [userRoleFilter, setUserRoleFilter] = useState('all')
@@ -555,8 +673,10 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
                     ? "Update your library's details and contact information."
                     : activeSettingsMenu === 'Users & Roles'
                       ? 'Manage system users and their roles and permissions.'
-                      : activeSettingsMenu === 'Books & Borrowing'
-                        ? 'Configure book management and circulation settings.'
+                    : activeSettingsMenu === 'Books & Borrowing'
+                      ? 'Configure book management and circulation settings.'
+                      : activeSettingsMenu === 'Membership & Penalties'
+                        ? 'Configure membership types and penalty rules for overdue materials.'
                       : 'Manage your system preferences and configurations.'}
                 </p>
               </div>
@@ -1349,6 +1469,305 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
                       <p className="mt-1">These borrowing settings will be applied to all members unless specific rules are set for individual member types.</p>
                     </div>
                   </div>
+                ) : booksBorrowingTab === 'Return Settings' ? (
+                  <div className="space-y-4 p-6">
+                    <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                      <p className="flex items-center gap-2 text-sm font-semibold">
+                        <ClipboardCheck size={15} className="text-indigo-600" />
+                        Return Policy
+                      </p>
+                      <p className={`mt-1 text-sm ${textMutedClass}`}>Configure rules for returning books.</p>
+
+                      <div className="mt-4 grid gap-4 md:grid-cols-4">
+                        <InputField
+                          label="Grace Period (Days)"
+                          value={booksBorrowingSettings.returnGracePeriodDays}
+                          onChange={(value) => updateBooksBorrowing('returnGracePeriodDays', value)}
+                          isDarkMode={isDarkMode}
+                          hint="Grace period before fine is applied."
+                        />
+                        <SelectField
+                          label="Fine Calculation Method"
+                          value={booksBorrowingSettings.fineCalculationMethod}
+                          onChange={(value) => updateBooksBorrowing('fineCalculationMethod', value)}
+                          options={fineCalculationOptions}
+                          isDarkMode={isDarkMode}
+                        />
+                        <InputField
+                          label="Fine Amount (Per Day)"
+                          value={booksBorrowingSettings.fineAmountPerDay}
+                          onChange={(value) => updateBooksBorrowing('fineAmountPerDay', value)}
+                          isDarkMode={isDarkMode}
+                          hint="Fine amount charged per overdue day."
+                        />
+                        <InputField
+                          label="Maximum Fine Amount"
+                          value={booksBorrowingSettings.maximumFineAmount}
+                          onChange={(value) => updateBooksBorrowing('maximumFineAmount', value)}
+                          isDarkMode={isDarkMode}
+                          hint="Maximum fine charged per book."
+                        />
+                      </div>
+                    </section>
+
+                    <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                      <p className="flex items-center gap-2 text-sm font-semibold">
+                        <Shield size={15} className="text-indigo-600" />
+                        Return Processing
+                      </p>
+
+                      <div className="mt-4 grid gap-4 md:grid-cols-2">
+                        <div className="space-y-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-semibold">Allow Book Return After Due Date</p>
+                              <p className={`text-xs ${textMutedClass}`}>Members can return books even after the due date.</p>
+                            </div>
+                            <SwitchField checked={booksBorrowingSettings.allowBookReturnAfterDueDate} onChange={(value) => updateBooksBorrowing('allowBookReturnAfterDueDate', value)} isDarkMode={isDarkMode} />
+                          </div>
+
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-semibold">Auto-Calculate Fine on Return</p>
+                              <p className={`text-xs ${textMutedClass}`}>Automatically calculate fine when a book is returned.</p>
+                            </div>
+                            <SwitchField checked={booksBorrowingSettings.autoCalculateFineOnReturn} onChange={(value) => updateBooksBorrowing('autoCalculateFineOnReturn', value)} isDarkMode={isDarkMode} />
+                          </div>
+                        </div>
+
+                        <div className="space-y-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-semibold">Clear Reservation on Return</p>
+                              <p className={`text-xs ${textMutedClass}`}>Remove member&apos;s reservation when the book is returned.</p>
+                            </div>
+                            <SwitchField checked={booksBorrowingSettings.clearReservationOnReturn} onChange={(value) => updateBooksBorrowing('clearReservationOnReturn', value)} isDarkMode={isDarkMode} />
+                          </div>
+
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-semibold">Update Book Availability on Return</p>
+                              <p className={`text-xs ${textMutedClass}`}>Make the book available immediately after return.</p>
+                            </div>
+                            <SwitchField checked={booksBorrowingSettings.updateBookAvailabilityOnReturn} onChange={(value) => updateBooksBorrowing('updateBookAvailabilityOnReturn', value)} isDarkMode={isDarkMode} />
+                          </div>
+                        </div>
+                      </div>
+                    </section>
+
+                    <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                      <p className="flex items-center gap-2 text-sm font-semibold">
+                        <Wrench size={15} className="text-indigo-600" />
+                        Fine Handling
+                      </p>
+
+                      <div className="mt-4 grid gap-4 md:grid-cols-2">
+                        <div className="space-y-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-semibold">Allow Fine Waiver</p>
+                              <p className={`text-xs ${textMutedClass}`}>Librarians can waive fines manually.</p>
+                            </div>
+                            <SwitchField checked={booksBorrowingSettings.allowFineWaiver} onChange={(value) => updateBooksBorrowing('allowFineWaiver', value)} isDarkMode={isDarkMode} />
+                          </div>
+
+                          <SelectField
+                            label="Fine Rounding"
+                            value={booksBorrowingSettings.fineRounding}
+                            onChange={(value) => updateBooksBorrowing('fineRounding', value)}
+                            options={fineRoundingOptions}
+                            isDarkMode={isDarkMode}
+                          />
+                        </div>
+
+                        <div className="space-y-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-semibold">Fine Payment Required for Return</p>
+                              <p className={`text-xs ${textMutedClass}`}>Require fine payment before returning a book.</p>
+                            </div>
+                            <SwitchField checked={booksBorrowingSettings.finePaymentRequiredForReturn} onChange={(value) => updateBooksBorrowing('finePaymentRequiredForReturn', value)} isDarkMode={isDarkMode} />
+                          </div>
+
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-semibold">Receipt on Fine Payment</p>
+                              <p className={`text-xs ${textMutedClass}`}>Generate receipt when fine is paid.</p>
+                            </div>
+                            <SwitchField checked={booksBorrowingSettings.receiptOnFinePayment} onChange={(value) => updateBooksBorrowing('receiptOnFinePayment', value)} isDarkMode={isDarkMode} />
+                          </div>
+                        </div>
+                      </div>
+                    </section>
+
+                    <div className={`rounded-xl border px-4 py-3 text-sm ${isDarkMode ? 'border-indigo-500/40 bg-indigo-500/10 text-indigo-200' : 'border-indigo-200 bg-indigo-50 text-indigo-700'}`}>
+                      <p className="flex items-center gap-2 font-semibold"><CircleAlert size={15} />Note</p>
+                      <p className="mt-1">These return settings will be applied to all members unless specific rules are set for individual member types.</p>
+                    </div>
+                  </div>
+                ) : booksBorrowingTab === 'Reservation Settings' ? (
+                  <div className="space-y-4 p-6">
+                    <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                      <p className="flex items-center gap-2 text-sm font-semibold">
+                        <ClipboardCheck size={15} className="text-indigo-600" />
+                        Reservation Rules
+                      </p>
+                      <p className={`mt-1 text-sm ${textMutedClass}`}>Configure general rules for book reservations.</p>
+
+                      <div className="mt-4 grid gap-4 md:grid-cols-4">
+                        <div>
+                          <p className="text-sm font-semibold">Allow Reservations</p>
+                          <div className="mt-3">
+                            <SwitchField checked={booksBorrowingSettings.allowReservations} onChange={(value) => updateBooksBorrowing('allowReservations', value)} isDarkMode={isDarkMode} />
+                          </div>
+                          <p className={`mt-3 text-xs ${textMutedClass}`}>Enable members to reserve books.</p>
+                        </div>
+                        <InputField
+                          label="Maximum Reservations Per Member"
+                          value={booksBorrowingSettings.maxReservationsPerMember}
+                          onChange={(value) => updateBooksBorrowing('maxReservationsPerMember', value)}
+                          isDarkMode={isDarkMode}
+                          hint="Maximum number of active reservations."
+                        />
+                        <InputField
+                          label="Reservation Expiry (Days)"
+                          value={booksBorrowingSettings.reservationExpiryDays}
+                          onChange={(value) => updateBooksBorrowing('reservationExpiryDays', value)}
+                          isDarkMode={isDarkMode}
+                          hint="Days to hold a reserved book."
+                        />
+                        <InputField
+                          label="Notify Before Expiry (Hours)"
+                          value={booksBorrowingSettings.notifyBeforeExpiryHours}
+                          onChange={(value) => updateBooksBorrowing('notifyBeforeExpiryHours', value)}
+                          isDarkMode={isDarkMode}
+                          hint="Send reminder before reservation expires."
+                        />
+                      </div>
+                    </section>
+
+                    <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                      <p className="flex items-center gap-2 text-sm font-semibold">
+                        <Shield size={15} className="text-indigo-600" />
+                        Reservation Conditions
+                      </p>
+
+                      <div className="mt-4 grid gap-4 md:grid-cols-4">
+                        <div>
+                          <div className="flex items-start justify-between gap-3">
+                            <p className="text-sm font-semibold">Only Allow Reservation if No Copy Available</p>
+                            <SwitchField checked={booksBorrowingSettings.onlyAllowReservationIfNoCopyAvailable} onChange={(value) => updateBooksBorrowing('onlyAllowReservationIfNoCopyAvailable', value)} isDarkMode={isDarkMode} />
+                          </div>
+                          <p className={`mt-2 text-xs ${textMutedClass}`}>Members can reserve only when all copies are currently borrowed.</p>
+                        </div>
+                        <div>
+                          <div className="flex items-start justify-between gap-3">
+                            <p className="text-sm font-semibold">Allow Reservation on Lost/Damaged Copies</p>
+                            <SwitchField checked={booksBorrowingSettings.allowReservationOnLostDamagedCopies} onChange={(value) => updateBooksBorrowing('allowReservationOnLostDamagedCopies', value)} isDarkMode={isDarkMode} />
+                          </div>
+                          <p className={`mt-2 text-xs ${textMutedClass}`}>Allow reservation even if some copies are marked lost or damaged.</p>
+                        </div>
+                        <div>
+                          <div className="flex items-start justify-between gap-3">
+                            <p className="text-sm font-semibold">Allow Reservation on Reference Books</p>
+                            <SwitchField checked={booksBorrowingSettings.allowReservationOnReferenceBooks} onChange={(value) => updateBooksBorrowing('allowReservationOnReferenceBooks', value)} isDarkMode={isDarkMode} />
+                          </div>
+                          <p className={`mt-2 text-xs ${textMutedClass}`}>Enable reservation for reference (non-circulating) books.</p>
+                        </div>
+                        <div>
+                          <div className="flex items-start justify-between gap-3">
+                            <p className="text-sm font-semibold">Allow Reservation on Upcoming Books</p>
+                            <SwitchField checked={booksBorrowingSettings.allowReservationOnUpcomingBooks} onChange={(value) => updateBooksBorrowing('allowReservationOnUpcomingBooks', value)} isDarkMode={isDarkMode} />
+                          </div>
+                          <p className={`mt-2 text-xs ${textMutedClass}`}>Allow reservation for books that will be available in future.</p>
+                        </div>
+                      </div>
+                    </section>
+
+                    <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                      <p className="flex items-center gap-2 text-sm font-semibold">
+                        <UsersRound size={15} className="text-indigo-600" />
+                        Reservation Queue
+                      </p>
+
+                      <div className="mt-4 grid gap-4 md:grid-cols-4">
+                        <SelectField
+                          label="Queue Type"
+                          value={booksBorrowingSettings.queueType}
+                          onChange={(value) => updateBooksBorrowing('queueType', value)}
+                          options={queueTypeOptions}
+                          isDarkMode={isDarkMode}
+                        />
+                        <div>
+                          <p className="text-sm font-semibold">Automatically Cancel Reservation</p>
+                          <div className="mt-3">
+                            <SwitchField checked={booksBorrowingSettings.autoCancelReservation} onChange={(value) => updateBooksBorrowing('autoCancelReservation', value)} isDarkMode={isDarkMode} />
+                          </div>
+                          <p className={`mt-3 text-xs ${textMutedClass}`}>Cancel reservation if member doesn&apos;t collect the book within the expiry period.</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold">Next Reservation After Cancellation</p>
+                          <div className="mt-3">
+                            <SwitchField checked={booksBorrowingSettings.nextReservationAfterCancellation} onChange={(value) => updateBooksBorrowing('nextReservationAfterCancellation', value)} isDarkMode={isDarkMode} />
+                          </div>
+                          <p className={`mt-3 text-xs ${textMutedClass}`}>Automatically assign the next reservation in the queue.</p>
+                        </div>
+                        <div>
+                          <SelectField
+                            label="Queue Priority"
+                            value={booksBorrowingSettings.queuePriority}
+                            onChange={(value) => updateBooksBorrowing('queuePriority', value)}
+                            options={queuePriorityOptions}
+                            isDarkMode={isDarkMode}
+                          />
+                          <p className={`mt-1 text-xs ${textMutedClass}`}>Prioritize reservations by date or member type.</p>
+                        </div>
+                      </div>
+                    </section>
+
+                    <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                      <p className="flex items-center gap-2 text-sm font-semibold">
+                        <Bell size={15} className="text-indigo-600" />
+                        Notifications
+                      </p>
+
+                      <div className="mt-4 grid gap-4 md:grid-cols-4">
+                        <div>
+                          <div className="flex items-start justify-between gap-3">
+                            <p className="text-sm font-semibold">Reservation Confirmation</p>
+                            <SwitchField checked={booksBorrowingSettings.reservationConfirmationNotification} onChange={(value) => updateBooksBorrowing('reservationConfirmationNotification', value)} isDarkMode={isDarkMode} />
+                          </div>
+                          <p className={`mt-2 text-xs ${textMutedClass}`}>Notify members when their reservation is confirmed.</p>
+                        </div>
+                        <div>
+                          <div className="flex items-start justify-between gap-3">
+                            <p className="text-sm font-semibold">Reservation Expiry Reminder</p>
+                            <SwitchField checked={booksBorrowingSettings.reservationExpiryReminderNotification} onChange={(value) => updateBooksBorrowing('reservationExpiryReminderNotification', value)} isDarkMode={isDarkMode} />
+                          </div>
+                          <p className={`mt-2 text-xs ${textMutedClass}`}>Send reminder before reservation expires.</p>
+                        </div>
+                        <div>
+                          <div className="flex items-start justify-between gap-3">
+                            <p className="text-sm font-semibold">Reservation Cancellation Alert</p>
+                            <SwitchField checked={booksBorrowingSettings.reservationCancellationAlertNotification} onChange={(value) => updateBooksBorrowing('reservationCancellationAlertNotification', value)} isDarkMode={isDarkMode} />
+                          </div>
+                          <p className={`mt-2 text-xs ${textMutedClass}`}>Notify members when their reservation is cancelled.</p>
+                        </div>
+                        <div>
+                          <div className="flex items-start justify-between gap-3">
+                            <p className="text-sm font-semibold">Book Ready Notification</p>
+                            <SwitchField checked={booksBorrowingSettings.bookReadyNotification} onChange={(value) => updateBooksBorrowing('bookReadyNotification', value)} isDarkMode={isDarkMode} />
+                          </div>
+                          <p className={`mt-2 text-xs ${textMutedClass}`}>Notify members when the reserved book is ready to collect.</p>
+                        </div>
+                      </div>
+                    </section>
+
+                    <div className={`rounded-xl border px-4 py-3 text-sm ${isDarkMode ? 'border-indigo-500/40 bg-indigo-500/10 text-indigo-200' : 'border-indigo-200 bg-indigo-50 text-indigo-700'}`}>
+                      <p className="flex items-center gap-2 font-semibold"><CircleAlert size={15} />Note</p>
+                      <p className="mt-1">These reservation settings will be applied to all members unless specific rules are set for individual member types.</p>
+                    </div>
+                  </div>
                 ) : (
                   <div className="p-6">
                     <section className={`rounded-xl border p-6 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
@@ -1360,7 +1779,178 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
               </section>
             ) : null}
 
-            {activeSettingsMenu !== 'General' && activeSettingsMenu !== 'Library Profile' && activeSettingsMenu !== 'Users & Roles' && activeSettingsMenu !== 'Books & Borrowing' ? (
+            {activeSettingsMenu === 'Membership & Penalties' ? (
+              <section className={`rounded-2xl border p-0 ${cardClass}`}>
+                <div className="px-6 pt-4">
+                  <div className={`flex items-center gap-6 border-b ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                    <button
+                      type="button"
+                      onClick={() => setMembershipPenaltyTab('Membership Types')}
+                      className={`border-b-2 px-1 pb-3 text-sm font-semibold ${membershipPenaltyTab === 'Membership Types' ? 'border-indigo-600 text-indigo-600' : isDarkMode ? 'border-transparent text-slate-300' : 'border-transparent text-slate-700'}`}
+                    >
+                      Membership Types
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMembershipPenaltyTab('Penalty Rules')}
+                      className={`border-b-2 px-1 pb-3 text-sm font-semibold ${membershipPenaltyTab === 'Penalty Rules' ? 'border-indigo-600 text-indigo-600' : isDarkMode ? 'border-transparent text-slate-300' : 'border-transparent text-slate-700'}`}
+                    >
+                      Penalty Rules
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-4 p-6">
+                  {membershipPenaltyTab === 'Membership Types' ? (
+                    <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="flex items-center gap-2 text-sm font-semibold"><UsersRound size={15} className="text-indigo-600" />Membership Types</p>
+                        <p className={`mt-1 text-sm ${textMutedClass}`}>Manage different membership types and their borrowing privileges.</p>
+                      </div>
+                      <button type="button" className={`inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-sm font-semibold transition-colors ${isDarkMode ? 'border-indigo-500/70 text-indigo-200 hover:bg-indigo-500/10' : 'border-indigo-400 text-indigo-700 hover:bg-indigo-50'}`}>
+                        <Plus size={14} />
+                        Add Membership Type
+                      </button>
+                    </div>
+
+                    <div className={`mt-4 overflow-hidden rounded-xl border ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                      <div className={`grid grid-cols-[1.1fr_1.6fr_0.7fr_0.9fr_0.8fr_0.6fr] gap-3 border-b px-4 py-3 text-[13px] font-semibold ${isDarkMode ? 'border-slate-700 bg-[#0b1738] text-slate-200' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
+                        <p>Membership Type</p>
+                        <p>Description</p>
+                        <p>Max Books</p>
+                        <p>Loan Period (Days)</p>
+                        <p>Fine Exempt</p>
+                        <p>Actions</p>
+                      </div>
+
+                      {membershipTypeRows.map((row) => {
+                        const Icon = row.icon
+                        const chipColor =
+                          row.color === 'violet'
+                            ? isDarkMode ? 'bg-violet-500/20 text-violet-200' : 'bg-violet-100 text-violet-700'
+                            : row.color === 'emerald'
+                              ? isDarkMode ? 'bg-emerald-500/20 text-emerald-200' : 'bg-emerald-100 text-emerald-700'
+                              : row.color === 'amber'
+                                ? isDarkMode ? 'bg-amber-500/20 text-amber-200' : 'bg-amber-100 text-amber-700'
+                                : row.color === 'blue'
+                                  ? isDarkMode ? 'bg-blue-500/20 text-blue-200' : 'bg-blue-100 text-blue-700'
+                                  : isDarkMode ? 'bg-slate-600 text-slate-200' : 'bg-slate-100 text-slate-700'
+
+                        return (
+                          <div key={row.type} className={`grid grid-cols-[1.1fr_1.6fr_0.7fr_0.9fr_0.8fr_0.6fr] items-center gap-3 border-b px-4 py-3 last:border-b-0 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                            <div className="flex items-center gap-2">
+                              <span className={`grid h-8 w-8 place-items-center rounded-lg ${chipColor}`}><Icon size={14} /></span>
+                              <span className="text-sm font-semibold">{row.type}</span>
+                            </div>
+                            <p className={`text-sm ${textMutedClass}`}>{row.description}</p>
+                            <p className="text-sm">{row.maxBooks}</p>
+                            <p className="text-sm">{row.loanPeriodDays}</p>
+                            <p>
+                              <span className={`rounded-md px-2 py-0.5 text-xs font-semibold ${row.fineExempt ? isDarkMode ? 'bg-emerald-500/20 text-emerald-200' : 'bg-emerald-100 text-emerald-700' : isDarkMode ? 'bg-slate-600 text-slate-200' : 'bg-slate-100 text-slate-700'}`}>
+                                {row.fineExempt ? 'Yes' : 'No'}
+                              </span>
+                            </p>
+                            <div className="flex items-center gap-2">
+                              <button type="button" className={`grid h-8 w-8 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 text-indigo-300 hover:bg-slate-800' : 'border-slate-200 text-indigo-600 hover:bg-indigo-50'}`}><Pencil size={14} /></button>
+                              <button type="button" className={`grid h-8 w-8 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 text-rose-300 hover:bg-slate-800' : 'border-slate-200 text-rose-600 hover:bg-rose-50'}`}><Trash2 size={14} /></button>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                    <p className={`mt-3 text-sm ${textMutedClass}`}>Showing 1 to 5 of 5 types</p>
+                    </section>
+                  ) : (
+                    <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="flex items-center gap-2 text-sm font-semibold"><TriangleAlert size={15} className="text-indigo-600" />Penalty Rules</p>
+                          <p className={`mt-1 text-sm ${textMutedClass}`}>Define fine rules for overdue, lost or damaged materials.</p>
+                        </div>
+                        <button type="button" className={`inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-sm font-semibold transition-colors ${isDarkMode ? 'border-indigo-500/70 text-indigo-200 hover:bg-indigo-500/10' : 'border-indigo-400 text-indigo-700 hover:bg-indigo-50'}`}>
+                          <Plus size={14} />
+                          Add Penalty Rule
+                        </button>
+                      </div>
+
+                      <div className="mt-4 flex flex-wrap items-center gap-3">
+                        <div className="relative w-full max-w-[420px]">
+                          <Search size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${textMutedClass}`} />
+                          <input
+                            placeholder="Search penalty rules..."
+                            className={`h-10 w-full rounded-xl border px-3 pr-9 text-[14px] outline-none transition-colors ${
+                              isDarkMode
+                                ? 'border-slate-700 bg-[#0b1738] text-slate-100 placeholder:text-slate-500 focus:border-emerald-500'
+                                : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400 focus:border-emerald-500'
+                            }`}
+                          />
+                        </div>
+                        <div className="ml-auto flex items-center gap-3">
+                          <div className="w-[190px]">
+                            <SelectField label="" value="All Fine Types" onChange={() => undefined} options={[{ value: 'All Fine Types', label: 'All Fine Types' }]} isDarkMode={isDarkMode} />
+                          </div>
+                          <button type="button" className={`inline-flex h-10 items-center gap-2 rounded-xl border px-4 text-sm font-semibold transition-colors ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-50'}`}>
+                            <Settings2 size={14} />
+                            Filters
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className={`mt-4 overflow-hidden rounded-xl border ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                        <div className={`grid grid-cols-[0.35fr_1.2fr_1fr_0.9fr_1fr_1fr_0.9fr_0.8fr] gap-3 border-b px-4 py-3 text-[13px] font-semibold ${isDarkMode ? 'border-slate-700 bg-[#0b1738] text-slate-200' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
+                          <p>#</p><p>Fine Type</p><p>Apply Fine Per</p><p>Fine Amount</p><p>Grace Period (Days)</p><p>Max Fine Amount</p><p>Status</p><p>Actions</p>
+                        </div>
+                        {penaltyRuleListRows.map((row, idx) => {
+                          const Icon = row.icon
+                          const iconBg =
+                            row.color === 'amber'
+                              ? isDarkMode ? 'bg-amber-500/20 text-amber-200' : 'bg-amber-100 text-amber-700'
+                              : row.color === 'rose'
+                                ? isDarkMode ? 'bg-rose-500/20 text-rose-200' : 'bg-rose-100 text-rose-700'
+                                : row.color === 'violet'
+                                  ? isDarkMode ? 'bg-violet-500/20 text-violet-200' : 'bg-violet-100 text-violet-700'
+                                  : row.color === 'orange'
+                                    ? isDarkMode ? 'bg-orange-500/20 text-orange-200' : 'bg-orange-100 text-orange-700'
+                                    : isDarkMode ? 'bg-blue-500/20 text-blue-200' : 'bg-blue-100 text-blue-700'
+                          return (
+                            <div key={`${row.fineType}-${idx}`} className={`grid grid-cols-[0.35fr_1.2fr_1fr_0.9fr_1fr_1fr_0.9fr_0.8fr] items-center gap-3 border-b px-4 py-3 last:border-b-0 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                              <p className="text-sm">{idx + 1}</p>
+                              <div className="flex items-center gap-2"><span className={`grid h-8 w-8 place-items-center rounded-lg ${iconBg}`}><Icon size={14} /></span><span className="text-sm font-semibold">{row.fineType}</span></div>
+                              <p className="text-sm">{row.applyFinePer}</p>
+                              <p className="text-sm">{row.fineAmount}</p>
+                              <p className="text-sm">{row.gracePeriod}</p>
+                              <p className="text-sm">{row.maxFineAmount}</p>
+                              <p><span className={`rounded-md px-2 py-0.5 text-xs font-semibold ${row.status === 'Active' ? isDarkMode ? 'bg-emerald-500/20 text-emerald-200' : 'bg-emerald-100 text-emerald-700' : isDarkMode ? 'bg-slate-600 text-slate-200' : 'bg-slate-100 text-slate-700'}`}>{row.status}</span></p>
+                              <div className="flex items-center gap-2">
+                                <button type="button" className={`grid h-8 w-8 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 text-indigo-300 hover:bg-slate-800' : 'border-slate-200 text-indigo-600 hover:bg-indigo-50'}`}><Pencil size={14} /></button>
+                                <button type="button" className={`grid h-8 w-8 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 text-rose-300 hover:bg-slate-800' : 'border-slate-200 text-rose-600 hover:bg-rose-50'}`}><Trash2 size={14} /></button>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+
+                      <div className="mt-3 flex items-center justify-between">
+                        <p className={`text-sm ${textMutedClass}`}>Showing 1 to 5 of 5 rules</p>
+                        <div className="flex items-center gap-2">
+                          <button type="button" className={`grid h-8 w-8 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-300 text-slate-600 hover:bg-slate-50'}`}><ChevronLeft size={14} /></button>
+                          <button type="button" className="grid h-8 min-w-8 place-items-center rounded-lg bg-indigo-600 px-2 text-sm font-semibold text-white">1</button>
+                          <button type="button" className={`grid h-8 w-8 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-300 text-slate-600 hover:bg-slate-50'}`}><ChevronRight size={14} /></button>
+                        </div>
+                      </div>
+                    </section>
+                  )}
+
+                  <div className={`rounded-xl border px-4 py-3 text-sm ${isDarkMode ? 'border-indigo-500/40 bg-indigo-500/10 text-indigo-200' : 'border-indigo-200 bg-indigo-50 text-indigo-700'}`}>
+                    <p className="flex items-center gap-2 font-semibold"><CircleAlert size={15} />Note</p>
+                    <p className="mt-1">These membership and penalty settings will be applied to all members unless specific rules are set for individual member types.</p>
+                  </div>
+                </div>
+              </section>
+            ) : null}
+
+            {activeSettingsMenu !== 'General' && activeSettingsMenu !== 'Library Profile' && activeSettingsMenu !== 'Users & Roles' && activeSettingsMenu !== 'Books & Borrowing' && activeSettingsMenu !== 'Membership & Penalties' ? (
               <section className={`rounded-2xl border p-6 ${cardClass}`}>
                 <h4 className="text-[20px] font-semibold tracking-tight">{activeSettingsMenu}</h4>
                 <p className={`mt-2 text-sm ${textMutedClass}`}>This tab is ready for implementation next.</p>
