@@ -99,6 +99,26 @@ type UserRecord = {
   isYou?: boolean
 }
 
+type BooksBorrowingSettings = {
+  accessionFormat: string
+  defaultLanguage: string
+  defaultCondition: string
+  defaultShelfLocation: string
+  allowDuplicateBooks: boolean
+  autoGenerateAccessionNumber: boolean
+  allowMultipleCategories: boolean
+  allowMultipleSubjects: boolean
+  showOnPublicCatalog: boolean
+  maxBooksPerMember: string
+  loanPeriodDays: string
+  renewalLimit: string
+  renewalPeriodDays: string
+  reserveWhenUnavailable: boolean
+  autoDueDateCalculation: boolean
+  gracePeriodDays: string
+  dueDateReminder: string
+}
+
 type Option = {
   value: string
   label: string
@@ -264,15 +284,53 @@ const roles = [
   { name: 'Guest View', detail: 'Read-only access to catalog', users: 0, icon: View, color: 'slate' },
 ] as const
 
+const languageSelectOptions: Option[] = [
+  { value: 'English', label: 'English' },
+  { value: 'Filipino', label: 'Filipino' },
+]
+
+const conditionOptions: Option[] = [
+  { value: 'New', label: 'New' },
+  { value: 'Good', label: 'Good' },
+  { value: 'Fair', label: 'Fair' },
+]
+
+const reminderOptions: Option[] = [
+  { value: '1 day before', label: '1 day before' },
+  { value: '2 days before', label: '2 days before' },
+  { value: '3 days before', label: '3 days before' },
+]
+
+const initialBooksBorrowingSettings: BooksBorrowingSettings = {
+  accessionFormat: 'ACC-(YYYY)-(#####)',
+  defaultLanguage: 'English',
+  defaultCondition: 'New',
+  defaultShelfLocation: 'General Shelf',
+  allowDuplicateBooks: true,
+  autoGenerateAccessionNumber: true,
+  allowMultipleCategories: true,
+  allowMultipleSubjects: true,
+  showOnPublicCatalog: true,
+  maxBooksPerMember: '5',
+  loanPeriodDays: '14',
+  renewalLimit: '2',
+  renewalPeriodDays: '7',
+  reserveWhenUnavailable: true,
+  autoDueDateCalculation: true,
+  gracePeriodDays: '1',
+  dueDateReminder: '2 days before',
+}
+
 type InputFieldProps = {
   label: string
   value: string
   onChange: (value: string) => void
   isDarkMode: boolean
   rightIcon?: LucideIcon
+  hint?: string
 }
 
-function InputField({ label, value, onChange, isDarkMode, rightIcon }: InputFieldProps) {
+function InputField({ label, value, onChange, isDarkMode, rightIcon, hint }: InputFieldProps) {
   const RightIcon = rightIcon
   return (
     <label className="space-y-1.5">
@@ -289,6 +347,7 @@ function InputField({ label, value, onChange, isDarkMode, rightIcon }: InputFiel
         />
         {RightIcon ? <RightIcon size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} /> : null}
       </div>
+      {hint ? <span className={`block text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{hint}</span> : null}
     </label>
   )
 }
@@ -350,6 +409,8 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
   const [additionalPreferences, setAdditionalPreferences] = useState(initialAdditionalPreferences)
   const [libraryProfile, setLibraryProfile] = useState(initialLibraryProfile)
   const [usersRoleTab, setUsersRoleTab] = useState<'Users' | 'Roles'>('Users')
+  const [booksBorrowingTab, setBooksBorrowingTab] = useState<'Book Settings' | 'Borrowing Settings' | 'Return Settings' | 'Reservation Settings'>('Book Settings')
+  const [booksBorrowingSettings, setBooksBorrowingSettings] = useState(initialBooksBorrowingSettings)
   const [userSearch, setUserSearch] = useState('')
   const [userRoleFilter, setUserRoleFilter] = useState('all')
   const [userStatusFilter, setUserStatusFilter] = useState('all')
@@ -371,6 +432,9 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
   }
   const updateLibraryProfile = <Key extends keyof LibraryProfile>(key: Key, value: LibraryProfile[Key]) => {
     setLibraryProfile((previous) => ({ ...previous, [key]: value }))
+  }
+  const updateBooksBorrowing = <Key extends keyof BooksBorrowingSettings>(key: Key, value: BooksBorrowingSettings[Key]) => {
+    setBooksBorrowingSettings((previous) => ({ ...previous, [key]: value }))
   }
 
   const libraryItems = settingsMenuItems.filter((item) => item.group === 'LIBRARY')
@@ -478,6 +542,8 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
                     ? "Update your library's details and contact information."
                     : activeSettingsMenu === 'Users & Roles'
                       ? 'Manage system users and their roles and permissions.'
+                      : activeSettingsMenu === 'Books & Borrowing'
+                        ? 'Configure book management and circulation settings.'
                       : 'Manage your system preferences and configurations.'}
                 </p>
               </div>
@@ -971,7 +1037,164 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
               </section>
             ) : null}
 
-            {activeSettingsMenu !== 'General' && activeSettingsMenu !== 'Library Profile' && activeSettingsMenu !== 'Users & Roles' ? (
+            {activeSettingsMenu === 'Books & Borrowing' ? (
+              <section className={`rounded-2xl border p-0 ${cardClass}`}>
+                <div className="px-6 pt-4">
+                  <div className={`flex items-center gap-6 border-b ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                    {(['Book Settings', 'Borrowing Settings', 'Return Settings', 'Reservation Settings'] as const).map((tab) => {
+                      const active = booksBorrowingTab === tab
+                      return (
+                        <button
+                          key={tab}
+                          type="button"
+                          onClick={() => setBooksBorrowingTab(tab)}
+                          className={`border-b-2 px-1 pb-3 text-sm font-semibold transition-colors ${
+                            active
+                              ? 'border-indigo-600 text-indigo-600'
+                              : isDarkMode
+                                ? 'border-transparent text-slate-300 hover:text-slate-100'
+                                : 'border-transparent text-slate-700 hover:text-slate-900'
+                          }`}
+                        >
+                          {tab}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {booksBorrowingTab === 'Book Settings' ? (
+                  <div className="space-y-4 p-6">
+                    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
+                      <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                        <h4 className="text-[20px] font-semibold tracking-tight">Book Management</h4>
+                        <p className={`mt-1 text-sm ${textMutedClass}`}>Configure general settings for managing books in the library.</p>
+
+                        <div className="mt-4 grid gap-4 md:grid-cols-2">
+                          <InputField
+                            label="Accession Number Format"
+                            value={booksBorrowingSettings.accessionFormat}
+                            onChange={(value) => updateBooksBorrowing('accessionFormat', value)}
+                            isDarkMode={isDarkMode}
+                            hint="Use (YYYY) for year and (#####) for number"
+                          />
+                          <SelectField
+                            label="Default Language"
+                            value={booksBorrowingSettings.defaultLanguage}
+                            onChange={(value) => updateBooksBorrowing('defaultLanguage', value)}
+                            options={languageSelectOptions}
+                            isDarkMode={isDarkMode}
+                          />
+                          <SelectField
+                            label="Default Condition"
+                            value={booksBorrowingSettings.defaultCondition}
+                            onChange={(value) => updateBooksBorrowing('defaultCondition', value)}
+                            options={conditionOptions}
+                            isDarkMode={isDarkMode}
+                          />
+                          <InputField
+                            label="Default Shelf Location"
+                            value={booksBorrowingSettings.defaultShelfLocation}
+                            onChange={(value) => updateBooksBorrowing('defaultShelfLocation', value)}
+                            isDarkMode={isDarkMode}
+                          />
+                        </div>
+
+                        <div className="mt-4 grid gap-4 md:grid-cols-2">
+                          <div className="flex items-center justify-between gap-3 rounded-xl border p-3">
+                            <div>
+                              <p className="text-sm font-semibold">Allow Duplicate Books</p>
+                              <p className={`text-xs ${textMutedClass}`}>Allow adding multiple copies of the same book.</p>
+                            </div>
+                            <SwitchField checked={booksBorrowingSettings.allowDuplicateBooks} onChange={(value) => updateBooksBorrowing('allowDuplicateBooks', value)} isDarkMode={isDarkMode} />
+                          </div>
+                          <div className="flex items-center justify-between gap-3 rounded-xl border p-3">
+                            <div>
+                              <p className="text-sm font-semibold">Auto-generate Accession Number</p>
+                              <p className={`text-xs ${textMutedClass}`}>Automatically generate accession number when adding books.</p>
+                            </div>
+                            <SwitchField checked={booksBorrowingSettings.autoGenerateAccessionNumber} onChange={(value) => updateBooksBorrowing('autoGenerateAccessionNumber', value)} isDarkMode={isDarkMode} />
+                          </div>
+                        </div>
+                      </section>
+
+                      <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                        <h4 className="text-[20px] font-semibold tracking-tight">Book Categories & Subjects</h4>
+                        <p className={`mt-1 text-sm ${textMutedClass}`}>Manage how categories and subjects work.</p>
+                        <div className="mt-4 space-y-0">
+                          <div className={`flex items-center justify-between gap-3 py-4 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'} border-b`}>
+                            <div>
+                              <p className="text-sm font-semibold">Allow Multiple Categories</p>
+                              <p className={`text-xs ${textMutedClass}`}>A book can be assigned to multiple categories.</p>
+                            </div>
+                            <SwitchField checked={booksBorrowingSettings.allowMultipleCategories} onChange={(value) => updateBooksBorrowing('allowMultipleCategories', value)} isDarkMode={isDarkMode} />
+                          </div>
+                          <div className={`flex items-center justify-between gap-3 py-4 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'} border-b`}>
+                            <div>
+                              <p className="text-sm font-semibold">Allow Multiple Subjects</p>
+                              <p className={`text-xs ${textMutedClass}`}>A book can be assigned to multiple subjects.</p>
+                            </div>
+                            <SwitchField checked={booksBorrowingSettings.allowMultipleSubjects} onChange={(value) => updateBooksBorrowing('allowMultipleSubjects', value)} isDarkMode={isDarkMode} />
+                          </div>
+                          <div className="flex items-center justify-between gap-3 py-4">
+                            <div>
+                              <p className="text-sm font-semibold">Show on Public Catalog</p>
+                              <p className={`text-xs ${textMutedClass}`}>Make newly added books visible on the public catalog.</p>
+                            </div>
+                            <SwitchField checked={booksBorrowingSettings.showOnPublicCatalog} onChange={(value) => updateBooksBorrowing('showOnPublicCatalog', value)} isDarkMode={isDarkMode} />
+                          </div>
+                        </div>
+                      </section>
+                    </div>
+
+                    <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                      <h4 className="text-[20px] font-semibold tracking-tight">Circulation Rules (General)</h4>
+                      <p className={`mt-1 text-sm ${textMutedClass}`}>Set general rules that apply to all book transactions.</p>
+
+                      <div className="mt-4 grid gap-4 md:grid-cols-4">
+                        <InputField label="Maximum Books Per Member" value={booksBorrowingSettings.maxBooksPerMember} onChange={(value) => updateBooksBorrowing('maxBooksPerMember', value)} isDarkMode={isDarkMode} hint="Number of books a member can borrow at a time." />
+                        <InputField label="Loan Period (Days)" value={booksBorrowingSettings.loanPeriodDays} onChange={(value) => updateBooksBorrowing('loanPeriodDays', value)} isDarkMode={isDarkMode} hint="Default number of days for borrowing books." />
+                        <InputField label="Renewal Limit" value={booksBorrowingSettings.renewalLimit} onChange={(value) => updateBooksBorrowing('renewalLimit', value)} isDarkMode={isDarkMode} hint="Maximum number of times a book can be renewed." />
+                        <InputField label="Renewal Period (Days)" value={booksBorrowingSettings.renewalPeriodDays} onChange={(value) => updateBooksBorrowing('renewalPeriodDays', value)} isDarkMode={isDarkMode} hint="Number of days added on each renewal." />
+                      </div>
+
+                      <div className="mt-4 grid gap-4 md:grid-cols-4">
+                        <div className="flex items-center justify-between gap-3 rounded-xl border p-3">
+                          <div>
+                            <p className="text-sm font-semibold">Reserve When Unavailable</p>
+                            <p className={`text-xs ${textMutedClass}`}>Allow members to reserve books that are currently borrowed.</p>
+                          </div>
+                          <SwitchField checked={booksBorrowingSettings.reserveWhenUnavailable} onChange={(value) => updateBooksBorrowing('reserveWhenUnavailable', value)} isDarkMode={isDarkMode} />
+                        </div>
+                        <div className="flex items-center justify-between gap-3 rounded-xl border p-3">
+                          <div>
+                            <p className="text-sm font-semibold">Auto Due Date Calculation</p>
+                            <p className={`text-xs ${textMutedClass}`}>Automatically calculate due date based on loan period.</p>
+                          </div>
+                          <SwitchField checked={booksBorrowingSettings.autoDueDateCalculation} onChange={(value) => updateBooksBorrowing('autoDueDateCalculation', value)} isDarkMode={isDarkMode} />
+                        </div>
+                        <InputField label="Grace Period (Days)" value={booksBorrowingSettings.gracePeriodDays} onChange={(value) => updateBooksBorrowing('gracePeriodDays', value)} isDarkMode={isDarkMode} hint="Grace period before fine is applied." />
+                        <SelectField label="Due Date Reminder" value={booksBorrowingSettings.dueDateReminder} onChange={(value) => updateBooksBorrowing('dueDateReminder', value)} options={reminderOptions} isDarkMode={isDarkMode} />
+                      </div>
+                    </section>
+
+                    <div className={`rounded-xl border px-4 py-3 text-sm ${isDarkMode ? 'border-indigo-500/40 bg-indigo-500/10 text-indigo-200' : 'border-indigo-200 bg-indigo-50 text-indigo-700'}`}>
+                      <p className="font-semibold">Default Values</p>
+                      <p className="mt-1">These settings will be applied globally across the system. You can override some of these values for specific members or books when needed.</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-6">
+                    <section className={`rounded-xl border p-6 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                      <h4 className="text-[20px] font-semibold tracking-tight">{booksBorrowingTab}</h4>
+                      <p className={`mt-2 text-sm ${textMutedClass}`}>This section is ready next. We can implement it with the same detail level as Book Settings.</p>
+                    </section>
+                  </div>
+                )}
+              </section>
+            ) : null}
+
+            {activeSettingsMenu !== 'General' && activeSettingsMenu !== 'Library Profile' && activeSettingsMenu !== 'Users & Roles' && activeSettingsMenu !== 'Books & Borrowing' ? (
               <section className={`rounded-2xl border p-6 ${cardClass}`}>
                 <h4 className="text-[20px] font-semibold tracking-tight">{activeSettingsMenu}</h4>
                 <p className={`mt-2 text-sm ${textMutedClass}`}>This tab is ready for implementation next.</p>
