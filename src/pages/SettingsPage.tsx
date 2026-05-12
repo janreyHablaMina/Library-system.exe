@@ -3,18 +3,24 @@ import type { LucideIcon } from 'lucide-react'
 import {
   Bell,
   BookOpen,
+  Building2,
+  CalendarDays,
   Check,
   ChevronDown,
   Clock3,
+  Eye,
   Globe,
   IdCard,
   Mail,
   Monitor,
   Moon,
+  Pencil,
   RotateCcw,
   Settings2,
   Shield,
   Sun,
+  Trash2,
+  Upload,
   UserCog,
   UsersRound,
   WalletCards,
@@ -50,6 +56,22 @@ type AdditionalPreferences = {
   showBarcodeInReceipts: boolean
   dueDateReminders: boolean
   publicCatalog: boolean
+}
+
+type LibraryProfile = {
+  libraryName: string
+  establishedYear: string
+  libraryEmail: string
+  phoneNumber: string
+  website: string
+  libraryCode: string
+  streetAddress: string
+  addressLine2: string
+  city: string
+  stateProvince: string
+  zipPostalCode: string
+  country: string
+  description: string
 }
 
 type Option = {
@@ -170,6 +192,51 @@ const initialAdditionalPreferences: AdditionalPreferences = {
   publicCatalog: true,
 }
 
+const initialLibraryProfile: LibraryProfile = {
+  libraryName: 'infoLib Library',
+  establishedYear: '2020',
+  libraryEmail: 'infolib@example.com',
+  phoneNumber: '+63 912 345 6789',
+  website: 'https://infolib.com',
+  libraryCode: 'INFOLIB-2020',
+  streetAddress: '123 Library St.',
+  addressLine2: 'Cityville',
+  city: 'Cityville',
+  stateProvince: 'California',
+  zipPostalCode: 'CA 90210',
+  country: 'United States',
+  description: 'infoLib Library is a modern library dedicated to providing knowledge and resources to inspire learning, research, and community growth.',
+}
+
+type InputFieldProps = {
+  label: string
+  value: string
+  onChange: (value: string) => void
+  isDarkMode: boolean
+  rightIcon?: LucideIcon
+}
+
+function InputField({ label, value, onChange, isDarkMode, rightIcon }: InputFieldProps) {
+  const RightIcon = rightIcon
+  return (
+    <label className="space-y-1.5">
+      <span className={`block text-[13px] font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{label}</span>
+      <div className="relative">
+        <input
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          className={`h-10 w-full rounded-xl border px-3 pr-9 text-[14px] outline-none transition-colors ${
+            isDarkMode
+              ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500 focus:border-emerald-500'
+              : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400 focus:border-emerald-500'
+          }`}
+        />
+        {RightIcon ? <RightIcon size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} /> : null}
+      </div>
+    </label>
+  )
+}
+
 type SelectFieldProps = {
   label: string
   value: string
@@ -225,6 +292,7 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
   const [general, setGeneral] = useState(initialGeneralSettings)
   const [systemPreferences, setSystemPreferences] = useState(initialSystemPreferences)
   const [additionalPreferences, setAdditionalPreferences] = useState(initialAdditionalPreferences)
+  const [libraryProfile, setLibraryProfile] = useState(initialLibraryProfile)
 
   const shellClass = isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'
   const cardClass = isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'
@@ -240,6 +308,9 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
 
   const updateAdditionalPreference = (key: keyof AdditionalPreferences, value: boolean) => {
     setAdditionalPreferences((previous) => ({ ...previous, [key]: value }))
+  }
+  const updateLibraryProfile = <Key extends keyof LibraryProfile>(key: Key, value: LibraryProfile[Key]) => {
+    setLibraryProfile((previous) => ({ ...previous, [key]: value }))
   }
 
   const libraryItems = settingsMenuItems.filter((item) => item.group === 'LIBRARY')
@@ -332,10 +403,12 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
                   <span className="mx-2">/</span>
                   Settings
                   <span className="mx-2">/</span>
-                  General
+                  {activeSettingsMenu}
                 </p>
-                <h3 className="mt-1 text-[30px] font-medium tracking-tight">General Settings</h3>
-                <p className={`mt-1 text-sm ${textMutedClass}`}>Manage your system preferences and configurations.</p>
+                <h3 className="mt-1 text-[30px] font-medium tracking-tight">{activeSettingsMenu === 'General' ? 'General Settings' : activeSettingsMenu}</h3>
+                <p className={`mt-1 text-sm ${textMutedClass}`}>
+                  {activeSettingsMenu === 'Library Profile' ? "Update your library's details and contact information." : 'Manage your system preferences and configurations.'}
+                </p>
               </div>
               <button
                 type="button"
@@ -346,7 +419,9 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
               </button>
             </div>
 
-            <section className={`rounded-2xl border p-6 ${cardClass}`}>
+            {activeSettingsMenu === 'General' ? (
+              <>
+                <section className={`rounded-2xl border p-6 ${cardClass}`}>
               <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_285px]">
                 <div>
                   <h4 className="text-[20px] font-semibold tracking-tight">System Preferences</h4>
@@ -410,9 +485,9 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
                   </div>
                 </aside>
               </div>
-            </section>
+                </section>
 
-            <section className={`rounded-2xl border p-6 ${cardClass}`}>
+                <section className={`rounded-2xl border p-6 ${cardClass}`}>
               <h4 className="text-[20px] font-semibold tracking-tight">Additional Preferences</h4>
               <div className="mt-2 mb-3 h-0.5 w-24 rounded-full bg-indigo-500" />
               <p className={`text-sm ${textMutedClass}`}>Configure additional system preferences.</p>
@@ -444,7 +519,96 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
               <div className={`mt-5 rounded-xl border px-4 py-3 text-sm ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-300' : 'border-slate-200 bg-slate-50 text-slate-600'}`}>
                 These settings will be applied across the entire system.
               </div>
-            </section>
+                </section>
+              </>
+            ) : null}
+
+            {activeSettingsMenu === 'Library Profile' ? (
+              <>
+                <section className={`rounded-2xl border p-5 ${cardClass}`}>
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <h4 className="text-[20px] font-semibold tracking-tight">Library Details</h4>
+                      <p className={`mt-1 text-sm ${textMutedClass}`}>Basic information about your library.</p>
+                    </div>
+                    <button type="button" className={`inline-flex h-10 items-center gap-2 rounded-xl border px-4 text-sm font-semibold transition-colors ${isDarkMode ? 'border-indigo-500/70 text-indigo-200 hover:bg-indigo-500/10' : 'border-indigo-400 text-indigo-700 hover:bg-indigo-50'}`}>
+                      <Eye size={15} />
+                      Preview Library Profile
+                    </button>
+                  </div>
+
+                  <div className="mt-5 grid gap-5 xl:grid-cols-[220px_minmax(0,1fr)]">
+                    <div className={`rounded-xl border p-4 text-center ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-slate-50'}`}>
+                      <div className="relative mx-auto w-fit">
+                        <div className={`mx-auto grid h-20 w-20 place-items-center rounded-full ${isDarkMode ? 'bg-slate-700 text-indigo-300' : 'bg-indigo-100 text-indigo-700'}`}>
+                          <Building2 size={36} />
+                        </div>
+                        <span className={`absolute -bottom-1 -right-1 grid h-8 w-8 place-items-center rounded-full border ${isDarkMode ? 'border-slate-700 bg-[#0b1738] text-slate-300' : 'border-slate-200 bg-white text-slate-600'}`}>
+                          <Pencil size={14} />
+                        </span>
+                      </div>
+                      <p className={`mt-3 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Current Logo</p>
+                      <p className={`mt-1 text-xs ${textMutedClass}`}>PNG, JPG or SVG. Max size 2MB</p>
+                      <button type="button" className={`mt-3 inline-flex h-10 items-center gap-2 rounded-xl border px-4 text-sm font-semibold transition-colors ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-white'}`}>
+                        <Upload size={14} />
+                        Change Logo
+                      </button>
+                      <button type="button" className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-red-500 hover:text-red-600">
+                        <Trash2 size={14} />
+                        Remove Logo
+                      </button>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <InputField label="Library Name *" value={libraryProfile.libraryName} onChange={(value) => updateLibraryProfile('libraryName', value)} isDarkMode={isDarkMode} />
+                      <InputField label="Established Year" value={libraryProfile.establishedYear} onChange={(value) => updateLibraryProfile('establishedYear', value)} isDarkMode={isDarkMode} rightIcon={CalendarDays} />
+                      <InputField label="Library Email *" value={libraryProfile.libraryEmail} onChange={(value) => updateLibraryProfile('libraryEmail', value)} isDarkMode={isDarkMode} />
+                      <InputField label="Phone Number *" value={libraryProfile.phoneNumber} onChange={(value) => updateLibraryProfile('phoneNumber', value)} isDarkMode={isDarkMode} />
+                      <InputField label="Website" value={libraryProfile.website} onChange={(value) => updateLibraryProfile('website', value)} isDarkMode={isDarkMode} />
+                      <InputField label="Library Code / ID" value={libraryProfile.libraryCode} onChange={(value) => updateLibraryProfile('libraryCode', value)} isDarkMode={isDarkMode} />
+                    </div>
+                  </div>
+                </section>
+
+                <section className={`rounded-2xl border p-5 ${cardClass}`}>
+                  <h4 className="text-[20px] font-semibold tracking-tight">Address</h4>
+                  <p className={`mt-1 text-sm ${textMutedClass}`}>Library location and address details.</p>
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    <InputField label="Street Address *" value={libraryProfile.streetAddress} onChange={(value) => updateLibraryProfile('streetAddress', value)} isDarkMode={isDarkMode} />
+                    <InputField label="Address Line 2" value={libraryProfile.addressLine2} onChange={(value) => updateLibraryProfile('addressLine2', value)} isDarkMode={isDarkMode} />
+                  </div>
+                  <div className="mt-4 grid gap-4 md:grid-cols-4">
+                    <InputField label="City *" value={libraryProfile.city} onChange={(value) => updateLibraryProfile('city', value)} isDarkMode={isDarkMode} />
+                    <InputField label="State / Province *" value={libraryProfile.stateProvince} onChange={(value) => updateLibraryProfile('stateProvince', value)} isDarkMode={isDarkMode} />
+                    <InputField label="ZIP / Postal Code *" value={libraryProfile.zipPostalCode} onChange={(value) => updateLibraryProfile('zipPostalCode', value)} isDarkMode={isDarkMode} />
+                    <SelectField label="Country *" value={libraryProfile.country} onChange={(value) => updateLibraryProfile('country', value)} options={[{ value: 'United States', label: 'United States' }, { value: 'Philippines', label: 'Philippines' }]} isDarkMode={isDarkMode} />
+                  </div>
+
+                  <div className={`mt-5 border-t pt-4 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                    <h4 className="text-[20px] font-semibold tracking-tight">Library Description</h4>
+                    <p className={`mt-1 text-sm ${textMutedClass}`}>Brief description about your library.</p>
+                    <textarea
+                      value={libraryProfile.description}
+                      onChange={(event) => updateLibraryProfile('description', event.target.value.slice(0, 500))}
+                      rows={4}
+                      className={`mt-3 w-full resize-none rounded-xl border px-3 py-2 text-[14px] outline-none transition-colors ${
+                        isDarkMode
+                          ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500 focus:border-emerald-500'
+                          : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400 focus:border-emerald-500'
+                      }`}
+                    />
+                    <p className={`mt-2 text-right text-xs ${textMutedClass}`}>{libraryProfile.description.length} / 500</p>
+                  </div>
+                </section>
+              </>
+            ) : null}
+
+            {activeSettingsMenu !== 'General' && activeSettingsMenu !== 'Library Profile' ? (
+              <section className={`rounded-2xl border p-6 ${cardClass}`}>
+                <h4 className="text-[20px] font-semibold tracking-tight">{activeSettingsMenu}</h4>
+                <p className={`mt-2 text-sm ${textMutedClass}`}>This tab is ready for implementation next.</p>
+              </section>
+            ) : null}
           </div>
         </div>
       </div>
