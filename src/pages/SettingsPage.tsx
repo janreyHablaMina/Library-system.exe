@@ -7,22 +7,33 @@ import {
   CalendarDays,
   Check,
   ChevronDown,
+  ChevronUp,
+  ChevronLeft,
+  ChevronRight,
   Clock3,
+  EllipsisVertical,
   Eye,
   Globe,
   IdCard,
+  KeyRound,
+  Library,
   Mail,
+  PenLine,
   Monitor,
   Moon,
+  Plus,
   Pencil,
   RotateCcw,
+  Search,
   Settings2,
   Shield,
   Sun,
   Trash2,
   Upload,
+  UserRound,
   UserCog,
   UsersRound,
+  View,
   WalletCards,
 } from 'lucide-react'
 
@@ -72,6 +83,20 @@ type LibraryProfile = {
   zipPostalCode: string
   country: string
   description: string
+}
+
+type UserStatus = 'Active' | 'Inactive'
+type UserRole = 'Administrator' | 'Librarian' | 'Assistant' | 'Member Clerk'
+
+type UserRecord = {
+  name: string
+  username: string
+  email: string
+  role: UserRole
+  status: UserStatus
+  lastLogin: string
+  avatar: string
+  isYou?: boolean
 }
 
 type Option = {
@@ -208,6 +233,37 @@ const initialLibraryProfile: LibraryProfile = {
   description: 'infoLib Library is a modern library dedicated to providing knowledge and resources to inspire learning, research, and community growth.',
 }
 
+const userRoleOptions: Option[] = [
+  { value: 'all', label: 'All Roles' },
+  { value: 'Administrator', label: 'Administrator' },
+  { value: 'Librarian', label: 'Librarian' },
+  { value: 'Assistant', label: 'Assistant' },
+  { value: 'Member Clerk', label: 'Member Clerk' },
+]
+
+const userStatusOptions: Option[] = [
+  { value: 'all', label: 'All Status' },
+  { value: 'Active', label: 'Active' },
+  { value: 'Inactive', label: 'Inactive' },
+]
+
+const mockUsers: UserRecord[] = [
+  { name: 'Admin User', username: 'admin', email: 'admin@infolib.com', role: 'Administrator', status: 'Active', lastLogin: 'May 12, 2026 10:30 AM', avatar: '🧑🏻', isYou: true },
+  { name: 'Sarah Johnson', username: 'sarah.j', email: 'sarah@infolib.com', role: 'Librarian', status: 'Active', lastLogin: 'May 12, 2026 09:15 AM', avatar: '👩🏻' },
+  { name: 'Michael Brown', username: 'michael.b', email: 'michael@infolib.com', role: 'Librarian', status: 'Active', lastLogin: 'May 11, 2026 04:45 PM', avatar: '👨🏽' },
+  { name: 'Emily Davis', username: 'emily.d', email: 'emily@infolib.com', role: 'Assistant', status: 'Active', lastLogin: 'May 10, 2026 02:20 PM', avatar: '👩🏼' },
+  { name: 'James Wilson', username: 'james.w', email: 'james@infolib.com', role: 'Member Clerk', status: 'Inactive', lastLogin: 'May 5, 2026 11:10 AM', avatar: '👨🏻' },
+  { name: 'Olivia Martinez', username: 'olivia.m', email: 'olivia@infolib.com', role: 'Assistant', status: 'Active', lastLogin: 'May 8, 2026 03:30 PM', avatar: '👩🏽' },
+]
+
+const roles = [
+  { name: 'Administrator', detail: 'Full system access and configuration', users: 5, icon: Shield, color: 'violet' },
+  { name: 'Librarian', detail: 'Manage books, members and circulation', users: 8, icon: BookOpen, color: 'blue' },
+  { name: 'Assistant', detail: 'Assist with daily library operations', users: 4, icon: UserCog, color: 'amber' },
+  { name: 'Member Clerk', detail: 'Manage members and basic circulation', users: 3, icon: UsersRound, color: 'cyan' },
+  { name: 'Guest View', detail: 'Read-only access to catalog', users: 0, icon: View, color: 'slate' },
+] as const
+
 type InputFieldProps = {
   label: string
   value: string
@@ -293,6 +349,10 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
   const [systemPreferences, setSystemPreferences] = useState(initialSystemPreferences)
   const [additionalPreferences, setAdditionalPreferences] = useState(initialAdditionalPreferences)
   const [libraryProfile, setLibraryProfile] = useState(initialLibraryProfile)
+  const [usersRoleTab, setUsersRoleTab] = useState<'Users' | 'Roles'>('Users')
+  const [userSearch, setUserSearch] = useState('')
+  const [userRoleFilter, setUserRoleFilter] = useState('all')
+  const [userStatusFilter, setUserStatusFilter] = useState('all')
 
   const shellClass = isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'
   const cardClass = isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'
@@ -315,6 +375,13 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
 
   const libraryItems = settingsMenuItems.filter((item) => item.group === 'LIBRARY')
   const systemItems = settingsMenuItems.filter((item) => item.group === 'SYSTEM')
+  const filteredUsers = mockUsers.filter((user) => {
+    const q = userSearch.trim().toLowerCase()
+    const searchMatch = !q || user.name.toLowerCase().includes(q) || user.email.toLowerCase().includes(q) || user.username.toLowerCase().includes(q)
+    const roleMatch = userRoleFilter === 'all' || user.role === userRoleFilter
+    const statusMatch = userStatusFilter === 'all' || user.status === userStatusFilter
+    return searchMatch && roleMatch && statusMatch
+  })
 
   return (
     <div className={`min-h-0 flex-1 overflow-auto p-6 ${shellClass}`}>
@@ -407,16 +474,27 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
                 </p>
                 <h3 className="mt-1 text-[30px] font-medium tracking-tight">{activeSettingsMenu === 'General' ? 'General Settings' : activeSettingsMenu}</h3>
                 <p className={`mt-1 text-sm ${textMutedClass}`}>
-                  {activeSettingsMenu === 'Library Profile' ? "Update your library's details and contact information." : 'Manage your system preferences and configurations.'}
+                  {activeSettingsMenu === 'Library Profile'
+                    ? "Update your library's details and contact information."
+                    : activeSettingsMenu === 'Users & Roles'
+                      ? 'Manage system users and their roles and permissions.'
+                      : 'Manage your system preferences and configurations.'}
                 </p>
               </div>
-              <button
-                type="button"
-                className="inline-flex h-10 items-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white shadow-[0_12px_24px_-16px_rgba(79,70,229,0.85)] transition-colors hover:bg-indigo-700"
-              >
-                <Check size={15} />
-                Save Changes
-              </button>
+              {activeSettingsMenu === 'Users & Roles' ? (
+                <button type="button" className="inline-flex h-10 items-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white shadow-[0_12px_24px_-16px_rgba(79,70,229,0.85)] transition-colors hover:bg-indigo-700">
+                  <Plus size={15} />
+                  Add User
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="inline-flex h-10 items-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white shadow-[0_12px_24px_-16px_rgba(79,70,229,0.85)] transition-colors hover:bg-indigo-700"
+                >
+                  <Check size={15} />
+                  Save Changes
+                </button>
+              )}
             </div>
 
             {activeSettingsMenu === 'General' ? (
@@ -603,7 +681,297 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
               </>
             ) : null}
 
-            {activeSettingsMenu !== 'General' && activeSettingsMenu !== 'Library Profile' ? (
+            {activeSettingsMenu === 'Users & Roles' ? (
+              <section className={`rounded-2xl border p-0 ${cardClass}`}>
+                <div className="px-6 pt-4">
+                  <div className={`flex items-center gap-5 border-b ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                    {(['Users', 'Roles'] as const).map((tab) => {
+                      const active = usersRoleTab === tab
+                      return (
+                        <button
+                          key={tab}
+                          type="button"
+                          onClick={() => setUsersRoleTab(tab)}
+                          className={`border-b-2 px-1 pb-3 text-[22px] font-semibold transition-colors ${
+                            active
+                              ? 'border-indigo-600 text-indigo-600'
+                              : isDarkMode
+                                ? 'border-transparent text-slate-300 hover:text-slate-100'
+                                : 'border-transparent text-slate-700 hover:text-slate-900'
+                          }`}
+                        >
+                          {tab}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {usersRoleTab === 'Users' ? (
+                  <>
+                    <div className="px-6 py-5">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <div className="relative min-w-[280px] flex-1">
+                          <Search size={16} className={`pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                          <input
+                            value={userSearch}
+                            onChange={(event) => setUserSearch(event.target.value)}
+                            placeholder="Search users by name, email, or username..."
+                            className={`h-10 w-full rounded-xl border py-2 pl-10 pr-3 text-[14px] outline-none transition-colors ${
+                              isDarkMode
+                                ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500 focus:border-emerald-500'
+                                : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400 focus:border-emerald-500'
+                            }`}
+                          />
+                        </div>
+
+                        <div className="w-[190px]">
+                          <SelectField label="" value={userRoleFilter} onChange={setUserRoleFilter} options={userRoleOptions} isDarkMode={isDarkMode} />
+                        </div>
+                        <div className="w-[150px]">
+                          <SelectField label="" value={userStatusFilter} onChange={setUserStatusFilter} options={userStatusOptions} isDarkMode={isDarkMode} />
+                        </div>
+
+                        <button type="button" className={`ml-auto inline-flex h-10 items-center gap-2 rounded-xl border px-4 text-sm font-semibold transition-colors ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-50'}`}>
+                          <Upload size={14} />
+                          Export
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="px-6 pb-0">
+                      <div className={`overflow-hidden rounded-xl border ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                        <div className={`grid grid-cols-[1.35fr_0.8fr_1.2fr_1fr_0.85fr_1.35fr_0.35fr] gap-3 border-b px-4 py-3 text-[13px] font-semibold ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
+                          <p>User</p>
+                          <p>Username</p>
+                          <p>Email</p>
+                          <p>Role</p>
+                          <p>Status</p>
+                          <p>Last Login</p>
+                          <p className="text-right">Actions</p>
+                        </div>
+
+                        {filteredUsers.map((user) => (
+                          <div key={user.email} className={`grid grid-cols-[1.35fr_0.8fr_1.2fr_1fr_0.85fr_1.35fr_0.35fr] items-center gap-3 border-b px-4 py-3 last:border-b-0 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                            <div className="flex items-center gap-3">
+                              <span className={`grid h-9 w-9 place-items-center rounded-full text-lg ${isDarkMode ? 'bg-slate-700' : 'bg-indigo-100'}`}>{user.avatar}</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-semibold">{user.name}</span>
+                                {user.isYou ? <span className={`rounded-md px-2 py-0.5 text-xs font-semibold ${isDarkMode ? 'bg-indigo-500/20 text-indigo-200' : 'bg-indigo-100 text-indigo-700'}`}>You</span> : null}
+                              </div>
+                            </div>
+                            <p className={`text-sm ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{user.username}</p>
+                            <p className={`text-sm ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{user.email}</p>
+                            <p>
+                              <span className={`rounded-lg px-2.5 py-1 text-xs font-semibold ${
+                                user.role === 'Administrator'
+                                  ? isDarkMode ? 'bg-violet-500/20 text-violet-200' : 'bg-violet-100 text-violet-700'
+                                  : user.role === 'Librarian'
+                                    ? isDarkMode ? 'bg-blue-500/20 text-blue-200' : 'bg-blue-100 text-blue-700'
+                                    : user.role === 'Member Clerk'
+                                      ? isDarkMode ? 'bg-cyan-500/20 text-cyan-200' : 'bg-cyan-100 text-cyan-700'
+                                      : isDarkMode ? 'bg-amber-500/20 text-amber-200' : 'bg-amber-100 text-amber-700'
+                              }`}>
+                                {user.role}
+                              </span>
+                            </p>
+                            <p>
+                              <span className={`rounded-lg px-2.5 py-1 text-xs font-semibold ${
+                                user.status === 'Active'
+                                  ? isDarkMode ? 'bg-emerald-500/20 text-emerald-200' : 'bg-emerald-100 text-emerald-700'
+                                  : isDarkMode ? 'bg-rose-500/20 text-rose-200' : 'bg-rose-100 text-rose-700'
+                              }`}>
+                                {user.status}
+                              </span>
+                            </p>
+                            <p className={`text-sm ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{user.lastLogin}</p>
+                            <button type="button" className={`ml-auto inline-flex h-8 w-8 items-center justify-center rounded-lg ${isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-100'}`}>
+                              <EllipsisVertical size={16} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className={`mt-3 flex items-center justify-between border-t px-6 py-4 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                      <p className={`text-sm ${textMutedClass}`}>Showing 1 to {filteredUsers.length} of {filteredUsers.length} users</p>
+                      <div className="flex items-center gap-2">
+                        <button type="button" className={`grid h-8 w-8 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-300 text-slate-600 hover:bg-slate-50'}`}>
+                          <ChevronLeft size={15} />
+                        </button>
+                        <button type="button" className="grid h-8 min-w-8 place-items-center rounded-lg bg-indigo-600 px-2 text-sm font-semibold text-white">1</button>
+                        <button type="button" className={`grid h-8 w-8 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-300 text-slate-600 hover:bg-slate-50'}`}>
+                          <ChevronRight size={15} />
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="px-6 py-5">
+                    <div className="grid gap-4 xl:grid-cols-[460px_minmax(0,1fr)]">
+                      <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <h4 className="text-[20px] font-semibold tracking-tight">Roles</h4>
+                            <p className={`mt-1 text-sm ${textMutedClass}`}>Manage user roles and their permissions.</p>
+                          </div>
+                          <button type="button" className={`inline-flex h-8 items-center gap-1 rounded-lg border px-3 text-xs font-semibold transition-colors ${isDarkMode ? 'border-indigo-500/70 text-indigo-200 hover:bg-indigo-500/10' : 'border-indigo-400 text-indigo-700 hover:bg-indigo-50'}`}>
+                            <Plus size={12} />
+                            Add Role
+                          </button>
+                        </div>
+
+                        <div className="relative mt-4">
+                          <Search size={15} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                          <input
+                            placeholder="Search roles..."
+                            className={`h-10 w-full rounded-xl border py-2 pl-3 pr-9 text-[14px] outline-none transition-colors ${
+                              isDarkMode
+                                ? 'border-slate-700 bg-[#0b1738] text-slate-100 placeholder:text-slate-500 focus:border-emerald-500'
+                                : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400 focus:border-emerald-500'
+                            }`}
+                          />
+                        </div>
+
+                        <div className={`mt-3 overflow-hidden rounded-xl border ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                          {roles.map((role, index) => {
+                            const RoleIcon = role.icon
+                            const isActive = index === 0
+                            const badgeClass =
+                              role.color === 'violet'
+                                ? isDarkMode ? 'bg-violet-500/20 text-violet-200' : 'bg-violet-100 text-violet-700'
+                                : role.color === 'blue'
+                                  ? isDarkMode ? 'bg-blue-500/20 text-blue-200' : 'bg-blue-100 text-blue-700'
+                                  : role.color === 'amber'
+                                    ? isDarkMode ? 'bg-amber-500/20 text-amber-200' : 'bg-amber-100 text-amber-700'
+                                    : role.color === 'cyan'
+                                      ? isDarkMode ? 'bg-cyan-500/20 text-cyan-200' : 'bg-cyan-100 text-cyan-700'
+                                      : isDarkMode ? 'bg-slate-600 text-slate-200' : 'bg-slate-100 text-slate-700'
+
+                            return (
+                              <div
+                                key={role.name}
+                                className={`flex items-center justify-between gap-3 border-b px-3 py-3 last:border-b-0 ${
+                                  isActive
+                                    ? isDarkMode ? 'border-slate-700 bg-indigo-500/10' : 'border-slate-200 bg-indigo-50/60'
+                                    : isDarkMode ? 'border-slate-700' : 'border-slate-200'
+                                }`}
+                              >
+                                <div className="flex min-w-0 items-start gap-3">
+                                  <span className={`mt-0.5 grid h-8 w-8 place-items-center rounded-lg ${badgeClass}`}>
+                                    <RoleIcon size={15} />
+                                  </span>
+                                  <div className="min-w-0">
+                                    <p className="text-sm font-semibold">{role.name}</p>
+                                    <p className={`truncate text-xs ${textMutedClass}`}>{role.detail}</p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className={`rounded-lg px-2 py-0.5 text-xs font-semibold ${badgeClass}`}>{role.users} Users</span>
+                                  <button type="button" className={`grid h-7 w-7 place-items-center rounded-md ${isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-100'}`}>
+                                    <EllipsisVertical size={14} />
+                                  </button>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+
+                        <p className={`mt-4 text-sm ${textMutedClass}`}>Showing 1 to 5 of 5 roles</p>
+                      </section>
+
+                      <section className={`rounded-xl border ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                        <div className={`border-b p-4 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-start gap-3">
+                              <span className={`grid h-12 w-12 place-items-center rounded-xl ${isDarkMode ? 'bg-violet-500/20 text-violet-200' : 'bg-violet-100 text-violet-700'}`}>
+                                <Shield size={22} />
+                              </span>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <h4 className="text-[20px] font-semibold tracking-tight">Administrator</h4>
+                                  <span className={`rounded-lg px-2 py-0.5 text-xs font-semibold ${isDarkMode ? 'bg-violet-500/20 text-violet-200' : 'bg-violet-100 text-violet-700'}`}>System Role</span>
+                                </div>
+                                <p className={`mt-1 text-sm ${textMutedClass}`}>Full system access and configuration</p>
+                              </div>
+                            </div>
+                            <button type="button" className={`inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-sm font-semibold transition-colors ${isDarkMode ? 'border-indigo-500/70 text-indigo-200 hover:bg-indigo-500/10' : 'border-indigo-400 text-indigo-700 hover:bg-indigo-50'}`}>
+                              <PenLine size={14} />
+                              Edit Role
+                            </button>
+                          </div>
+
+                          <div className="mt-4 flex items-center gap-5">
+                            <button type="button" className="border-b-2 border-indigo-600 pb-2 text-sm font-semibold text-indigo-600">Permissions</button>
+                            <button type="button" className={`border-b-2 border-transparent pb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Users (5)</button>
+                            <button type="button" className={`border-b-2 border-transparent pb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Role Details</button>
+                          </div>
+                        </div>
+
+                        <div className="p-4">
+                          <div className="mb-4 flex items-center justify-between gap-3">
+                            <div>
+                              <h5 className="text-[20px] font-semibold tracking-tight">Permissions</h5>
+                              <p className={`mt-1 text-sm ${textMutedClass}`}>Manage what this role can access and do.</p>
+                            </div>
+                            <button type="button" className={`inline-flex h-8 items-center gap-1 rounded-lg border px-3 text-xs font-semibold transition-colors ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-50'}`}>
+                              Expand All
+                            </button>
+                          </div>
+
+                          <div className="space-y-3">
+                            <div className={`overflow-hidden rounded-xl border ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                              <div className={`flex items-center justify-between border-b px-4 py-3 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-slate-50'}`}>
+                                <p className="flex items-center gap-2 text-sm font-semibold"><KeyRound size={15} />Dashboard</p>
+                                <ChevronUp size={15} />
+                              </div>
+                              <div className="px-4 py-3">
+                                <div className="flex items-center justify-between text-sm">
+                                  <span>View dashboard</span>
+                                  <span className={`rounded-md px-2 py-0.5 text-xs font-semibold ${isDarkMode ? 'bg-emerald-500/20 text-emerald-200' : 'bg-emerald-100 text-emerald-700'}`}>Allowed</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className={`overflow-hidden rounded-xl border ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                              <div className={`flex items-center justify-between border-b px-4 py-3 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-slate-50'}`}>
+                                <p className="flex items-center gap-2 text-sm font-semibold"><Library size={15} />Books</p>
+                                <ChevronDown size={15} />
+                              </div>
+                              <div className="space-y-0">
+                                {['View books', 'Add new books', 'Edit books', 'Delete books'].map((item) => (
+                                  <div key={item} className={`flex items-center justify-between border-b px-4 py-2.5 text-sm last:border-b-0 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                                    <span>{item}</span>
+                                    <span className={`rounded-md px-2 py-0.5 text-xs font-semibold ${isDarkMode ? 'bg-emerald-500/20 text-emerald-200' : 'bg-emerald-100 text-emerald-700'}`}>Allowed</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className={`overflow-hidden rounded-xl border ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                              <div className={`flex items-center justify-between border-b px-4 py-3 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-slate-50'}`}>
+                                <p className="flex items-center gap-2 text-sm font-semibold"><UserRound size={15} />Members</p>
+                                <ChevronDown size={15} />
+                              </div>
+                              <div className="space-y-0">
+                                {['View members', 'Add new members', 'Edit members', 'Delete members'].map((item) => (
+                                  <div key={item} className={`flex items-center justify-between border-b px-4 py-2.5 text-sm last:border-b-0 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                                    <span>{item}</span>
+                                    <span className={`rounded-md px-2 py-0.5 text-xs font-semibold ${isDarkMode ? 'bg-emerald-500/20 text-emerald-200' : 'bg-emerald-100 text-emerald-700'}`}>Allowed</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </section>
+                    </div>
+                  </div>
+                )}
+              </section>
+            ) : null}
+
+            {activeSettingsMenu !== 'General' && activeSettingsMenu !== 'Library Profile' && activeSettingsMenu !== 'Users & Roles' ? (
               <section className={`rounded-2xl border p-6 ${cardClass}`}>
                 <h4 className="text-[20px] font-semibold tracking-tight">{activeSettingsMenu}</h4>
                 <p className={`mt-2 text-sm ${textMutedClass}`}>This tab is ready for implementation next.</p>
