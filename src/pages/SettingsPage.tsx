@@ -50,7 +50,15 @@ type LibraryInformation = {
   email: string
   phone: string
   address: string
+  streetAddress: string
+  addressLine2: string
+  city: string
+  stateProvince: string
+  zipPostalCode: string
+  country: string
   website: string
+  libraryCode: string
+  description: string
   establishedYear: string
   logoFileName: string | null
 }
@@ -199,7 +207,15 @@ const initialSettingsState: SettingsState = {
     email: 'infolib@example.com',
     phone: '+63 912 345 6789',
     address: '123 Library St., Cityville, CA 90210',
+    streetAddress: '123 Library St.',
+    addressLine2: 'Cityville',
+    city: 'Cityville',
+    stateProvince: 'California',
+    zipPostalCode: 'CA 90210',
+    country: 'United States',
     website: 'https://infolib.com',
+    libraryCode: 'INFOLIB-2020',
+    description: 'infoLib Library is a modern library dedicated to providing knowledge and resources to inspire learning, research, and community growth.',
     establishedYear: '2020',
     logoFileName: null,
   },
@@ -449,7 +465,86 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
           </aside>
 
           <div className="space-y-6">
-            <section className={`rounded-2xl border p-6 ${cardClass}`}>
+            {activeSettingsMenu === 'Library Information' ? (
+              <section className={`rounded-2xl border p-6 ${cardClass}`}>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className={`text-sm font-semibold ${textMutedClass}`}>
+                      Home
+                      <span className="mx-2">/</span>
+                      Settings
+                      <span className="mx-2">/</span>
+                      Library Information
+                    </p>
+                    <h3 className="mt-1 text-[30px] font-black tracking-tight">Library Information</h3>
+                    <p className={`mt-1 text-sm ${textMutedClass}`}>Update your library details and contact information.</p>
+                  </div>
+                </div>
+
+                <div className="mt-6">
+                  <div className={`rounded-2xl border p-5 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                    <h4 className="text-xl font-semibold">Library Details</h4>
+                    <p className={`mt-1 text-sm ${textMutedClass}`}>Basic information about your library.</p>
+                    <div className="mt-5 grid gap-4 lg:grid-cols-[200px_minmax(0,1fr)]">
+                      <div className={`rounded-xl border border-dashed p-4 text-center ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-slate-50'}`}>
+                        <div className={`mx-auto grid h-16 w-16 place-items-center rounded-full ${isDarkMode ? 'bg-slate-700 text-indigo-300' : 'bg-indigo-100 text-indigo-700'}`}>
+                          <Building2 size={28} />
+                        </div>
+                        <p className={`mt-3 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Upload Library Logo</p>
+                        <p className={`mt-1 text-xs ${textMutedClass}`}>PNG, JPG or SVG. Max size 2MB</p>
+                        {settings.library.logoFileName ? <p className={`mt-1 text-xs ${textMutedClass}`}>{settings.library.logoFileName}</p> : null}
+                        <input ref={logoInputRef} type="file" accept=".png,.jpg,.jpeg,.svg" className="sr-only" onChange={handleLogoSelection} />
+                        <button type="button" onClick={() => logoInputRef.current?.click()} className={`mt-3 inline-flex h-10 items-center gap-2 rounded-lg border px-4 text-sm font-semibold transition-colors ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-white'}`}>
+                          <Upload size={14} />
+                          Choose File
+                        </button>
+                      </div>
+
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <InputField label="Library Name *" value={settings.library.name} onChange={(value) => updateLibrary('name', value)} isDarkMode={isDarkMode} />
+                        <InputField label="Established Year" value={settings.library.establishedYear} onChange={(value) => updateLibrary('establishedYear', value)} isDarkMode={isDarkMode} />
+                        <InputField label="Library Email *" value={settings.library.email} onChange={(value) => updateLibrary('email', value)} isDarkMode={isDarkMode} type="email" />
+                        <InputField label="Phone Number *" value={settings.library.phone} onChange={(value) => updateLibrary('phone', value)} isDarkMode={isDarkMode} />
+                        <InputField label="Website" value={settings.library.website} onChange={(value) => updateLibrary('website', value)} isDarkMode={isDarkMode} type="url" />
+                        <InputField label="Library Code / ID" value={settings.library.libraryCode} onChange={(value) => updateLibrary('libraryCode', value)} isDarkMode={isDarkMode} />
+                      </div>
+                    </div>
+
+                    <div className="mt-7">
+                      <h4 className="text-xl font-semibold">Address</h4>
+                      <p className={`mt-1 text-sm ${textMutedClass}`}>Library location and address details.</p>
+                      <div className="mt-4 grid gap-4 md:grid-cols-2">
+                        <InputField label="Street Address *" value={settings.library.streetAddress} onChange={(value) => updateLibrary('streetAddress', value)} isDarkMode={isDarkMode} />
+                        <InputField label="Address Line 2" value={settings.library.addressLine2} onChange={(value) => updateLibrary('addressLine2', value)} isDarkMode={isDarkMode} />
+                        <InputField label="City *" value={settings.library.city} onChange={(value) => updateLibrary('city', value)} isDarkMode={isDarkMode} />
+                        <InputField label="State / Province *" value={settings.library.stateProvince} onChange={(value) => updateLibrary('stateProvince', value)} isDarkMode={isDarkMode} />
+                        <InputField label="ZIP / Postal Code *" value={settings.library.zipPostalCode} onChange={(value) => updateLibrary('zipPostalCode', value)} isDarkMode={isDarkMode} />
+                        <InputField label="Country *" value={settings.library.country} onChange={(value) => updateLibrary('country', value)} isDarkMode={isDarkMode} />
+                      </div>
+                    </div>
+
+                    <div className="mt-7">
+                      <label className="space-y-1.5">
+                        <span className={`block text-sm font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Library Description</span>
+                        <textarea
+                          value={settings.library.description}
+                          onChange={(event) => updateLibrary('description', event.target.value)}
+                          rows={5}
+                          maxLength={500}
+                          className={`w-full resize-none rounded-xl border px-3 py-2 text-sm outline-none transition-colors ${
+                            isDarkMode
+                              ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500 focus:border-emerald-500'
+                              : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400 focus:border-emerald-500'
+                          }`}
+                        />
+                      </label>
+                      <p className={`mt-1 text-right text-xs ${textMutedClass}`}>{settings.library.description.length} / 500</p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            ) : (
+              <section className={`rounded-2xl border p-6 ${cardClass}`}>
               <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_330px]">
                 <div>
                   <h3 className="text-[22px] font-semibold tracking-tight">General Settings</h3>
@@ -539,82 +634,12 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
                     ))}
                   </div>
                 </div>
-              </div>
-            </section>
-
-            <section className={`rounded-2xl border p-6 ${cardClass}`}>
-              <h3 className="text-[22px] font-semibold tracking-tight">Library Information</h3>
-              <p className={`mt-1 text-sm ${textMutedClass}`}>Update your library information</p>
-
-              <div className="mt-5 grid gap-5 xl:grid-cols-[260px_minmax(0,1fr)]">
-                <div className={`rounded-xl border border-dashed p-5 text-center ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-slate-50'}`}>
-                  <div className={`mx-auto grid h-16 w-16 place-items-center rounded-full ${isDarkMode ? 'bg-slate-700 text-indigo-300' : 'bg-indigo-100 text-indigo-700'}`}>
-                    <Building2 size={28} />
-                  </div>
-                  <p className={`mt-4 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Upload Library Logo</p>
-                  <p className={`mt-1 text-xs ${textMutedClass}`}>PNG, JPG or SVG. Max size 2MB</p>
-                  {settings.library.logoFileName ? (
-                    <p className={`mt-2 text-xs ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{settings.library.logoFileName}</p>
-                  ) : null}
-                  <input ref={logoInputRef} type="file" accept=".png,.jpg,.jpeg,.svg" className="sr-only" onChange={handleLogoSelection} />
-                  <button
-                    type="button"
-                    onClick={() => logoInputRef.current?.click()}
-                    className={`mt-4 inline-flex h-10 items-center gap-2 rounded-lg border px-4 text-sm font-semibold transition-colors ${
-                      isDarkMode
-                        ? 'border-slate-700 text-slate-200 hover:bg-slate-800'
-                        : 'border-slate-300 text-slate-700 hover:bg-white'
-                    }`}
-                  >
-                    <Upload size={14} />
-                    Choose File
-                  </button>
                 </div>
+              </section>
+            )}
 
-                <div className="grid gap-4 md:grid-cols-2">
-                  <InputField
-                    label="Library Name"
-                    value={settings.library.name}
-                    onChange={(value) => updateLibrary('name', value)}
-                    isDarkMode={isDarkMode}
-                  />
-                  <InputField
-                    label="Address"
-                    value={settings.library.address}
-                    onChange={(value) => updateLibrary('address', value)}
-                    isDarkMode={isDarkMode}
-                  />
-                  <InputField
-                    label="Library Email"
-                    value={settings.library.email}
-                    onChange={(value) => updateLibrary('email', value)}
-                    isDarkMode={isDarkMode}
-                    type="email"
-                  />
-                  <InputField
-                    label="Website"
-                    value={settings.library.website}
-                    onChange={(value) => updateLibrary('website', value)}
-                    isDarkMode={isDarkMode}
-                    type="url"
-                  />
-                  <InputField
-                    label="Phone Number"
-                    value={settings.library.phone}
-                    onChange={(value) => updateLibrary('phone', value)}
-                    isDarkMode={isDarkMode}
-                  />
-                  <InputField
-                    label="Established Year"
-                    value={settings.library.establishedYear}
-                    onChange={(value) => updateLibrary('establishedYear', value)}
-                    isDarkMode={isDarkMode}
-                  />
-                </div>
-              </div>
-            </section>
-
-            <div className="grid gap-6 xl:grid-cols-3">
+            {activeSettingsMenu !== 'Library Information' ? (
+              <div className="grid gap-6 xl:grid-cols-3">
               <section className={`rounded-2xl border p-5 ${cardClass}`}>
                 <h3 className="text-[22px] font-semibold tracking-tight">Backup Settings</h3>
                 <p className={`mt-1 text-sm ${textMutedClass}`}>Manage system backup and restore</p>
@@ -722,7 +747,8 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
                   />
                 </div>
               </section>
-            </div>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
