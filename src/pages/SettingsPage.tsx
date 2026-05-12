@@ -6,11 +6,13 @@ import {
   Building2,
   CalendarDays,
   Check,
+  CircleAlert,
   ChevronDown,
   ChevronUp,
   ChevronLeft,
   ChevronRight,
   Clock3,
+  ClipboardCheck,
   EllipsisVertical,
   Eye,
   Globe,
@@ -34,6 +36,7 @@ import {
   UserCog,
   UsersRound,
   View,
+  Wrench,
   WalletCards,
 } from 'lucide-react'
 
@@ -117,6 +120,11 @@ type BooksBorrowingSettings = {
   autoDueDateCalculation: boolean
   gracePeriodDays: string
   dueDateReminder: string
+  allowBorrowingIfOverdue: boolean
+  blockBorrowingIfFineExists: boolean
+  blockBorrowingIfMembershipExpired: boolean
+  minimumDaysBetweenLoans: string
+  allowStaffOverrideLoanPolicy: boolean
 }
 
 type Option = {
@@ -319,6 +327,11 @@ const initialBooksBorrowingSettings: BooksBorrowingSettings = {
   autoDueDateCalculation: true,
   gracePeriodDays: '1',
   dueDateReminder: '2 days before',
+  allowBorrowingIfOverdue: true,
+  blockBorrowingIfFineExists: false,
+  blockBorrowingIfMembershipExpired: true,
+  minimumDaysBetweenLoans: '0',
+  allowStaffOverrideLoanPolicy: true,
 }
 
 type InputFieldProps = {
@@ -1181,6 +1194,159 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
                     <div className={`rounded-xl border px-4 py-3 text-sm ${isDarkMode ? 'border-indigo-500/40 bg-indigo-500/10 text-indigo-200' : 'border-indigo-200 bg-indigo-50 text-indigo-700'}`}>
                       <p className="font-semibold">Default Values</p>
                       <p className="mt-1">These settings will be applied globally across the system. You can override some of these values for specific members or books when needed.</p>
+                    </div>
+                  </div>
+                ) : booksBorrowingTab === 'Borrowing Settings' ? (
+                  <div className="space-y-4 p-6">
+                    <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                      <h4 className="text-[20px] font-semibold tracking-tight">Borrowing Settings</h4>
+                      <p className={`mt-1 text-sm ${textMutedClass}`}>Configure rules and policies for borrowing books.</p>
+
+                      <div className={`mt-4 rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+                        <p className="flex items-center gap-2 text-sm font-semibold">
+                          <ClipboardCheck size={15} className="text-indigo-600" />
+                          Loan Policy
+                        </p>
+
+                        <div className="mt-4 grid gap-4 md:grid-cols-4">
+                          <InputField
+                            label="Maximum Books Per Member"
+                            value={booksBorrowingSettings.maxBooksPerMember}
+                            onChange={(value) => updateBooksBorrowing('maxBooksPerMember', value)}
+                            isDarkMode={isDarkMode}
+                            hint="Total books a member can borrow."
+                          />
+                          <InputField
+                            label="Loan Period (Days)"
+                            value={booksBorrowingSettings.loanPeriodDays}
+                            onChange={(value) => updateBooksBorrowing('loanPeriodDays', value)}
+                            isDarkMode={isDarkMode}
+                            hint="Default number of days for borrowing."
+                          />
+                          <InputField
+                            label="Renewal Limit"
+                            value={booksBorrowingSettings.renewalLimit}
+                            onChange={(value) => updateBooksBorrowing('renewalLimit', value)}
+                            isDarkMode={isDarkMode}
+                            hint="Maximum number of times a book can be renewed."
+                          />
+                          <InputField
+                            label="Renewal Period (Days)"
+                            value={booksBorrowingSettings.renewalPeriodDays}
+                            onChange={(value) => updateBooksBorrowing('renewalPeriodDays', value)}
+                            isDarkMode={isDarkMode}
+                            hint="Number of days added on each renewal."
+                          />
+                        </div>
+                      </div>
+
+                      <div className={`mt-3 rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+                        <p className="flex items-center gap-2 text-sm font-semibold">
+                          <Shield size={15} className="text-indigo-600" />
+                          Borrowing Restrictions
+                        </p>
+
+                        <div className="mt-4 grid gap-4 md:grid-cols-2">
+                          <div className="space-y-3">
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <p className="text-sm font-semibold">Allow Borrowing If Member Has Overdue</p>
+                                <p className={`text-xs ${textMutedClass}`}>If enabled, members can borrow even with overdue books.</p>
+                              </div>
+                              <SwitchField
+                                checked={booksBorrowingSettings.allowBorrowingIfOverdue}
+                                onChange={(value) => updateBooksBorrowing('allowBorrowingIfOverdue', value)}
+                                isDarkMode={isDarkMode}
+                              />
+                            </div>
+
+                            <InputField
+                              label="Minimum Days Between Loans"
+                              value={booksBorrowingSettings.minimumDaysBetweenLoans}
+                              onChange={(value) => updateBooksBorrowing('minimumDaysBetweenLoans', value)}
+                              isDarkMode={isDarkMode}
+                              hint="Minimum wait days before borrowing again."
+                            />
+                          </div>
+
+                          <div className="space-y-4">
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <p className="text-sm font-semibold">Block Borrowing If Fine Exists</p>
+                                <p className={`text-xs ${textMutedClass}`}>If enabled, members with fines cannot borrow.</p>
+                              </div>
+                              <SwitchField
+                                checked={booksBorrowingSettings.blockBorrowingIfFineExists}
+                                onChange={(value) => updateBooksBorrowing('blockBorrowingIfFineExists', value)}
+                                isDarkMode={isDarkMode}
+                              />
+                            </div>
+
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <p className="text-sm font-semibold">Block Borrowing If Membership Expired</p>
+                                <p className={`text-xs ${textMutedClass}`}>If enabled, expired members cannot borrow.</p>
+                              </div>
+                              <SwitchField
+                                checked={booksBorrowingSettings.blockBorrowingIfMembershipExpired}
+                                onChange={(value) => updateBooksBorrowing('blockBorrowingIfMembershipExpired', value)}
+                                isDarkMode={isDarkMode}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className={`mt-3 rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+                        <p className="flex items-center gap-2 text-sm font-semibold">
+                          <Wrench size={15} className="text-indigo-600" />
+                          Additional Options
+                        </p>
+
+                        <div className="mt-4 grid gap-4 md:grid-cols-2">
+                          <div className="space-y-4">
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <p className="text-sm font-semibold">Auto Due Date Calculation</p>
+                                <p className={`text-xs ${textMutedClass}`}>Automatically calculate due date based on loan period.</p>
+                              </div>
+                              <SwitchField
+                                checked={booksBorrowingSettings.autoDueDateCalculation}
+                                onChange={(value) => updateBooksBorrowing('autoDueDateCalculation', value)}
+                                isDarkMode={isDarkMode}
+                              />
+                            </div>
+
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <p className="text-sm font-semibold">Allow Staff to Override Loan Policy</p>
+                                <p className={`text-xs ${textMutedClass}`}>Allow staff to override loan rules when necessary.</p>
+                              </div>
+                              <SwitchField
+                                checked={booksBorrowingSettings.allowStaffOverrideLoanPolicy}
+                                onChange={(value) => updateBooksBorrowing('allowStaffOverrideLoanPolicy', value)}
+                                isDarkMode={isDarkMode}
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <SelectField
+                              label="Due Date Reminder"
+                              value={booksBorrowingSettings.dueDateReminder}
+                              onChange={(value) => updateBooksBorrowing('dueDateReminder', value)}
+                              options={reminderOptions}
+                              isDarkMode={isDarkMode}
+                            />
+                            <p className={`mt-1 text-xs ${textMutedClass}`}>Send reminder before due date.</p>
+                          </div>
+                        </div>
+                      </div>
+                    </section>
+
+                    <div className={`rounded-xl border px-4 py-3 text-sm ${isDarkMode ? 'border-indigo-500/40 bg-indigo-500/10 text-indigo-200' : 'border-indigo-200 bg-indigo-50 text-indigo-700'}`}>
+                      <p className="flex items-center gap-2 font-semibold"><CircleAlert size={15} />Note</p>
+                      <p className="mt-1">These borrowing settings will be applied to all members unless specific rules are set for individual member types.</p>
                     </div>
                   </div>
                 ) : (
