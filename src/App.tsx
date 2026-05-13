@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { ArrowLeft, ArrowRight, Bell, BookOpen, BookPlus, Bookmark, Clock3, FileText, Mail, MessageCircle, Moon, Search, Sun, Undo2, UserPlus, Users } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Bell, BookOpen, BookPlus, Bookmark, ChevronRight, Clock3, FileText, Grid2x2, LayoutDashboard, Mail, MessageCircle, Moon, Search, Settings2, Shield, Sun, Undo2, User, UserPlus, Users, UsersRound, Warehouse } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import heroImage from './assets/login.avif'
 import { BooksPage } from './pages/BooksPage'
@@ -20,6 +20,8 @@ type LoginFormState = {
 
 type NavItem = {
   label: string
+  icon: LucideIcon
+  group: 'LIBRARY' | 'MANAGEMENT' | 'SYSTEM' | 'SETTINGS'
 }
 
 const initialState: LoginFormState = {
@@ -29,14 +31,22 @@ const initialState: LoginFormState = {
 }
 
 const navItems: NavItem[] = [
-  { label: 'Overview' },
-  { label: 'Books' },
-  { label: 'Members' },
-  { label: 'Authors' },
-  { label: 'Categories' },
-  { label: 'Borrow / Return' },
-  { label: 'Reports' },
-  { label: 'Settings' },
+  { label: 'Overview', icon: LayoutDashboard, group: 'LIBRARY' },
+  { label: 'Books', icon: BookOpen, group: 'LIBRARY' },
+  { label: 'Members', icon: Users, group: 'LIBRARY' },
+  { label: 'Authors', icon: User, group: 'LIBRARY' },
+  { label: 'Categories', icon: Grid2x2, group: 'LIBRARY' },
+  { label: 'Borrow / Return', icon: ArrowRight, group: 'LIBRARY' },
+  { label: 'Staff', icon: UsersRound, group: 'MANAGEMENT' },
+  { label: 'Roles & Permissions', icon: Shield, group: 'MANAGEMENT' },
+  { label: 'Branches', icon: Warehouse, group: 'MANAGEMENT' },
+  { label: 'Reports', icon: FileText, group: 'SYSTEM' },
+  { label: 'Notifications', icon: Bell, group: 'SYSTEM' },
+  { label: 'Email & SMTP', icon: Mail, group: 'SYSTEM' },
+  { label: 'Security', icon: Shield, group: 'SYSTEM' },
+  { label: 'Backup', icon: Clock3, group: 'SYSTEM' },
+  { label: 'Activity Logs', icon: FileText, group: 'SYSTEM' },
+  { label: 'Settings', icon: Settings2, group: 'SETTINGS' },
 ]
 
 type ActivityItem = {
@@ -139,19 +149,19 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
     ? {
         main: 'bg-slate-950 text-slate-100',
         frame: 'border-slate-800 bg-slate-950',
-        aside: 'border-slate-800 bg-[#070f23]',
-        asideTitle: 'text-emerald-400',
-        asideSub: 'text-slate-400',
-        navActive: 'bg-emerald-500/16 text-emerald-300',
-        navIdle: 'text-slate-300 hover:bg-slate-800',
+        aside: 'border-emerald-900/40 bg-[linear-gradient(180deg,#052e22_0%,#064e3b_55%,#022c22_100%)]',
+        asideTitle: 'text-emerald-100',
+        asideSub: 'text-emerald-200/75',
+        navActive: 'bg-[linear-gradient(90deg,#34d399_0%,#10b981_100%)] text-white shadow-[0_14px_22px_-16px_rgba(16,185,129,0.95)]',
+        navIdle: 'text-emerald-50/90 hover:bg-emerald-700/40',
         header: 'border-slate-800 bg-[#0a1430]',
         search: 'border-slate-700 bg-[#0a1430]',
         searchIcon: 'text-slate-500 group-focus-within:text-emerald-400',
         searchInput: 'text-slate-100 placeholder:text-slate-500',
         iconBtn: 'text-slate-300 hover:bg-slate-800',
-        profileBorder: 'border-slate-700',
-        profileName: 'text-slate-100',
-        profileRole: 'text-slate-400',
+        profileBorder: 'border-emerald-800/60',
+        profileName: 'text-emerald-50',
+        profileRole: 'text-emerald-200/75',
         contentBg: 'bg-[#020617]',
         greetingTitle: 'text-slate-100',
         greetingSub: 'text-slate-400',
@@ -164,19 +174,19 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
     : {
         main: 'bg-white text-slate-800',
         frame: 'border-slate-200 bg-white',
-        aside: 'border-slate-200 bg-white',
-        asideTitle: 'text-[#2f5bff]',
-        asideSub: 'text-slate-500',
-        navActive: 'bg-blue-100 text-blue-700',
-        navIdle: 'text-slate-600 hover:bg-slate-100',
+        aside: 'border-emerald-900/35 bg-[linear-gradient(180deg,#064e3b_0%,#065f46_48%,#064e3b_100%)]',
+        asideTitle: 'text-emerald-50',
+        asideSub: 'text-emerald-100/80',
+        navActive: 'bg-[linear-gradient(90deg,#34d399_0%,#10b981_100%)] text-white shadow-[0_14px_22px_-16px_rgba(16,185,129,0.95)]',
+        navIdle: 'text-emerald-50/90 hover:bg-emerald-700/35',
         header: 'border-slate-200 bg-white',
         search: 'border-slate-200 bg-white',
         searchIcon: 'text-slate-400 group-focus-within:text-emerald-600',
         searchInput: 'text-slate-700 placeholder:text-slate-400',
         iconBtn: 'text-slate-600 hover:bg-slate-100',
-        profileBorder: 'border-slate-200',
-        profileName: 'text-slate-800',
-        profileRole: 'text-slate-500',
+        profileBorder: 'border-emerald-800/55',
+        profileName: 'text-emerald-50',
+        profileRole: 'text-emerald-100/80',
         contentBg: 'bg-[#f8fafc]',
         greetingTitle: 'text-slate-900',
         greetingSub: 'text-slate-500',
@@ -191,38 +201,55 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
     <main className={`h-screen overflow-hidden p-0 ${dashboardTheme.main} ${isDarkMode ? 'dashboard-dark' : ''}`}>
       <div className={`flex h-full w-full overflow-hidden border ${dashboardTheme.frame}`}>
         <aside className={`hidden h-full shrink-0 border-r transition-all duration-200 lg:flex lg:flex-col ${dashboardTheme.aside} ${sidebarCollapsed ? 'w-20' : 'w-64'}`}>
-          <div className={`border-b py-6 ${dashboardTheme.aside} ${sidebarCollapsed ? 'px-3' : 'px-6'}`}>
-            <h1 className={`font-black italic tracking-tight ${dashboardTheme.asideTitle} ${sidebarCollapsed ? 'text-2xl text-center' : 'text-4xl'}`}>infoLib</h1>
-            {!sidebarCollapsed ? <p className={`mt-1 text-[10px] font-bold uppercase tracking-[0.08em] ${dashboardTheme.asideSub}`}>Library Management System</p> : null}
+          <div className={`border-b py-6 ${dashboardTheme.profileBorder} ${sidebarCollapsed ? 'px-3' : 'px-6'}`}>
+            <h1 className={`font-black tracking-tight ${dashboardTheme.asideTitle} ${sidebarCollapsed ? 'text-2xl text-center' : 'text-4xl'}`}>info<span className="text-emerald-300">Lib</span></h1>
+            {!sidebarCollapsed ? <p className={`mt-1 text-[10px] font-semibold uppercase tracking-[0.08em] ${dashboardTheme.asideSub}`}>Library Management System</p> : null}
           </div>
-          <nav className={`flex-1 space-y-1 py-5 text-sm ${sidebarCollapsed ? 'px-2' : 'px-4'}`}>
-            {navItems.map((item) => (
-              <button
-                key={item.label}
-                onClick={() => {
-                  setActivePage(item.label)
-                  if (item.label !== 'Books') {
-                    setIsBookDetailOpen(false)
-                  }
-                  if (item.label !== 'All Transactions' && item.label !== 'Borrow / Return') {
-                    setIsTransactionDetailOpen(false)
-                  }
-                }}
-                className={
-                  item.label === activePage
-                    ? `flex w-full items-center rounded-lg py-2 font-semibold ${dashboardTheme.navActive} ${sidebarCollapsed ? 'justify-center px-2' : 'gap-2 px-3'}`
-                    : `flex w-full items-center rounded-lg py-2 ${dashboardTheme.navIdle} ${sidebarCollapsed ? 'justify-center px-2' : 'gap-2 px-3'}`
-                }
-                type="button"
-                title={sidebarCollapsed ? item.label : undefined}
-              >
-                <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                {!sidebarCollapsed ? item.label : null}
-              </button>
+          <nav className={`flex-1 space-y-4 overflow-y-auto py-5 text-sm ${sidebarCollapsed ? 'px-2' : 'px-4'}`}>
+            {(['LIBRARY', 'MANAGEMENT', 'SYSTEM', 'SETTINGS'] as const).map((group) => (
+              <div key={group}>
+                {!sidebarCollapsed ? <p className="mb-2 px-2 text-xs font-bold tracking-[0.08em] text-emerald-100/70">{group}</p> : null}
+                <div className="space-y-1">
+                  {navItems.filter((item) => item.group === group).map((item) => {
+                    const ItemIcon = item.icon
+                    const isActive = item.label === activePage
+                    return (
+                      <button
+                        key={item.label}
+                        onClick={() => {
+                          setActivePage(item.label)
+                          if (item.label !== 'Books') {
+                            setIsBookDetailOpen(false)
+                          }
+                          if (item.label !== 'All Transactions' && item.label !== 'Borrow / Return') {
+                            setIsTransactionDetailOpen(false)
+                          }
+                        }}
+                        className={
+                          isActive
+                            ? `flex w-full items-center rounded-xl py-2.5 font-semibold ${dashboardTheme.navActive} ${sidebarCollapsed ? 'justify-center px-2' : 'gap-3 px-3'}`
+                            : `flex w-full items-center rounded-xl py-2.5 ${dashboardTheme.navIdle} ${sidebarCollapsed ? 'justify-center px-2' : 'gap-3 px-3'}`
+                        }
+                        type="button"
+                        title={sidebarCollapsed ? item.label : undefined}
+                      >
+                        <ItemIcon size={17} />
+                        {!sidebarCollapsed ? <span>{item.label}</span> : null}
+                        {!sidebarCollapsed ? <ChevronRight size={14} className="ml-auto opacity-75" /> : null}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
             ))}
           </nav>
           <div className={`border-t ${dashboardTheme.profileBorder} ${sidebarCollapsed ? 'p-2' : 'p-4'}`}>
-            {!sidebarCollapsed ? <p className={`text-xs ${dashboardTheme.profileRole}`}>© 2026 infoLib</p> : null}
+            {!sidebarCollapsed ? (
+              <div className="rounded-xl border border-emerald-400/25 bg-emerald-700/20 p-3">
+                <p className={`text-sm font-semibold ${dashboardTheme.profileName}`}>Admin User</p>
+                <p className={`text-xs ${dashboardTheme.profileRole}`}>Librarian</p>
+              </div>
+            ) : null}
           </div>
         </aside>
 
