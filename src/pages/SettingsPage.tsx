@@ -6,6 +6,7 @@ import {
   Building2,
   CalendarDays,
   Check,
+  CheckCircle2,
   CircleAlert,
   ChevronDown,
   ChevronUp,
@@ -13,8 +14,10 @@ import {
   ChevronRight,
   Clock3,
   ClipboardCheck,
+  Download,
   EllipsisVertical,
   Eye,
+  Filter,
   Globe,
   IdCard,
   KeyRound,
@@ -42,6 +45,7 @@ import {
   View,
   Wrench,
   WalletCards,
+  XCircle,
 } from 'lucide-react'
 
 type SettingsPageProps = {
@@ -866,6 +870,8 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
                         ? 'Manage security settings to protect your library system and data.'
                       : activeSettingsMenu === 'Backup'
                         ? 'Create and manage backups of your library system data. Backups help you restore your system in case of data loss.'
+                      : activeSettingsMenu === 'Activity Logs'
+                        ? 'View and monitor all activities performed in the system.'
                       : 'Manage your system preferences and configurations.'}
                 </p>
               </div>
@@ -874,6 +880,25 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
                   <Plus size={15} />
                   Add User
                 </button>
+              ) : activeSettingsMenu === 'Activity Logs' ? (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className={`inline-flex h-10 items-center gap-2 rounded-xl border px-4 text-sm font-semibold transition-colors ${
+                      isDarkMode ? 'border-indigo-500/60 text-indigo-200 hover:bg-indigo-500/10' : 'border-indigo-300 text-indigo-700 hover:bg-indigo-50'
+                    }`}
+                  >
+                    <Download size={15} />
+                    Export Logs
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex h-10 items-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white shadow-[0_12px_24px_-16px_rgba(79,70,229,0.85)] transition-colors hover:bg-indigo-700"
+                  >
+                    <Trash2 size={15} />
+                    Clear Old Logs
+                  </button>
+                </div>
               ) : (
                 <button
                   type="button"
@@ -2659,6 +2684,157 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
               </section>
             ) : null}
 
+            {activeSettingsMenu === 'Activity Logs' ? (
+              <section className={`rounded-2xl border p-0 ${cardClass}`}>
+                <div className="space-y-4 p-6">
+                  <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+                    <div className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                      <div className="grid gap-4 lg:grid-cols-4">
+                        <label className="space-y-1.5 lg:col-span-2">
+                          <span className={`block text-[13px] font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Search</span>
+                          <div className="relative">
+                            <input placeholder="Search by user, action, module..." className={`h-10 w-full rounded-xl border px-3 pr-9 text-[14px] outline-none transition-colors ${isDarkMode ? 'border-slate-700 bg-[#0b1738] text-slate-100 placeholder:text-slate-500 focus:border-indigo-500' : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400 focus:border-indigo-500'}`} />
+                            <Search size={15} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${textMutedClass}`} />
+                          </div>
+                        </label>
+                        <SelectField label="User" value="All Users" onChange={() => undefined} options={[{ value: 'All Users', label: 'All Users' }, { value: 'Admin User', label: 'Admin User' }, { value: 'Librarian John', label: 'Librarian John' }]} isDarkMode={isDarkMode} />
+                        <SelectField label="Module" value="All Modules" onChange={() => undefined} options={[{ value: 'All Modules', label: 'All Modules' }, { value: 'Books', label: 'Books' }, { value: 'Members', label: 'Members' }, { value: 'Borrow/Return', label: 'Borrow/Return' }]} isDarkMode={isDarkMode} />
+                        <SelectField label="Date Range" value="This Week" onChange={() => undefined} options={[{ value: 'Today', label: 'Today' }, { value: 'This Week', label: 'This Week' }, { value: 'This Month', label: 'This Month' }]} isDarkMode={isDarkMode} />
+                        <SelectField label="Status" value="All Status" onChange={() => undefined} options={[{ value: 'All Status', label: 'All Status' }, { value: 'Success', label: 'Success' }, { value: 'Failed', label: 'Failed' }]} isDarkMode={isDarkMode} />
+                      </div>
+                      <div className="mt-4 flex justify-end gap-2">
+                        <button type="button" className={`inline-flex h-10 items-center gap-2 rounded-lg border px-4 text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
+                          <RotateCcw size={14} />
+                          Reset
+                        </button>
+                        <button type="button" className="inline-flex h-10 items-center gap-2 rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-indigo-700">
+                          <Filter size={14} />
+                          Filter
+                        </button>
+                      </div>
+                    </div>
+
+                    <aside className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                      <div className="mb-3 flex items-center justify-between">
+                        <p className="text-sm font-semibold">Activity Summary</p>
+                        <span className={`rounded-md px-2 py-1 text-xs font-semibold ${isDarkMode ? 'bg-indigo-500/20 text-indigo-200' : 'bg-indigo-50 text-indigo-700'}`}>This Week</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        {[
+                          ['245', 'Total Activities', ClipboardCheck, 'blue'],
+                          ['198', 'Successful', CheckCircle2, 'emerald'],
+                          ['32', 'Failed', XCircle, 'rose'],
+                          ['15', 'Users', UsersRound, 'violet'],
+                        ].map(([value, label, Icon, tone]) => {
+                          const style = tone === 'emerald'
+                            ? isDarkMode ? 'bg-emerald-500/10 text-emerald-200' : 'bg-emerald-50 text-emerald-700'
+                            : tone === 'rose'
+                              ? isDarkMode ? 'bg-rose-500/10 text-rose-200' : 'bg-rose-50 text-rose-700'
+                              : tone === 'violet'
+                                ? isDarkMode ? 'bg-violet-500/10 text-violet-200' : 'bg-violet-50 text-violet-700'
+                                : isDarkMode ? 'bg-blue-500/10 text-blue-200' : 'bg-blue-50 text-blue-700'
+                          const Cmp = Icon as LucideIcon
+                          return (
+                            <div key={label as string} className={`rounded-lg border p-3 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+                              <div className={`mb-2 grid h-7 w-7 place-items-center rounded-lg ${style}`}>
+                                <Cmp size={14} />
+                              </div>
+                              <p className="text-xl font-semibold leading-none">{value as string}</p>
+                              <p className={`mt-1 text-xs ${textMutedClass}`}>{label as string}</p>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </aside>
+                  </div>
+
+                  <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+                    <section className={`overflow-hidden rounded-xl border ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                      <div className={`grid min-w-[960px] grid-cols-[1fr_1fr_0.8fr_0.8fr_1.4fr_1fr_0.8fr_50px] gap-3 border-b px-4 py-3 text-[13px] font-semibold ${isDarkMode ? 'border-slate-700 bg-[#0b1738] text-slate-200' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
+                        <p>Date & Time</p><p>User</p><p>Module</p><p>Action</p><p>Description</p><p>IP Address</p><p>Status</p><p />
+                      </div>
+                      <div className="overflow-x-auto">
+                        {[
+                          ['May 12, 2026 10:30 AM', 'Admin User', 'Books', 'Created', 'Added new book "The Alchemist"', '192.168.1.10', 'Success'],
+                          ['May 12, 2026 10:15 AM', 'Librarian John', 'Members', 'Updated', 'Updated member details', '192.168.1.15', 'Success'],
+                          ['May 12, 2026 09:58 AM', 'Librarian Sarah', 'Borrow/Return', 'Issued', 'Issued book "Atomic Habits"', '192.168.1.18', 'Success'],
+                          ['May 12, 2026 09:20 AM', 'Member Mike', 'Auth', 'Login', 'User logged in', '192.168.1.22', 'Success'],
+                          ['May 11, 2026 08:20 PM', 'Unknown', 'Auth', 'Login Failed', 'Failed login attempt', '192.168.1.99', 'Failed'],
+                          ['May 10, 2026 11:05 AM', 'Librarian Sarah', 'Categories', 'Created', 'Created new category "Science Fiction"', '192.168.1.18', 'Success'],
+                        ].map((row, idx) => {
+                          const statusOk = row[6] === 'Success'
+                          return (
+                            <div key={`${row[0]}-${idx}`} className={`grid min-w-[960px] grid-cols-[1fr_1fr_0.8fr_0.8fr_1.4fr_1fr_0.8fr_50px] items-center gap-3 border-b px-4 py-3 text-sm last:border-b-0 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                              <p>{row[0]}</p>
+                              <p className="font-semibold">{row[1]}</p>
+                              <p><span className={`rounded-md px-2 py-0.5 text-xs font-semibold ${isDarkMode ? 'bg-indigo-500/20 text-indigo-200' : 'bg-indigo-50 text-indigo-700'}`}>{row[2]}</span></p>
+                              <p>{row[3]}</p>
+                              <p className={textMutedClass}>{row[4]}</p>
+                              <p>{row[5]}</p>
+                              <p>
+                                <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold ${statusOk ? isDarkMode ? 'bg-emerald-500/20 text-emerald-200' : 'bg-emerald-100 text-emerald-700' : isDarkMode ? 'bg-rose-500/20 text-rose-200' : 'bg-rose-100 text-rose-700'}`}>
+                                  {row[6]}
+                                </span>
+                              </p>
+                              <button type="button" className={textMutedClass}><EllipsisVertical size={16} /></button>
+                            </div>
+                          )
+                        })}
+                      </div>
+                      <div className={`flex items-center justify-between border-t px-4 py-3 text-sm ${isDarkMode ? 'border-slate-700 text-slate-300' : 'border-slate-200 text-slate-600'}`}>
+                        <p>Showing 1 to 6 of 245 logs</p>
+                        <div className="flex items-center gap-2">
+                          <button type="button" className={`grid h-8 w-8 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}><ChevronLeft size={14} /></button>
+                          <button type="button" className="grid h-8 w-8 place-items-center rounded-lg bg-indigo-600 text-sm font-semibold text-white">1</button>
+                          <button type="button" className={`grid h-8 w-8 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}>2</button>
+                          <button type="button" className={`grid h-8 w-8 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}><ChevronRight size={14} /></button>
+                        </div>
+                      </div>
+                    </section>
+
+                    <div className="space-y-4">
+                      <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                        <p className="text-sm font-semibold">Activities by Module</p>
+                        <div className="mt-4 flex items-center gap-4">
+                          <div className="h-32 w-32 rounded-full bg-[conic-gradient(#4f46e5_0deg_115deg,#0ea5e9_115deg_194deg,#f59e0b_194deg_255deg,#10b981_255deg_300deg,#8b5cf6_300deg_332deg,#94a3b8_332deg_360deg)] p-5">
+                            <div className={`h-full w-full rounded-full ${isDarkMode ? 'bg-[#0f1f49]' : 'bg-white'}`} />
+                          </div>
+                          <div className="space-y-2 text-xs">
+                            {['Books 78 (31.8%)', 'Members 54 (22.0%)', 'Borrow/Return 42 (17.1%)', 'Users 31 (12.7%)', 'Auth 21 (8.6%)', 'Others 19 (7.8%)'].map((line) => (
+                              <p key={line} className={textMutedClass}>{line}</p>
+                            ))}
+                          </div>
+                        </div>
+                      </section>
+
+                      <section className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                        <p className="text-sm font-semibold">Recent Failed Activities</p>
+                        <div className="mt-3 space-y-3">
+                          {[
+                            ['Failed login attempt', 'Unknown IP: 192.168.1.99', 'May 11, 02:20 PM'],
+                            ['Permission denied', 'User: mike@gmail.com', 'May 10, 04:15 PM'],
+                            ['Invalid token', 'IP: 192.168.1.55', 'May 10, 11:32 AM'],
+                          ].map((item) => (
+                            <div key={item[0]} className={`flex items-start justify-between gap-3 rounded-lg border p-3 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-slate-50'}`}>
+                              <div className="flex items-start gap-2">
+                                <span className={`mt-0.5 grid h-6 w-6 place-items-center rounded-md ${isDarkMode ? 'bg-rose-500/15 text-rose-200' : 'bg-rose-100 text-rose-700'}`}><TriangleAlert size={13} /></span>
+                                <div>
+                                  <p className="text-sm font-semibold">{item[0]}</p>
+                                  <p className={`text-xs ${textMutedClass}`}>{item[1]}</p>
+                                </div>
+                              </div>
+                              <span className={`text-xs ${textMutedClass}`}>{item[2]}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <button type="button" className="mt-3 text-sm font-semibold text-indigo-600 hover:text-indigo-700">View All Failed Activities</button>
+                      </section>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            ) : null}
+
             {activeSettingsMenu === 'Backup' ? (
               <section className={`rounded-2xl border p-0 ${cardClass}`}>
                 <div className="space-y-4 p-6">
@@ -2755,7 +2931,7 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
               </section>
             ) : null}
 
-            {activeSettingsMenu !== 'General' && activeSettingsMenu !== 'Library Profile' && activeSettingsMenu !== 'Users & Roles' && activeSettingsMenu !== 'Books & Borrowing' && activeSettingsMenu !== 'Membership & Penalties' && activeSettingsMenu !== 'Notifications' && activeSettingsMenu !== 'Email & SMTP' && activeSettingsMenu !== 'Security' && activeSettingsMenu !== 'Backup' ? (
+            {activeSettingsMenu !== 'General' && activeSettingsMenu !== 'Library Profile' && activeSettingsMenu !== 'Users & Roles' && activeSettingsMenu !== 'Books & Borrowing' && activeSettingsMenu !== 'Membership & Penalties' && activeSettingsMenu !== 'Notifications' && activeSettingsMenu !== 'Email & SMTP' && activeSettingsMenu !== 'Security' && activeSettingsMenu !== 'Backup' && activeSettingsMenu !== 'Activity Logs' ? (
               <section className={`rounded-2xl border p-6 ${cardClass}`}>
                 <h4 className="text-[20px] font-semibold tracking-tight">{activeSettingsMenu}</h4>
                 <p className={`mt-2 text-sm ${textMutedClass}`}>This tab is ready for implementation next.</p>
