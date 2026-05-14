@@ -21,6 +21,20 @@ import {
   Image,
   Play,
   Send,
+  Search,
+  Filter,
+  Plus,
+  Download,
+  Pencil,
+  Trash,
+  ShieldCheck,
+  BookOpen,
+  UserCog,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  CheckCircle2,
+  ExternalLink,
 } from 'lucide-react'
 
 type SettingsPageProps = {
@@ -48,7 +62,7 @@ const settingsMenuItems = [
 const timeOptions = ['08:00 AM', '09:00 AM', '12:00 PM', '01:00 PM', '05:00 PM']
 
 export function SettingsPage({ isDarkMode }: SettingsPageProps) {
-  const [activeMenu, setActiveMenu] = useState('Library Profile')
+  const [activeMenu, setActiveMenu] = useState('Users & Roles')
   const [theme, setTheme] = useState<ThemeMode>('light')
   const [notifications, setNotifications] = useState(true)
   const [overdueFine, setOverdueFine] = useState(true)
@@ -56,6 +70,7 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
   const [autoMemberId, setAutoMemberId] = useState(true)
   const [showCatalog, setShowCatalog] = useState(true)
   const [showBarcode, setShowBarcode] = useState(true)
+  const [usersRolesTab, setUsersRolesTab] = useState<'Users' | 'Roles'>('Users')
   const [operatingHours, setOperatingHours] = useState<OperatingDay[]>([
     { day: 'Monday', open: '08:00 AM', close: '05:00 PM', closed: false },
     { day: 'Tuesday', open: '08:00 AM', close: '05:00 PM', closed: false },
@@ -79,6 +94,179 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
       prev.map((item, idx) => (idx === index ? { ...item, [key]: value } : item)),
     )
   }
+
+  const users = [
+    { name: 'Admin User', email: 'admin@infolib.com', role: 'Administrator', roleClass: 'bg-emerald-100 text-emerald-700', status: 'Active', statusClass: 'bg-emerald-100 text-emerald-700', login: 'May 14, 2026 10:30 AM' },
+    { name: 'Maria Santos', email: 'maria.santos@infolib.com', role: 'Librarian', roleClass: 'bg-sky-100 text-sky-700', status: 'Active', statusClass: 'bg-emerald-100 text-emerald-700', login: 'May 14, 2026 09:15 AM' },
+    { name: 'Juan Dela Cruz', email: 'juan.delacruz@infolib.com', role: 'Assistant Librarian', roleClass: 'bg-violet-100 text-violet-700', status: 'Active', statusClass: 'bg-emerald-100 text-emerald-700', login: 'May 13, 2026 04:20 PM' },
+    { name: 'Ana Lim', email: 'ana.lim@infolib.com', role: 'Library Clerk', roleClass: 'bg-amber-100 text-amber-700', status: 'Active', statusClass: 'bg-emerald-100 text-emerald-700', login: 'May 13, 2026 02:45 PM' },
+    { name: 'Pedro Reyes', email: 'pedro.reyes@infolib.com', role: 'Library Clerk', roleClass: 'bg-amber-100 text-amber-700', status: 'Inactive', statusClass: 'bg-rose-100 text-rose-700', login: 'May 10, 2026 11:05 AM' },
+    { name: 'Sarah Wilson', email: 'sarah.wilson@infolib.com', role: 'Assistant Librarian', roleClass: 'bg-violet-100 text-violet-700', status: 'Active', statusClass: 'bg-emerald-100 text-emerald-700', login: 'May 9, 2026 03:30 PM' },
+    { name: 'Carlo Garcia', email: 'carlo.garcia@infolib.com', role: 'Library Clerk', roleClass: 'bg-amber-100 text-amber-700', status: 'Active', statusClass: 'bg-emerald-100 text-emerald-700', login: 'May 8, 2026 10:10 AM' },
+  ]
+
+  const roles = [
+    { title: 'Administrator', desc: 'Full access to all modules and settings.', users: '1 User', icon: ShieldCheck, color: 'text-emerald-600 bg-emerald-100' },
+    { title: 'Librarian', desc: 'Manage books, members, circulation and reports.', users: '1 User', icon: BookOpen, color: 'text-sky-600 bg-sky-100' },
+    { title: 'Assistant Librarian', desc: 'Assist in circulation, catalogs and member services.', users: '2 Users', icon: UserCog, color: 'text-violet-600 bg-violet-100' },
+    { title: 'Library Clerk', desc: 'Handle daily operations and basic transactions.', users: '3 Users', icon: UsersRound, color: 'text-amber-600 bg-amber-100' },
+  ]
+
+  const renderUsersAndRoles = () => (
+    <div className="space-y-6">
+      <div className="grid items-start gap-5 lg:grid-cols-[7fr_3fr]">
+        <section className={`rounded-2xl border p-4 ${cardClass}`}>
+          <div className="mb-4 flex border-b border-slate-200 pb-2 text-sm font-semibold">
+            <button onClick={() => setUsersRolesTab('Users')} className={`px-4 py-2 ${usersRolesTab === 'Users' ? 'border-b-2 border-emerald-600 text-emerald-600' : subLabelClass}`}>Users</button>
+            <button onClick={() => setUsersRolesTab('Roles')} className={`px-4 py-2 ${usersRolesTab === 'Roles' ? 'border-b-2 border-emerald-600 text-emerald-600' : subLabelClass}`}>Roles</button>
+          </div>
+
+          {usersRolesTab === 'Users' ? (
+            <>
+              <div className="mb-4 grid gap-3 md:grid-cols-[1.6fr_1fr_1fr_auto]">
+                <div className={`flex h-11 items-center gap-2 rounded-xl border px-3 ${inputClass}`}>
+                  <Search size={16} className="text-slate-400" />
+                  <input className="w-full bg-transparent text-sm outline-none" placeholder="Search users by name, email or role..." />
+                </div>
+                <select className={`h-11 rounded-xl border px-3 text-sm outline-none ${inputClass}`}><option>All Roles</option></select>
+                <select className={`h-11 rounded-xl border px-3 text-sm outline-none ${inputClass}`}><option>All Status</option></select>
+                <button className={`inline-flex h-11 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-semibold ${inputClass}`}><Filter size={14} /> Filter</button>
+              </div>
+              <div className="overflow-hidden rounded-xl border border-slate-200">
+                <div className={`grid grid-cols-[2.1fr_1.4fr_0.9fr_1.2fr_0.8fr] gap-2 px-4 py-3 text-xs font-bold uppercase tracking-wide ${isDarkMode ? 'bg-slate-900 text-slate-300' : 'bg-slate-50 text-slate-500'}`}>
+                  <p>User</p><p>Role</p><p>Status</p><p>Last Login</p><p>Actions</p>
+                </div>
+                {users.map((user) => (
+                  <div key={user.email} className={`grid grid-cols-[2.1fr_1.4fr_0.9fr_1.2fr_0.8fr] items-center gap-2 px-4 py-3 text-sm ${isDarkMode ? 'border-t border-slate-800' : 'border-t border-slate-100'}`}>
+                    <div><p className={`font-semibold ${labelClass}`}>{user.name}</p><p className={`text-xs ${subLabelClass}`}>{user.email}</p></div>
+                    <p><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${user.roleClass}`}>{user.role}</span></p>
+                    <p><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${user.statusClass}`}>{user.status}</span></p>
+                    <p className={`text-xs ${labelClass}`}>{user.login}</p>
+                    <div className="flex gap-2">
+                      <button className={`grid h-8 w-8 place-items-center rounded-lg border ${inputClass}`}><Pencil size={13} /></button>
+                      <button className={`grid h-8 w-8 place-items-center rounded-lg border text-rose-500 ${inputClass}`}><Trash size={13} /></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 flex items-center justify-between">
+                <p className={`text-xs ${subLabelClass}`}>Showing 1 to 7 of 7 users</p>
+                <div className="flex items-center gap-2">
+                  <button className={`grid h-8 w-8 place-items-center rounded-lg border ${inputClass}`}><ChevronLeft size={14} /></button>
+                  <button className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-600 text-sm font-semibold text-white">1</button>
+                  <button className={`grid h-8 w-8 place-items-center rounded-lg border ${inputClass}`}><ChevronRight size={14} /></button>
+                  <select className={`ml-2 h-8 rounded-lg border px-2 text-sm ${inputClass}`}><option>10 / page</option></select>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="mb-4 max-w-[320px]">
+                <div className={`flex h-11 items-center gap-2 rounded-xl border px-3 ${inputClass}`}>
+                  <Search size={16} className="text-slate-400" />
+                  <input className="w-full bg-transparent text-sm outline-none" placeholder="Search roles..." />
+                </div>
+              </div>
+              <div className="overflow-hidden rounded-xl border border-slate-200">
+                <div className={`grid grid-cols-[1.4fr_2.1fr_0.6fr_0.8fr_0.8fr] gap-2 px-4 py-3 text-xs font-bold uppercase tracking-wide ${isDarkMode ? 'bg-slate-900 text-slate-300' : 'bg-slate-50 text-slate-500'}`}>
+                  <p>Role Name</p><p>Description</p><p>Users</p><p>Status</p><p>Actions</p>
+                </div>
+                {[
+                  { title: 'Administrator', desc: 'Full access to all modules and settings.', users: '1', status: 'Active', statusClass: 'bg-emerald-100 text-emerald-700', icon: ShieldCheck, color: 'text-emerald-600 bg-emerald-100' },
+                  { title: 'Librarian', desc: 'Manage books, members, circulation and reports.', users: '1', status: 'Active', statusClass: 'bg-emerald-100 text-emerald-700', icon: BookOpen, color: 'text-sky-600 bg-sky-100' },
+                  { title: 'Assistant Librarian', desc: 'Assist in circulation, catalogs and member services.', users: '2', status: 'Active', statusClass: 'bg-emerald-100 text-emerald-700', icon: UserCog, color: 'text-violet-600 bg-violet-100' },
+                  { title: 'Library Clerk', desc: 'Handle daily operations and basic transactions.', users: '3', status: 'Active', statusClass: 'bg-emerald-100 text-emerald-700', icon: UsersRound, color: 'text-amber-600 bg-amber-100' },
+                  { title: 'View Only', desc: 'Can view books and members but cannot make changes.', users: '0', status: 'Inactive', statusClass: 'bg-rose-100 text-rose-700', icon: Eye, color: 'text-slate-600 bg-slate-100' },
+                ].map((role) => (
+                  <div key={role.title} className={`grid grid-cols-[1.4fr_2.1fr_0.6fr_0.8fr_0.8fr] items-center gap-2 px-4 py-3 text-sm ${isDarkMode ? 'border-t border-slate-800' : 'border-t border-slate-100'}`}>
+                    <div className="flex items-center gap-3"><div className={`grid h-10 w-10 place-items-center rounded-xl ${role.color}`}><role.icon size={17} /></div><p className={`font-semibold ${labelClass}`}>{role.title}</p></div>
+                    <p className={`text-sm ${subLabelClass}`}>{role.desc}</p>
+                    <p className={`text-sm font-semibold ${labelClass}`}>{role.users}</p>
+                    <p><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${role.statusClass}`}>{role.status}</span></p>
+                    <div className="flex gap-2">
+                      <button className={`grid h-8 w-8 place-items-center rounded-lg border ${inputClass}`}><Pencil size={13} /></button>
+                      <button className={`grid h-8 w-8 place-items-center rounded-lg border text-rose-500 ${inputClass}`}><Trash size={13} /></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 flex items-center justify-between">
+                <p className={`text-xs ${subLabelClass}`}>Showing 1 to 5 of 5 roles</p>
+                <div className="flex items-center gap-2">
+                  <button className={`grid h-8 w-8 place-items-center rounded-lg border ${inputClass}`}><ChevronLeft size={14} /></button>
+                  <button className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-600 text-sm font-semibold text-white">1</button>
+                  <button className={`grid h-8 w-8 place-items-center rounded-lg border ${inputClass}`}><ChevronRight size={14} /></button>
+                  <select className={`ml-2 h-8 rounded-lg border px-2 text-sm ${inputClass}`}><option>10 / page</option></select>
+                </div>
+              </div>
+            </>
+          )}
+        </section>
+
+        <section className={`rounded-2xl border p-5 ${cardClass}`}>
+          {usersRolesTab === 'Users' ? (
+            <>
+              <div className="mb-5 grid grid-cols-[1fr_auto] items-start gap-3">
+                <div className="min-w-0">
+                  <h4 className={`text-[20px] font-bold leading-none ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Roles</h4>
+                  <p className={`mt-1 text-sm leading-5 ${subLabelClass}`}>Manage user roles and their permissions.</p>
+                </div>
+                <button className={`inline-flex h-11 items-center gap-2 whitespace-nowrap rounded-xl border px-4 text-sm font-semibold ${inputClass}`}><Plus size={14} />Add Role</button>
+              </div>
+              <div className="space-y-3.5">
+                {roles.map((role) => (
+                  <div key={role.title} className={`grid grid-cols-[1fr_auto] items-center gap-3 rounded-xl border p-3.5 ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>
+                    <div className="flex min-w-0 items-start gap-3"><div className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${role.color}`}><role.icon size={17} /></div><div className="min-w-0"><p className={`text-sm font-semibold ${labelClass}`}>{role.title}</p><p className={`text-xs leading-5 ${subLabelClass}`}>{role.desc}</p></div></div>
+                    <div className="flex items-center gap-2 whitespace-nowrap pl-2"><p className="text-xs font-semibold text-emerald-600">{role.users}</p><ChevronRight size={14} className="text-emerald-500" /></div>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <>
+              <h4 className={`text-[28px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Role Details</h4>
+              <p className={`mb-4 mt-1 text-sm ${subLabelClass}`}>View role information and permissions.</p>
+              <div className={`mb-4 flex items-center justify-between rounded-xl border p-3 ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>
+                <div className="flex items-center gap-3"><div className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-100 text-emerald-600"><ShieldCheck size={17} /></div><p className={`font-semibold ${labelClass}`}>Administrator</p></div>
+                <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">Active</span>
+              </div>
+              <div className="space-y-3">
+                <div><p className={`text-sm font-semibold ${labelClass}`}>Description</p><p className={`text-sm ${subLabelClass}`}>Full access to all modules and settings.</p></div>
+                <div><p className={`text-sm font-semibold ${labelClass}`}>Users</p><p className={`text-sm ${subLabelClass}`}>1 user assigned</p></div>
+                <div className={`border-t pt-3 ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>
+                  <p className={`mb-2 text-sm font-semibold ${labelClass}`}>Permissions</p>
+                  <p className={`mb-3 text-sm ${subLabelClass}`}>This role has access to all modules and features.</p>
+                  <div className="space-y-2">
+                    {[
+                      ['Dashboard', 'View system overview and statistics'],
+                      ['Books', 'Add, edit, delete and manage books'],
+                      ['Members', 'Add, edit, delete and manage members'],
+                      ['Circulation', 'Borrow, return and manage reservations'],
+                      ['Reports', 'View and export all reports'],
+                      ['Settings', 'Manage all system settings'],
+                    ].map(([title, subtitle]) => (
+                      <div key={title} className="flex items-start gap-2"><CheckCircle2 size={16} className="mt-0.5 shrink-0 text-emerald-600" /><div><p className={`text-sm font-semibold ${labelClass}`}>{title}</p><p className={`text-xs ${subLabelClass}`}>{subtitle}</p></div></div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <button className={`mt-5 w-full rounded-xl border px-4 py-2.5 text-sm font-semibold ${inputClass}`}>View All Permissions</button>
+            </>
+          )}
+        </section>
+      </div>
+      <div className={`flex items-center justify-between rounded-2xl border px-5 py-4 ${isDarkMode ? 'border-emerald-700/30 bg-emerald-900/10' : 'border-emerald-100 bg-emerald-50/40'}`}>
+        <div>
+          <p className={`text-sm font-semibold ${labelClass}`}>About Roles & Permissions</p>
+          <p className={`text-xs ${subLabelClass}`}>Roles help you control what users can access and do in the system.</p>
+        </div>
+        <button className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold ${inputClass}`}>
+          {usersRolesTab === 'Roles' ? 'Learn More' : 'View Permissions Guide'}
+          {usersRolesTab === 'Roles' ? <ExternalLink size={14} /> : null}
+        </button>
+      </div>
+    </div>
+  )
 
   const renderLibraryProfile = () => (
     <div className="space-y-8">
@@ -280,17 +468,34 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
               <p className={`mt-2 text-[14px] font-medium ${subLabelClass}`}>
                 {activeMenu === 'Library Profile'
                   ? 'Manage your library information that will appear across the system.'
+                  : activeMenu === 'Users & Roles'
+                    ? 'Manage system users and their roles and permissions.'
                   : 'Manage your system preferences and configurations.'}
               </p>
             </div>
-            <button className="inline-flex items-center gap-2 rounded-xl bg-[#059669] px-6 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-emerald-700 active:scale-[0.98]">
-              <Check size={18} strokeWidth={3} />
-              Save Changes
-            </button>
+            {activeMenu === 'Users & Roles' ? (
+              <div className="flex gap-3">
+                {usersRolesTab === 'Users' ? (
+                  <button className={`inline-flex items-center gap-2 rounded-xl border px-5 py-3 text-sm font-bold ${inputClass}`}>
+                    <Download size={16} /> Export
+                  </button>
+                ) : null}
+                <button className="inline-flex items-center gap-2 rounded-xl bg-[#059669] px-5 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-emerald-700 active:scale-[0.98]">
+                  <Plus size={16} /> {usersRolesTab === 'Users' ? 'Add User' : 'Add Role'}
+                </button>
+              </div>
+            ) : (
+              <button className="inline-flex items-center gap-2 rounded-xl bg-[#059669] px-6 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-emerald-700 active:scale-[0.98]">
+                <Check size={18} strokeWidth={3} />
+                Save Changes
+              </button>
+            )}
           </div>
 
           {activeMenu === 'Library Profile' ? (
             renderLibraryProfile()
+          ) : activeMenu === 'Users & Roles' ? (
+            renderUsersAndRoles()
           ) : (
             <div className="grid gap-8 lg:grid-cols-12">
               <section className={`rounded-3xl border p-8 lg:col-span-8 ${cardClass}`}>
