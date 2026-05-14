@@ -3,7 +3,6 @@ import {
   Settings2,
   UsersRound,
   Bell,
-  Shield,
   RotateCcw,
   ChevronDown,
   Sun,
@@ -35,10 +34,19 @@ import {
   Eye,
   CheckCircle2,
   ExternalLink,
+  Mail,
+  Calendar,
+  AlertCircle,
+  Receipt,
+  Info,
+  Lock,
+  Shield,
 } from 'lucide-react'
 
 type SettingsPageProps = {
   isDarkMode: boolean
+  activeTab: string
+  onTabChange?: (tab: string) => void
 }
 
 type ThemeMode = 'light' | 'dark' | 'system'
@@ -50,19 +58,10 @@ type OperatingDay = {
   closed: boolean
 }
 
-const settingsMenuItems = [
-  { label: 'General', icon: Settings2 },
-  { label: 'Library Profile', icon: Library },
-  { label: 'Users & Roles', icon: UsersRound },
-  { label: 'Notifications', icon: Bell },
-  { label: 'Security', icon: Shield },
-  { label: 'Backup', icon: RotateCcw },
-]
-
 const timeOptions = ['08:00 AM', '09:00 AM', '12:00 PM', '01:00 PM', '05:00 PM']
 
-export function SettingsPage({ isDarkMode }: SettingsPageProps) {
-  const [activeMenu, setActiveMenu] = useState('Users & Roles')
+export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPageProps) {
+  const activeMenu = activeTab
   const [theme, setTheme] = useState<ThemeMode>('light')
   const [notifications, setNotifications] = useState(true)
   const [overdueFine, setOverdueFine] = useState(true)
@@ -79,6 +78,19 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
     { day: 'Friday', open: '08:00 AM', close: '05:00 PM', closed: false },
     { day: 'Saturday', open: '09:00 AM', close: '01:00 PM', closed: false },
     { day: 'Sunday', open: '08:00 AM', close: '05:00 PM', closed: true },
+  ])
+
+  const [emailNotifs, setEmailNotifs] = useState(true)
+  const [inAppNotifs, setInAppNotifs] = useState(true)
+  const [previewTab, setPreviewTab] = useState<'Email' | 'In-App'>('Email')
+
+  const [events, setEvents] = useState([
+    { id: 'due-date', label: 'Due Date Reminder', desc: 'Notify members before the book due date.', icon: Calendar, color: 'text-emerald-500 bg-emerald-100 dark:bg-emerald-500/10', email: true, inApp: true, hasInApp: true },
+    { id: 'overdue', label: 'Overdue Notice', desc: 'Notify members when a book is overdue.', icon: AlertCircle, color: 'text-rose-500 bg-rose-100 dark:bg-rose-500/10', email: true, inApp: true, hasInApp: true },
+    { id: 'fine', label: 'Fine Notice', desc: 'Notify members about fines generated.', icon: Receipt, color: 'text-amber-500 bg-amber-100 dark:bg-amber-500/10', email: true, inApp: false, hasInApp: false },
+    { id: 'reservation', label: 'Reservation Available', desc: 'Notify members when their reserved book is available.', icon: BookOpen, color: 'text-blue-500 bg-blue-100 dark:bg-blue-500/10', email: true, inApp: true, hasInApp: true },
+    { id: 'registration', label: 'Member Registration', desc: 'Notify admin when a new member registers.', icon: UsersRound, color: 'text-violet-500 bg-violet-100 dark:bg-violet-500/10', email: true, inApp: true, hasInApp: true },
+    { id: 'return', label: 'Return Reminder', desc: 'Notify members who have not returned borrowed books.', icon: RotateCcw, color: 'text-sky-500 bg-sky-100 dark:bg-sky-500/10', email: true, inApp: false, hasInApp: true },
   ])
 
   const cardClass = isDarkMode ? 'border-slate-800 bg-[#0a1633]' : 'border-slate-200 bg-white'
@@ -425,55 +437,442 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
     </div>
   )
 
+  const renderGeneralSettings = () => (
+    <div className="grid gap-8 lg:grid-cols-12">
+      <section className={`rounded-3xl border p-8 lg:col-span-8 ${cardClass}`}>
+        <div className="mb-10 flex items-center gap-4">
+          <div className={`grid h-12 w-12 place-items-center rounded-xl ${iconBoxBg}`}>
+            <Settings2 size={24} strokeWidth={2} />
+          </div>
+          <div>
+            <h4 className={`text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>1. System Preferences</h4>
+            <p className={`text-[13px] font-medium ${subLabelClass}`}>Configure basic system preferences.</p>
+          </div>
+        </div>
+
+        <div className="grid gap-8 md:grid-cols-2">
+          {[
+            { label: 'Date Format', options: ['May 12, 2026 (MM DD, YYYY)', '12 May 2026 (DD MM, YYYY)'] },
+            { label: 'Language', options: ['English', 'Filipino'] },
+            { label: 'Time Format', options: ['12 Hour (02:30 PM)', '24 Hour (14:30)'] },
+            { label: 'Currency', options: ['PHP - Philippine Peso (P)', 'USD - US Dollar ($)'] },
+          ].map((field) => (
+            <div key={field.label} className="space-y-2.5">
+              <label className={`text-[13px] font-bold ${labelClass}`}>{field.label}</label>
+              <div className="relative">
+                <select className={`h-12 w-full appearance-none rounded-xl border px-4 pr-10 text-[13px] font-semibold outline-none focus:border-emerald-500 transition-colors ${inputClass}`}>
+                  {field.options.map((option) => (
+                    <option key={`${field.label}-${option}`}>{option}</option>
+                  ))}
+                </select>
+                <ChevronDown size={18} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-10 space-y-3">
+          <label className={`text-[13px] font-bold ${labelClass}`}>Default Theme</label>
+          <div className="flex gap-4">
+            {[
+              { id: 'light', icon: Sun, label: 'Light' },
+              { id: 'dark', icon: Moon, label: 'Dark' },
+              { id: 'system', icon: Monitor, label: 'System' },
+            ].map((t) => {
+              const isActive = theme === t.id
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => setTheme(t.id as ThemeMode)}
+                  className={`flex min-w-[140px] items-center justify-center gap-3 rounded-xl border px-6 py-3.5 text-[13px] font-bold transition-all duration-200 ${
+                    isActive
+                      ? 'border-emerald-500 bg-[#f0fdf4] text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
+                      : isDarkMode
+                        ? 'border-slate-800 bg-[#0f1f49] text-slate-400 hover:bg-slate-800'
+                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  <t.icon size={18} strokeWidth={isActive ? 2.5 : 2} />
+                  {t.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section className={`rounded-3xl border p-8 lg:col-span-4 ${cardClass}`}>
+        <div className="mb-10 flex items-center gap-4">
+          <div className={`grid h-12 w-12 place-items-center rounded-xl ${iconBoxBg}`}>
+            <History size={24} strokeWidth={2} />
+          </div>
+          <div>
+            <h4 className={`text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>2. Library Rules</h4>
+            <p className={`text-[13px] font-medium ${subLabelClass}`}>Set important rules and policies for your library.</p>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {[
+            { label: 'Enable Notifications', state: notifications, setState: setNotifications, icon: Bell },
+            { label: 'Enable Overdue Fine', state: overdueFine, setState: setOverdueFine, icon: RotateCcw },
+            { label: 'Allow Member Self-Registration', state: selfRegistration, setState: setSelfRegistration, icon: UserPlus },
+            { label: 'Auto-generate Member ID', state: autoMemberId, setState: setAutoMemberId, icon: CreditCard },
+            { label: 'Show Book Availability in Public Catalog', state: showCatalog, setState: setShowCatalog, icon: Globe },
+          ].map((item) => (
+            <div key={item.label} className={`flex items-center justify-between rounded-2xl border px-5 py-4 transition-all ${isDarkMode ? 'border-slate-800/50 hover:bg-slate-800/30' : 'border-[#f1f5f9] bg-white hover:bg-[#f8fafc]'}`}>
+              <div className="flex items-center gap-4">
+                <div className="text-emerald-600 opacity-80 dark:text-emerald-400">
+                  <item.icon size={20} strokeWidth={2} />
+                </div>
+                <span className={`text-[13px] font-semibold ${labelClass}`}>{item.label}</span>
+              </div>
+              <button
+                onClick={() => item.setState(!item.state)}
+                className={`relative h-[26px] w-[50px] shrink-0 rounded-full transition-all duration-300 ${
+                  item.state ? 'bg-emerald-600' : 'bg-slate-200 dark:bg-slate-700'
+                }`}
+              >
+                <div className={`absolute left-1 top-1 h-[18px] w-[18px] transform rounded-full bg-white transition-transform duration-300 ${item.state ? 'translate-x-6' : 'translate-x-0'}`} />
+              </button>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className={`col-span-12 rounded-3xl border p-8 ${cardClass}`}>
+        <div className="mb-10 flex items-center gap-4">
+          <div className={`grid h-12 w-12 place-items-center rounded-xl ${iconBoxBg}`}>
+            <Monitor size={24} strokeWidth={2} />
+          </div>
+          <div>
+            <h4 className={`text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>3. Display & Behavior</h4>
+            <p className={`text-[13px] font-medium ${subLabelClass}`}>Customize how the system behaves and displays information.</p>
+          </div>
+        </div>
+
+        <div className="grid gap-10 lg:grid-cols-2">
+          <div className="grid gap-8 sm:grid-cols-2">
+            <div className="space-y-2">
+              <label className={`text-[13px] font-bold ${labelClass}`}>Items Per Page</label>
+              <p className={`text-[12px] font-medium leading-relaxed ${subLabelClass}`}>Number of items to show in lists and tables.</p>
+              <div className="relative mt-3">
+                <select className={`h-12 w-full appearance-none rounded-xl border px-4 pr-10 text-[13px] font-semibold outline-none focus:border-emerald-500 transition-colors ${inputClass}`}>
+                  <option>10</option>
+                  <option>20</option>
+                  <option>50</option>
+                </select>
+                <ChevronDown size={18} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className={`text-[13px] font-bold ${labelClass}`}>Due Date Reminder</label>
+              <p className={`text-[12px] font-medium leading-relaxed ${subLabelClass}`}>Send reminders before the due date.</p>
+              <div className="relative mt-3">
+                <select className={`h-12 w-full appearance-none rounded-xl border px-4 pr-10 text-[13px] font-semibold outline-none focus:border-emerald-500 transition-colors ${inputClass}`}>
+                  <option>2 Days Before</option>
+                  <option>1 Day Before</option>
+                  <option>Same Day</option>
+                </select>
+                <ChevronDown size={18} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" />
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-8 sm:grid-cols-2">
+            <div className="space-y-2">
+              <label className={`text-[13px] font-bold ${labelClass}`}>Auto Logout</label>
+              <p className={`text-[12px] font-medium leading-relaxed ${subLabelClass}`}>Automatically logout inactive users.</p>
+              <div className="relative mt-3">
+                <select className={`h-12 w-full appearance-none rounded-xl border px-4 pr-10 text-[13px] font-semibold outline-none focus:border-emerald-500 transition-colors ${inputClass}`}>
+                  <option>30 Minutes</option>
+                  <option>1 Hour</option>
+                  <option>2 Hours</option>
+                </select>
+                <ChevronDown size={18} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" />
+              </div>
+            </div>
+            <div className={`self-end rounded-2xl border px-6 py-5 ${isDarkMode ? 'border-slate-800' : 'border-[#f1f5f9] bg-white'}`}>
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <label className={`text-[13px] font-bold ${labelClass}`}>Show Barcode in Receipts</label>
+                  <p className={`text-[11px] font-medium leading-relaxed ${subLabelClass}`}>Display book barcode in print receipts.</p>
+                </div>
+                <button
+                  onClick={() => setShowBarcode(!showBarcode)}
+                  className={`relative h-[26px] w-[50px] shrink-0 rounded-full transition-all duration-300 ${
+                    showBarcode ? 'bg-emerald-600' : 'bg-slate-200 dark:bg-slate-700'
+                  }`}
+                >
+                  <div className={`absolute left-1 top-1 h-[18px] w-[18px] transform rounded-full bg-white transition-transform duration-300 ${showBarcode ? 'translate-x-6' : 'translate-x-0'}`} />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  )
+
+  const renderSettingsOverview = () => (
+    <div className="space-y-8">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {/* General */}
+        <section className={`flex flex-col rounded-2xl border p-6 transition-all duration-300 hover:shadow-lg ${cardClass}`}>
+          <div className="mb-8 flex items-start gap-4">
+            <div className={`grid h-12 w-12 place-items-center rounded-xl ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600'}`}>
+              <Settings2 size={24} />
+            </div>
+            <div>
+              <h4 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>General</h4>
+              <p className={`mt-1 text-sm ${subLabelClass}`}>Configure general system settings like language, date format, loan rules and more.</p>
+            </div>
+          </div>
+          <button 
+            onClick={() => onTabChange?.('General')}
+            className={`mt-auto flex w-full items-center justify-between rounded-xl border p-3 text-sm font-semibold transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 ${inputClass}`}
+          >
+            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
+              <Settings2 size={16} />
+              <span>Manage Settings</span>
+            </div>
+            <ChevronRight size={16} />
+          </button>
+        </section>
+
+        {/* Library Profile */}
+        <section className={`flex flex-col rounded-2xl border p-6 transition-all duration-300 hover:shadow-lg ${cardClass}`}>
+          <div className="mb-8 flex items-start gap-4">
+            <div className={`grid h-12 w-12 place-items-center rounded-xl ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600'}`}>
+              <Library size={24} />
+            </div>
+            <div>
+              <h4 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Library Profile</h4>
+              <p className={`mt-1 text-sm ${subLabelClass}`}>Update library information, contact details and system identity.</p>
+            </div>
+          </div>
+          <button 
+            onClick={() => onTabChange?.('Library Profile')}
+            className={`mt-auto flex w-full items-center justify-between rounded-xl border p-3 text-sm font-semibold transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 ${inputClass}`}
+          >
+            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
+              <Library size={16} />
+              <span>Edit Profile</span>
+            </div>
+            <ChevronRight size={16} />
+          </button>
+        </section>
+
+        {/* Users & Roles */}
+        <section className={`flex flex-col rounded-2xl border p-6 transition-all duration-300 hover:shadow-lg ${cardClass}`}>
+          <div className="mb-8 flex items-start gap-4">
+            <div className={`grid h-12 w-12 place-items-center rounded-xl ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600'}`}>
+              <UsersRound size={24} />
+            </div>
+            <div>
+              <h4 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Users & Roles</h4>
+              <p className={`mt-1 text-sm ${subLabelClass}`}>Add users, set roles and manage permissions across the system.</p>
+            </div>
+          </div>
+          <button 
+            onClick={() => onTabChange?.('Users & Roles')}
+            className={`mt-auto flex w-full items-center justify-between rounded-xl border p-3 text-sm font-semibold transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 ${inputClass}`}
+          >
+            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
+              <UsersRound size={16} />
+              <span>Manage Access</span>
+            </div>
+            <ChevronRight size={16} />
+          </button>
+        </section>
+
+        {/* Notifications */}
+        <section className={`flex flex-col rounded-2xl border p-6 transition-all duration-300 hover:shadow-lg ${cardClass}`}>
+          <div className="mb-8 flex items-start gap-4">
+            <div className={`grid h-12 w-12 place-items-center rounded-xl ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600'}`}>
+              <Bell size={24} />
+            </div>
+            <div>
+              <h4 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Notifications</h4>
+              <p className={`mt-1 text-sm ${subLabelClass}`}>Configure email notifications, alerts and reminder preferences.</p>
+            </div>
+          </div>
+          <button 
+            onClick={() => onTabChange?.('Notifications')}
+            className={`mt-auto flex w-full items-center justify-between rounded-xl border p-3 text-sm font-semibold transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 ${inputClass}`}
+          >
+            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
+              <Bell size={16} />
+              <span>Notification Settings</span>
+            </div>
+            <ChevronRight size={16} />
+          </button>
+        </section>
+
+        {/* Security */}
+        <section className={`flex flex-col rounded-2xl border p-6 transition-all duration-300 hover:shadow-lg ${cardClass}`}>
+          <div className="mb-8 flex items-start gap-4">
+            <div className={`grid h-12 w-12 place-items-center rounded-xl ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600'}`}>
+              <ShieldCheck size={24} />
+            </div>
+            <div>
+              <h4 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Security</h4>
+              <p className={`mt-1 text-sm ${subLabelClass}`}>Manage password policy, sessions and other security preferences.</p>
+            </div>
+          </div>
+          <button 
+            onClick={() => onTabChange?.('Security')}
+            className={`mt-auto flex w-full items-center justify-between rounded-xl border p-3 text-sm font-semibold transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 ${inputClass}`}
+          >
+            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
+              <ShieldCheck size={16} />
+              <span>Security Settings</span>
+            </div>
+            <ChevronRight size={16} />
+          </button>
+        </section>
+
+        {/* System Secure Card */}
+        <section className={`rounded-2xl border p-6 transition-all duration-300 hover:shadow-lg ${isDarkMode ? 'border-emerald-900/30 bg-emerald-900/10' : 'border-emerald-100/50 bg-emerald-50/20'}`}>
+          <div className="flex items-center gap-8">
+            <div className="relative flex-shrink-0">
+              <div className={`grid h-28 w-24 place-items-center rounded-2xl border-2 ${isDarkMode ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-emerald-200 bg-white'}`}>
+                <div className="relative">
+                  <Lock size={40} className="text-emerald-500" />
+                  <div className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white shadow-sm ring-2 ring-white dark:ring-slate-900">
+                    <Check size={12} strokeWidth={4} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex-1 space-y-4">
+              <div>
+                <h4 className="text-lg font-bold text-emerald-600 dark:text-emerald-400">Your system is secure</h4>
+                <p className={`mt-1 text-sm font-medium ${subLabelClass}`}>All settings are protected and changes are logged.</p>
+              </div>
+              
+              <div className={`h-[1px] w-full ${isDarkMode ? 'bg-slate-800/50' : 'bg-emerald-100'}`} />
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className={`text-xs font-semibold ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Last updated</p>
+                  <p className={`mt-0.5 text-sm font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>May 15, 2026 • 10:30 AM</p>
+                </div>
+                <div className={`grid h-10 w-10 place-items-center rounded-xl ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600'}`}>
+                  <Calendar size={18} strokeWidth={2.5} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      {/* Recent Settings Activity */}
+      <section className={`mt-10 overflow-hidden rounded-2xl border ${cardClass}`}>
+        <div className="flex items-center justify-between px-8 py-5">
+          <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Recent Settings Activity</h3>
+          <button 
+            onClick={() => onTabChange?.('Overview')}
+            className="flex items-center gap-1 text-sm font-bold text-emerald-600 transition-colors hover:text-emerald-700"
+          >
+            <span>View all activity</span>
+            <ChevronRight size={16} />
+          </button>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'bg-[#0f1f49] text-slate-300 border-y border-slate-800/50' : 'bg-slate-50 text-slate-600 border-y border-slate-100'}`}>
+              <tr>
+                <th className="px-8 py-3.5">Activity</th>
+                <th className="px-6 py-3.5">Module</th>
+                <th className="px-6 py-3.5">Updated By</th>
+                <th className="px-6 py-3.5">Date & Time</th>
+              </tr>
+            </thead>
+            <tbody className={isDarkMode ? 'bg-[#0b1738]' : 'bg-white'}>
+              {[
+                { 
+                  title: 'General settings updated', 
+                  detail: 'Loan period, Fine per day changed', 
+                  module: 'General', 
+                  user: 'Admin User', 
+                  time: 'May 15, 2026 • 10:30 AM',
+                  icon: Settings2,
+                  iconBg: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
+                },
+                { 
+                  title: 'New user added: Ana Lim', 
+                  detail: 'Assigned as Student Librarian', 
+                  module: 'Users & Roles', 
+                  user: 'Admin User', 
+                  time: 'May 14, 2026 • 04:22 PM',
+                  icon: UsersRound,
+                  iconBg: 'bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400'
+                },
+                { 
+                  title: 'Password policy updated', 
+                  detail: 'Enforced 12-char minimum length', 
+                  module: 'Security', 
+                  user: 'Admin User', 
+                  time: 'May 13, 2026 • 09:15 AM',
+                  icon: ShieldCheck,
+                  iconBg: 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400'
+                },
+              ].map((item, idx) => (
+                <tr key={idx} className={`border-t transition-colors ${isDarkMode ? 'border-slate-800/50 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}>
+                  <td className="px-8 py-5">
+                    <div className="flex items-center gap-4">
+                      <div className={`grid h-10 w-10 place-items-center rounded-lg ${item.iconBg}`}>
+                        <item.icon size={18} />
+                      </div>
+                      <div>
+                        <p className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-900'}`}>{item.title}</p>
+                        <p className={`text-xs ${subLabelClass}`}>{item.detail}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-5">
+                    <span className={`inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-bold ${
+                      item.module === 'General' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15' :
+                      item.module === 'Users & Roles' ? 'bg-purple-50 text-purple-700 dark:bg-purple-500/15' :
+                      'bg-blue-50 text-blue-700 dark:bg-blue-500/15'
+                    }`}>
+                      {item.module}
+                    </span>
+                  </td>
+                  <td className={`px-6 py-5 text-sm font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{item.user}</td>
+                  <td className={`px-6 py-5 text-sm font-semibold ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{item.time}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  )
+
   return (
     <div className={`min-h-0 flex-1 overflow-auto p-8 transition-colors duration-300 ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
-      <div className="mx-auto flex w-full max-w-[1500px] gap-10">
-        <aside className="w-64 shrink-0">
-          <div className={`sticky top-8 self-start rounded-2xl border p-5 ${cardClass}`}>
-            <h3 className={`mb-5 px-3 text-[13px] font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-900'}`}>Settings Menu</h3>
-            <nav className="space-y-1">
-              {settingsMenuItems.map((item) => {
-                const Icon = item.icon
-                const isActive = item.label === activeMenu
-                return (
-                  <button
-                    key={item.label}
-                    onClick={() => setActiveMenu(item.label)}
-                    className={`flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-[13px] font-semibold transition-all duration-200 ${
-                      isActive
-                        ? 'bg-[#f0fdf4] text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
-                        : isDarkMode ? 'text-slate-400 hover:bg-slate-800' : 'text-slate-500 hover:bg-slate-50'
-                    }`}
-                  >
-                    <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
-                    {item.label}
-                  </button>
-                )
-              })}
-            </nav>
-          </div>
-        </aside>
-
-        <main className="flex-1 pb-20">
+      <div className="space-y-10 pb-20">
           <div className="mb-10 flex items-start justify-between">
             <div>
-              <nav className="mb-3 flex items-center gap-2 text-[13px] font-medium text-slate-400">
-                <span className="cursor-pointer transition-colors hover:text-emerald-600">Home</span>
-                <span className="opacity-40">/</span>
-                <span className="cursor-pointer transition-colors hover:text-emerald-600">Settings</span>
-                <span className="opacity-40">/</span>
-                <span className="font-bold text-emerald-600">{activeMenu}</span>
-              </nav>
-              <h2 className={`text-[32px] font-bold leading-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{activeMenu}</h2>
-              <p className={`mt-2 text-[14px] font-medium ${subLabelClass}`}>
+              <h2 className={`text-4xl font-black tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                {activeMenu === 'Overview' ? 'Settings' : activeMenu}
+              </h2>
+              <p className={`mt-1 text-base ${subLabelClass}`}>
                 {activeMenu === 'Library Profile'
                   ? 'Manage your library information that will appear across the system.'
                   : activeMenu === 'Users & Roles'
                     ? 'Manage system users and their roles and permissions.'
-                  : 'Manage your system preferences and configurations.'}
+                  : activeMenu === 'Notifications'
+                    ? 'Manage and customize system notifications and reminders.'
+                  : activeMenu === 'General'
+                    ? 'Configure basic system preferences and rules.'
+                  : 'Manage your library system preferences and configuration.'}
               </p>
             </div>
-            {activeMenu === 'Users & Roles' ? (
+            {activeMenu === 'Overview' ? null : activeMenu === 'Users & Roles' ? (
               <div className="flex gap-3">
                 {usersRolesTab === 'Users' ? (
                   <button className={`inline-flex items-center gap-2 rounded-xl border px-5 py-3 text-sm font-bold ${inputClass}`}>
@@ -496,183 +895,13 @@ export function SettingsPage({ isDarkMode }: SettingsPageProps) {
             renderLibraryProfile()
           ) : activeMenu === 'Users & Roles' ? (
             renderUsersAndRoles()
+          ) : activeMenu === 'Notifications' ? (
+            renderNotifications()
+          ) : activeMenu === 'General' ? (
+            renderGeneralSettings()
           ) : (
-            <div className="grid gap-8 lg:grid-cols-12">
-              <section className={`rounded-3xl border p-8 lg:col-span-8 ${cardClass}`}>
-                <div className="mb-10 flex items-center gap-4">
-                  <div className={`grid h-12 w-12 place-items-center rounded-xl ${iconBoxBg}`}>
-                    <Settings2 size={24} strokeWidth={2} />
-                  </div>
-                  <div>
-                    <h4 className={`text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>1. System Preferences</h4>
-                    <p className={`text-[13px] font-medium ${subLabelClass}`}>Configure basic system preferences.</p>
-                  </div>
-                </div>
-
-                <div className="grid gap-8 md:grid-cols-2">
-                  {[
-                    { label: 'Date Format', options: ['May 12, 2026 (MM DD, YYYY)', '12 May 2026 (DD MM, YYYY)'] },
-                    { label: 'Language', options: ['English', 'Filipino'] },
-                    { label: 'Time Format', options: ['12 Hour (02:30 PM)', '24 Hour (14:30)'] },
-                    { label: 'Currency', options: ['PHP - Philippine Peso (P)', 'USD - US Dollar ($)'] },
-                  ].map((field) => (
-                    <div key={field.label} className="space-y-2.5">
-                      <label className={`text-[13px] font-bold ${labelClass}`}>{field.label}</label>
-                      <div className="relative">
-                        <select className={`h-12 w-full appearance-none rounded-xl border px-4 pr-10 text-[13px] font-semibold outline-none focus:border-emerald-500 transition-colors ${inputClass}`}>
-                          {field.options.map((option) => (
-                            <option key={`${field.label}-${option}`}>{option}</option>
-                          ))}
-                        </select>
-                        <ChevronDown size={18} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-10 space-y-3">
-                  <label className={`text-[13px] font-bold ${labelClass}`}>Default Theme</label>
-                  <div className="flex gap-4">
-                    {[
-                      { id: 'light', icon: Sun, label: 'Light' },
-                      { id: 'dark', icon: Moon, label: 'Dark' },
-                      { id: 'system', icon: Monitor, label: 'System' },
-                    ].map((t) => {
-                      const isActive = theme === t.id
-                      return (
-                        <button
-                          key={t.id}
-                          onClick={() => setTheme(t.id as ThemeMode)}
-                          className={`flex min-w-[140px] items-center justify-center gap-3 rounded-xl border px-6 py-3.5 text-[13px] font-bold transition-all duration-200 ${
-                            isActive
-                              ? 'border-emerald-500 bg-[#f0fdf4] text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
-                              : isDarkMode
-                                ? 'border-slate-800 bg-[#0f1f49] text-slate-400 hover:bg-slate-800'
-                                : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-                          }`}
-                        >
-                          <t.icon size={18} strokeWidth={isActive ? 2.5 : 2} />
-                          {t.label}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              </section>
-
-              <section className={`rounded-3xl border p-8 lg:col-span-4 ${cardClass}`}>
-                <div className="mb-10 flex items-center gap-4">
-                  <div className={`grid h-12 w-12 place-items-center rounded-xl ${iconBoxBg}`}>
-                    <History size={24} strokeWidth={2} />
-                  </div>
-                  <div>
-                    <h4 className={`text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>2. Library Rules</h4>
-                    <p className={`text-[13px] font-medium ${subLabelClass}`}>Set important rules and policies for your library.</p>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  {[
-                    { label: 'Enable Notifications', state: notifications, setState: setNotifications, icon: Bell },
-                    { label: 'Enable Overdue Fine', state: overdueFine, setState: setOverdueFine, icon: RotateCcw },
-                    { label: 'Allow Member Self-Registration', state: selfRegistration, setState: setSelfRegistration, icon: UserPlus },
-                    { label: 'Auto-generate Member ID', state: autoMemberId, setState: setAutoMemberId, icon: CreditCard },
-                    { label: 'Show Book Availability in Public Catalog', state: showCatalog, setState: setShowCatalog, icon: Globe },
-                  ].map((item) => (
-                    <div key={item.label} className={`flex items-center justify-between rounded-2xl border px-5 py-4 transition-all ${isDarkMode ? 'border-slate-800/50 hover:bg-slate-800/30' : 'border-[#f1f5f9] bg-white hover:bg-[#f8fafc]'}`}>
-                      <div className="flex items-center gap-4">
-                        <div className="text-emerald-600 opacity-80 dark:text-emerald-400">
-                          <item.icon size={20} strokeWidth={2} />
-                        </div>
-                        <span className={`text-[13px] font-semibold ${labelClass}`}>{item.label}</span>
-                      </div>
-                      <button
-                        onClick={() => item.setState(!item.state)}
-                        className={`relative h-[26px] w-[50px] shrink-0 rounded-full transition-all duration-300 ${
-                          item.state ? 'bg-emerald-600' : 'bg-slate-200 dark:bg-slate-700'
-                        }`}
-                      >
-                        <div className={`absolute left-1 top-1 h-[18px] w-[18px] transform rounded-full bg-white transition-transform duration-300 ${item.state ? 'translate-x-6' : 'translate-x-0'}`} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </section>
-
-              <section className={`col-span-12 rounded-3xl border p-8 ${cardClass}`}>
-                <div className="mb-10 flex items-center gap-4">
-                  <div className={`grid h-12 w-12 place-items-center rounded-xl ${iconBoxBg}`}>
-                    <Monitor size={24} strokeWidth={2} />
-                  </div>
-                  <div>
-                    <h4 className={`text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>3. Display & Behavior</h4>
-                    <p className={`text-[13px] font-medium ${subLabelClass}`}>Customize how the system behaves and displays information.</p>
-                  </div>
-                </div>
-
-                <div className="grid gap-10 lg:grid-cols-2">
-                  <div className="grid gap-8 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <label className={`text-[13px] font-bold ${labelClass}`}>Items Per Page</label>
-                      <p className={`text-[12px] font-medium leading-relaxed ${subLabelClass}`}>Number of items to show in lists and tables.</p>
-                      <div className="relative mt-3">
-                        <select className={`h-12 w-full appearance-none rounded-xl border px-4 pr-10 text-[13px] font-semibold outline-none focus:border-emerald-500 transition-colors ${inputClass}`}>
-                          <option>10</option>
-                          <option>20</option>
-                          <option>50</option>
-                        </select>
-                        <ChevronDown size={18} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <label className={`text-[13px] font-bold ${labelClass}`}>Due Date Reminder</label>
-                      <p className={`text-[12px] font-medium leading-relaxed ${subLabelClass}`}>Send reminders before the due date.</p>
-                      <div className="relative mt-3">
-                        <select className={`h-12 w-full appearance-none rounded-xl border px-4 pr-10 text-[13px] font-semibold outline-none focus:border-emerald-500 transition-colors ${inputClass}`}>
-                          <option>2 Days Before</option>
-                          <option>1 Day Before</option>
-                          <option>Same Day</option>
-                        </select>
-                        <ChevronDown size={18} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid gap-8 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <label className={`text-[13px] font-bold ${labelClass}`}>Auto Logout</label>
-                      <p className={`text-[12px] font-medium leading-relaxed ${subLabelClass}`}>Automatically logout inactive users.</p>
-                      <div className="relative mt-3">
-                        <select className={`h-12 w-full appearance-none rounded-xl border px-4 pr-10 text-[13px] font-semibold outline-none focus:border-emerald-500 transition-colors ${inputClass}`}>
-                          <option>30 Minutes</option>
-                          <option>1 Hour</option>
-                          <option>2 Hours</option>
-                        </select>
-                        <ChevronDown size={18} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                      </div>
-                    </div>
-                    <div className={`self-end rounded-2xl border px-6 py-5 ${isDarkMode ? 'border-slate-800' : 'border-[#f1f5f9] bg-white'}`}>
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-1">
-                          <label className={`text-[13px] font-bold ${labelClass}`}>Show Barcode in Receipts</label>
-                          <p className={`text-[11px] font-medium leading-relaxed ${subLabelClass}`}>Display book barcode in print receipts.</p>
-                        </div>
-                        <button
-                          onClick={() => setShowBarcode(!showBarcode)}
-                          className={`relative h-[26px] w-[50px] shrink-0 rounded-full transition-all duration-300 ${
-                            showBarcode ? 'bg-emerald-600' : 'bg-slate-200 dark:bg-slate-700'
-                          }`}
-                        >
-                          <div className={`absolute left-1 top-1 h-[18px] w-[18px] transform rounded-full bg-white transition-transform duration-300 ${showBarcode ? 'translate-x-6' : 'translate-x-0'}`} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </section>
-            </div>
+            renderSettingsOverview()
           )}
-        </main>
       </div>
     </div>
   )

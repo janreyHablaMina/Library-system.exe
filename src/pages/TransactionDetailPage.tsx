@@ -2,10 +2,8 @@ import {
   ArrowLeft,
   Calendar,
   CheckCircle2,
-  Clock,
   CreditCard,
   FileText,
-  History,
   Info,
   Mail,
   MoreVertical,
@@ -20,7 +18,6 @@ import {
   UserCheck,
   MapPin
 } from 'lucide-react'
-import { useState } from 'react'
 import sarahAvatar from '../assets/sarah_avatar.png'
 import bookCover from '../assets/login.avif'
 
@@ -31,7 +28,6 @@ type TransactionDetailPageProps = {
 }
 
 export function TransactionDetailPage({ isDarkMode, onBack }: TransactionDetailPageProps) {
-  const [activeTab, setActiveTab] = useState<'timeline' | 'notes'>('timeline')
   const cardClass = isDarkMode ? 'border-slate-800 bg-[#0a1633]' : 'border-slate-200 bg-white'
   const subCardClass = isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-50 bg-[#f9fafb]'
   const labelClass = isDarkMode ? 'text-slate-400' : 'text-slate-500'

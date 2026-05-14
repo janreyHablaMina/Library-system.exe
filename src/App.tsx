@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { ArrowLeft, ArrowLeftRight, ArrowRight, BarChart3, Bell, BookOpen, BookPlus, Bookmark, Calendar, ChevronRight, Clock3, Feather, FileText, Grid2x2, LayoutDashboard, Mail, MessageCircle, Moon, Search, Settings2, Shield, Sun, Undo2, User, UserCircle, UserPlus, Users, UsersRound, Warehouse } from 'lucide-react'
+import { ArrowLeft, ArrowLeftRight, ArrowRight, BarChart3, Bell, BookOpen, BookPlus, Bookmark, Calendar, ChevronRight, Clock3, Feather, FileText, Grid2x2, LayoutDashboard, Library, Mail, MessageCircle, Moon, RotateCcw, Search, Settings2, Shield, Sun, Undo2, UserCircle, UserPlus, Users, UsersRound } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import heroImage from './assets/login.avif'
 import { BooksPage } from './pages/BooksPage'
@@ -23,11 +23,6 @@ type LoginFormState = {
   rememberMe: boolean
 }
 
-type NavItem = {
-  label: string
-  icon: LucideIcon
-  group: 'LIBRARY' | 'MANAGEMENT' | 'SYSTEM' | 'SETTINGS'
-}
 
 
 const initialState: LoginFormState = {
@@ -47,6 +42,15 @@ const navItems = [
   { id: 'Staff', icon: UserCircle, label: 'Staff' },
   { id: 'Reports', icon: BarChart3, label: 'Reports' },
   { id: 'Settings', icon: Settings2, label: 'Settings' },
+]
+
+const settingsMenuItems = [
+  { label: 'General', icon: Settings2 },
+  { label: 'Library Profile', icon: Library },
+  { label: 'Users & Roles', icon: UsersRound },
+  { label: 'Notifications', icon: Bell },
+  { label: 'Security', icon: Shield },
+  { label: 'Backup', icon: RotateCcw },
 ]
 
 
@@ -119,6 +123,8 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [activePage, setActivePage] = useState<string>('Dashboard')
+  const [isSettingsExpanded, setIsSettingsExpanded] = useState(false)
+  const [activeSettingsTab, setActiveSettingsTab] = useState('Overview')
   const [isBookDetailOpen, setIsBookDetailOpen] = useState(false)
   const [isTransactionDetailOpen, setIsTransactionDetailOpen] = useState(false)
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null)
@@ -296,24 +302,49 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
                 </div>
 
                 {/* SYSTEM Section */}
-                <div className="mt-6 px-4">
+                <div className="mt-6 px-4 pb-4">
                   <p className="px-4 text-[11px] font-bold uppercase tracking-[2px] text-slate-500">System</p>
                   <div className="mt-4 space-y-1">
-                    {navItems.slice(9).map((item) => (
-                      <button
-                        key={item.id}
-                        onClick={() => setActivePage(item.id as any)}
-                        className={`group flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200 ${
-                          activePage === item.id
-                            ? 'bg-emerald-600/20 text-emerald-400 shadow-[inset_0_0_12px_rgba(16,185,129,0.1)]'
-                            : 'text-slate-400 hover:bg-slate-800/50 hover:text-emerald-300'
-                        }`}
-                      >
-                        <item.icon size={20} className={activePage === item.id ? 'text-emerald-400' : ''} />
-                        <span className="flex-1 text-left font-semibold">{item.label}</span>
-                        <ChevronRight size={14} className={`transition-transform duration-300 ${activePage === item.id ? 'rotate-90 text-emerald-400' : 'text-emerald-100/40'}`} />
-                      </button>
-                    ))}
+                    <button
+                      onClick={() => {
+                        setActivePage('Settings')
+                        setIsSettingsExpanded(!isSettingsExpanded)
+                        setActiveSettingsTab('Overview')
+                      }}
+                      className={`group flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200 ${
+                        activePage === 'Settings'
+                          ? 'bg-emerald-600/20 text-emerald-400 shadow-[inset_0_0_12px_rgba(16,185,129,0.1)]'
+                          : 'text-slate-400 hover:bg-slate-800/50 hover:text-emerald-300'
+                      }`}
+                    >
+                      <Settings2 size={20} className={activePage === 'Settings' ? 'text-emerald-400' : ''} />
+                      <span className="flex-1 text-left font-semibold">{!sidebarCollapsed && 'Settings'}</span>
+                      {!sidebarCollapsed && (
+                        <ChevronRight size={14} className={`transition-transform duration-300 ${isSettingsExpanded ? 'rotate-90' : ''} ${activePage === 'Settings' ? 'text-emerald-400' : 'text-emerald-100/40'}`} />
+                      )}
+                    </button>
+                    
+                    {isSettingsExpanded && !sidebarCollapsed && (
+                      <div className="ml-4 mt-1 space-y-1 border-l border-emerald-500/20 pl-4">
+                        {settingsMenuItems.map((subItem) => (
+                          <button
+                            key={subItem.label}
+                            onClick={() => {
+                              setActivePage('Settings')
+                              setActiveSettingsTab(subItem.label)
+                            }}
+                            className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-200 ${
+                              activePage === 'Settings' && activeSettingsTab === subItem.label
+                                ? 'text-emerald-400 bg-emerald-400/5'
+                                : 'text-slate-400 hover:text-emerald-300 hover:bg-slate-800/30'
+                            }`}
+                          >
+                            <subItem.icon size={16} />
+                            {subItem.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
           </nav>
@@ -438,7 +469,7 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
           ) : activePage === 'Reports' ? (
             <ReportsPage isDarkMode={isDarkMode} />
           ) : activePage === 'Settings' ? (
-            <SettingsPage isDarkMode={isDarkMode} />
+            <SettingsPage isDarkMode={isDarkMode} activeTab={activeSettingsTab} onTabChange={setActiveSettingsTab} />
           ) : activePage === 'Authors' ? (
             <AuthorsPage isDarkMode={isDarkMode} />
           ) : activePage === 'Categories' ? (

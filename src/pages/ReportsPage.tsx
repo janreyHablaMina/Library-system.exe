@@ -8,12 +8,9 @@ import {
   Clock,
   RotateCcw,
   BadgeDollarSign,
-  TrendingUp,
   ArrowUpRight,
   ArrowDownRight,
-  Info,
-  TriangleAlert,
-  MoreHorizontal
+  TriangleAlert
 } from 'lucide-react'
 import {
   AreaChart,
@@ -63,8 +60,6 @@ type ReportsPageProps = {
 export function ReportsPage({ isDarkMode }: ReportsPageProps) {
   const cardClass = isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'
   const labelClass = isDarkMode ? 'text-slate-400' : 'text-slate-500'
-  const mainText = isDarkMode ? 'text-white' : 'text-slate-900'
-  const tableHeaderBg = isDarkMode ? 'bg-[#0f1f49]' : 'bg-slate-50'
 
   return (
     <div className={`min-h-0 flex-1 overflow-auto p-6 ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>

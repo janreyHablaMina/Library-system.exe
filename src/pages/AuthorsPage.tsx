@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { ChevronDown, Download, Eye, MoreHorizontal, Pencil, Plus, RotateCcw, Search, Trash2, Users, X, BookOpen, Star, Calendar, Filter, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronDown, Download, Eye, Pencil, Plus, Search, Trash2, Users, X, BookOpen, Star, Calendar, Filter, ChevronLeft, ChevronRight } from 'lucide-react'
 
 type AuthorRow = {
   id: number
