@@ -13,6 +13,7 @@ import { ReportsPage } from './pages/ReportsPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { AuthorsPage } from './pages/AuthorsPage'
 import { CategoriesPage } from './pages/CategoriesPage'
+import { ReservationsPage } from './pages/ReservationsPage'
 
 
 type LoginFormState = {
@@ -414,7 +415,7 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
             )
           ) : activePage === 'Members' ? (
             <MembersPage isDarkMode={isDarkMode} />
-          ) : activePage === 'Borrow / Return' ? (
+          ) : activePage === 'Transactions' ? (
             <BorrowReturnPage isDarkMode={isDarkMode} onOpenTransactions={() => setActivePage('All Transactions')} />
           ) : activePage === 'All Transactions' ? (
             isTransactionDetailOpen ? (
@@ -426,7 +427,7 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
             ) : (
               <TransactionsPage
                 isDarkMode={isDarkMode}
-                onBack={() => setActivePage('Borrow / Return')}
+                onBack={() => setActivePage('Transactions')}
                 onOpenTransactionDetail={(id) => {
                   setSelectedTransactionId(id)
                   setIsTransactionDetailOpen(true)
@@ -441,6 +442,8 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
             <AuthorsPage isDarkMode={isDarkMode} />
           ) : activePage === 'Categories' ? (
             <CategoriesPage isDarkMode={isDarkMode} />
+          ) : activePage === 'Reservations' ? (
+            <ReservationsPage isDarkMode={isDarkMode} />
           ) : (
 
           <div className={`min-h-0 flex-1 overflow-auto p-4 ${dashboardTheme.contentBg}`}>
