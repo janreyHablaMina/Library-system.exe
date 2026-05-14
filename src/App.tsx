@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { ArrowLeft, ArrowRight, Bell, BookOpen, BookPlus, Bookmark, ChevronRight, Clock3, FileText, Grid2x2, LayoutDashboard, Mail, MessageCircle, Moon, Search, Settings2, Shield, Sun, Undo2, User, UserPlus, Users, UsersRound, Warehouse } from 'lucide-react'
+import { ArrowLeft, ArrowLeftRight, ArrowRight, BarChart3, Bell, BookOpen, BookPlus, Bookmark, Calendar, ChevronRight, Clock3, Feather, FileText, Grid2x2, LayoutDashboard, Mail, MessageCircle, Moon, Search, Settings2, Shield, Sun, Undo2, User, UserCircle, UserPlus, Users, UsersRound, Warehouse } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import heroImage from './assets/login.avif'
 import { BooksPage } from './pages/BooksPage'
@@ -11,6 +11,9 @@ import { BookDetailPage } from './pages/BookDetailPage'
 import { TransactionDetailPage } from './pages/TransactionDetailPage'
 import { ReportsPage } from './pages/ReportsPage'
 import { SettingsPage } from './pages/SettingsPage'
+import { AuthorsPage } from './pages/AuthorsPage'
+import { CategoriesPage } from './pages/CategoriesPage'
+
 
 type LoginFormState = {
   username: string
@@ -24,30 +27,26 @@ type NavItem = {
   group: 'LIBRARY' | 'MANAGEMENT' | 'SYSTEM' | 'SETTINGS'
 }
 
+
 const initialState: LoginFormState = {
   username: '',
   password: '',
   rememberMe: true,
 }
 
-const navItems: NavItem[] = [
-  { label: 'Overview', icon: LayoutDashboard, group: 'LIBRARY' },
-  { label: 'Books', icon: BookOpen, group: 'LIBRARY' },
-  { label: 'Members', icon: Users, group: 'LIBRARY' },
-  { label: 'Authors', icon: User, group: 'LIBRARY' },
-  { label: 'Categories', icon: Grid2x2, group: 'LIBRARY' },
-  { label: 'Borrow / Return', icon: ArrowRight, group: 'LIBRARY' },
-  { label: 'Staff', icon: UsersRound, group: 'MANAGEMENT' },
-  { label: 'Roles & Permissions', icon: Shield, group: 'MANAGEMENT' },
-  { label: 'Branches', icon: Warehouse, group: 'MANAGEMENT' },
-  { label: 'Reports', icon: FileText, group: 'SYSTEM' },
-  { label: 'Notifications', icon: Bell, group: 'SYSTEM' },
-  { label: 'Email & SMTP', icon: Mail, group: 'SYSTEM' },
-  { label: 'Security', icon: Shield, group: 'SYSTEM' },
-  { label: 'Backup', icon: Clock3, group: 'SYSTEM' },
-  { label: 'Activity Logs', icon: FileText, group: 'SYSTEM' },
-  { label: 'Settings', icon: Settings2, group: 'SETTINGS' },
+const navItems = [
+  { id: 'Dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { id: 'Books', icon: BookOpen, label: 'Books' },
+  { id: 'Members', icon: Users, label: 'Members' },
+  { id: 'Authors', icon: Feather, label: 'Authors' },
+  { id: 'Categories', icon: Grid2x2, label: 'Categories' },
+  { id: 'Transactions', icon: ArrowLeftRight, label: 'Borrow / Return' },
+  { id: 'Reservations', icon: Calendar, label: 'Reservations' },
+  { id: 'Staff', icon: UserCircle, label: 'Staff' },
+  { id: 'Reports', icon: BarChart3, label: 'Reports' },
+  { id: 'Settings', icon: Settings2, label: 'Settings' },
 ]
+
 
 type ActivityItem = {
   title: string
@@ -117,7 +116,7 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [activePage, setActivePage] = useState<NavItem['label']>('Books')
+  const [activePage, setActivePage] = useState<string>('Dashboard')
   const [isBookDetailOpen, setIsBookDetailOpen] = useState(false)
   const [isTransactionDetailOpen, setIsTransactionDetailOpen] = useState(false)
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null)
@@ -185,8 +184,8 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
         searchInput: 'text-slate-700 placeholder:text-slate-400',
         iconBtn: 'text-slate-600 hover:bg-slate-100',
         profileBorder: 'border-emerald-800/55',
-        profileName: 'text-emerald-50',
-        profileRole: 'text-emerald-100/80',
+        profileName: 'text-slate-900',
+        profileRole: 'text-slate-500',
         contentBg: 'bg-[#f8fafc]',
         greetingTitle: 'text-slate-900',
         greetingSub: 'text-slate-500',
@@ -205,43 +204,116 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
             <h1 className={`font-black tracking-tight ${dashboardTheme.asideTitle} ${sidebarCollapsed ? 'text-2xl text-center' : 'text-4xl'}`}>info<span className="text-emerald-300">Lib</span></h1>
             {!sidebarCollapsed ? <p className={`mt-1 text-[10px] font-semibold uppercase tracking-[0.08em] ${dashboardTheme.asideSub}`}>Library Management System</p> : null}
           </div>
-          <nav className={`flex-1 space-y-4 overflow-y-auto py-5 text-sm ${sidebarCollapsed ? 'px-2' : 'px-4'}`}>
-            {(['LIBRARY', 'MANAGEMENT', 'SYSTEM', 'SETTINGS'] as const).map((group) => (
-              <div key={group}>
-                {!sidebarCollapsed ? <p className="mb-2 px-2 text-xs font-bold tracking-[0.08em] text-emerald-100/70">{group}</p> : null}
-                <div className="space-y-1">
-                  {navItems.filter((item) => item.group === group).map((item) => {
-                    const ItemIcon = item.icon
-                    const isActive = item.label === activePage
-                    return (
-                      <button
-                        key={item.label}
-                        onClick={() => {
-                          setActivePage(item.label)
-                          if (item.label !== 'Books') {
-                            setIsBookDetailOpen(false)
-                          }
-                          if (item.label !== 'All Transactions' && item.label !== 'Borrow / Return') {
-                            setIsTransactionDetailOpen(false)
-                          }
-                        }}
-                        className={
-                          isActive
-                            ? `flex w-full items-center rounded-xl py-2.5 font-semibold ${dashboardTheme.navActive} ${sidebarCollapsed ? 'justify-center px-2' : 'gap-3 px-3'}`
-                            : `flex w-full items-center rounded-xl py-2.5 ${dashboardTheme.navIdle} ${sidebarCollapsed ? 'justify-center px-2' : 'gap-3 px-3'}`
-                        }
-                        type="button"
-                        title={sidebarCollapsed ? item.label : undefined}
+          <nav className={`flex-1 overflow-y-auto py-5 text-sm`}>
+                {/* Top Section - Dashboard */}
+                <div className="px-4 mt-4">
+                   {(() => {
+                     const DashIcon = navItems[0].icon;
+                     return (
+                       <button
+                        key={navItems[0].id}
+                        onClick={() => setActivePage(navItems[0].id as any)}
+                        className={`group flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200 ${
+                          activePage === navItems[0].id
+                            ? 'bg-emerald-600/20 text-emerald-400 shadow-[inset_0_0_12px_rgba(16,185,129,0.1)]'
+                            : 'text-slate-400 hover:bg-slate-800/50 hover:text-emerald-300'
+                        }`}
                       >
-                        <ItemIcon size={17} />
-                        {!sidebarCollapsed ? <span>{item.label}</span> : null}
-                        {!sidebarCollapsed ? <ChevronRight size={14} className="ml-auto opacity-75" /> : null}
+                        <DashIcon size={20} className={activePage === navItems[0].id ? 'text-emerald-400' : ''} />
+                        <span className="flex-1 text-left font-semibold">{navItems[0].label}</span>
+                        {activePage === navItems[0].id && <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />}
                       </button>
-                    )
-                  })}
+                     )
+                   })()}
                 </div>
-              </div>
-            ))}
+
+                {/* LIBRARY Section */}
+                <div className="mt-8 px-4">
+                  <p className="px-4 text-[11px] font-bold uppercase tracking-[2px] text-slate-500">Library</p>
+                  <div className="mt-4 space-y-1">
+                    {navItems.slice(1, 5).map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => setActivePage(item.id as any)}
+                        className={`group flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200 ${
+                          activePage === item.id
+                            ? 'bg-emerald-600/20 text-emerald-400 shadow-[inset_0_0_12px_rgba(16,185,129,0.1)]'
+                            : 'text-slate-400 hover:bg-slate-800/50 hover:text-emerald-300'
+                        }`}
+                      >
+                        <item.icon size={20} className={activePage === item.id ? 'text-emerald-400' : ''} />
+                        <span className="flex-1 text-left font-semibold">{item.label}</span>
+                        <ChevronRight size={14} className={`transition-transform duration-300 ${activePage === item.id ? 'rotate-90 text-emerald-400' : 'text-emerald-100/40'}`} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* CIRCULATION Section */}
+                <div className="mt-6 px-4">
+                  <p className="px-4 text-[11px] font-bold uppercase tracking-[2px] text-slate-500">Circulation</p>
+                  <div className="mt-4 space-y-1">
+                    {navItems.slice(5, 7).map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => setActivePage(item.id as any)}
+                        className={`group flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200 ${
+                          activePage === item.id
+                            ? 'bg-emerald-600/20 text-emerald-400 shadow-[inset_0_0_12px_rgba(16,185,129,0.1)]'
+                            : 'text-slate-400 hover:bg-slate-800/50 hover:text-emerald-300'
+                        }`}
+                      >
+                        <item.icon size={20} className={activePage === item.id ? 'text-emerald-400' : ''} />
+                        <span className="flex-1 text-left font-semibold">{item.label}</span>
+                        <ChevronRight size={14} className={`transition-transform duration-300 ${activePage === item.id ? 'rotate-90 text-emerald-400' : 'text-emerald-100/40'}`} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* MANAGEMENT Section */}
+                <div className="mt-6 px-4">
+                  <p className="px-4 text-[11px] font-bold uppercase tracking-[2px] text-slate-500">Management</p>
+                  <div className="mt-4 space-y-1">
+                    {navItems.slice(7, 9).map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => setActivePage(item.id as any)}
+                        className={`group flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200 ${
+                          activePage === item.id
+                            ? 'bg-emerald-600/20 text-emerald-400 shadow-[inset_0_0_12px_rgba(16,185,129,0.1)]'
+                            : 'text-slate-400 hover:bg-slate-800/50 hover:text-emerald-300'
+                        }`}
+                      >
+                        <item.icon size={20} className={activePage === item.id ? 'text-emerald-400' : ''} />
+                        <span className="flex-1 text-left font-semibold">{item.label}</span>
+                        <ChevronRight size={14} className={`transition-transform duration-300 ${activePage === item.id ? 'rotate-90 text-emerald-400' : 'text-emerald-100/40'}`} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* SYSTEM Section */}
+                <div className="mt-6 px-4">
+                  <p className="px-4 text-[11px] font-bold uppercase tracking-[2px] text-slate-500">System</p>
+                  <div className="mt-4 space-y-1">
+                    {navItems.slice(9).map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => setActivePage(item.id as any)}
+                        className={`group flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200 ${
+                          activePage === item.id
+                            ? 'bg-emerald-600/20 text-emerald-400 shadow-[inset_0_0_12px_rgba(16,185,129,0.1)]'
+                            : 'text-slate-400 hover:bg-slate-800/50 hover:text-emerald-300'
+                        }`}
+                      >
+                        <item.icon size={20} className={activePage === item.id ? 'text-emerald-400' : ''} />
+                        <span className="flex-1 text-left font-semibold">{item.label}</span>
+                        <ChevronRight size={14} className={`transition-transform duration-300 ${activePage === item.id ? 'rotate-90 text-emerald-400' : 'text-emerald-100/40'}`} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
           </nav>
           <div className={`border-t ${dashboardTheme.profileBorder} ${sidebarCollapsed ? 'p-2' : 'p-4'}`}>
             {!sidebarCollapsed ? (
@@ -365,7 +437,12 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
             <ReportsPage isDarkMode={isDarkMode} />
           ) : activePage === 'Settings' ? (
             <SettingsPage isDarkMode={isDarkMode} />
+          ) : activePage === 'Authors' ? (
+            <AuthorsPage isDarkMode={isDarkMode} />
+          ) : activePage === 'Categories' ? (
+            <CategoriesPage isDarkMode={isDarkMode} />
           ) : (
+
           <div className={`min-h-0 flex-1 overflow-auto p-4 ${dashboardTheme.contentBg}`}>
             <section className="p-5">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
