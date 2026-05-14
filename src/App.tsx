@@ -14,6 +14,7 @@ import { SettingsPage } from './pages/SettingsPage'
 import { AuthorsPage } from './pages/AuthorsPage'
 import { CategoriesPage } from './pages/CategoriesPage'
 import { ReservationsPage } from './pages/ReservationsPage'
+import { StaffPage } from './pages/StaffPage'
 
 
 type LoginFormState = {
@@ -444,6 +445,8 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
             <CategoriesPage isDarkMode={isDarkMode} />
           ) : activePage === 'Reservations' ? (
             <ReservationsPage isDarkMode={isDarkMode} />
+          ) : activePage === 'Staff' ? (
+            <StaffPage isDarkMode={isDarkMode} />
           ) : (
 
           <div className={`min-h-0 flex-1 overflow-auto p-4 ${dashboardTheme.contentBg}`}>
