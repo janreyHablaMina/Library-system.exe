@@ -42,6 +42,10 @@ import {
   Lock,
   Shield,
   Clock,
+  MoreVertical,
+  MoreHorizontal,
+  UserCircle,
+  UserX,
 } from 'lucide-react'
 
 type SettingsPageProps = {
@@ -126,157 +130,173 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
   ]
 
   const renderUsersAndRoles = () => (
-    <div className="space-y-6">
-      <div className="grid items-start gap-5 lg:grid-cols-[7fr_3fr]">
-        <section className={`rounded-2xl border p-4 ${cardClass}`}>
-          <div className="mb-4 flex border-b border-slate-200 pb-2 text-sm font-semibold">
-            <button onClick={() => setUsersRolesTab('Users')} className={`px-4 py-2 ${usersRolesTab === 'Users' ? 'border-b-2 border-emerald-600 text-emerald-600' : subLabelClass}`}>Users</button>
-            <button onClick={() => setUsersRolesTab('Roles')} className={`px-4 py-2 ${usersRolesTab === 'Roles' ? 'border-b-2 border-emerald-600 text-emerald-600' : subLabelClass}`}>Roles</button>
+    <div className="space-y-8">
+      {/* Stats Overview */}
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          { label: 'Total Users', value: '12', sub: 'All active system users', icon: UsersRound, color: 'bg-emerald-50 text-emerald-600', darkColor: 'bg-emerald-500/10 text-emerald-400' },
+          { label: 'Roles', value: '3', sub: 'System roles defined', icon: ShieldCheck, color: 'bg-teal-50 text-teal-600', darkColor: 'bg-teal-500/10 text-teal-400' },
+          { label: 'Active Users', value: '11', sub: 'Currently active accounts', icon: UserCircle, color: 'bg-blue-50 text-blue-600', darkColor: 'bg-blue-500/10 text-blue-400' },
+          { label: 'Inactive Users', value: '1', sub: 'Deactivated accounts', icon: UserX, color: 'bg-orange-50 text-orange-600', darkColor: 'bg-orange-500/10 text-orange-400' },
+        ].map((stat) => (
+          <div key={stat.label} className={`group flex cursor-pointer items-center justify-between rounded-2xl border p-6 transition-all hover:shadow-lg ${cardClass}`}>
+            <div className="flex items-center gap-5">
+              <div className={`grid h-14 w-14 place-items-center rounded-2xl transition-transform group-hover:scale-110 ${isDarkMode ? stat.darkColor : stat.color}`}>
+                <stat.icon size={28} strokeWidth={2} />
+              </div>
+              <div>
+                <p className={`text-[13px] font-bold ${subLabelClass}`}>{stat.label}</p>
+                <h3 className={`text-2xl font-black ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{stat.value}</h3>
+                <p className={`text-[11px] font-medium ${subLabelClass}`}>{stat.sub}</p>
+              </div>
+            </div>
+            <ChevronRight size={18} className="text-slate-300 transition-transform group-hover:translate-x-1" />
+          </div>
+        ))}
+      </div>
+
+      <div className="grid items-start gap-6 lg:grid-cols-[2fr_1fr]">
+        {/* Users Table Column */}
+        <section className={`rounded-2xl border ${cardClass}`}>
+          <div className="px-8 pt-8 pb-8 flex flex-wrap items-center justify-between gap-6">
+            <div>
+              <h4 className={`text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Users</h4>
+              <p className={`text-[13px] font-medium ${subLabelClass}`}>View and manage all system users.</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className={`flex h-11 w-72 items-center gap-3 rounded-xl border px-4 ${inputClass}`}>
+                <Search size={18} className="text-slate-400" />
+                <input className="w-full bg-transparent text-[13px] font-medium outline-none" placeholder="Search users..." />
+              </div>
+              <button className={`flex h-11 items-center gap-2 rounded-xl border px-4 text-[13px] font-bold ${inputClass}`}>
+                <Filter size={16} /> Filter
+              </button>
+              <button className={`grid h-11 w-11 place-items-center rounded-xl border ${inputClass}`}>
+                <MoreVertical size={18} />
+              </button>
+            </div>
           </div>
 
-          {usersRolesTab === 'Users' ? (
-            <>
-              <div className="mb-4 grid gap-3 md:grid-cols-[1.6fr_1fr_1fr_auto]">
-                <div className={`flex h-11 items-center gap-2 rounded-xl border px-3 ${inputClass}`}>
-                  <Search size={16} className="text-slate-400" />
-                  <input className="w-full bg-transparent text-sm outline-none" placeholder="Search users by name, email or role..." />
-                </div>
-                <select className={`h-11 rounded-xl border px-3 text-sm outline-none ${inputClass}`}><option>All Roles</option></select>
-                <select className={`h-11 rounded-xl border px-3 text-sm outline-none ${inputClass}`}><option>All Status</option></select>
-                <button className={`inline-flex h-11 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-semibold ${inputClass}`}><Filter size={14} /> Filter</button>
-              </div>
-              <div className="overflow-hidden rounded-xl border border-slate-200">
-                <div className={`grid grid-cols-[2.1fr_1.4fr_0.9fr_1.2fr_0.8fr] gap-2 px-4 py-3 text-xs font-bold uppercase tracking-wide ${isDarkMode ? 'bg-slate-900 text-slate-300' : 'bg-slate-50 text-slate-500'}`}>
-                  <p>User</p><p>Role</p><p>Status</p><p>Last Login</p><p>Actions</p>
-                </div>
-                {users.map((user) => (
-                  <div key={user.email} className={`grid grid-cols-[2.1fr_1.4fr_0.9fr_1.2fr_0.8fr] items-center gap-2 px-4 py-3 text-sm ${isDarkMode ? 'border-t border-slate-800' : 'border-t border-slate-100'}`}>
-                    <div><p className={`font-semibold ${labelClass}`}>{user.name}</p><p className={`text-xs ${subLabelClass}`}>{user.email}</p></div>
-                    <p><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${user.roleClass}`}>{user.role}</span></p>
-                    <p><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${user.statusClass}`}>{user.status}</span></p>
-                    <p className={`text-xs ${labelClass}`}>{user.login}</p>
-                    <div className="flex gap-2">
-                      <button className={`grid h-8 w-8 place-items-center rounded-lg border ${inputClass}`}><Pencil size={13} /></button>
-                      <button className={`grid h-8 w-8 place-items-center rounded-lg border text-rose-500 ${inputClass}`}><Trash size={13} /></button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-4 flex items-center justify-between">
-                <p className={`text-xs ${subLabelClass}`}>Showing 1 to 7 of 7 users</p>
-                <div className="flex items-center gap-2">
-                  <button className={`grid h-8 w-8 place-items-center rounded-lg border ${inputClass}`}><ChevronLeft size={14} /></button>
-                  <button className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-600 text-sm font-semibold text-white">1</button>
-                  <button className={`grid h-8 w-8 place-items-center rounded-lg border ${inputClass}`}><ChevronRight size={14} /></button>
-                  <select className={`ml-2 h-8 rounded-lg border px-2 text-sm ${inputClass}`}><option>10 / page</option></select>
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="mb-4 max-w-[320px]">
-                <div className={`flex h-11 items-center gap-2 rounded-xl border px-3 ${inputClass}`}>
-                  <Search size={16} className="text-slate-400" />
-                  <input className="w-full bg-transparent text-sm outline-none" placeholder="Search roles..." />
-                </div>
-              </div>
-              <div className="overflow-hidden rounded-xl border border-slate-200">
-                <div className={`grid grid-cols-[1.4fr_2.1fr_0.6fr_0.8fr_0.8fr] gap-2 px-4 py-3 text-xs font-bold uppercase tracking-wide ${isDarkMode ? 'bg-slate-900 text-slate-300' : 'bg-slate-50 text-slate-500'}`}>
-                  <p>Role Name</p><p>Description</p><p>Users</p><p>Status</p><p>Actions</p>
-                </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className={`text-[11px] font-bold uppercase tracking-wider ${isDarkMode ? 'bg-[#0f1f49] text-slate-300 border-y border-slate-800/50' : 'bg-slate-50 text-slate-600 border-y border-slate-100'}`}>
+                <tr>
+                  <th className="px-8 py-4">User</th>
+                  <th className="px-8 py-4">Role</th>
+                  <th className="px-8 py-4">Status</th>
+                  <th className="px-8 py-4">Last Login</th>
+                  <th className="px-8 py-4">Actions</th>
+                </tr>
+              </thead>
+              <tbody className={isDarkMode ? 'bg-[#0b1738]' : 'bg-white'}>
                 {[
-                  { title: 'Administrator', desc: 'Full access to all modules and settings.', users: '1', status: 'Active', statusClass: 'bg-emerald-100 text-emerald-700', icon: ShieldCheck, color: 'text-emerald-600 bg-emerald-100' },
-                  { title: 'Librarian', desc: 'Manage books, members, circulation and reports.', users: '1', status: 'Active', statusClass: 'bg-emerald-100 text-emerald-700', icon: BookOpen, color: 'text-sky-600 bg-sky-100' },
-                  { title: 'Assistant Librarian', desc: 'Assist in circulation, catalogs and member services.', users: '2', status: 'Active', statusClass: 'bg-emerald-100 text-emerald-700', icon: UserCog, color: 'text-violet-600 bg-violet-100' },
-                  { title: 'Library Clerk', desc: 'Handle daily operations and basic transactions.', users: '3', status: 'Active', statusClass: 'bg-emerald-100 text-emerald-700', icon: UsersRound, color: 'text-amber-600 bg-amber-100' },
-                  { title: 'View Only', desc: 'Can view books and members but cannot make changes.', users: '0', status: 'Inactive', statusClass: 'bg-rose-100 text-rose-700', icon: Eye, color: 'text-slate-600 bg-slate-100' },
-                ].map((role) => (
-                  <div key={role.title} className={`grid grid-cols-[1.4fr_2.1fr_0.6fr_0.8fr_0.8fr] items-center gap-2 px-4 py-3 text-sm ${isDarkMode ? 'border-t border-slate-800' : 'border-t border-slate-100'}`}>
-                    <div className="flex items-center gap-3"><div className={`grid h-10 w-10 place-items-center rounded-xl ${role.color}`}><role.icon size={17} /></div><p className={`font-semibold ${labelClass}`}>{role.title}</p></div>
-                    <p className={`text-sm ${subLabelClass}`}>{role.desc}</p>
-                    <p className={`text-sm font-semibold ${labelClass}`}>{role.users}</p>
-                    <p><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${role.statusClass}`}>{role.status}</span></p>
-                    <div className="flex gap-2">
-                      <button className={`grid h-8 w-8 place-items-center rounded-lg border ${inputClass}`}><Pencil size={13} /></button>
-                      <button className={`grid h-8 w-8 place-items-center rounded-lg border text-rose-500 ${inputClass}`}><Trash size={13} /></button>
-                    </div>
-                  </div>
+                  { name: 'Admin User', email: 'admin@citycentralschool.edu.ph', role: 'Librarian', status: 'Active', login: 'May 15, 2026 • 10:30 AM', color: 'bg-emerald-50 text-emerald-600' },
+                  { name: 'Maria Santos', email: 'maria.santos@citycentralschool.edu.ph', role: 'Librarian', status: 'Active', login: 'May 15, 2026 • 09:15 AM', color: 'bg-emerald-50 text-emerald-600' },
+                  { name: 'John Dela Cruz', email: 'john.delacruz@citycentralschool.edu.ph', role: 'Assistant', status: 'Active', login: 'May 14, 2026 • 02:20 PM', color: 'bg-blue-50 text-blue-600' },
+                  { name: 'Ana Lim', email: 'ana.lim@citycentralschool.edu.ph', role: 'Assistant', status: 'Active', login: 'May 14, 2026 • 11:05 AM', color: 'bg-blue-50 text-blue-600' },
+                  { name: 'Guest User', email: 'guest@citycentralschool.edu.ph', role: 'Viewer', status: 'Inactive', login: 'Apr 20, 2026 • 04:45 PM', color: 'bg-slate-50 text-slate-600' },
+                ].map((user, idx) => (
+                  <tr key={user.email} className={`border-b last:border-0 transition-colors ${isDarkMode ? 'border-slate-800/50 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}>
+                    <td className="px-8 py-5">
+                      <div className="flex items-center gap-4">
+                        <div className={`grid h-10 w-10 place-items-center rounded-full text-white text-xs font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200'}`}>
+                           {user.name.split(' ').map(n => n[0]).join('')}
+                        </div>
+                        <div>
+                          <p className={`text-[13px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{user.name}</p>
+                          <p className={`text-[11px] font-medium ${subLabelClass}`}>{user.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-5">
+                      <span className={`inline-flex items-center rounded-lg px-2.5 py-1 text-[11px] font-bold ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : user.color}`}>
+                        {user.role}
+                      </span>
+                    </td>
+                    <td className="px-8 py-5">
+                      <div className="flex items-center gap-2">
+                        <div className={`h-2 w-2 rounded-full ${user.status === 'Active' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]'}`} />
+                        <span className={`text-[12px] font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{user.status}</span>
+                      </div>
+                    </td>
+                    <td className="px-8 py-5 text-[12px] font-semibold text-slate-500">{user.login}</td>
+                    <td className="px-8 py-5 text-right">
+                      <button className={`grid h-9 w-9 place-items-center rounded-xl border ${inputClass} hover:border-emerald-500 transition-colors`}>
+                        <MoreHorizontal size={16} />
+                      </button>
+                    </td>
+                  </tr>
                 ))}
-              </div>
-              <div className="mt-4 flex items-center justify-between">
-                <p className={`text-xs ${subLabelClass}`}>Showing 1 to 5 of 5 roles</p>
-                <div className="flex items-center gap-2">
-                  <button className={`grid h-8 w-8 place-items-center rounded-lg border ${inputClass}`}><ChevronLeft size={14} /></button>
-                  <button className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-600 text-sm font-semibold text-white">1</button>
-                  <button className={`grid h-8 w-8 place-items-center rounded-lg border ${inputClass}`}><ChevronRight size={14} /></button>
-                  <select className={`ml-2 h-8 rounded-lg border px-2 text-sm ${inputClass}`}><option>10 / page</option></select>
-                </div>
-              </div>
-            </>
-          )}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="px-8 py-6 flex items-center justify-between border-t border-slate-100 dark:border-slate-800">
+            <p className={`text-[12px] font-bold ${subLabelClass}`}>Showing 1 to 5 of 12 users</p>
+            <div className="flex items-center gap-2">
+              <button className={`grid h-10 w-10 place-items-center rounded-xl border ${inputClass}`}><ChevronLeft size={16} /></button>
+              <button className="h-10 w-10 rounded-xl bg-emerald-600 text-[13px] font-bold text-white">1</button>
+              <button className={`h-10 w-10 rounded-xl border text-[13px] font-bold transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 ${inputClass}`}>2</button>
+              <button className={`h-10 w-10 rounded-xl border text-[13px] font-bold transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 ${inputClass}`}>3</button>
+              <button className={`grid h-10 w-10 place-items-center rounded-xl border ${inputClass}`}><ChevronRight size={16} /></button>
+            </div>
+          </div>
         </section>
 
-        <section className={`rounded-2xl border p-5 ${cardClass}`}>
-          {usersRolesTab === 'Users' ? (
-            <>
-              <div className="mb-5 grid grid-cols-[1fr_auto] items-start gap-3">
-                <div className="min-w-0">
-                  <h4 className={`text-[20px] font-bold leading-none ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Roles</h4>
-                  <p className={`mt-1 text-sm leading-5 ${subLabelClass}`}>Manage user roles and their permissions.</p>
-                </div>
-                <button className={`inline-flex h-11 items-center gap-2 whitespace-nowrap rounded-xl border px-4 text-sm font-semibold ${inputClass}`}><Plus size={14} />Add Role</button>
-              </div>
-              <div className="space-y-3.5">
-                {roles.map((role) => (
-                  <div key={role.title} className={`grid grid-cols-[1fr_auto] items-center gap-3 rounded-xl border p-3.5 ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>
-                    <div className="flex min-w-0 items-start gap-3"><div className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${role.color}`}><role.icon size={17} /></div><div className="min-w-0"><p className={`text-sm font-semibold ${labelClass}`}>{role.title}</p><p className={`text-xs leading-5 ${subLabelClass}`}>{role.desc}</p></div></div>
-                    <div className="flex items-center gap-2 whitespace-nowrap pl-2"><p className="text-xs font-semibold text-emerald-600">{role.users}</p><ChevronRight size={14} className="text-emerald-500" /></div>
+        {/* Roles Sidebar Column */}
+        <div className="space-y-6">
+          <section className={`rounded-2xl border p-8 ${cardClass}`}>
+            <h4 className={`text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Roles</h4>
+            <p className={`mb-8 text-[13px] font-medium ${subLabelClass}`}>System roles and their permissions.</p>
+
+            <div className="space-y-4">
+              {[
+                { title: 'Librarian', desc: 'Full access to all system modules.', users: '4 users', icon: UserCircle, color: 'bg-emerald-50 text-emerald-600' },
+                { title: 'Assistant', desc: 'Manage circulation, members, and catalog only.', users: '6 users', icon: UserCircle, color: 'bg-blue-50 text-blue-600' },
+                { title: 'Viewer', desc: 'View only access to selected modules.', users: '2 users', icon: Eye, color: 'bg-orange-50 text-orange-600' },
+              ].map((role) => (
+                <div key={role.title} className={`group flex cursor-pointer items-center justify-between rounded-2xl border p-4 transition-all hover:border-emerald-500/50 ${isDarkMode ? 'border-slate-800 hover:bg-[#0f1f49]/30' : 'border-slate-100 hover:bg-slate-50'}`}>
+                  <div className="flex items-center gap-4">
+                    <div className={`grid h-10 w-10 place-items-center rounded-xl ${isDarkMode ? 'bg-slate-800 text-slate-400' : role.color}`}>
+                      <role.icon size={20} />
+                    </div>
+                    <div>
+                      <p className={`text-[13px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{role.title}</p>
+                      <p className={`text-[11px] font-medium leading-relaxed ${subLabelClass}`}>{role.desc}</p>
+                    </div>
                   </div>
-                ))}
-              </div>
-            </>
-          ) : (
-            <>
-              <h4 className={`text-[28px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Role Details</h4>
-              <p className={`mb-4 mt-1 text-sm ${subLabelClass}`}>View role information and permissions.</p>
-              <div className={`mb-4 flex items-center justify-between rounded-xl border p-3 ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>
-                <div className="flex items-center gap-3"><div className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-100 text-emerald-600"><ShieldCheck size={17} /></div><p className={`font-semibold ${labelClass}`}>Administrator</p></div>
-                <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">Active</span>
-              </div>
-              <div className="space-y-3">
-                <div><p className={`text-sm font-semibold ${labelClass}`}>Description</p><p className={`text-sm ${subLabelClass}`}>Full access to all modules and settings.</p></div>
-                <div><p className={`text-sm font-semibold ${labelClass}`}>Users</p><p className={`text-sm ${subLabelClass}`}>1 user assigned</p></div>
-                <div className={`border-t pt-3 ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>
-                  <p className={`mb-2 text-sm font-semibold ${labelClass}`}>Permissions</p>
-                  <p className={`mb-3 text-sm ${subLabelClass}`}>This role has access to all modules and features.</p>
-                  <div className="space-y-2">
-                    {[
-                      ['Dashboard', 'View system overview and statistics'],
-                      ['Books', 'Add, edit, delete and manage books'],
-                      ['Members', 'Add, edit, delete and manage members'],
-                      ['Circulation', 'Borrow, return and manage reservations'],
-                      ['Reports', 'View and export all reports'],
-                      ['Settings', 'Manage all system settings'],
-                    ].map(([title, subtitle]) => (
-                      <div key={title} className="flex items-start gap-2"><CheckCircle2 size={16} className="mt-0.5 shrink-0 text-emerald-600" /><div><p className={`text-sm font-semibold ${labelClass}`}>{title}</p><p className={`text-xs ${subLabelClass}`}>{subtitle}</p></div></div>
-                    ))}
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600'}`}>{role.users}</span>
+                    <ChevronRight size={14} className="text-slate-300" />
                   </div>
                 </div>
-              </div>
-              <button className={`mt-5 w-full rounded-xl border px-4 py-2.5 text-sm font-semibold ${inputClass}`}>View All Permissions</button>
-            </>
-          )}
-        </section>
-      </div>
-      <div className={`flex items-center justify-between rounded-2xl border px-5 py-4 ${isDarkMode ? 'border-emerald-700/30 bg-emerald-900/10' : 'border-emerald-100 bg-emerald-50/40'}`}>
-        <div>
-          <p className={`text-sm font-semibold ${labelClass}`}>About Roles & Permissions</p>
-          <p className={`text-xs ${subLabelClass}`}>Roles help you control what users can access and do in the system.</p>
+              ))}
+            </div>
+          </section>
+
+          <section className={`rounded-2xl border p-8 ${cardClass}`}>
+            <h4 className={`mb-8 text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Quick Actions</h4>
+            <div className="space-y-3">
+              {[
+                { label: 'Add New User', sub: 'Create a new user account', icon: UserPlus },
+                { label: 'Manage Roles', sub: 'Edit roles and permissions', icon: ShieldCheck },
+              ].map((action) => (
+                <button key={action.label} className={`flex w-full items-center justify-between rounded-2xl border p-4 transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 ${inputClass}`}>
+                  <div className="flex items-center gap-4">
+                    <div className="text-emerald-600 dark:text-emerald-400">
+                      <action.icon size={20} />
+                    </div>
+                    <div className="text-left">
+                      <p className={`text-[13px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{action.label}</p>
+                      <p className={`text-[11px] font-medium ${subLabelClass}`}>{action.sub}</p>
+                    </div>
+                  </div>
+                  <ChevronRight size={14} className="text-slate-300" />
+                </button>
+              ))}
+            </div>
+          </section>
         </div>
-        <button className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold ${inputClass}`}>
-          {usersRolesTab === 'Roles' ? 'Learn More' : 'View Permissions Guide'}
-          {usersRolesTab === 'Roles' ? <ExternalLink size={14} /> : null}
-        </button>
       </div>
     </div>
   )
@@ -790,17 +810,24 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
             </div>
             {activeMenu === 'Overview' ? null : activeMenu === 'Users & Roles' ? (
               <div className="flex gap-3">
-                {usersRolesTab === 'Users' ? (
-                  <button className={`inline-flex items-center gap-2 rounded-xl border px-5 py-3 text-sm font-bold ${inputClass}`}>
-                    <Download size={16} /> Export
-                  </button>
-                ) : null}
-                <button className="inline-flex items-center gap-2 rounded-xl bg-[#059669] px-5 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-emerald-700 active:scale-[0.98]">
-                  <Plus size={16} /> {usersRolesTab === 'Users' ? 'Add User' : 'Add Role'}
+                <button 
+                  onClick={() => alert('Exporting user data...')}
+                  className={`inline-flex items-center gap-2 rounded-xl border px-5 py-3 text-sm font-bold ${inputClass}`}
+                >
+                  <Download size={16} /> Export
+                </button>
+                <button 
+                  onClick={() => alert('Opening Add New User modal...')}
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#059669] px-5 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-emerald-700 active:scale-[0.98]"
+                >
+                  <Plus size={16} /> Add New User
                 </button>
               </div>
             ) : (
-              <button className="inline-flex items-center gap-2 rounded-xl bg-[#059669] px-6 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-emerald-700 active:scale-[0.98]">
+              <button 
+                onClick={() => alert('Settings saved successfully!')}
+                className="inline-flex items-center gap-2 rounded-xl bg-[#059669] px-6 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-emerald-700 active:scale-[0.98]"
+              >
                 <Check size={18} strokeWidth={3} />
                 Save Changes
               </button>
