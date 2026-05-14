@@ -41,6 +41,7 @@ import {
   Info,
   Lock,
   Shield,
+  Clock,
 } from 'lucide-react'
 
 type SettingsPageProps = {
@@ -281,336 +282,238 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
   )
 
   const renderLibraryProfile = () => (
-    <div className="space-y-8">
-      <div className="grid gap-8 lg:grid-cols-12">
-        <section className={`rounded-3xl border p-6 lg:col-span-8 ${cardClass}`}>
-          <h4 className={`mb-6 text-[22px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Library Information</h4>
-          <div className="grid gap-6 md:grid-cols-[180px_1fr]">
-            <div>
-              <p className={`mb-2 text-[13px] font-semibold ${labelClass}`}>Library Logo</p>
-              <div className={`grid h-44 place-items-center rounded-2xl border ${inputClass}`}>
-                <div className="text-center">
-                  <Library size={46} className="mx-auto text-emerald-500" />
-                  <p className="mt-3 text-xl font-black text-emerald-600">infoLib</p>
-                  <p className={`text-[10px] font-semibold uppercase tracking-wide ${subLabelClass}`}>Public Library</p>
-                </div>
-              </div>
-              <div className="mt-3 flex gap-2">
-                <button className={`inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-xl border text-[13px] font-semibold ${inputClass}`}>
-                  <Upload size={15} /> Upload New
-                </button>
-                <button className={`inline-flex h-10 w-10 items-center justify-center rounded-xl border text-rose-500 ${inputClass}`}>
-                  <Trash2 size={15} />
-                </button>
-              </div>
-              <p className={`mt-2 text-[11px] ${subLabelClass}`}>Allowed: JPG, PNG, SVG</p>
-              <p className={`text-[11px] ${subLabelClass}`}>Max size: 2MB</p>
+    <div className="grid items-start gap-6 lg:grid-cols-[3fr_7fr]">
+      {/* Library Logo Column */}
+      <div className="space-y-6">
+        <section className={`rounded-2xl border p-8 ${cardClass}`}>
+          <div className="mb-8 flex items-center gap-4">
+            <div className={`grid h-12 w-12 place-items-center rounded-xl ${iconBoxBg}`}>
+              <Image size={24} strokeWidth={2} />
             </div>
+            <div>
+              <h4 className={`text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Library Logo</h4>
+              <p className={`text-[12px] font-medium ${subLabelClass}`}>Recommended: 512x512px</p>
+            </div>
+          </div>
 
-            <div className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label className={`mb-2 block text-[13px] font-semibold ${labelClass}`}>Library Name *</label>
-                  <input className={`h-11 w-full rounded-xl border px-3 text-[13px] outline-none focus:border-emerald-500 ${inputClass}`} defaultValue="infoLib Public Library" />
-                </div>
-                <div>
-                  <label className={`mb-2 block text-[13px] font-semibold ${labelClass}`}>Library Code</label>
-                  <input className={`h-11 w-full rounded-xl border px-3 text-[13px] outline-none focus:border-emerald-500 ${inputClass}`} defaultValue="INFLIB001" />
-                </div>
+          <div className="flex flex-col items-center">
+            <div className={`h-36 w-36 rounded-full border-2 p-2 ${isDarkMode ? 'border-slate-800 bg-slate-900/50' : 'border-slate-100 bg-white shadow-sm'}`}>
+              <div className={`flex h-full w-full items-center justify-center rounded-full ${isDarkMode ? 'bg-emerald-500/10' : 'bg-emerald-50'}`}>
+                <Library size={48} className="text-emerald-600 dark:text-emerald-400" strokeWidth={1.5} />
               </div>
-
-              <div>
-                <label className={`mb-2 block text-[13px] font-semibold ${labelClass}`}>Address *</label>
-                <input className={`h-11 w-full rounded-xl border px-3 text-[13px] outline-none focus:border-emerald-500 ${inputClass}`} defaultValue="123 Library Street, Cityville, Metro Manila, Philippines" />
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label className={`mb-2 block text-[13px] font-semibold ${labelClass}`}>Phone Number</label>
-                  <input className={`h-11 w-full rounded-xl border px-3 text-[13px] outline-none focus:border-emerald-500 ${inputClass}`} defaultValue="+63 912 345 6789" />
-                </div>
-                <div>
-                  <label className={`mb-2 block text-[13px] font-semibold ${labelClass}`}>Email Address</label>
-                  <input className={`h-11 w-full rounded-xl border px-3 text-[13px] outline-none focus:border-emerald-500 ${inputClass}`} defaultValue="infolib@example.com" />
-                </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label className={`mb-2 block text-[13px] font-semibold ${labelClass}`}>Website</label>
-                  <input className={`h-11 w-full rounded-xl border px-3 text-[13px] outline-none focus:border-emerald-500 ${inputClass}`} defaultValue="https://infolib.example.com" />
-                </div>
-                <div>
-                  <label className={`mb-2 block text-[13px] font-semibold ${labelClass}`}>Established Year</label>
-                  <div className="relative">
-                    <select className={`h-11 w-full appearance-none rounded-xl border px-3 pr-10 text-[13px] outline-none focus:border-emerald-500 ${inputClass}`} defaultValue="2015">
-                      <option>2026</option>
-                      <option>2020</option>
-                      <option>2015</option>
-                      <option>2010</option>
-                    </select>
-                    <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label className={`mb-2 block text-[13px] font-semibold ${labelClass}`}>Library Description</label>
-                <textarea className={`h-20 w-full resize-none rounded-xl border px-3 py-2 text-[13px] outline-none focus:border-emerald-500 ${inputClass}`} defaultValue="infoLib Public Library is dedicated to providing quality resources, services, and programs that support learning, literacy, and community development." />
-              </div>
+            </div>
+            <div className="mt-8 flex w-full flex-col gap-3">
+              <button className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 py-3 text-[13px] font-bold text-slate-700 transition-all hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800/50">
+                <Upload size={16} /> Change Logo
+              </button>
+              <button className="flex w-full items-center justify-center gap-2 rounded-xl border border-rose-100 py-3 text-[13px] font-bold text-rose-500 transition-all hover:bg-rose-50 dark:border-rose-900/20 dark:hover:bg-rose-900/40">
+                <Trash2 size={16} /> Remove Logo
+              </button>
             </div>
           </div>
         </section>
 
-        <section className={`rounded-3xl border p-6 lg:col-span-4 ${cardClass}`}>
-          <h4 className={`text-[22px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Operating Hours</h4>
-          <p className={`mt-1 text-[13px] ${subLabelClass}`}>Set your library's regular operating hours.</p>
-          <div className="mt-5 space-y-3">
-            {operatingHours.map((item, idx) => (
-              <div key={item.day} className="grid grid-cols-[78px_1fr] items-center gap-3">
-                <p className={`text-[13px] font-semibold ${labelClass}`}>{item.day}</p>
-                {item.closed ? (
-                  <label className={`inline-flex items-center gap-2 text-[13px] font-semibold ${labelClass}`}>
-                    <input
-                      type="checkbox"
-                      checked={item.closed}
-                      onChange={(event) => updateOperatingHour(idx, 'closed', event.target.checked)}
-                      className="h-4 w-4 rounded border-slate-300 text-emerald-600"
-                    />
-                    Closed
-                  </label>
-                ) : (
-                  <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-                    <div className="relative">
-                      <select
-                        value={item.open}
-                        onChange={(event) => updateOperatingHour(idx, 'open', event.target.value)}
-                        className={`h-10 w-full appearance-none rounded-xl border px-3 pr-8 text-[13px] outline-none focus:border-emerald-500 ${inputClass}`}
-                      >
-                        {timeOptions.map((time) => (
-                          <option key={`${item.day}-${time}`}>{time}</option>
-                        ))}
-                      </select>
-                      <ChevronDown size={14} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                    </div>
-                    <span className={subLabelClass}>-</span>
-                    <div className="relative">
-                      <select
-                        value={item.close}
-                        onChange={(event) => updateOperatingHour(idx, 'close', event.target.value)}
-                        className={`h-10 w-full appearance-none rounded-xl border px-3 pr-8 text-[13px] outline-none focus:border-emerald-500 ${inputClass}`}
-                      >
-                        {timeOptions.map((time) => (
-                          <option key={`${item.day}-close-${time}`}>{time}</option>
-                        ))}
-                      </select>
-                      <ChevronDown size={14} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
+        <section className={`rounded-2xl border p-6 transition-all hover:shadow-md ${isDarkMode ? 'border-emerald-900/30 bg-emerald-900/10' : 'border-emerald-100 bg-emerald-50/40'}`}>
+          <div className="mb-4 flex items-center gap-3">
+            <div className={`grid h-10 w-10 place-items-center rounded-lg ${isDarkMode ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600'}`}>
+              <Info size={20} strokeWidth={2.5} />
+            </div>
+            <div>
+              <h5 className={`text-[14px] font-bold ${isDarkMode ? 'text-emerald-400' : 'text-emerald-900'}`}>Logo Guidelines</h5>
+              <p className={`text-[11px] font-medium ${isDarkMode ? 'text-emerald-500/60' : 'text-emerald-600'}`}>For best display results</p>
+            </div>
           </div>
-          <p className={`mt-4 text-[12px] ${subLabelClass}`}>Note: Time format is based on your system settings.</p>
+          
+          <ul className="space-y-3 text-[12px] font-semibold">
+            {[
+              { label: 'Recommended size', value: '512 x 512px' },
+              { label: 'Supported formats', value: 'PNG, JPG, SVG' },
+              { label: 'Maximum file size', value: '2.0 MB' },
+              { label: 'Aspect ratio', value: '1:1 (Square)' },
+            ].map((item) => (
+              <li key={item.label} className="flex items-center justify-between border-b border-emerald-500/10 pb-2 last:border-0 last:pb-0">
+                <span className={isDarkMode ? 'text-emerald-100/60' : 'text-emerald-700/70'}>{item.label}</span>
+                <span className={isDarkMode ? 'text-emerald-300' : 'text-emerald-800'}>{item.value}</span>
+              </li>
+            ))}
+          </ul>
+
+          <div className={`mt-5 rounded-xl p-3 text-[11px] font-medium leading-relaxed ${isDarkMode ? 'bg-emerald-500/5 text-emerald-400/80' : 'bg-white/60 text-emerald-700'}`}>
+            <span className="font-bold">Pro Tip:</span> Use a transparent PNG logo for a more integrated look on both light and dark themes.
+          </div>
         </section>
       </div>
 
-      <section className={`rounded-3xl border p-6 ${cardClass}`}>
-        <h4 className={`mb-4 text-[22px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Additional Information</h4>
-        <div className="grid gap-4 md:grid-cols-2">
-          {[
-            { label: 'Facebook', value: 'https://facebook.com/infoliblibrary', icon: Link2, color: 'text-blue-500' },
-            { label: 'Instagram', value: 'https://instagram.com/infoliblibrary', icon: Image, color: 'text-pink-500' },
-            { label: 'Twitter', value: 'https://twitter.com/infoliblibrary', icon: Send, color: 'text-sky-500' },
-            { label: 'YouTube', value: 'https://youtube.com/@infoliblibrary', icon: Play, color: 'text-red-500' },
-          ].map((field) => (
-            <div key={field.label}>
-              <label className={`mb-2 block text-[13px] font-semibold ${labelClass}`}>{field.label}</label>
-              <div className={`flex h-11 items-center gap-3 rounded-xl border px-3 ${inputClass}`}>
-                <field.icon size={18} className={field.color} />
-                <input className="w-full bg-transparent text-[13px] outline-none" defaultValue={field.value} />
-              </div>
+      {/* Library Information */}
+      <section className={`rounded-2xl border p-8 ${cardClass}`}>
+        <div className="mb-10 flex items-center gap-4">
+          <div className={`grid h-12 w-12 place-items-center rounded-xl ${iconBoxBg}`}>
+            <Library size={24} strokeWidth={2} />
+          </div>
+          <div>
+            <h4 className={`text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Library Information</h4>
+            <p className={`text-[13px] font-medium ${subLabelClass}`}>Update your library's details and contact information.</p>
+          </div>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="space-y-5">
+            <div>
+              <label className={`mb-2 block text-[13px] font-bold ${labelClass}`}>Library Name</label>
+              <input className={`h-12 w-full rounded-xl border px-4 text-[13px] font-semibold outline-none focus:border-emerald-500 transition-colors ${inputClass}`} defaultValue="City Central School Library" />
             </div>
-          ))}
+            <div>
+              <label className={`mb-2 block text-[13px] font-bold ${labelClass}`}>Contact Number</label>
+              <input className={`h-12 w-full rounded-xl border px-4 text-[13px] font-semibold outline-none focus:border-emerald-500 transition-colors ${inputClass}`} defaultValue="(02) 8123-4567" />
+            </div>
+            <div>
+              <label className={`mb-2 block text-[13px] font-bold ${labelClass}`}>Email</label>
+              <input className={`h-12 w-full rounded-xl border px-4 text-[13px] font-semibold outline-none focus:border-emerald-500 transition-colors ${inputClass}`} defaultValue="library@citycentralschool.edu.ph" />
+            </div>
+          </div>
+
+          <div className="space-y-5">
+            <div>
+              <label className={`mb-2 block text-[13px] font-bold ${labelClass}`}>Librarian / In-Charge</label>
+              <input className={`h-12 w-full rounded-xl border px-4 text-[13px] font-semibold outline-none focus:border-emerald-500 transition-colors ${inputClass}`} defaultValue="Maria Santos" />
+            </div>
+            <div>
+              <label className={`mb-2 block text-[13px] font-bold ${labelClass}`}>Address</label>
+              <textarea className={`h-[148px] w-full resize-none rounded-xl border px-4 py-3 text-[13px] font-semibold outline-none focus:border-emerald-500 transition-colors ${inputClass}`} defaultValue="123 Education Street, Central District,&#10;Cityville, 1234" />
+            </div>
+          </div>
+
+          <div className="md:col-span-2">
+            <label className={`mb-2 block text-[13px] font-bold ${labelClass}`}>Description (Optional)</label>
+            <textarea className={`h-24 w-full resize-none rounded-xl border px-4 py-3 text-[13px] font-semibold outline-none focus:border-emerald-500 transition-colors ${inputClass}`} defaultValue="The City Central School Library supports students and teachers by providing quality resources and a quiet place to learn and discover." />
+          </div>
         </div>
       </section>
     </div>
   )
 
   const renderGeneralSettings = () => (
-    <div className="grid gap-8 lg:grid-cols-12">
-      <section className={`rounded-3xl border p-8 lg:col-span-8 ${cardClass}`}>
+    <div className="space-y-6">
+      {/* Circulation Rules */}
+      <section className={`rounded-2xl border p-8 ${cardClass}`}>
         <div className="mb-10 flex items-center gap-4">
           <div className={`grid h-12 w-12 place-items-center rounded-xl ${iconBoxBg}`}>
-            <Settings2 size={24} strokeWidth={2} />
+            <Calendar size={24} strokeWidth={2} />
           </div>
           <div>
-            <h4 className={`text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>1. System Preferences</h4>
-            <p className={`text-[13px] font-medium ${subLabelClass}`}>Configure basic system preferences.</p>
+            <h4 className={`text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Circulation Rules</h4>
+            <p className={`text-[13px] font-medium ${subLabelClass}`}>Set rules for borrowing and returning library materials.</p>
           </div>
         </div>
 
-        <div className="grid gap-8 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {[
-            { label: 'Date Format', options: ['May 12, 2026 (MM DD, YYYY)', '12 May 2026 (DD MM, YYYY)'] },
-            { label: 'Language', options: ['English', 'Filipino'] },
-            { label: 'Time Format', options: ['12 Hour (02:30 PM)', '24 Hour (14:30)'] },
-            { label: 'Currency', options: ['PHP - Philippine Peso (P)', 'USD - US Dollar ($)'] },
-          ].map((field) => (
-            <div key={field.label} className="space-y-2.5">
-              <label className={`text-[13px] font-bold ${labelClass}`}>{field.label}</label>
-              <div className="relative">
-                <select className={`h-12 w-full appearance-none rounded-xl border px-4 pr-10 text-[13px] font-semibold outline-none focus:border-emerald-500 transition-colors ${inputClass}`}>
-                  {field.options.map((option) => (
-                    <option key={`${field.label}-${option}`}>{option}</option>
-                  ))}
-                </select>
-                <ChevronDown size={18} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" />
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-10 space-y-3">
-          <label className={`text-[13px] font-bold ${labelClass}`}>Default Theme</label>
-          <div className="flex gap-4">
-            {[
-              { id: 'light', icon: Sun, label: 'Light' },
-              { id: 'dark', icon: Moon, label: 'Dark' },
-              { id: 'system', icon: Monitor, label: 'System' },
-            ].map((t) => {
-              const isActive = theme === t.id
-              return (
-                <button
-                  key={t.id}
-                  onClick={() => setTheme(t.id as ThemeMode)}
-                  className={`flex min-w-[140px] items-center justify-center gap-3 rounded-xl border px-6 py-3.5 text-[13px] font-bold transition-all duration-200 ${
-                    isActive
-                      ? 'border-emerald-500 bg-[#f0fdf4] text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
-                      : isDarkMode
-                        ? 'border-slate-800 bg-[#0f1f49] text-slate-400 hover:bg-slate-800'
-                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-                  }`}
-                >
-                  <t.icon size={18} strokeWidth={isActive ? 2.5 : 2} />
-                  {t.label}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      <section className={`rounded-3xl border p-8 lg:col-span-4 ${cardClass}`}>
-        <div className="mb-10 flex items-center gap-4">
-          <div className={`grid h-12 w-12 place-items-center rounded-xl ${iconBoxBg}`}>
-            <History size={24} strokeWidth={2} />
-          </div>
-          <div>
-            <h4 className={`text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>2. Library Rules</h4>
-            <p className={`text-[13px] font-medium ${subLabelClass}`}>Set important rules and policies for your library.</p>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          {[
-            { label: 'Enable Notifications', state: notifications, setState: setNotifications, icon: Bell },
-            { label: 'Enable Overdue Fine', state: overdueFine, setState: setOverdueFine, icon: RotateCcw },
-            { label: 'Allow Member Self-Registration', state: selfRegistration, setState: setSelfRegistration, icon: UserPlus },
-            { label: 'Auto-generate Member ID', state: autoMemberId, setState: setAutoMemberId, icon: CreditCard },
-            { label: 'Show Book Availability in Public Catalog', state: showCatalog, setState: setShowCatalog, icon: Globe },
+            { label: 'Default Loan Period', sub: '(days)', desc: 'Number of days a book can be borrowed.', value: '7', icon: Calendar },
+            { label: 'Fine Per Day', sub: '(PHP)', desc: 'Amount charged for each overdue day.', value: '5.00', icon: CreditCard },
+            { label: 'Maximum Renewals', sub: '(times)', desc: 'How many times a loan can be renewed.', value: '2', icon: RotateCcw },
+            { label: 'Grace Period', sub: '(days)', desc: 'Number of days before fines are applied.', value: '1', icon: Clock },
           ].map((item) => (
-            <div key={item.label} className={`flex items-center justify-between rounded-2xl border px-5 py-4 transition-all ${isDarkMode ? 'border-slate-800/50 hover:bg-slate-800/30' : 'border-[#f1f5f9] bg-white hover:bg-[#f8fafc]'}`}>
-              <div className="flex items-center gap-4">
-                <div className="text-emerald-600 opacity-80 dark:text-emerald-400">
-                  <item.icon size={20} strokeWidth={2} />
+            <div key={item.label} className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="text-emerald-600 dark:text-emerald-400">
+                  <item.icon size={18} />
                 </div>
-                <span className={`text-[13px] font-semibold ${labelClass}`}>{item.label}</span>
+                <div>
+                  <label className={`block text-[13px] font-bold ${labelClass}`}>{item.label}</label>
+                  <span className={`text-[11px] font-medium ${subLabelClass}`}>{item.sub}</span>
+                </div>
               </div>
-              <button
-                onClick={() => item.setState(!item.state)}
-                className={`relative h-[26px] w-[50px] shrink-0 rounded-full transition-all duration-300 ${
-                  item.state ? 'bg-emerald-600' : 'bg-slate-200 dark:bg-slate-700'
-                }`}
-              >
-                <div className={`absolute left-1 top-1 h-[18px] w-[18px] transform rounded-full bg-white transition-transform duration-300 ${item.state ? 'translate-x-6' : 'translate-x-0'}`} />
-              </button>
+              <div className={`relative flex h-12 w-full items-center justify-between rounded-xl border px-4 ${inputClass}`}>
+                <input type="text" className="w-full bg-transparent text-[15px] font-bold outline-none" defaultValue={item.value} />
+                <div className="flex flex-col border-l border-slate-200 pl-3 dark:border-slate-800">
+                  <button className="text-slate-400 hover:text-emerald-500 transition-colors"><ChevronDown size={14} className="rotate-180" /></button>
+                  <button className="text-slate-400 hover:text-emerald-500 transition-colors"><ChevronDown size={14} /></button>
+                </div>
+              </div>
+              <p className={`text-[11px] font-medium leading-relaxed ${subLabelClass}`}>{item.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
-      <section className={`col-span-12 rounded-3xl border p-8 ${cardClass}`}>
+      {/* Notifications & Behavior */}
+      <section className={`rounded-2xl border p-8 ${cardClass}`}>
         <div className="mb-10 flex items-center gap-4">
           <div className={`grid h-12 w-12 place-items-center rounded-xl ${iconBoxBg}`}>
-            <Monitor size={24} strokeWidth={2} />
+            <Bell size={24} strokeWidth={2} />
           </div>
           <div>
-            <h4 className={`text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>3. Display & Behavior</h4>
-            <p className={`text-[13px] font-medium ${subLabelClass}`}>Customize how the system behaves and displays information.</p>
+            <h4 className={`text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Notifications & Behavior</h4>
+            <p className={`text-[13px] font-medium ${subLabelClass}`}>Configure notification settings and reservation behavior.</p>
           </div>
         </div>
 
-        <div className="grid gap-10 lg:grid-cols-2">
-          <div className="grid gap-8 sm:grid-cols-2">
-            <div className="space-y-2">
-              <label className={`text-[13px] font-bold ${labelClass}`}>Items Per Page</label>
-              <p className={`text-[12px] font-medium leading-relaxed ${subLabelClass}`}>Number of items to show in lists and tables.</p>
-              <div className="relative mt-3">
-                <select className={`h-12 w-full appearance-none rounded-xl border px-4 pr-10 text-[13px] font-semibold outline-none focus:border-emerald-500 transition-colors ${inputClass}`}>
-                  <option>10</option>
-                  <option>20</option>
-                  <option>50</option>
-                </select>
-                <ChevronDown size={18} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" />
+        <div className="space-y-4">
+          {/* Email Notifications */}
+          <div className={`rounded-2xl border p-6 transition-all hover:border-emerald-500/30 ${isDarkMode ? 'border-slate-800 bg-[#0f1f49]/30' : 'border-slate-100 bg-slate-50/50'}`}>
+            <div className="flex flex-wrap items-center justify-between gap-6">
+              <div className="flex flex-1 items-start gap-5">
+                <div className={`grid h-12 w-12 shrink-0 place-items-center rounded-xl ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white text-emerald-600 shadow-sm'}`}>
+                  <Mail size={22} />
+                </div>
+                <div className="space-y-1">
+                  <h5 className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-900'}`}>Email Notifications</h5>
+                  <p className={`max-w-md text-[12px] font-medium leading-relaxed ${subLabelClass}`}>
+                    Receive email notifications for important library activities such as reservations, due dates, and overdue items.
+                  </p>
+                </div>
               </div>
-            </div>
-            <div className="space-y-2">
-              <label className={`text-[13px] font-bold ${labelClass}`}>Due Date Reminder</label>
-              <p className={`text-[12px] font-medium leading-relaxed ${subLabelClass}`}>Send reminders before the due date.</p>
-              <div className="relative mt-3">
-                <select className={`h-12 w-full appearance-none rounded-xl border px-4 pr-10 text-[13px] font-semibold outline-none focus:border-emerald-500 transition-colors ${inputClass}`}>
-                  <option>2 Days Before</option>
-                  <option>1 Day Before</option>
-                  <option>Same Day</option>
-                </select>
-                <ChevronDown size={18} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" />
+              <div className="flex items-center gap-6">
+                <button
+                  onClick={() => setNotifications(!notifications)}
+                  className={`relative h-[26px] w-[50px] shrink-0 rounded-full transition-all duration-300 ${
+                    notifications ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-700'
+                  }`}
+                >
+                  <div className={`absolute left-1 top-1 h-[18px] w-[18px] transform rounded-full bg-white shadow-sm transition-transform duration-300 ${notifications ? 'translate-x-6' : 'translate-x-0'}`} />
+                </button>
+                <div className={`rounded-lg px-4 py-3 text-[11px] font-semibold leading-relaxed ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-700'}`}>
+                  Notification will be sent to the <br /> registered email of the member.
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="grid gap-8 sm:grid-cols-2">
-            <div className="space-y-2">
-              <label className={`text-[13px] font-bold ${labelClass}`}>Auto Logout</label>
-              <p className={`text-[12px] font-medium leading-relaxed ${subLabelClass}`}>Automatically logout inactive users.</p>
-              <div className="relative mt-3">
-                <select className={`h-12 w-full appearance-none rounded-xl border px-4 pr-10 text-[13px] font-semibold outline-none focus:border-emerald-500 transition-colors ${inputClass}`}>
-                  <option>30 Minutes</option>
-                  <option>1 Hour</option>
-                  <option>2 Hours</option>
-                </select>
-                <ChevronDown size={18} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" />
-              </div>
-            </div>
-            <div className={`self-end rounded-2xl border px-6 py-5 ${isDarkMode ? 'border-slate-800' : 'border-[#f1f5f9] bg-white'}`}>
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <label className={`text-[13px] font-bold ${labelClass}`}>Show Barcode in Receipts</label>
-                  <p className={`text-[11px] font-medium leading-relaxed ${subLabelClass}`}>Display book barcode in print receipts.</p>
+          {/* Reservation Expiry */}
+          <div className={`rounded-2xl border p-6 transition-all hover:border-emerald-500/30 ${isDarkMode ? 'border-slate-800 bg-[#0f1f49]/30' : 'border-slate-100 bg-slate-50/50'}`}>
+            <div className="flex flex-wrap items-center justify-between gap-6">
+              <div className="flex flex-1 items-start gap-5">
+                <div className={`grid h-12 w-12 shrink-0 place-items-center rounded-xl ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white text-emerald-600 shadow-sm'}`}>
+                  <Calendar size={22} />
                 </div>
-                <button
-                  onClick={() => setShowBarcode(!showBarcode)}
-                  className={`relative h-[26px] w-[50px] shrink-0 rounded-full transition-all duration-300 ${
-                    showBarcode ? 'bg-emerald-600' : 'bg-slate-200 dark:bg-slate-700'
-                  }`}
-                >
-                  <div className={`absolute left-1 top-1 h-[18px] w-[18px] transform rounded-full bg-white transition-transform duration-300 ${showBarcode ? 'translate-x-6' : 'translate-x-0'}`} />
-                </button>
+                <div className="space-y-1">
+                  <h5 className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-900'}`}>Reservation Expiry <span className={`text-[11px] font-medium ${subLabelClass}`}>(days)</span></h5>
+                  <p className={`max-w-md text-[12px] font-medium leading-relaxed ${subLabelClass}`}>
+                    Automatically cancel a reservation if it is not claimed within the set number of days.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-6">
+                <div className={`relative flex h-11 w-24 items-center justify-between rounded-xl border px-3 ${isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'}`}>
+                  <input type="text" className="w-full bg-transparent text-[14px] font-bold outline-none" defaultValue="3" />
+                  <div className="flex flex-col border-l border-slate-200 pl-2 dark:border-slate-800">
+                    <ChevronDown size={12} className="rotate-180 text-slate-400" />
+                    <ChevronDown size={12} className="text-slate-400" />
+                  </div>
+                </div>
+                <div className={`rounded-lg px-4 py-3 text-[11px] font-semibold leading-relaxed ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-700'}`}>
+                  Reservation will be cancelled <br /> after the number of days.
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
+
+      <div className="flex items-center justify-center gap-2 py-4">
+        <Info size={16} className="text-slate-400" />
+        <p className="text-[12px] font-medium text-slate-400">These settings apply to the entire library system.</p>
+      </div>
     </div>
   )
 
@@ -855,9 +758,22 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
   return (
     <div className={`min-h-0 flex-1 overflow-auto p-8 transition-colors duration-300 ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
       <div className="space-y-10 pb-20">
-          <div className="mb-10 flex items-start justify-between">
-            <div>
-              <h2 className={`text-4xl font-black tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+          <div className="mb-10 items-start justify-between">
+            {activeMenu !== 'Overview' && (
+              <nav className="mb-4 flex items-center gap-2 text-[13px] font-bold">
+                <button 
+                  onClick={() => onTabChange?.('Overview')}
+                  className="text-slate-400 transition-colors hover:text-emerald-600"
+                >
+                  Settings
+                </button>
+                <ChevronRight size={14} className="text-slate-300" />
+                <span className="text-emerald-600">{activeMenu}</span>
+              </nav>
+            )}
+            <div className="flex items-start justify-between">
+              <div>
+                <h2 className={`text-4xl font-black tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
                 {activeMenu === 'Overview' ? 'Settings' : activeMenu}
               </h2>
               <p className={`mt-1 text-base ${subLabelClass}`}>
@@ -890,6 +806,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
               </button>
             )}
           </div>
+        </div>
 
           {activeMenu === 'Library Profile' ? (
             renderLibraryProfile()
