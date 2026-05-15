@@ -19,6 +19,7 @@ type BookRow = {
 type BooksPageProps = {
   isDarkMode: boolean
   onOpenBookDetail: () => void
+  onOpenAddBook: () => void
 }
 
 const stats = [
@@ -63,7 +64,7 @@ function getCategoryClass(category: string) {
   }
 }
 
-export function BooksPage({ isDarkMode, onOpenBookDetail }: BooksPageProps) {
+export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: BooksPageProps) {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
 
   return (
@@ -75,7 +76,11 @@ export function BooksPage({ isDarkMode, onOpenBookDetail }: BooksPageProps) {
             <p className={`mt-1 text-base ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Manage all library books and materials</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button type="button" className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-semibold text-white hover:bg-emerald-700">
+            <button
+              type="button"
+              onClick={onOpenAddBook}
+              className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-semibold text-white hover:bg-emerald-700"
+            >
               <span className="text-lg leading-none">+</span>
               Add Book
             </button>

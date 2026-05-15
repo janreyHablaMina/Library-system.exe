@@ -1,5 +1,5 @@
 import { Settings2, UsersRound, ShieldCheck, Library } from 'lucide-react';
-import { ActivityItem } from '../types';
+import type { ActivityItem } from '../types';
 
 export const recentActivityData: ActivityItem[] = [
   { 

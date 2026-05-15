@@ -1,3 +1,6 @@
+import React from 'react';
+import { ArrowLeft, ArrowRight, Bell, MessageCircle, Moon, Search, Sun } from 'lucide-react';
+
 type TopbarProps = {
   sidebarCollapsed: boolean;
   setSidebarCollapsed: React.Dispatch<React.SetStateAction<boolean>>;

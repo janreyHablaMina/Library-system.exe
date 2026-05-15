@@ -1,6 +1,6 @@
 import React from 'react';
 import { ChevronRight, Settings2 } from 'lucide-react';
-import { NavItem } from '../../types';
+import type { NavItem } from '../../types';
 
 type SidebarProps = {
   sidebarCollapsed: boolean;
