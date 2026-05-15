@@ -1,53 +1,20 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import {
-  Settings2,
-  UsersRound,
-  Bell,
-  RotateCcw,
-  ChevronDown,
-  Sun,
-  Moon,
-  Monitor,
-  Check,
-  Library,
-  Globe,
-  UserPlus,
-  CreditCard,
-  History,
-  Upload,
-  Trash2,
-  Link2,
-  Image,
-  Play,
-  Send,
-  Search,
-  Filter,
-  Plus,
-  Download,
-  Pencil,
-  Trash,
-  ShieldCheck,
-  BookOpen,
-  UserCog,
-  ChevronLeft,
-  ChevronRight,
-  Eye,
-  CheckCircle2,
-  ExternalLink,
-  Mail,
-  Calendar,
-  AlertCircle,
-  Receipt,
-  Info,
-  Lock,
-  Shield,
-  Clock,
-  MoreVertical,
-  MoreHorizontal,
-  UserCircle,
-  UserX,
-  Smartphone,
+  Settings2, UsersRound, Bell, RotateCcw, ChevronDown, Check, Library, 
+  Globe, UserPlus, CreditCard, History, Upload, Trash2, Link2, Image, 
+  Play, Send, Search, Filter, Plus, Download, Pencil, Trash, ShieldCheck, 
+  BookOpen, ChevronRight, Info, Eye, EyeOff, Shield, UserCog, ChevronLeft,
+  CheckCircle2, ExternalLink, Mail, Calendar, AlertCircle, Receipt, Lock,
+  Clock, MoreVertical, MoreHorizontal, UserCircle, UserX, Smartphone
 } from 'lucide-react'
+
+// UI Components
+import { Button } from '../components/ui/Button'
+import { Badge } from '../components/ui/Badge'
+import { Card } from '../components/ui/Card'
+
+// Data
+import { recentActivityData } from '../data/recentActivity'
 
 type SettingsPageProps = {
   isDarkMode: boolean
@@ -695,57 +662,6 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
   )
 
   const renderSettingsOverview = () => {
-    const recentActivity = [
-      {
-        id: 1,
-        title: 'General settings updated',
-        detail: 'Loan period, Fine per day changed',
-        module: 'General',
-        updatedBy: 'Admin User',
-        date: 'May 15, 2026',
-        time: '10:30 AM',
-        icon: Settings2,
-        color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400',
-        badge: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400'
-      },
-      {
-        id: 2,
-        title: 'New user added: Ana Lim',
-        detail: 'Assigned as Student Librarian',
-        module: 'Users & Roles',
-        updatedBy: 'Admin User',
-        date: 'May 14, 2026',
-        time: '04:22 PM',
-        icon: UsersRound,
-        color: 'text-violet-600 bg-violet-50 dark:bg-violet-500/10 dark:text-violet-400',
-        badge: 'bg-violet-50 text-violet-700 dark:bg-violet-500/15 dark:text-violet-400'
-      },
-      {
-        id: 3,
-        title: 'Password changed',
-        detail: 'Admin password was updated',
-        module: 'Account Security',
-        updatedBy: 'Admin User',
-        date: 'May 13, 2026',
-        time: '09:15 AM',
-        icon: ShieldCheck,
-        color: 'text-blue-600 bg-blue-50 dark:bg-blue-500/10 dark:text-blue-400',
-        badge: 'bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400'
-      },
-      {
-        id: 4,
-        title: 'Library information updated',
-        detail: 'Library address and contact information changed',
-        module: 'Library Profile',
-        updatedBy: 'Admin User',
-        date: 'May 12, 2026',
-        time: '02:45 PM',
-        icon: Library,
-        color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400',
-        badge: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400'
-      }
-    ]
-
     return (
       <div className="space-y-12">
         {/* Top Cards Grid */}
@@ -784,7 +700,12 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
               color: 'text-blue-500 bg-blue-50 dark:bg-blue-500/10'
             }
           ].map((card) => (
-            <section key={card.title} className={`flex flex-col rounded-2xl border p-6 transition-all duration-300 hover:shadow-lg ${cardClass}`}>
+            <Card 
+              key={card.title} 
+              isDarkMode={isDarkMode} 
+              hoverable 
+              className="flex flex-col"
+            >
               <div className="mb-6 flex items-start gap-4">
                 <div className={`grid h-14 w-14 shrink-0 place-items-center rounded-2xl ${card.color}`}>
                   <card.icon size={28} />
@@ -794,14 +715,18 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                   <p className={`mt-1.5 text-xs font-medium leading-relaxed ${subLabelClass}`}>{card.desc}</p>
                 </div>
               </div>
-              <button 
+              <Button 
+                variant="outline" 
+                size="md" 
+                icon={ChevronRight} 
+                iconPosition="right"
                 onClick={() => onTabChange?.(card.tab)}
-                className={`mt-auto flex w-full items-center justify-between rounded-xl border p-3.5 text-xs font-bold transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 ${inputClass}`}
+                isDarkMode={isDarkMode}
+                className="mt-auto w-full justify-between"
               >
                 <span className="text-emerald-600 dark:text-emerald-400">{card.btnText}</span>
-                <ChevronRight size={16} className="text-slate-400" />
-              </button>
-            </section>
+              </Button>
+            </Card>
           ))}
         </div>
 
@@ -809,13 +734,12 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Recent Settings Activity</h3>
-            <button className="flex items-center gap-2 text-sm font-bold text-emerald-600 transition-colors hover:text-emerald-700">
-              <span>View all activity</span>
-              <ChevronRight size={18} />
-            </button>
+            <Button variant="ghost" size="sm" icon={ChevronRight} iconPosition="right" isDarkMode={isDarkMode}>
+              View all activity
+            </Button>
           </div>
 
-          <div className={`overflow-hidden rounded-2xl border ${isDarkMode ? 'border-slate-800/50 bg-[#0b1738]' : 'border-slate-100 bg-white shadow-sm'}`}>
+          <Card isDarkMode={isDarkMode} padding="none" className="overflow-hidden">
             <table className="w-full text-left text-sm">
               <thead className={isDarkMode ? 'bg-[#0f1f49]/50 text-slate-300' : 'bg-slate-50/50 text-slate-600'}>
                 <tr>
@@ -826,7 +750,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                 </tr>
               </thead>
               <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800/30' : 'divide-slate-100/50'}`}>
-                {recentActivity.map((item) => (
+                {recentActivityData.map((item) => (
                   <tr key={item.id} className={`transition-colors duration-150 ${isDarkMode ? 'hover:bg-[#12244f]' : 'hover:bg-slate-50'}`}>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
@@ -840,9 +764,9 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`rounded-md px-2 py-1 text-xs font-semibold ${item.badge}`}>
+                      <Badge variant={item.badge as any} isDarkMode={isDarkMode}>
                         {item.module}
-                      </span>
+                      </Badge>
                     </td>
                     <td className="px-6 py-4">
                       <p className={`font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{item.updatedBy}</p>
@@ -855,7 +779,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                 ))}
               </tbody>
             </table>
-          </div>
+          </Card>
         </div>
       </div>
     )
