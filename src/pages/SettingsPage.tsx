@@ -46,6 +46,7 @@ import {
   MoreHorizontal,
   UserCircle,
   UserX,
+  Smartphone,
 } from 'lucide-react'
 
 type SettingsPageProps = {
@@ -97,6 +98,10 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
     { id: 'registration', label: 'Member Registration', desc: 'Notify admin when a new member registers.', icon: UsersRound, color: 'text-violet-500 bg-violet-100 dark:bg-violet-500/10', email: true, inApp: true, hasInApp: true },
     { id: 'return', label: 'Return Reminder', desc: 'Notify members who have not returned borrowed books.', icon: RotateCcw, color: 'text-sky-500 bg-sky-100 dark:bg-sky-500/10', email: true, inApp: false, hasInApp: true },
   ])
+
+  const [showCurrentPass, setShowCurrentPass] = useState(false)
+  const [showNewPass, setShowNewPass] = useState(false)
+  const [showConfirmPass, setShowConfirmPass] = useState(false)
 
   const cardClass = isDarkMode ? 'border-slate-800 bg-[#0a1633]' : 'border-slate-200 bg-white'
   const iconBoxBg = isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-[#f0fdf4] text-emerald-600'
@@ -537,6 +542,158 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
     </div>
   )
 
+  const renderAccountSecurity = () => (
+    <div className="space-y-10">
+      <div className="grid items-start gap-8 lg:grid-cols-[1.5fr_1fr]">
+        {/* Change Password Section */}
+        <section className={`rounded-2xl border p-8 ${cardClass}`}>
+          <div className="mb-8 flex items-center gap-4">
+            <div className={`grid h-12 w-12 place-items-center rounded-xl ${iconBoxBg}`}>
+              <Shield size={24} strokeWidth={2} />
+            </div>
+            <div>
+              <h4 className={`text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Change Password</h4>
+              <p className={`text-[13px] font-medium ${subLabelClass}`}>Update your password regularly to keep your account secure.</p>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <div>
+              <label className={`mb-2 block text-[13px] font-bold ${labelClass}`}>Current Password</label>
+              <div className="relative">
+                <input 
+                  type={showCurrentPass ? "text" : "password"}
+                  className={`h-12 w-full rounded-xl border px-4 text-[13px] font-semibold outline-none focus:border-emerald-500 transition-colors pr-12 ${inputClass}`} 
+                  placeholder="Enter your current password" 
+                />
+                <button 
+                  type="button"
+                  onClick={() => setShowCurrentPass(!showCurrentPass)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-500 transition-colors"
+                >
+                  <Eye size={18} />
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className={`mb-2 block text-[13px] font-bold ${labelClass}`}>New Password</label>
+              <div className="relative">
+                <input 
+                  type={showNewPass ? "text" : "password"}
+                  className={`h-12 w-full rounded-xl border px-4 text-[13px] font-semibold outline-none focus:border-emerald-500 transition-colors pr-12 ${inputClass}`} 
+                  placeholder="Enter your new password" 
+                />
+                <button 
+                  type="button"
+                  onClick={() => setShowNewPass(!showNewPass)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-500 transition-colors"
+                >
+                  <Eye size={18} />
+                </button>
+              </div>
+              <p className={`mt-2 text-[11px] font-medium ${subLabelClass}`}>Password must be at least 8 characters long.</p>
+            </div>
+
+            <div>
+              <label className={`mb-2 block text-[13px] font-bold ${labelClass}`}>Confirm New Password</label>
+              <div className="relative">
+                <input 
+                  type={showConfirmPass ? "text" : "password"}
+                  className={`h-12 w-full rounded-xl border px-4 text-[13px] font-semibold outline-none focus:border-emerald-500 transition-colors pr-12 ${inputClass}`} 
+                  placeholder="Confirm your new password" 
+                />
+                <button 
+                  type="button"
+                  onClick={() => setShowConfirmPass(!showConfirmPass)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-500 transition-colors"
+                >
+                  <Eye size={18} />
+                </button>
+              </div>
+            </div>
+
+            <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#059669] py-4 text-sm font-bold text-white shadow-sm transition-all hover:bg-emerald-700 active:scale-[0.98]">
+              <Lock size={18} />
+              Save Password
+            </button>
+          </div>
+        </section>
+
+        {/* Login Trail Section */}
+        <section className={`rounded-2xl border p-8 ${cardClass}`}>
+          <div className="mb-8 flex items-center gap-4">
+            <div className={`grid h-12 w-12 place-items-center rounded-xl ${iconBoxBg}`}>
+              <Clock size={24} strokeWidth={2} />
+            </div>
+            <div>
+              <h4 className={`text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Login Trail</h4>
+              <p className={`text-[13px] font-medium ${subLabelClass}`}>A record of recent login and logout activities.</p>
+            </div>
+          </div>
+
+          <div className={`overflow-hidden rounded-xl border ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+            <table className="w-full text-left text-sm">
+              <thead className={isDarkMode ? 'bg-[#0f1f49] text-slate-300' : 'bg-slate-50 text-slate-600'}>
+                <tr className="text-[11px] font-bold uppercase tracking-wider">
+                  <th className="px-4 py-3">User</th>
+                  <th className="px-4 py-3 text-center">Action</th>
+                  <th className="px-4 py-3 text-right">Date & Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  { name: 'Admin User', role: 'Librarian', action: 'Login', date: 'May 15, 2026', time: '10:30 AM' },
+                  { name: 'Admin User', role: 'Librarian', action: 'Logout', date: 'May 15, 2026', time: '12:15 PM' },
+                  { name: 'Maria Santos', role: 'Librarian', action: 'Login', date: 'May 15, 2026', time: '09:05 AM' },
+                  { name: 'Maria Santos', role: 'Librarian', action: 'Logout', date: 'May 15, 2026', time: '09:45 AM' },
+                  { name: 'John Dela Cruz', role: 'Assistant Librarian', action: 'Login', date: 'May 14, 2026', time: '04:20 PM' },
+                ].map((trail, idx) => (
+                  <tr key={idx} className={`border-t transition-colors duration-150 ${isDarkMode ? 'border-slate-700 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className={`grid h-10 w-10 place-items-center rounded-full text-[11px] font-bold text-white ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200'}`}>
+                          {trail.name.split(' ').map(n => n[0]).join('')}
+                        </div>
+                        <div>
+                          <p className={`text-[13px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{trail.name}</p>
+                          <p className={`text-[11px] font-medium ${subLabelClass}`}>{trail.role}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`rounded-md px-2 py-1 text-xs font-semibold ${
+                        trail.action === 'Login' 
+                          ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' 
+                          : 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
+                      }`}>
+                        {trail.action}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <p className={`text-[12px] font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{trail.date}</p>
+                      <p className={`text-[11px] font-medium ${subLabelClass}`}>{trail.time}</p>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <button className="mt-8 flex w-full items-center justify-between px-2 text-[14px] font-bold text-emerald-600 transition-colors hover:text-emerald-700">
+            <span>View All Login Activity</span>
+            <ChevronRight size={18} />
+          </button>
+        </section>
+      </div>
+
+      <div className="flex items-center justify-center gap-2 py-4">
+        <Info size={16} className="text-slate-400" />
+        <p className="text-[13px] font-medium text-slate-400">If you notice any unfamiliar activity, please change your password immediately.</p>
+      </div>
+    </div>
+  )
+
   const renderSettingsOverview = () => (
     <div className="space-y-8">
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -644,7 +801,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
             </div>
           </div>
           <button 
-            onClick={() => onTabChange?.('Security')}
+            onClick={() => onTabChange?.('Account Security')}
             className={`mt-auto flex w-full items-center justify-between rounded-xl border p-3 text-sm font-semibold transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 ${inputClass}`}
           >
             <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
@@ -805,6 +962,8 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                     ? 'Manage and customize system notifications and reminders.'
                   : activeMenu === 'General'
                     ? 'Configure basic system preferences and rules.'
+                  : activeMenu === 'Account Security'
+                    ? 'Manage your account password and view login trail.'
                   : 'Manage your library system preferences and configuration.'}
               </p>
             </div>
@@ -843,6 +1002,8 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
             renderNotifications()
           ) : activeMenu === 'General' ? (
             renderGeneralSettings()
+          ) : activeMenu === 'Account Security' ? (
+            renderAccountSecurity()
           ) : (
             renderSettingsOverview()
           )}
