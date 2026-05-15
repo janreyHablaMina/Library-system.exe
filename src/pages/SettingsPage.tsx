@@ -694,243 +694,172 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
     </div>
   )
 
-  const renderSettingsOverview = () => (
-    <div className="space-y-8">
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {/* General */}
-        <section className={`flex flex-col rounded-2xl border p-6 transition-all duration-300 hover:shadow-lg ${cardClass}`}>
-          <div className="mb-8 flex items-start gap-4">
-            <div className={`grid h-12 w-12 place-items-center rounded-xl ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600'}`}>
-              <Settings2 size={24} />
-            </div>
-            <div>
-              <h4 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>General</h4>
-              <p className={`mt-1 text-sm ${subLabelClass}`}>Configure general system settings like language, date format, loan rules and more.</p>
-            </div>
-          </div>
-          <button 
-            onClick={() => onTabChange?.('General')}
-            className={`mt-auto flex w-full items-center justify-between rounded-xl border p-3 text-sm font-semibold transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 ${inputClass}`}
-          >
-            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
-              <Settings2 size={16} />
-              <span>Manage Settings</span>
-            </div>
-            <ChevronRight size={16} />
-          </button>
-        </section>
+  const renderSettingsOverview = () => {
+    const recentActivity = [
+      {
+        id: 1,
+        title: 'General settings updated',
+        detail: 'Loan period, Fine per day changed',
+        module: 'General',
+        updatedBy: 'Admin User',
+        date: 'May 15, 2026',
+        time: '10:30 AM',
+        icon: Settings2,
+        color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400',
+        badge: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400'
+      },
+      {
+        id: 2,
+        title: 'New user added: Ana Lim',
+        detail: 'Assigned as Student Librarian',
+        module: 'Users & Roles',
+        updatedBy: 'Admin User',
+        date: 'May 14, 2026',
+        time: '04:22 PM',
+        icon: UsersRound,
+        color: 'text-violet-600 bg-violet-50 dark:bg-violet-500/10 dark:text-violet-400',
+        badge: 'bg-violet-50 text-violet-700 dark:bg-violet-500/15 dark:text-violet-400'
+      },
+      {
+        id: 3,
+        title: 'Password changed',
+        detail: 'Admin password was updated',
+        module: 'Account Security',
+        updatedBy: 'Admin User',
+        date: 'May 13, 2026',
+        time: '09:15 AM',
+        icon: ShieldCheck,
+        color: 'text-blue-600 bg-blue-50 dark:bg-blue-500/10 dark:text-blue-400',
+        badge: 'bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400'
+      },
+      {
+        id: 4,
+        title: 'Library information updated',
+        detail: 'Library address and contact information changed',
+        module: 'Library Profile',
+        updatedBy: 'Admin User',
+        date: 'May 12, 2026',
+        time: '02:45 PM',
+        icon: Library,
+        color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400',
+        badge: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400'
+      }
+    ]
 
-        {/* Library Profile */}
-        <section className={`flex flex-col rounded-2xl border p-6 transition-all duration-300 hover:shadow-lg ${cardClass}`}>
-          <div className="mb-8 flex items-start gap-4">
-            <div className={`grid h-12 w-12 place-items-center rounded-xl ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600'}`}>
-              <Library size={24} />
-            </div>
-            <div>
-              <h4 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Library Profile</h4>
-              <p className={`mt-1 text-sm ${subLabelClass}`}>Update library information, contact details and system identity.</p>
-            </div>
-          </div>
-          <button 
-            onClick={() => onTabChange?.('Library Profile')}
-            className={`mt-auto flex w-full items-center justify-between rounded-xl border p-3 text-sm font-semibold transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 ${inputClass}`}
-          >
-            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
-              <Library size={16} />
-              <span>Edit Profile</span>
-            </div>
-            <ChevronRight size={16} />
-          </button>
-        </section>
-
-        {/* Users & Roles */}
-        <section className={`flex flex-col rounded-2xl border p-6 transition-all duration-300 hover:shadow-lg ${cardClass}`}>
-          <div className="mb-8 flex items-start gap-4">
-            <div className={`grid h-12 w-12 place-items-center rounded-xl ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600'}`}>
-              <UsersRound size={24} />
-            </div>
-            <div>
-              <h4 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Users & Roles</h4>
-              <p className={`mt-1 text-sm ${subLabelClass}`}>Add users, set roles and manage permissions across the system.</p>
-            </div>
-          </div>
-          <button 
-            onClick={() => onTabChange?.('Users & Roles')}
-            className={`mt-auto flex w-full items-center justify-between rounded-xl border p-3 text-sm font-semibold transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 ${inputClass}`}
-          >
-            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
-              <UsersRound size={16} />
-              <span>Manage Access</span>
-            </div>
-            <ChevronRight size={16} />
-          </button>
-        </section>
-
-        {/* Notifications */}
-        <section className={`flex flex-col rounded-2xl border p-6 transition-all duration-300 hover:shadow-lg ${cardClass}`}>
-          <div className="mb-8 flex items-start gap-4">
-            <div className={`grid h-12 w-12 place-items-center rounded-xl ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600'}`}>
-              <Bell size={24} />
-            </div>
-            <div>
-              <h4 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Notifications</h4>
-              <p className={`mt-1 text-sm ${subLabelClass}`}>Configure email notifications, alerts and reminder preferences.</p>
-            </div>
-          </div>
-          <button 
-            onClick={() => onTabChange?.('Notifications')}
-            className={`mt-auto flex w-full items-center justify-between rounded-xl border p-3 text-sm font-semibold transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 ${inputClass}`}
-          >
-            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
-              <Bell size={16} />
-              <span>Notification Settings</span>
-            </div>
-            <ChevronRight size={16} />
-          </button>
-        </section>
-
-        {/* Security */}
-        <section className={`flex flex-col rounded-2xl border p-6 transition-all duration-300 hover:shadow-lg ${cardClass}`}>
-          <div className="mb-8 flex items-start gap-4">
-            <div className={`grid h-12 w-12 place-items-center rounded-xl ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600'}`}>
-              <ShieldCheck size={24} />
-            </div>
-            <div>
-              <h4 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Security</h4>
-              <p className={`mt-1 text-sm ${subLabelClass}`}>Manage password policy, sessions and other security preferences.</p>
-            </div>
-          </div>
-          <button 
-            onClick={() => onTabChange?.('Account Security')}
-            className={`mt-auto flex w-full items-center justify-between rounded-xl border p-3 text-sm font-semibold transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 ${inputClass}`}
-          >
-            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
-              <ShieldCheck size={16} />
-              <span>Security Settings</span>
-            </div>
-            <ChevronRight size={16} />
-          </button>
-        </section>
-
-        {/* System Secure Card */}
-        <section className={`rounded-2xl border p-6 transition-all duration-300 hover:shadow-lg ${isDarkMode ? 'border-emerald-900/30 bg-emerald-900/10' : 'border-emerald-100/50 bg-emerald-50/20'}`}>
-          <div className="flex items-center gap-8">
-            <div className="relative flex-shrink-0">
-              <div className={`grid h-28 w-24 place-items-center rounded-2xl border-2 ${isDarkMode ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-emerald-200 bg-white'}`}>
-                <div className="relative">
-                  <Lock size={40} className="text-emerald-500" />
-                  <div className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white shadow-sm ring-2 ring-white dark:ring-slate-900">
-                    <Check size={12} strokeWidth={4} />
-                  </div>
+    return (
+      <div className="space-y-12">
+        {/* Top Cards Grid */}
+        <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+          {[
+            { 
+              title: 'General', 
+              desc: 'Configure general system settings like language, date format, loan rules and more.', 
+              icon: Settings2, 
+              btnText: 'Manage Settings', 
+              tab: 'General',
+              color: 'text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10'
+            },
+            { 
+              title: 'Library Profile', 
+              desc: 'Update library information, contact details and system identity.', 
+              icon: Library, 
+              btnText: 'Edit Profile', 
+              tab: 'Library Profile',
+              color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10'
+            },
+            { 
+              title: 'Users & Roles', 
+              desc: 'Add users, set roles and manage permissions across the system.', 
+              icon: UsersRound, 
+              btnText: 'Manage Access', 
+              tab: 'Users & Roles',
+              color: 'text-violet-500 bg-violet-50 dark:bg-violet-500/10'
+            },
+            { 
+              title: 'Account Security', 
+              desc: 'Change your password and view login trail to keep your account secure.', 
+              icon: ShieldCheck, 
+              btnText: 'Manage Security', 
+              tab: 'Account Security',
+              color: 'text-blue-500 bg-blue-50 dark:bg-blue-500/10'
+            }
+          ].map((card) => (
+            <section key={card.title} className={`flex flex-col rounded-2xl border p-6 transition-all duration-300 hover:shadow-lg ${cardClass}`}>
+              <div className="mb-6 flex items-start gap-4">
+                <div className={`grid h-14 w-14 shrink-0 place-items-center rounded-2xl ${card.color}`}>
+                  <card.icon size={28} />
                 </div>
-              </div>
-            </div>
-
-            <div className="flex-1 space-y-4">
-              <div>
-                <h4 className="text-lg font-bold text-emerald-600 dark:text-emerald-400">Your system is secure</h4>
-                <p className={`mt-1 text-sm font-medium ${subLabelClass}`}>All settings are protected and changes are logged.</p>
-              </div>
-              
-              <div className={`h-[1px] w-full ${isDarkMode ? 'bg-slate-800/50' : 'bg-emerald-100'}`} />
-
-              <div className="flex items-center justify-between">
                 <div>
-                  <p className={`text-xs font-semibold ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Last updated</p>
-                  <p className={`mt-0.5 text-sm font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>May 15, 2026 • 10:30 AM</p>
-                </div>
-                <div className={`grid h-10 w-10 place-items-center rounded-xl ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600'}`}>
-                  <Calendar size={18} strokeWidth={2.5} />
+                  <h4 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{card.title}</h4>
+                  <p className={`mt-1.5 text-xs font-medium leading-relaxed ${subLabelClass}`}>{card.desc}</p>
                 </div>
               </div>
-            </div>
-          </div>
-        </section>
-      </div>
+              <button 
+                onClick={() => onTabChange?.(card.tab)}
+                className={`mt-auto flex w-full items-center justify-between rounded-xl border p-3.5 text-xs font-bold transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 ${inputClass}`}
+              >
+                <span className="text-emerald-600 dark:text-emerald-400">{card.btnText}</span>
+                <ChevronRight size={16} className="text-slate-400" />
+              </button>
+            </section>
+          ))}
+        </div>
 
-      {/* Recent Settings Activity */}
-      <section className={`mt-10 overflow-hidden rounded-2xl border ${cardClass}`}>
-        <div className="flex items-center justify-between px-8 py-5">
-          <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Recent Settings Activity</h3>
-          <button 
-            onClick={() => onTabChange?.('Overview')}
-            className="flex items-center gap-1 text-sm font-bold text-emerald-600 transition-colors hover:text-emerald-700"
-          >
-            <span>View all activity</span>
-            <ChevronRight size={16} />
-          </button>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'bg-[#0f1f49] text-slate-300 border-y border-slate-800/50' : 'bg-slate-50 text-slate-600 border-y border-slate-100'}`}>
-              <tr>
-                <th className="px-8 py-3.5">Activity</th>
-                <th className="px-6 py-3.5">Module</th>
-                <th className="px-6 py-3.5">Updated By</th>
-                <th className="px-6 py-3.5">Date & Time</th>
-              </tr>
-            </thead>
-            <tbody className={isDarkMode ? 'bg-[#0b1738]' : 'bg-white'}>
-              {[
-                { 
-                  title: 'General settings updated', 
-                  detail: 'Loan period, Fine per day changed', 
-                  module: 'General', 
-                  user: 'Admin User', 
-                  time: 'May 15, 2026 • 10:30 AM',
-                  icon: Settings2,
-                  iconBg: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
-                },
-                { 
-                  title: 'New user added: Ana Lim', 
-                  detail: 'Assigned as Student Librarian', 
-                  module: 'Users & Roles', 
-                  user: 'Admin User', 
-                  time: 'May 14, 2026 • 04:22 PM',
-                  icon: UsersRound,
-                  iconBg: 'bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400'
-                },
-                { 
-                  title: 'Password policy updated', 
-                  detail: 'Enforced 12-char minimum length', 
-                  module: 'Security', 
-                  user: 'Admin User', 
-                  time: 'May 13, 2026 • 09:15 AM',
-                  icon: ShieldCheck,
-                  iconBg: 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400'
-                },
-              ].map((item, idx) => (
-                <tr key={idx} className={`border-t transition-colors ${isDarkMode ? 'border-slate-800/50 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}>
-                  <td className="px-8 py-5">
-                    <div className="flex items-center gap-4">
-                      <div className={`grid h-10 w-10 place-items-center rounded-lg ${item.iconBg}`}>
-                        <item.icon size={18} />
-                      </div>
-                      <div>
-                        <p className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-900'}`}>{item.title}</p>
-                        <p className={`text-xs ${subLabelClass}`}>{item.detail}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-5">
-                    <span className={`inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-bold ${
-                      item.module === 'General' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15' :
-                      item.module === 'Users & Roles' ? 'bg-purple-50 text-purple-700 dark:bg-purple-500/15' :
-                      'bg-blue-50 text-blue-700 dark:bg-blue-500/15'
-                    }`}>
-                      {item.module}
-                    </span>
-                  </td>
-                  <td className={`px-6 py-5 text-sm font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{item.user}</td>
-                  <td className={`px-6 py-5 text-sm font-semibold ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{item.time}</td>
+        {/* Recent Activity Table */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Recent Settings Activity</h3>
+            <button className="flex items-center gap-2 text-sm font-bold text-emerald-600 transition-colors hover:text-emerald-700">
+              <span>View all activity</span>
+              <ChevronRight size={18} />
+            </button>
+          </div>
+
+          <div className={`overflow-hidden rounded-2xl border ${isDarkMode ? 'border-slate-800/50 bg-[#0b1738]' : 'border-slate-100 bg-white shadow-sm'}`}>
+            <table className="w-full text-left text-sm">
+              <thead className={isDarkMode ? 'bg-[#0f1f49]/50 text-slate-300' : 'bg-slate-50/50 text-slate-600'}>
+                <tr>
+                  <th className="px-6 py-3.5 font-semibold">ACTIVITY</th>
+                  <th className="px-6 py-3.5 font-semibold">MODULE</th>
+                  <th className="px-6 py-3.5 font-semibold">UPDATED BY</th>
+                  <th className="px-6 py-3.5 font-semibold text-right">DATE & TIME</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800/30' : 'divide-slate-100/50'}`}>
+                {recentActivity.map((item) => (
+                  <tr key={item.id} className={`transition-colors duration-150 ${isDarkMode ? 'hover:bg-[#12244f]' : 'hover:bg-slate-50'}`}>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-4">
+                        <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${item.color}`}>
+                          <item.icon size={20} />
+                        </div>
+                        <div>
+                          <p className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{item.title}</p>
+                          <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{item.detail}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`rounded-md px-2 py-1 text-xs font-semibold ${item.badge}`}>
+                        {item.module}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className={`font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{item.updatedBy}</p>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <p className={`font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{item.date}</p>
+                      <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{item.time}</p>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </section>
-    </div>
-  )
+      </div>
+    )
+  }
 
   return (
     <div className={`min-h-0 flex-1 overflow-auto p-8 transition-colors duration-300 ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
@@ -958,8 +887,6 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                   ? 'Manage your library information that will appear across the system.'
                   : activeMenu === 'Users & Roles'
                     ? 'Manage system users and their roles and permissions.'
-                  : activeMenu === 'Notifications'
-                    ? 'Manage and customize system notifications and reminders.'
                   : activeMenu === 'General'
                     ? 'Configure basic system preferences and rules.'
                   : activeMenu === 'Account Security'

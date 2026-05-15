@@ -44,14 +44,6 @@ const navItems = [
   { id: 'Settings', icon: Settings2, label: 'Settings' },
 ]
 
-const settingsMenuItems = [
-  { label: 'General', icon: Settings2 },
-  { label: 'Library Profile', icon: Library },
-  { label: 'Users & Roles', icon: UsersRound },
-  { label: 'Notifications', icon: Bell },
-  { label: 'Security', icon: Shield },
-  { label: 'Backup', icon: RotateCcw },
-]
 
 
 type ActivityItem = {
@@ -123,7 +115,6 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [activePage, setActivePage] = useState<string>('Dashboard')
-  const [isSettingsExpanded, setIsSettingsExpanded] = useState(false)
   const [activeSettingsTab, setActiveSettingsTab] = useState('Overview')
   const [isBookDetailOpen, setIsBookDetailOpen] = useState(false)
   const [isTransactionDetailOpen, setIsTransactionDetailOpen] = useState(false)
@@ -308,7 +299,6 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
                     <button
                       onClick={() => {
                         setActivePage('Settings')
-                        setIsSettingsExpanded(!isSettingsExpanded)
                         setActiveSettingsTab('Overview')
                       }}
                       className={`group flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200 ${
@@ -319,32 +309,7 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
                     >
                       <Settings2 size={20} className={activePage === 'Settings' ? 'text-emerald-400' : ''} />
                       <span className="flex-1 text-left font-semibold">{!sidebarCollapsed && 'Settings'}</span>
-                      {!sidebarCollapsed && (
-                        <ChevronRight size={14} className={`transition-transform duration-300 ${isSettingsExpanded ? 'rotate-90' : ''} ${activePage === 'Settings' ? 'text-emerald-400' : 'text-emerald-100/40'}`} />
-                      )}
                     </button>
-                    
-                    {isSettingsExpanded && !sidebarCollapsed && (
-                      <div className="ml-4 mt-1 space-y-1 border-l border-emerald-500/20 pl-4">
-                        {settingsMenuItems.map((subItem) => (
-                          <button
-                            key={subItem.label}
-                            onClick={() => {
-                              setActivePage('Settings')
-                              setActiveSettingsTab(subItem.label)
-                            }}
-                            className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-200 ${
-                              activePage === 'Settings' && activeSettingsTab === subItem.label
-                                ? 'text-emerald-400 bg-emerald-400/5'
-                                : 'text-slate-400 hover:text-emerald-300 hover:bg-slate-800/30'
-                            }`}
-                          >
-                            <subItem.icon size={16} />
-                            {subItem.label}
-                          </button>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 </div>
           </nav>
