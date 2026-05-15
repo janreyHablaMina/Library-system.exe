@@ -50,7 +50,9 @@ const navItems: NavItem[] = [
   { id: 'Staff', icon: UserCircle, label: 'Staff' },
   { id: 'Reports', icon: BarChart3, label: 'Reports' },
   { id: 'Settings', icon: Settings2, label: 'Settings' },
-]
+] as const
+
+type ActivePage = (typeof navItems)[number]['id'] | 'All Transactions'
 
 const todayActivityItems: ActivityItem[] = [
   {
@@ -82,7 +84,7 @@ const todayActivityItems: ActivityItem[] = [
 function DashboardShell({ onLogout }: { onLogout: () => void }) {
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [activePage, setActivePage] = useState<string>('Dashboard')
+  const [activePage, setActivePage] = useState<ActivePage>('Dashboard')
   const [activeSettingsTab, setActiveSettingsTab] = useState('Overview')
   const [isBookDetailOpen, setIsBookDetailOpen] = useState(false)
   const [isTransactionDetailOpen, setIsTransactionDetailOpen] = useState(false)

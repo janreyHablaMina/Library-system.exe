@@ -22,49 +22,9 @@ type SettingsPageProps = {
   onTabChange?: (tab: string) => void
 }
 
-type ThemeMode = 'light' | 'dark' | 'system'
-
-type OperatingDay = {
-  day: string
-  open: string
-  close: string
-  closed: boolean
-}
-
-const timeOptions = ['08:00 AM', '09:00 AM', '12:00 PM', '01:00 PM', '05:00 PM']
-
 export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPageProps) {
   const activeMenu = activeTab
-  const [theme, setTheme] = useState<ThemeMode>('light')
   const [notifications, setNotifications] = useState(true)
-  const [overdueFine, setOverdueFine] = useState(true)
-  const [selfRegistration, setSelfRegistration] = useState(true)
-  const [autoMemberId, setAutoMemberId] = useState(true)
-  const [showCatalog, setShowCatalog] = useState(true)
-  const [showBarcode, setShowBarcode] = useState(true)
-  const [usersRolesTab, setUsersRolesTab] = useState<'Users' | 'Roles'>('Users')
-  const [operatingHours, setOperatingHours] = useState<OperatingDay[]>([
-    { day: 'Monday', open: '08:00 AM', close: '05:00 PM', closed: false },
-    { day: 'Tuesday', open: '08:00 AM', close: '05:00 PM', closed: false },
-    { day: 'Wednesday', open: '08:00 AM', close: '05:00 PM', closed: false },
-    { day: 'Thursday', open: '08:00 AM', close: '05:00 PM', closed: false },
-    { day: 'Friday', open: '08:00 AM', close: '05:00 PM', closed: false },
-    { day: 'Saturday', open: '09:00 AM', close: '01:00 PM', closed: false },
-    { day: 'Sunday', open: '08:00 AM', close: '05:00 PM', closed: true },
-  ])
-
-  const [emailNotifs, setEmailNotifs] = useState(true)
-  const [inAppNotifs, setInAppNotifs] = useState(true)
-  const [previewTab, setPreviewTab] = useState<'Email' | 'In-App'>('Email')
-
-  const [events, setEvents] = useState([
-    { id: 'due-date', label: 'Due Date Reminder', desc: 'Notify members before the book due date.', icon: Calendar, color: 'text-emerald-500 bg-emerald-100 dark:bg-emerald-500/10', email: true, inApp: true, hasInApp: true },
-    { id: 'overdue', label: 'Overdue Notice', desc: 'Notify members when a book is overdue.', icon: AlertCircle, color: 'text-rose-500 bg-rose-100 dark:bg-rose-500/10', email: true, inApp: true, hasInApp: true },
-    { id: 'fine', label: 'Fine Notice', desc: 'Notify members about fines generated.', icon: Receipt, color: 'text-amber-500 bg-amber-100 dark:bg-amber-500/10', email: true, inApp: false, hasInApp: false },
-    { id: 'reservation', label: 'Reservation Available', desc: 'Notify members when their reserved book is available.', icon: BookOpen, color: 'text-blue-500 bg-blue-100 dark:bg-blue-500/10', email: true, inApp: true, hasInApp: true },
-    { id: 'registration', label: 'Member Registration', desc: 'Notify admin when a new member registers.', icon: UsersRound, color: 'text-violet-500 bg-violet-100 dark:bg-violet-500/10', email: true, inApp: true, hasInApp: true },
-    { id: 'return', label: 'Return Reminder', desc: 'Notify members who have not returned borrowed books.', icon: RotateCcw, color: 'text-sky-500 bg-sky-100 dark:bg-sky-500/10', email: true, inApp: false, hasInApp: true },
-  ])
 
   const [showCurrentPass, setShowCurrentPass] = useState(false)
   const [showNewPass, setShowNewPass] = useState(false)
@@ -78,28 +38,6 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
     ? 'border-slate-800 bg-[#0f1f49] text-slate-200'
     : 'border-slate-200 bg-white text-slate-700'
 
-  const updateOperatingHour = (index: number, key: 'open' | 'close' | 'closed', value: string | boolean) => {
-    setOperatingHours((prev) =>
-      prev.map((item, idx) => (idx === index ? { ...item, [key]: value } : item)),
-    )
-  }
-
-  const users = [
-    { name: 'Admin User', email: 'admin@infolib.com', role: 'Administrator', roleClass: 'bg-emerald-100 text-emerald-700', status: 'Active', statusClass: 'bg-emerald-100 text-emerald-700', login: 'May 14, 2026 10:30 AM' },
-    { name: 'Maria Santos', email: 'maria.santos@infolib.com', role: 'Librarian', roleClass: 'bg-sky-100 text-sky-700', status: 'Active', statusClass: 'bg-emerald-100 text-emerald-700', login: 'May 14, 2026 09:15 AM' },
-    { name: 'Juan Dela Cruz', email: 'juan.delacruz@infolib.com', role: 'Assistant Librarian', roleClass: 'bg-violet-100 text-violet-700', status: 'Active', statusClass: 'bg-emerald-100 text-emerald-700', login: 'May 13, 2026 04:20 PM' },
-    { name: 'Ana Lim', email: 'ana.lim@infolib.com', role: 'Library Clerk', roleClass: 'bg-amber-100 text-amber-700', status: 'Active', statusClass: 'bg-emerald-100 text-emerald-700', login: 'May 13, 2026 02:45 PM' },
-    { name: 'Pedro Reyes', email: 'pedro.reyes@infolib.com', role: 'Library Clerk', roleClass: 'bg-amber-100 text-amber-700', status: 'Inactive', statusClass: 'bg-rose-100 text-rose-700', login: 'May 10, 2026 11:05 AM' },
-    { name: 'Sarah Wilson', email: 'sarah.wilson@infolib.com', role: 'Assistant Librarian', roleClass: 'bg-violet-100 text-violet-700', status: 'Active', statusClass: 'bg-emerald-100 text-emerald-700', login: 'May 9, 2026 03:30 PM' },
-    { name: 'Carlo Garcia', email: 'carlo.garcia@infolib.com', role: 'Library Clerk', roleClass: 'bg-amber-100 text-amber-700', status: 'Active', statusClass: 'bg-emerald-100 text-emerald-700', login: 'May 8, 2026 10:10 AM' },
-  ]
-
-  const roles = [
-    { title: 'Administrator', desc: 'Full access to all modules and settings.', users: '1 User', icon: ShieldCheck, color: 'text-emerald-600 bg-emerald-100' },
-    { title: 'Librarian', desc: 'Manage books, members, circulation and reports.', users: '1 User', icon: BookOpen, color: 'text-sky-600 bg-sky-100' },
-    { title: 'Assistant Librarian', desc: 'Assist in circulation, catalogs and member services.', users: '2 Users', icon: UserCog, color: 'text-violet-600 bg-violet-100' },
-    { title: 'Library Clerk', desc: 'Handle daily operations and basic transactions.', users: '3 Users', icon: UsersRound, color: 'text-amber-600 bg-amber-100' },
-  ]
 
   const renderUsersAndRoles = () => (
     <div className="space-y-8">
@@ -167,7 +105,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                   { name: 'John Dela Cruz', email: 'john.delacruz@citycentralschool.edu.ph', role: 'Assistant', status: 'Active', login: 'May 14, 2026 • 02:20 PM', color: 'bg-blue-50 text-blue-600' },
                   { name: 'Ana Lim', email: 'ana.lim@citycentralschool.edu.ph', role: 'Assistant', status: 'Active', login: 'May 14, 2026 • 11:05 AM', color: 'bg-blue-50 text-blue-600' },
                   { name: 'Guest User', email: 'guest@citycentralschool.edu.ph', role: 'Viewer', status: 'Inactive', login: 'Apr 20, 2026 • 04:45 PM', color: 'bg-slate-50 text-slate-600' },
-                ].map((user, idx) => (
+                ].map((user) => (
                   <tr key={user.email} className={`border-b last:border-0 transition-colors ${isDarkMode ? 'border-slate-800/50 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}>
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-4">
@@ -850,7 +788,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
           ) : activeMenu === 'Users & Roles' ? (
             renderUsersAndRoles()
           ) : activeMenu === 'Notifications' ? (
-            renderNotifications()
+            renderGeneralSettings()
           ) : activeMenu === 'General' ? (
             renderGeneralSettings()
           ) : activeMenu === 'Account Security' ? (
