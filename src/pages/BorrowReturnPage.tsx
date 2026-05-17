@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { ChevronDown, Ellipsis, IdCard, Mail, Phone, Search, X, Check } from 'lucide-react'
+import { ChevronDown, Ellipsis, IdCard, Search, X, Check } from 'lucide-react'
 
 type BorrowReturnPageProps = {
   isDarkMode: boolean
@@ -239,14 +239,7 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions }: BorrowRetur
 
                 {selectedMember && (
                   <div className={`relative rounded-xl border p-3 animate-[fadeIn_0.15s_ease-out] ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-slate-50/40'}`}>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedMember(null)}
-                      className={`absolute right-3 top-3 grid h-7 w-7 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-slate-200' : 'border-slate-200 text-slate-500 hover:bg-slate-100 hover:text-slate-700'}`}
-                    >
-                      <X size={13} />
-                    </button>
-                    <div className="grid gap-3 md:grid-cols-[1.25fr_1fr_auto_auto] md:items-center pr-8">
+                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                       <div className="flex min-w-0 items-center gap-3">
                         <span className={`grid h-10 w-10 place-items-center rounded-full ${isDarkMode ? 'bg-slate-800' : 'bg-white'}`}>{selectedMember.avatar}</span>
                         <div className="min-w-0">
@@ -254,17 +247,22 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions }: BorrowRetur
                           <p className={`truncate text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{selectedMember.memberId} • {selectedMember.type}</p>
                         </div>
                       </div>
-                      <div className="grid min-w-0 gap-1 text-xs">
-                        <p className={`flex items-center gap-2 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}><Phone size={13} />{selectedMember.phone}</p>
-                        <p className={`flex min-w-0 items-center gap-2 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}><Mail size={13} /><span className="truncate">{selectedMember.email}</span></p>
-                      </div>
-                      <div className="text-xs md:min-w-[84px] md:text-center">
-                        <p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Borrowed Books</p>
-                        <p className={`text-base font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>{selectedMember.borrowedCount}</p>
-                      </div>
-                      <div className="text-xs md:min-w-[96px] md:text-center">
-                        <p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Available Limit</p>
-                        <p className={`text-base font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>{selectedMember.limit}</p>
+                      <div className="flex items-center gap-4 md:gap-6">
+                        <div className="text-xs md:text-center">
+                          <p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Borrowed Books</p>
+                          <p className={`text-base font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>{selectedMember.borrowedCount}</p>
+                        </div>
+                        <div className="text-xs md:text-center">
+                          <p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Available Limit</p>
+                          <p className={`text-base font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>{selectedMember.limit}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedMember(null)}
+                          className={`grid h-8 w-8 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-slate-200' : 'border-slate-200 text-slate-500 hover:bg-slate-100 hover:text-slate-700'}`}
+                        >
+                          <X size={14} />
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -333,14 +331,7 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions }: BorrowRetur
 
                 {selectedBook && (
                   <div className={`relative rounded-xl border p-3 animate-[fadeIn_0.15s_ease-out] ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-slate-50/40'}`}>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedBook(null)}
-                      className={`absolute right-3 top-3 grid h-7 w-7 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-slate-200' : 'border-slate-200 text-slate-500 hover:bg-slate-100 hover:text-slate-700'}`}
-                    >
-                      <X size={13} />
-                    </button>
-                    <div className="flex items-center justify-between gap-3 pr-8">
+                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                       <div className="flex items-center gap-3">
                         <div className={`grid h-16 w-11 place-items-center rounded ${isDarkMode ? 'bg-slate-800' : 'bg-white'}`}>{selectedBook.icon}</div>
                         <div>
@@ -349,9 +340,18 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions }: BorrowRetur
                           <p className={`mt-1 text-xs ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>ISBN: {selectedBook.isbn} • Copy ID: {selectedBook.copyId}</p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Available Copies</p>
-                        <p className={`text-xl font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>{selectedBook.availableCopies}</p>
+                      <div className="flex items-center gap-4 md:gap-6">
+                        <div className="text-right text-xs">
+                          <p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Available Copies</p>
+                          <p className={`text-xl font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>{selectedBook.availableCopies}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedBook(null)}
+                          className={`grid h-8 w-8 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-slate-200' : 'border-slate-200 text-slate-500 hover:bg-slate-100 hover:text-slate-700'}`}
+                        >
+                          <X size={14} />
+                        </button>
                       </div>
                     </div>
                   </div>
