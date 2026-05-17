@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   BookOpen, Bookmark, ChevronDown, Clock3, Download, Filter, Grid2x2,
   List, MoreHorizontal, RotateCcw, Search, Upload,
-  Eye, Pencil, BookMarked, PlusCircle, RefreshCw, Trash2, AlertTriangle, X
+  Eye, Pencil, BookMarked, PlusCircle, RefreshCw, Trash2, AlertTriangle, X, Save
 } from 'lucide-react'
 
 type BookStatus = 'Available' | 'Borrowed' | 'Overdue'
@@ -45,6 +45,17 @@ const initialBooks: BookRow[] = [
   { id: 8, cover: '📒', title: 'Introduction to Library Science', isbn: '978-971-333-222-8', author: 'Villanueva, Ma. Teresa', category: 'Library Science', callNumber: '025.1 VIL', year: 2021, status: 'Available', available: '6 / 8' },
 ]
 
+const categories = [
+  'Social Sciences',
+  'History',
+  'Education',
+  'Law',
+  'Biography',
+  'Library Science',
+  'Technology',
+  'Fiction',
+]
+
 function getStatusClass(status: BookStatus) {
   if (status === 'Available') return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
   if (status === 'Borrowed') return 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
@@ -72,10 +83,11 @@ function getCategoryClass(category: string) {
 type BookActionsMenuProps = {
   isDarkMode: boolean
   onViewDetails: () => void
+  onEdit: () => void
   onDelete: () => void
 }
 
-function BookActionsMenu({ isDarkMode, onViewDetails, onDelete }: BookActionsMenuProps) {
+function BookActionsMenu({ isDarkMode, onViewDetails, onEdit, onDelete }: BookActionsMenuProps) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -151,7 +163,7 @@ function BookActionsMenu({ isDarkMode, onViewDetails, onDelete }: BookActionsMen
             type="button"
             className={`${itemBase} ${itemNormal}`}
             role="menuitem"
-            onClick={() => setOpen(false)}
+            onClick={() => { setOpen(false); onEdit(); }}
           >
             <Pencil size={15} className="shrink-0 text-violet-500" />
             Edit Book
@@ -211,6 +223,11 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
   const [bookList, setBookList] = useState<BookRow[]>(initialBooks)
   const [bookToDelete, setBookToDelete] = useState<BookRow | null>(null)
+  
+  // State for editing book details
+  const [bookToEdit, setBookToEdit] = useState<BookRow | null>(null)
+  const [editForm, setEditForm] = useState<Partial<BookRow>>({})
+
   const [showToast, setShowToast] = useState<string | null>(null)
 
   // Auto-dismiss toast
@@ -229,6 +246,26 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
     }
   }
 
+  const handleEditClick = (book: BookRow) => {
+    setBookToEdit(book)
+    setEditForm({ ...book })
+  }
+
+  const handleEditSave = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (bookToEdit && editForm.title) {
+      setBookList(prev => prev.map(b => b.id === bookToEdit.id ? { ...b, ...editForm } as BookRow : b))
+      setShowToast(`Successfully updated "${editForm.title}"`)
+      setBookToEdit(null)
+    }
+  }
+
+  const cardClass = isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'
+  const labelClass = isDarkMode ? 'text-slate-200' : 'text-slate-800'
+  const inputClass = isDarkMode
+    ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500 focus:border-emerald-500'
+    : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400 focus:border-emerald-500'
+
   return (
     <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
       {/* Toast Notification */}
@@ -241,12 +278,10 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
         </div>
       )}
 
-      {/* Styled Confirmation Modal */}
+      {/* Styled Confirmation Modal (Delete) */}
       {bookToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
-          <div className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl transition-all ${
-            isDarkMode ? 'bg-[#0b1738] border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
-          }`}>
+          <div className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl transition-all ${cardClass}`}>
             <div className="flex items-start gap-4">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-rose-500/10 text-rose-500">
                 <AlertTriangle size={24} />
@@ -279,6 +314,149 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Premium Edit Book Modal */}
+      {bookToEdit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/65 backdrop-blur-sm">
+          <form onSubmit={handleEditSave} className={`w-full max-w-lg rounded-2xl border shadow-2xl transition-all overflow-hidden ${cardClass}`}>
+            <div className="flex items-center justify-between border-b border-slate-200/15 p-5">
+              <div className="flex items-center gap-3">
+                <div className="grid h-10 w-10 place-items-center rounded-full bg-violet-500/10 text-violet-500">
+                  <Pencil size={18} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold">Edit Book Details</h3>
+                  <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Update catalog information and status</p>
+                </div>
+              </div>
+              <button type="button" onClick={() => setBookToEdit(null)} className={`rounded-lg p-1 ${isDarkMode ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="max-h-[70vh] overflow-y-auto p-6 space-y-4">
+              <div>
+                <label className={`text-xs font-bold uppercase tracking-wider ${labelClass}`}>Book Title *</label>
+                <input
+                  type="text"
+                  required
+                  value={editForm.title || ''}
+                  onChange={e => setEditForm(prev => ({ ...prev, title: e.target.value }))}
+                  className={`mt-1.5 h-11 w-full rounded-xl border px-4 outline-none ${inputClass}`}
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className={`text-xs font-bold uppercase tracking-wider ${labelClass}`}>Author *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editForm.author || ''}
+                    onChange={e => setEditForm(prev => ({ ...prev, author: e.target.value }))}
+                    className={`mt-1.5 h-11 w-full rounded-xl border px-4 outline-none ${inputClass}`}
+                  />
+                </div>
+                <div>
+                  <label className={`text-xs font-bold uppercase tracking-wider ${labelClass}`}>ISBN *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editForm.isbn || ''}
+                    onChange={e => setEditForm(prev => ({ ...prev, isbn: e.target.value }))}
+                    className={`mt-1.5 h-11 w-full rounded-xl border px-4 outline-none ${inputClass}`}
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className={`text-xs font-bold uppercase tracking-wider ${labelClass}`}>Category *</label>
+                  <div className="relative mt-1.5">
+                    <select
+                      value={editForm.category || ''}
+                      onChange={e => setEditForm(prev => ({ ...prev, category: e.target.value }))}
+                      className={`h-11 w-full appearance-none rounded-xl border px-4 pr-10 outline-none ${inputClass}`}
+                    >
+                      {categories.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                  </div>
+                </div>
+                <div>
+                  <label className={`text-xs font-bold uppercase tracking-wider ${labelClass}`}>Status *</label>
+                  <div className="relative mt-1.5">
+                    <select
+                      value={editForm.status || 'Available'}
+                      onChange={e => setEditForm(prev => ({ ...prev, status: e.target.value as BookStatus }))}
+                      className={`h-11 w-full appearance-none rounded-xl border px-4 pr-10 outline-none ${inputClass}`}
+                    >
+                      <option value="Available">Available</option>
+                      <option value="Borrowed">Borrowed</option>
+                      <option value="Overdue">Overdue</option>
+                    </select>
+                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="sm:col-span-1">
+                  <label className={`text-xs font-bold uppercase tracking-wider ${labelClass}`}>Year</label>
+                  <input
+                    type="number"
+                    value={editForm.year || 2024}
+                    onChange={e => setEditForm(prev => ({ ...prev, year: Number(e.target.value) }))}
+                    className={`mt-1.5 h-11 w-full rounded-xl border px-4 outline-none ${inputClass}`}
+                  />
+                </div>
+                <div className="sm:col-span-1">
+                  <label className={`text-xs font-bold uppercase tracking-wider ${labelClass}`}>Call Number</label>
+                  <input
+                    type="text"
+                    value={editForm.callNumber || ''}
+                    onChange={e => setEditForm(prev => ({ ...prev, callNumber: e.target.value }))}
+                    className={`mt-1.5 h-11 w-full rounded-xl border px-4 outline-none ${inputClass}`}
+                  />
+                </div>
+                <div className="sm:col-span-1">
+                  <label className={`text-xs font-bold uppercase tracking-wider ${labelClass}`}>Copies (Avail / Total)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 5 / 7"
+                    value={editForm.available || ''}
+                    onChange={e => setEditForm(prev => ({ ...prev, available: e.target.value }))}
+                    className={`mt-1.5 h-11 w-full rounded-xl border px-4 outline-none ${inputClass}`}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 border-t border-slate-200/15 p-4 bg-slate-500/5">
+              <button
+                type="button"
+                onClick={() => setBookToEdit(null)}
+                className={`rounded-xl px-5 h-11 text-sm font-semibold border ${
+                  isDarkMode
+                    ? 'border-slate-700 hover:bg-slate-800 text-slate-300'
+                    : 'border-slate-200 hover:bg-slate-50 text-slate-700'
+                }`}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="rounded-xl bg-emerald-700 hover:bg-emerald-800 h-11 px-6 text-sm font-semibold text-white inline-flex items-center gap-2"
+              >
+                <Save size={16} />
+                Save Changes
+              </button>
+            </div>
+          </form>
         </div>
       )}
 
@@ -413,7 +591,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
                       </td>
                       <td className={`px-3 py-3 font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{book.available}</td>
                       <td className="px-3 py-3 text-right">
-                        <BookActionsMenu isDarkMode={isDarkMode} onViewDetails={onOpenBookDetail} onDelete={() => setBookToDelete(book)} />
+                        <BookActionsMenu isDarkMode={isDarkMode} onViewDetails={onOpenBookDetail} onEdit={() => handleEditClick(book)} onDelete={() => setBookToDelete(book)} />
                       </td>
                     </tr>
                   ))}
@@ -445,7 +623,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
                   <div className="mt-auto pt-3">
                     <div className="flex items-center justify-between">
                       <span className={`rounded-md px-2 py-1 text-xs font-semibold ${getCategoryClass(book.category)}`}>{book.category}</span>
-                      <BookActionsMenu isDarkMode={isDarkMode} onViewDetails={onOpenBookDetail} onDelete={() => setBookToDelete(book)} />
+                      <BookActionsMenu isDarkMode={isDarkMode} onViewDetails={onOpenBookDetail} onEdit={() => handleEditClick(book)} onDelete={() => setBookToDelete(book)} />
                     </div>
                   </div>
                 </article>
