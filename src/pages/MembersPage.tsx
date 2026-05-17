@@ -87,7 +87,6 @@ export function MembersPage({ isDarkMode }: MembersPageProps) {
   // Dynamic States
   const [memberList, setMemberList] = useState<MemberRow[]>(members)
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedType, setSelectedType] = useState('All')
   const [selectedStatus, setSelectedStatus] = useState('All')
   const [selectedDept, setSelectedDept] = useState('All')
   const [activeStatTab, setActiveStatTab] = useState<'All Members' | 'Students' | 'Teachers' | 'Staff' | 'Visitors'>('All Members')
@@ -105,16 +104,13 @@ export function MembersPage({ isDarkMode }: MembersPageProps) {
     if (activeStatTab === 'Staff' && member.type !== 'Staff') return false
     if (activeStatTab === 'Visitors' && member.type !== 'Visitor') return false
 
-    // 2. Member Type Dropdown
-    if (selectedType !== 'All' && member.type !== selectedType) return false
-
-    // 3. Status Dropdown
+    // 2. Status Dropdown
     if (selectedStatus !== 'All' && member.status !== selectedStatus) return false
 
-    // 4. Department Dropdown
+    // 3. Department Dropdown
     if (selectedDept !== 'All' && member.department !== selectedDept) return false
 
-    // 5. Search Text Input (name, memberId, email, contact)
+    // 4. Search Text Input (name, memberId, email, contact)
     if (searchTerm.trim() !== '') {
       const term = searchTerm.toLowerCase()
       const matchName = member.name.toLowerCase().includes(term)
@@ -130,7 +126,6 @@ export function MembersPage({ isDarkMode }: MembersPageProps) {
   // Reset Filters
   const handleResetFilters = () => {
     setSearchTerm('')
-    setSelectedType('All')
     setSelectedStatus('All')
     setSelectedDept('All')
     setActiveStatTab('All Members')
@@ -239,22 +234,6 @@ export function MembersPage({ isDarkMode }: MembersPageProps) {
               />
             </label>
             
-            {/* Member Type Select */}
-            <div className="relative">
-              <select 
-                value={selectedType} 
-                onChange={(e) => setSelectedType(e.target.value)}
-                className={`h-11 appearance-none rounded-xl border py-2 pl-3 pr-9 text-sm outline-none min-w-[150px] ${
-                  isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'
-                }`}
-              >
-                <option value="All">Member Type: All</option>
-                {['Student', 'Teacher', 'Staff', 'Visitor'].map(tp => (
-                  <option key={tp} value={tp}>{tp}</option>
-                ))}
-              </select>
-              <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
-            </div>
 
             {/* Status Select */}
             <div className="relative">
