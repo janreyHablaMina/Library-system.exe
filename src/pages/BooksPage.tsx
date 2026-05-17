@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   BookOpen, Bookmark, ChevronDown, Clock3, Download, Filter, Grid2x2,
   List, MoreHorizontal, RotateCcw, Search, Upload,
-  Eye, Pencil, BookMarked, PlusCircle, RefreshCw, Trash2,
+  Eye, Pencil, BookMarked, PlusCircle, RefreshCw, Trash2, AlertTriangle, X
 } from 'lucide-react'
 
 type BookStatus = 'Available' | 'Borrowed' | 'Overdue'
@@ -34,7 +34,7 @@ const stats = [
   { label: 'Archived', value: '52', icon: Filter, active: false },
 ]
 
-const books: BookRow[] = [
+const initialBooks: BookRow[] = [
   { id: 1, cover: '📙', title: 'Sosyolohiya sa Filipino', isbn: '978-621-455-010-2', author: 'Kahayon, Alicia H.', category: 'Social Sciences', callNumber: '300.72 KAH', year: 2021, status: 'Available', available: '5 / 7' },
   { id: 2, cover: '📕', title: 'Understanding Philippine Social Realities through the Filipino Family', isbn: '978-971-009-123-4', author: 'Ramirez, Mina M.', category: 'Social Sciences', callNumber: '305.23 RAM', year: 2020, status: 'Borrowed', available: '1 / 3' },
   { id: 3, cover: '📘', title: 'The Conjugal Dictatorship of Ferdinand and Imelda Marcos I', isbn: '978-971-555-001-1', author: 'Mijares, Primitivo', category: 'History', callNumber: '959.904 MIJ', year: 2018, status: 'Available', available: '2 / 4' },
@@ -72,9 +72,10 @@ function getCategoryClass(category: string) {
 type BookActionsMenuProps = {
   isDarkMode: boolean
   onViewDetails: () => void
+  onDelete: () => void
 }
 
-function BookActionsMenu({ isDarkMode, onViewDetails }: BookActionsMenuProps) {
+function BookActionsMenu({ isDarkMode, onViewDetails, onDelete }: BookActionsMenuProps) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -194,7 +195,7 @@ function BookActionsMenu({ isDarkMode, onViewDetails }: BookActionsMenuProps) {
             type="button"
             className={`${itemBase} ${itemDanger}`}
             role="menuitem"
-            onClick={() => setOpen(false)}
+            onClick={() => { setOpen(false); onDelete(); }}
           >
             <Trash2 size={15} className="shrink-0" />
             Delete Book
@@ -208,9 +209,79 @@ function BookActionsMenu({ isDarkMode, onViewDetails }: BookActionsMenuProps) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: BooksPageProps) {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
+  const [bookList, setBookList] = useState<BookRow[]>(initialBooks)
+  const [bookToDelete, setBookToDelete] = useState<BookRow | null>(null)
+  const [showToast, setShowToast] = useState<string | null>(null)
+
+  // Auto-dismiss toast
+  useEffect(() => {
+    if (showToast) {
+      const t = setTimeout(() => setShowToast(null), 3000)
+      return () => clearTimeout(t)
+    }
+  }, [showToast])
+
+  const handleDeleteConfirm = () => {
+    if (bookToDelete) {
+      setBookList(prev => prev.filter(b => b.id !== bookToDelete.id))
+      setShowToast(`Successfully deleted "${bookToDelete.title}"`)
+      setBookToDelete(null)
+    }
+  }
 
   return (
     <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
+      {/* Toast Notification */}
+      {showToast && (
+        <div className="fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-lg animate-slide-in">
+          <span>{showToast}</span>
+          <button onClick={() => setShowToast(null)} className="rounded p-0.5 hover:bg-emerald-500">
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
+      {/* Styled Confirmation Modal */}
+      {bookToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
+          <div className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl transition-all ${
+            isDarkMode ? 'bg-[#0b1738] border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+          }`}>
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-rose-500/10 text-rose-500">
+                <AlertTriangle size={24} />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold leading-6">Delete Book</h3>
+                <p className={`mt-2 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                  Are you sure you want to delete <span className="font-semibold text-rose-500">"{bookToDelete.title}"</span>? This action cannot be undone.
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setBookToDelete(null)}
+                className={`rounded-xl px-4 py-2 text-sm font-semibold border ${
+                  isDarkMode
+                    ? 'border-slate-700 hover:bg-slate-800 text-slate-300'
+                    : 'border-slate-200 hover:bg-slate-50 text-slate-700'
+                }`}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteConfirm}
+                className="rounded-xl bg-rose-600 hover:bg-rose-700 px-4 py-2 text-sm font-semibold text-white"
+              >
+                Yes, Delete Book
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <section className="p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
@@ -319,7 +390,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
                   </tr>
                 </thead>
                 <tbody>
-                  {books.map((book) => (
+                  {bookList.map((book) => (
                     <tr key={book.id} className={`border-t transition-colors duration-150 ${isDarkMode ? 'border-slate-700 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}>
                       <td className="px-4 py-3 align-top"><input type="checkbox" /></td>
                       <td className="px-3 py-3">
@@ -342,7 +413,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
                       </td>
                       <td className={`px-3 py-3 font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{book.available}</td>
                       <td className="px-3 py-3 text-right">
-                        <BookActionsMenu isDarkMode={isDarkMode} onViewDetails={onOpenBookDetail} />
+                        <BookActionsMenu isDarkMode={isDarkMode} onViewDetails={onOpenBookDetail} onDelete={() => setBookToDelete(book)} />
                       </td>
                     </tr>
                   ))}
@@ -351,7 +422,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
             </div>
           ) : (
             <div className={`grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-6 ${isDarkMode ? 'bg-[#0b1738]' : 'bg-white'}`}>
-              {books.map((book) => (
+              {bookList.map((book) => (
                 <article key={book.id} className={`flex h-full flex-col rounded-xl border p-3 ${
                   isDarkMode
                     ? 'border-slate-700 bg-[#0b1738]'
@@ -374,7 +445,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
                   <div className="mt-auto pt-3">
                     <div className="flex items-center justify-between">
                       <span className={`rounded-md px-2 py-1 text-xs font-semibold ${getCategoryClass(book.category)}`}>{book.category}</span>
-                      <BookActionsMenu isDarkMode={isDarkMode} onViewDetails={onOpenBookDetail} />
+                      <BookActionsMenu isDarkMode={isDarkMode} onViewDetails={onOpenBookDetail} onDelete={() => setBookToDelete(book)} />
                     </div>
                   </div>
                 </article>
@@ -383,7 +454,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
           )}
 
           <div className={`flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm ${isDarkMode ? 'border-slate-700 text-slate-300' : 'border-slate-200 text-slate-600'}`}>
-            <p>Showing 1 to 10 of 6,619 books</p>
+            <p>Showing 1 to {bookList.length} of {bookList.length} books</p>
             <div className="flex items-center gap-2">
               <select className={`h-9 rounded-lg border px-3 text-sm ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
                 <option>10 per page</option>
