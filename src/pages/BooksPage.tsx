@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   BookOpen, Bookmark, ChevronDown, Clock3, Download, Filter, Grid2x2,
   List, MoreHorizontal, RotateCcw, Search, Upload,
@@ -219,9 +219,15 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
   // Filter States
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All')
+  const [selectedAuthor, setSelectedAuthor] = useState('All')
   const [selectedStatus, setSelectedStatus] = useState('All')
   const [selectedYear, setSelectedYear] = useState('All')
   const [activeStatTab, setActiveStatTab] = useState<'All Books' | 'Available' | 'Borrowed' | 'Overdue' | 'Archived'>('All Books')
+
+  // Dynamically pull all unique authors from your book list
+  const uniqueAuthors = useMemo(() => {
+    return Array.from(new Set(bookList.map(b => b.author))).sort()
+  }, [bookList])
 
   // Filter dynamic helper
   const filteredBooks = bookList.filter((book) => {
@@ -240,10 +246,13 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
     // 3. Category Dropdown
     if (selectedCategory !== 'All' && book.category !== selectedCategory) return false
 
-    // 4. Year Dropdown
+    // 4. Author Dropdown
+    if (selectedAuthor !== 'All' && book.author !== selectedAuthor) return false
+
+    // 5. Year Dropdown
     if (selectedYear !== 'All' && String(book.year) !== selectedYear) return false
 
-    // 5. Search input
+    // 6. Search input
     if (searchTerm.trim() !== '') {
       const term = searchTerm.toLowerCase()
       const matchTitle = book.title.toLowerCase().includes(term)
@@ -260,6 +269,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
   const handleResetFilters = () => {
     setSearchTerm('')
     setSelectedCategory('All')
+    setSelectedAuthor('All')
     setSelectedStatus('All')
     setSelectedYear('All')
     setActiveStatTab('All Books')
@@ -435,6 +445,23 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
                 <option value="All">Category: All</option>
                 {['Social Sciences', 'History', 'Education', 'Law', 'Biography', 'Library Science', 'Fiction', 'Technology'].map(cat => (
                   <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+              <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+            </div>
+
+            {/* Author Select */}
+            <div className="relative">
+              <select 
+                value={selectedAuthor} 
+                onChange={(e) => setSelectedAuthor(e.target.value)}
+                className={`h-11 appearance-none rounded-xl border py-2 pl-3 pr-9 text-sm outline-none min-w-[160px] max-w-[200px] truncate ${
+                  isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'
+                }`}
+              >
+                <option value="All">Author: All</option>
+                {uniqueAuthors.map(auth => (
+                  <option key={auth} value={auth}>{auth}</option>
                 ))}
               </select>
               <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
