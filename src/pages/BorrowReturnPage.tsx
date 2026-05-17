@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { ChevronDown, Ellipsis, IdCard, Mail, Phone, Search } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { ChevronDown, Ellipsis, IdCard, Mail, Phone, Search, X } from 'lucide-react'
 
 type BorrowReturnPageProps = {
   isDarkMode: boolean
@@ -55,10 +55,106 @@ function getFineClass(type: ReturnedRow['fineType']) {
     : 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
 }
 
+type MemberItem = {
+  name: string
+  memberId: string
+  type: string
+  phone: string
+  email: string
+  borrowedCount: number
+  limit: string
+  avatar: string
+}
+
+type BookItem = {
+  title: string
+  author: string
+  isbn: string
+  copyId: string
+  availableCopies: number
+  icon: string
+}
+
+const mockMembers: MemberItem[] = [
+  { name: 'Maria Santos', memberId: 'STU-2026-002', type: 'Student', phone: '0921 456 7890', email: 'maria.santos@email.com', borrowedCount: 1, limit: '4 / 5', avatar: '👩🏻' },
+  { name: 'Juan Dela Cruz', memberId: 'STU-2026-001', type: 'Student', phone: '0912 345 6789', email: 'juan.delacruz@email.com', borrowedCount: 2, limit: '3 / 5', avatar: '👨🏻' },
+  { name: 'Ana Lim', memberId: 'STU-2026-004', type: 'Student', phone: '0934 567 8901', email: 'ana.lim@email.com', borrowedCount: 3, limit: '2 / 5', avatar: '👩🏽' },
+  { name: 'Mark Anthony', memberId: 'TCH-2026-001', type: 'Teacher', phone: '0945 678 9012', email: 'mark.anthony@email.com', borrowedCount: 0, limit: '10 / 10', avatar: '👨🏾' },
+]
+
+const mockBooks: BookItem[] = [
+  { title: 'The Mindful Leader', author: 'Michael Bungay Stanier', isbn: '978-1524761540', copyId: 'BK-2026-0007', availableCopies: 3, icon: '📘' },
+  { title: 'Atomic Habits', author: 'James Clear', isbn: '978-0735211292', copyId: 'BK-2026-0001', availableCopies: 5, icon: '📙' },
+  { title: 'The Psychology of Money', author: 'Morgan Housel', isbn: '978-0857197689', copyId: 'BK-2026-0003', availableCopies: 2, icon: '📗' },
+  { title: 'Deep Work', author: 'Cal Newport', isbn: '978-1455586691', copyId: 'BK-2026-0002', availableCopies: 4, icon: '📕' },
+]
+
 export function BorrowReturnPage({ isDarkMode, onOpenTransactions }: BorrowReturnPageProps) {
   const [activeTab, setActiveTab] = useState<'borrow' | 'return'>('borrow')
   const [borrowDate, setBorrowDate] = useState('2026-05-06')
   const [dueDate, setDueDate] = useState('2026-05-20')
+
+  const [selectedMember, setSelectedMember] = useState<MemberItem | null>(null)
+  const [selectedBook, setSelectedBook] = useState<BookItem | null>(null)
+
+  const [memberSearchQuery, setMemberSearchQuery] = useState('')
+  const [showMemberDropdown, setShowMemberDropdown] = useState(false)
+
+  const [bookSearchQuery, setBookSearchQuery] = useState('')
+  const [showBookDropdown, setShowBookDropdown] = useState(false)
+
+  const [showToast, setShowToast] = useState<string | null>(null)
+
+  const memberDropdownRef = useRef<HTMLDivElement>(null)
+  const bookDropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (memberDropdownRef.current && !memberDropdownRef.current.contains(event.target as Node)) {
+        setShowMemberDropdown(false)
+      }
+      if (bookDropdownRef.current && !bookDropdownRef.current.contains(event.target as Node)) {
+        setShowBookDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  useEffect(() => {
+    if (showToast) {
+      const timer = setTimeout(() => setShowToast(null), 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [showToast])
+
+  const filteredMembersList = mockMembers.filter(m => 
+    m.name.toLowerCase().includes(memberSearchQuery.toLowerCase()) || 
+    m.memberId.toLowerCase().includes(memberSearchQuery.toLowerCase())
+  )
+
+  const filteredBooksList = mockBooks.filter(b => 
+    b.title.toLowerCase().includes(bookSearchQuery.toLowerCase()) || 
+    b.isbn.includes(bookSearchQuery)
+  )
+
+  const handleConfirmAction = () => {
+    if (!selectedMember) {
+      alert("Please select a member first.")
+      return
+    }
+    if (!selectedBook) {
+      alert("Please select a book first.")
+      return
+    }
+    if (activeTab === 'borrow') {
+      setShowToast(`Successfully borrowed "${selectedBook.title}" to ${selectedMember.name}!`)
+    } else {
+      setShowToast(`Successfully returned "${selectedBook.title}" from ${selectedMember.name}!`)
+    }
+    setSelectedMember(null)
+    setSelectedBook(null)
+  }
 
   return (
     <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
@@ -81,63 +177,157 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions }: BorrowRetur
             <p className={`mt-1 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{activeTab === 'borrow' ? 'Select member and book details to borrow.' : 'Select returned book details and complete return process.'}</p>
 
             <div className="mt-4 space-y-4">
-              <div>
+              <div className="relative" ref={memberDropdownRef}>
                 <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>1. Select Member</p>
-                <label className={`group flex h-11 items-center rounded-xl border px-3 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
-                  <Search size={16} className={`mr-2 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
-                  <input placeholder="Search by name, member ID or scan card..." className={`w-full bg-transparent text-sm outline-none ${isDarkMode ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400'}`} />
-                  <ChevronDown size={16} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />
-                </label>
-              </div>
+                {!selectedMember ? (
+                  <>
+                    <label className={`group flex h-11 items-center rounded-xl border px-3 transition-all ${isDarkMode ? 'border-slate-700 focus-within:border-emerald-500 bg-[#0f1f49]/30' : 'border-slate-200 focus-within:border-emerald-500 bg-slate-50'}`}>
+                      <Search size={16} className={`mr-2 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+                      <input
+                        value={memberSearchQuery}
+                        onChange={(e) => {
+                          setMemberSearchQuery(e.target.value)
+                          setShowMemberDropdown(true)
+                        }}
+                        onFocus={() => setShowMemberDropdown(true)}
+                        placeholder="Search by name, member ID or scan card..."
+                        className={`w-full bg-transparent text-sm outline-none ${isDarkMode ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400'}`}
+                      />
+                      <ChevronDown size={16} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />
+                    </label>
 
-              <div className={`rounded-xl border p-3 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-slate-50/40'}`}>
-                <div className="grid gap-3 md:grid-cols-[1.25fr_1fr_auto_auto] md:items-center">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <span className={`grid h-10 w-10 place-items-center rounded-full ${isDarkMode ? 'bg-slate-800' : 'bg-white'}`}>👩🏻</span>
-                    <div className="min-w-0">
-                      <p className={`truncate font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Maria Santos</p>
-                      <p className={`truncate text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>STU-2026-002 • Student</p>
+                    {showMemberDropdown && (
+                      <div className={`absolute left-0 right-0 z-50 mt-1 max-h-60 overflow-y-auto rounded-xl border p-1.5 shadow-xl ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
+                        {filteredMembersList.length > 0 ? (
+                          filteredMembersList.map((m) => (
+                            <button
+                              key={m.memberId}
+                              type="button"
+                              onClick={() => {
+                                setSelectedMember(m)
+                                setShowMemberDropdown(false)
+                                setMemberSearchQuery('')
+                              }}
+                              className={`flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left text-xs font-semibold transition-colors ${isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50'}`}
+                            >
+                              <span>{m.avatar}</span>
+                              <div className="flex-1">
+                                <p className={isDarkMode ? 'text-slate-100' : 'text-slate-900'}>{m.name}</p>
+                                <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{m.memberId} • {m.type}</p>
+                              </div>
+                            </button>
+                          ))
+                        ) : (
+                          <p className={`p-3 text-center text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>No members found</p>
+                        )}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className={`relative rounded-xl border p-3 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-slate-50/40'}`}>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedMember(null)}
+                      className={`absolute right-3 top-3 grid h-7 w-7 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-slate-200' : 'border-slate-200 text-slate-500 hover:bg-slate-100 hover:text-slate-700'}`}
+                    >
+                      <X size={13} />
+                    </button>
+                    <div className="grid gap-3 md:grid-cols-[1.25fr_1fr_auto_auto] md:items-center pr-8">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <span className={`grid h-10 w-10 place-items-center rounded-full ${isDarkMode ? 'bg-slate-800' : 'bg-white'}`}>{selectedMember.avatar}</span>
+                        <div className="min-w-0">
+                          <p className={`truncate font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{selectedMember.name}</p>
+                          <p className={`truncate text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{selectedMember.memberId} • {selectedMember.type}</p>
+                        </div>
+                      </div>
+                      <div className="grid min-w-0 gap-1 text-xs">
+                        <p className={`flex items-center gap-2 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}><Phone size={13} />{selectedMember.phone}</p>
+                        <p className={`flex min-w-0 items-center gap-2 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}><Mail size={13} /><span className="truncate">{selectedMember.email}</span></p>
+                      </div>
+                      <div className="text-xs md:min-w-[84px] md:text-center">
+                        <p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Borrowed Books</p>
+                        <p className={`text-base font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>{selectedMember.borrowedCount}</p>
+                      </div>
+                      <div className="text-xs md:min-w-[96px] md:text-center">
+                        <p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Available Limit</p>
+                        <p className={`text-base font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>{selectedMember.limit}</p>
+                      </div>
                     </div>
                   </div>
-                  <div className="grid min-w-0 gap-1 text-xs">
-                    <p className={`flex items-center gap-2 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}><Phone size={13} />0921 456 7890</p>
-                    <p className={`flex min-w-0 items-center gap-2 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}><Mail size={13} /><span className="truncate">maria.santos@email.com</span></p>
-                  </div>
-                  <div className="text-xs md:min-w-[84px] md:text-center">
-                    <p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Borrowed Books</p>
-                    <p className={`text-base font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>1</p>
-                  </div>
-                  <div className="text-xs md:min-w-[96px] md:text-center">
-                    <p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Available Limit</p>
-                    <p className={`text-base font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>4 / 5</p>
-                  </div>
-                </div>
+                )}
               </div>
 
-              <div>
+              <div className="relative" ref={bookDropdownRef}>
                 <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>2. Select Book</p>
-                <label className={`group flex h-11 items-center rounded-xl border px-3 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
-                  <Search size={16} className={`mr-2 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
-                  <input placeholder="Search by title, ISBN or scan barcode..." className={`w-full bg-transparent text-sm outline-none ${isDarkMode ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400'}`} />
-                  <ChevronDown size={16} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />
-                </label>
-              </div>
+                {!selectedBook ? (
+                  <>
+                    <label className={`group flex h-11 items-center rounded-xl border px-3 transition-all ${isDarkMode ? 'border-slate-700 focus-within:border-emerald-500 bg-[#0f1f49]/30' : 'border-slate-200 focus-within:border-emerald-500 bg-slate-50'}`}>
+                      <Search size={16} className={`mr-2 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+                      <input
+                        value={bookSearchQuery}
+                        onChange={(e) => {
+                          setBookSearchQuery(e.target.value)
+                          setShowBookDropdown(true)
+                        }}
+                        onFocus={() => setShowBookDropdown(true)}
+                        placeholder="Search by title, ISBN or scan barcode..."
+                        className={`w-full bg-transparent text-sm outline-none ${isDarkMode ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400'}`}
+                      />
+                      <ChevronDown size={16} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />
+                    </label>
 
-              <div className={`rounded-xl border p-3 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-slate-50/40'}`}>
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className={`grid h-16 w-11 place-items-center rounded ${isDarkMode ? 'bg-slate-800' : 'bg-white'}`}>📘</div>
-                    <div>
-                      <p className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>The Mindful Leader</p>
-                      <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Author: Michael Bungay Stanier</p>
-                      <p className={`mt-1 text-xs ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>ISBN: 978-1524761540 • Copy ID: BK-2026-0007</p>
+                    {showBookDropdown && (
+                      <div className={`absolute left-0 right-0 z-50 mt-1 max-h-60 overflow-y-auto rounded-xl border p-1.5 shadow-xl ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
+                        {filteredBooksList.length > 0 ? (
+                          filteredBooksList.map((b) => (
+                            <button
+                              key={b.copyId}
+                              type="button"
+                              onClick={() => {
+                                setSelectedBook(b)
+                                setShowBookDropdown(false)
+                                setBookSearchQuery('')
+                              }}
+                              className={`flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left text-xs font-semibold transition-colors ${isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50'}`}
+                            >
+                              <span className="text-lg">{b.icon}</span>
+                              <div className="flex-1">
+                                <p className={isDarkMode ? 'text-slate-100' : 'text-slate-900'}>{b.title}</p>
+                                <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{b.author} • {b.isbn}</p>
+                              </div>
+                            </button>
+                          ))
+                        ) : (
+                          <p className={`p-3 text-center text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>No books found</p>
+                        )}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className={`relative rounded-xl border p-3 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-slate-50/40'}`}>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedBook(null)}
+                      className={`absolute right-3 top-3 grid h-7 w-7 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-slate-200' : 'border-slate-200 text-slate-500 hover:bg-slate-100 hover:text-slate-700'}`}
+                    >
+                      <X size={13} />
+                    </button>
+                    <div className="flex items-center justify-between gap-3 pr-8">
+                      <div className="flex items-center gap-3">
+                        <div className={`grid h-16 w-11 place-items-center rounded ${isDarkMode ? 'bg-slate-800' : 'bg-white'}`}>{selectedBook.icon}</div>
+                        <div>
+                          <p className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{selectedBook.title}</p>
+                          <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Author: {selectedBook.author}</p>
+                          <p className={`mt-1 text-xs ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>ISBN: {selectedBook.isbn} • Copy ID: {selectedBook.copyId}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Available Copies</p>
+                        <p className={`text-xl font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>{selectedBook.availableCopies}</p>
+                      </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Available Copies</p>
-                    <p className={`text-xl font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>3</p>
-                  </div>
-                </div>
+                )}
               </div>
 
               <div className="grid gap-3 md:grid-cols-2">
@@ -172,7 +362,7 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions }: BorrowRetur
                 <p className={`mt-1 text-right text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>0 / 200</p>
               </div>
 
-              <button type="button" className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-semibold text-white hover:bg-emerald-700">
+              <button type="button" onClick={handleConfirmAction} className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-semibold text-white hover:bg-emerald-700">
                 <IdCard size={15} />
                 {activeTab === 'borrow' ? 'Confirm Borrow' : 'Confirm Return'}
               </button>
@@ -260,6 +450,19 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions }: BorrowRetur
           </div>
         </div>
       </section>
+
+      {showToast && (
+        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl border px-5 py-4 shadow-xl transition-all duration-300 animate-[fadeIn_0.2s_ease-out] ${
+          isDarkMode 
+            ? 'border-slate-700 bg-slate-900 text-slate-100' 
+            : 'border-slate-200 bg-white text-slate-800'
+        }`}>
+          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">
+            <span className="text-sm font-bold">✓</span>
+          </div>
+          <p className="text-sm font-semibold">{showToast}</p>
+        </div>
+      )}
     </div>
   )
 }
