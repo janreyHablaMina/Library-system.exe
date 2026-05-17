@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { ChevronDown, Download, Grid2x2, List, Mail, MoreHorizontal, Phone, Printer, RotateCcw, Search, UserPlus, Users, X } from 'lucide-react'
 
@@ -84,6 +84,58 @@ export function MembersPage({ isDarkMode }: MembersPageProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [memberForm, setMemberForm] = useState<MemberFormState>(initialFormState)
 
+  // Dynamic States
+  const [memberList, setMemberList] = useState<MemberRow[]>(members)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedType, setSelectedType] = useState('All')
+  const [selectedStatus, setSelectedStatus] = useState('All')
+  const [selectedDept, setSelectedDept] = useState('All')
+  const [activeStatTab, setActiveStatTab] = useState<'All Members' | 'Students' | 'Teachers' | 'Staff' | 'Visitors'>('All Members')
+
+  // Dynamically compute unique departments
+  const uniqueDepts = useMemo(() => {
+    return Array.from(new Set(memberList.map(m => m.department))).sort()
+  }, [memberList])
+
+  // Filter members dynamically
+  const filteredMembers = memberList.filter((member) => {
+    // 1. Stat Tab Filter
+    if (activeStatTab === 'Students' && member.type !== 'Student') return false
+    if (activeStatTab === 'Teachers' && member.type !== 'Teacher') return false
+    if (activeStatTab === 'Staff' && member.type !== 'Staff') return false
+    if (activeStatTab === 'Visitors' && member.type !== 'Visitor') return false
+
+    // 2. Member Type Dropdown
+    if (selectedType !== 'All' && member.type !== selectedType) return false
+
+    // 3. Status Dropdown
+    if (selectedStatus !== 'All' && member.status !== selectedStatus) return false
+
+    // 4. Department Dropdown
+    if (selectedDept !== 'All' && member.department !== selectedDept) return false
+
+    // 5. Search Text Input (name, memberId, email, contact)
+    if (searchTerm.trim() !== '') {
+      const term = searchTerm.toLowerCase()
+      const matchName = member.name.toLowerCase().includes(term)
+      const matchId = member.memberId.toLowerCase().includes(term)
+      const matchEmail = member.email.toLowerCase().includes(term)
+      const matchContact = member.contact.toLowerCase().includes(term)
+      if (!matchName && !matchId && !matchEmail && !matchContact) return false
+    }
+
+    return true
+  })
+
+  // Reset Filters
+  const handleResetFilters = () => {
+    setSearchTerm('')
+    setSelectedType('All')
+    setSelectedStatus('All')
+    setSelectedDept('All')
+    setActiveStatTab('All Members')
+  }
+
   const handleMemberFormChange = (field: keyof MemberFormState, value: string) => {
     setMemberForm((previous) => ({ ...previous, [field]: value }))
   }
@@ -95,6 +147,25 @@ export function MembersPage({ isDarkMode }: MembersPageProps) {
 
   const handleSaveMember = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    
+    // Basic validation
+    if (!memberForm.fullName.trim() || !memberForm.memberType || !memberForm.memberId) return
+
+    const newMember: MemberRow = {
+      id: Date.now(),
+      name: memberForm.fullName,
+      email: memberForm.email || 'n/a',
+      memberId: memberForm.memberId,
+      type: memberForm.memberType as MemberType,
+      department: memberForm.courseDepartment || 'General',
+      yearOrRole: memberForm.memberType === 'Student' ? '1st Year' : 'Support',
+      contact: memberForm.contactNumber || 'n/a',
+      borrowed: 0,
+      status: (memberForm.status as MemberStatus) || 'Active',
+      avatar: memberForm.memberType === 'Student' ? '🧑🏻' : memberForm.memberType === 'Teacher' ? '👨🏾' : '👨‍💼',
+    }
+
+    setMemberList(prev => [newMember, ...prev])
     closeAddModal()
   }
 
@@ -124,25 +195,35 @@ export function MembersPage({ isDarkMode }: MembersPageProps) {
 
         <div className={`mt-5 overflow-x-auto rounded-xl border ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
           <div className={`flex min-w-[880px] items-center gap-2 px-3 py-3 ${isDarkMode ? 'bg-[#0b1738]' : 'bg-white'}`}>
-            {stats.map((item) => (
-              <button
-                key={item.label}
-                type="button"
-                className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold ${
-                  item.active
-                    ? 'border border-emerald-600 bg-emerald-600 text-white'
-                    : isDarkMode
-                      ? 'border border-slate-700 bg-[#0f1f49] text-slate-300 hover:bg-slate-800'
-                      : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                <Users size={15} />
-                {item.label}
-                <span className={`rounded-full px-2 py-0.5 text-xs ${item.active ? 'bg-emerald-500 text-white' : isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
-                  {item.value}
-                </span>
-              </button>
-            ))}
+            {[
+              { label: 'All Members', value: String(memberList.length) },
+              { label: 'Students', value: String(memberList.filter(m => m.type === 'Student').length) },
+              { label: 'Teachers', value: String(memberList.filter(m => m.type === 'Teacher').length) },
+              { label: 'Staff', value: String(memberList.filter(m => m.type === 'Staff').length) },
+              { label: 'Visitors', value: String(memberList.filter(m => m.type === 'Visitor').length) },
+            ].map((item) => {
+              const isActive = activeStatTab === item.label
+              return (
+                <button
+                  key={item.label}
+                  type="button"
+                  onClick={() => setActiveStatTab(item.label as any)}
+                  className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-colors duration-150 ${
+                    isActive
+                      ? 'border border-emerald-600 bg-emerald-600 text-white'
+                      : isDarkMode
+                        ? 'border border-slate-700 bg-[#0f1f49] text-slate-300 hover:bg-slate-800'
+                        : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  <Users size={15} />
+                  {item.label}
+                  <span className={`rounded-full px-2 py-0.5 text-xs ${isActive ? 'bg-emerald-500 text-white' : isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
+                    {item.value}
+                  </span>
+                </button>
+              )
+            })}
           </div>
         </div>
 
@@ -150,19 +231,70 @@ export function MembersPage({ isDarkMode }: MembersPageProps) {
           <div className={`flex flex-wrap items-center gap-3 border-b p-3 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
             <label className={`group flex h-11 min-w-[280px] flex-1 items-center rounded-xl border px-3 ${isDarkMode ? 'border-slate-700 focus-within:border-emerald-500' : 'border-slate-200 focus-within:border-emerald-500'}`}>
               <Search size={16} className={`mr-2 ${isDarkMode ? 'text-slate-500 group-focus-within:text-emerald-400' : 'text-slate-400 group-focus-within:text-emerald-600'}`} />
-              <input className={`w-full bg-transparent text-sm outline-none ${isDarkMode ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400'}`} placeholder="Search by name, member ID, email, or contact..." />
+              <input
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className={`w-full bg-transparent text-sm outline-none ${isDarkMode ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400'}`}
+                placeholder="Search by name, member ID, email, or contact..."
+              />
             </label>
-            {['Member Type: All', 'Status: All', 'Department / Course: All'].map((label, idx) => (
-              <div key={label} className="relative">
-                <select className={`h-11 appearance-none rounded-xl border py-2 pl-3 pr-9 text-sm outline-none ${
-                  idx === 0 ? 'min-w-[150px]' : idx === 1 ? 'min-w-[130px]' : 'min-w-[220px]'
-                } ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
-                  <option>{label}</option>
-                </select>
-                <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
-              </div>
-            ))}
-            <button type="button" className={`inline-flex h-11 items-center gap-2 rounded-xl border px-4 text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
+            
+            {/* Member Type Select */}
+            <div className="relative">
+              <select 
+                value={selectedType} 
+                onChange={(e) => setSelectedType(e.target.value)}
+                className={`h-11 appearance-none rounded-xl border py-2 pl-3 pr-9 text-sm outline-none min-w-[150px] ${
+                  isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'
+                }`}
+              >
+                <option value="All">Member Type: All</option>
+                {['Student', 'Teacher', 'Staff', 'Visitor'].map(tp => (
+                  <option key={tp} value={tp}>{tp}</option>
+                ))}
+              </select>
+              <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+            </div>
+
+            {/* Status Select */}
+            <div className="relative">
+              <select 
+                value={selectedStatus} 
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                className={`h-11 appearance-none rounded-xl border py-2 pl-3 pr-9 text-sm outline-none min-w-[130px] ${
+                  isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'
+                }`}
+              >
+                <option value="All">Status: All</option>
+                {['Active', 'Overdue', 'Inactive'].map(st => (
+                  <option key={st} value={st}>{st}</option>
+                ))}
+              </select>
+              <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+            </div>
+
+            {/* Department Course Select */}
+            <div className="relative">
+              <select 
+                value={selectedDept} 
+                onChange={(e) => setSelectedDept(e.target.value)}
+                className={`h-11 appearance-none rounded-xl border py-2 pl-3 pr-9 text-sm outline-none min-w-[220px] max-w-[250px] truncate ${
+                  isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'
+                }`}
+              >
+                <option value="All">Department / Course: All</option>
+                {uniqueDepts.map(dept => (
+                  <option key={dept} value={dept}>{dept}</option>
+                ))}
+              </select>
+              <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+            </div>
+
+            <button 
+              type="button" 
+              onClick={handleResetFilters}
+              className={`inline-flex h-11 items-center gap-2 rounded-xl border px-4 text-sm font-semibold transition-colors duration-150 ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}
+            >
               <RotateCcw size={15} />
               Reset
             </button>
@@ -201,7 +333,7 @@ export function MembersPage({ isDarkMode }: MembersPageProps) {
                   </tr>
                 </thead>
                 <tbody>
-                  {members.map((member) => (
+                  {filteredMembers.map((member) => (
                     <tr key={member.id} className={`border-t transition-colors duration-150 ${isDarkMode ? 'border-slate-700 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}>
                       <td className="px-4 py-3 align-top"><input type="checkbox" /></td>
                       <td className="px-3 py-3">
@@ -238,7 +370,7 @@ export function MembersPage({ isDarkMode }: MembersPageProps) {
             </div>
           ) : (
             <div className={`grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5 ${isDarkMode ? 'bg-[#0b1738]' : 'bg-white'}`}>
-              {members.map((member) => (
+              {filteredMembers.map((member) => (
                 <article key={member.id} className={`flex h-full flex-col rounded-xl border p-3 transition-all duration-200 hover:-translate-y-0.5 ${
                   isDarkMode
                     ? 'border-slate-700 bg-[#0f1f49] hover:border-emerald-500/60 hover:shadow-[0_12px_24px_-16px_rgba(16,185,129,0.45)]'
@@ -263,7 +395,7 @@ export function MembersPage({ isDarkMode }: MembersPageProps) {
           )}
 
           <div className={`flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm ${isDarkMode ? 'border-slate-700 text-slate-300' : 'border-slate-200 text-slate-600'}`}>
-            <p>Showing 1 to 10 of 1,245 members</p>
+            <p>Showing 1 to {filteredMembers.length} of {filteredMembers.length} members</p>
             <div className="flex items-center gap-2">
               <select className={`h-9 rounded-lg border px-3 text-sm ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
                 <option>10 per page</option>
