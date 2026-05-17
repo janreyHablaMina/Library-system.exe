@@ -177,54 +177,55 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions }: BorrowRetur
             <p className={`mt-1 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{activeTab === 'borrow' ? 'Select member and book details to borrow.' : 'Select returned book details and complete return process.'}</p>
 
             <div className="mt-4 space-y-4">
-              <div className="relative" ref={memberDropdownRef}>
-                <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>1. Select Member</p>
-                {!selectedMember ? (
-                  <>
-                    <label className={`group flex h-11 items-center rounded-xl border px-3 transition-all ${isDarkMode ? 'border-slate-700 focus-within:border-emerald-500 bg-[#0f1f49]/30' : 'border-slate-200 focus-within:border-emerald-500 bg-slate-50'}`}>
-                      <Search size={16} className={`mr-2 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
-                      <input
-                        value={memberSearchQuery}
-                        onChange={(e) => {
-                          setMemberSearchQuery(e.target.value)
-                          setShowMemberDropdown(true)
-                        }}
-                        onFocus={() => setShowMemberDropdown(true)}
-                        placeholder="Search by name, member ID or scan card..."
-                        className={`w-full bg-transparent text-sm outline-none ${isDarkMode ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400'}`}
-                      />
-                      <ChevronDown size={16} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />
-                    </label>
+              <div className="relative space-y-2" ref={memberDropdownRef}>
+                <p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>1. Select Member</p>
+                <label className={`group flex h-11 items-center rounded-xl border px-3 transition-all ${isDarkMode ? 'border-slate-700 focus-within:border-emerald-500 bg-[#0f1f49]/30' : 'border-slate-200 focus-within:border-emerald-500 bg-slate-55'}`}>
+                  <Search size={16} className={`mr-2 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+                  <input
+                    value={selectedMember ? selectedMember.name : memberSearchQuery}
+                    onChange={(e) => {
+                      setMemberSearchQuery(e.target.value)
+                      setShowMemberDropdown(true)
+                      if (selectedMember) {
+                        setSelectedMember(null)
+                      }
+                    }}
+                    onFocus={() => setShowMemberDropdown(true)}
+                    placeholder="Search by name, member ID or scan card..."
+                    className={`w-full bg-transparent text-sm outline-none ${isDarkMode ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400'}`}
+                  />
+                  <ChevronDown size={16} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />
+                </label>
 
-                    {showMemberDropdown && (
-                      <div className={`absolute left-0 right-0 z-50 mt-1 max-h-60 overflow-y-auto rounded-xl border p-1.5 shadow-xl ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
-                        {filteredMembersList.length > 0 ? (
-                          filteredMembersList.map((m) => (
-                            <button
-                              key={m.memberId}
-                              type="button"
-                              onClick={() => {
-                                setSelectedMember(m)
-                                setShowMemberDropdown(false)
-                                setMemberSearchQuery('')
-                              }}
-                              className={`flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left text-xs font-semibold transition-colors ${isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50'}`}
-                            >
-                              <span>{m.avatar}</span>
-                              <div className="flex-1">
-                                <p className={isDarkMode ? 'text-slate-100' : 'text-slate-900'}>{m.name}</p>
-                                <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{m.memberId} • {m.type}</p>
-                              </div>
-                            </button>
-                          ))
-                        ) : (
-                          <p className={`p-3 text-center text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>No members found</p>
-                        )}
-                      </div>
+                {showMemberDropdown && (
+                  <div className={`absolute left-0 right-0 z-50 mt-1 max-h-60 overflow-y-auto rounded-xl border p-1.5 shadow-xl ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
+                    {filteredMembersList.length > 0 ? (
+                      filteredMembersList.map((m) => (
+                        <button
+                          key={m.memberId}
+                          type="button"
+                          onClick={() => {
+                            setSelectedMember(m)
+                            setShowMemberDropdown(false)
+                            setMemberSearchQuery('')
+                          }}
+                          className={`flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left text-xs font-semibold transition-colors ${isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50'}`}
+                        >
+                          <span>{m.avatar}</span>
+                          <div className="flex-1">
+                            <p className={isDarkMode ? 'text-slate-100' : 'text-slate-900'}>{m.name}</p>
+                            <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{m.memberId} • {m.type}</p>
+                          </div>
+                        </button>
+                      ))
+                    ) : (
+                      <p className={`p-3 text-center text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>No members found</p>
                     )}
-                  </>
-                ) : (
-                  <div className={`relative rounded-xl border p-3 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-slate-50/40'}`}>
+                  </div>
+                )}
+
+                {selectedMember && (
+                  <div className={`relative rounded-xl border p-3 animate-[fadeIn_0.15s_ease-out] ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-slate-50/40'}`}>
                     <button
                       type="button"
                       onClick={() => setSelectedMember(null)}
@@ -257,54 +258,55 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions }: BorrowRetur
                 )}
               </div>
 
-              <div className="relative" ref={bookDropdownRef}>
-                <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>2. Select Book</p>
-                {!selectedBook ? (
-                  <>
-                    <label className={`group flex h-11 items-center rounded-xl border px-3 transition-all ${isDarkMode ? 'border-slate-700 focus-within:border-emerald-500 bg-[#0f1f49]/30' : 'border-slate-200 focus-within:border-emerald-500 bg-slate-50'}`}>
-                      <Search size={16} className={`mr-2 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
-                      <input
-                        value={bookSearchQuery}
-                        onChange={(e) => {
-                          setBookSearchQuery(e.target.value)
-                          setShowBookDropdown(true)
-                        }}
-                        onFocus={() => setShowBookDropdown(true)}
-                        placeholder="Search by title, ISBN or scan barcode..."
-                        className={`w-full bg-transparent text-sm outline-none ${isDarkMode ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400'}`}
-                      />
-                      <ChevronDown size={16} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />
-                    </label>
+              <div className="relative space-y-2" ref={bookDropdownRef}>
+                <p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>2. Select Book</p>
+                <label className={`group flex h-11 items-center rounded-xl border px-3 transition-all ${isDarkMode ? 'border-slate-700 focus-within:border-emerald-500 bg-[#0f1f49]/30' : 'border-slate-200 focus-within:border-emerald-500 bg-slate-55'}`}>
+                  <Search size={16} className={`mr-2 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+                  <input
+                    value={selectedBook ? selectedBook.title : bookSearchQuery}
+                    onChange={(e) => {
+                      setBookSearchQuery(e.target.value)
+                      setShowBookDropdown(true)
+                      if (selectedBook) {
+                        setSelectedBook(null)
+                      }
+                    }}
+                    onFocus={() => setShowBookDropdown(true)}
+                    placeholder="Search by title, ISBN or scan barcode..."
+                    className={`w-full bg-transparent text-sm outline-none ${isDarkMode ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400'}`}
+                  />
+                  <ChevronDown size={16} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />
+                </label>
 
-                    {showBookDropdown && (
-                      <div className={`absolute left-0 right-0 z-50 mt-1 max-h-60 overflow-y-auto rounded-xl border p-1.5 shadow-xl ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
-                        {filteredBooksList.length > 0 ? (
-                          filteredBooksList.map((b) => (
-                            <button
-                              key={b.copyId}
-                              type="button"
-                              onClick={() => {
-                                setSelectedBook(b)
-                                setShowBookDropdown(false)
-                                setBookSearchQuery('')
-                              }}
-                              className={`flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left text-xs font-semibold transition-colors ${isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50'}`}
-                            >
-                              <span className="text-lg">{b.icon}</span>
-                              <div className="flex-1">
-                                <p className={isDarkMode ? 'text-slate-100' : 'text-slate-900'}>{b.title}</p>
-                                <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{b.author} • {b.isbn}</p>
-                              </div>
-                            </button>
-                          ))
-                        ) : (
-                          <p className={`p-3 text-center text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>No books found</p>
-                        )}
-                      </div>
+                {showBookDropdown && (
+                  <div className={`absolute left-0 right-0 z-50 mt-1 max-h-60 overflow-y-auto rounded-xl border p-1.5 shadow-xl ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
+                    {filteredBooksList.length > 0 ? (
+                      filteredBooksList.map((b) => (
+                        <button
+                          key={b.copyId}
+                          type="button"
+                          onClick={() => {
+                            setSelectedBook(b)
+                            setShowBookDropdown(false)
+                            setBookSearchQuery('')
+                          }}
+                          className={`flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left text-xs font-semibold transition-colors ${isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-55'}`}
+                        >
+                          <span className="text-lg">{b.icon}</span>
+                          <div className="flex-1">
+                            <p className={isDarkMode ? 'text-slate-100' : 'text-slate-900'}>{b.title}</p>
+                            <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{b.author} • {b.isbn}</p>
+                          </div>
+                        </button>
+                      ))
+                    ) : (
+                      <p className={`p-3 text-center text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>No books found</p>
                     )}
-                  </>
-                ) : (
-                  <div className={`relative rounded-xl border p-3 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-slate-50/40'}`}>
+                  </div>
+                )}
+
+                {selectedBook && (
+                  <div className={`relative rounded-xl border p-3 animate-[fadeIn_0.15s_ease-out] ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-slate-50/40'}`}>
                     <button
                       type="button"
                       onClick={() => setSelectedBook(null)}
