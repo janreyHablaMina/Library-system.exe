@@ -1,5 +1,9 @@
-import { useState } from 'react'
-import { BookOpen, Bookmark, ChevronDown, Clock3, Download, Filter, Grid2x2, List, MoreHorizontal, RotateCcw, Search, Upload } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import {
+  BookOpen, Bookmark, ChevronDown, Clock3, Download, Filter, Grid2x2,
+  List, MoreHorizontal, RotateCcw, Search, Upload,
+  Eye, Pencil, BookMarked, PlusCircle, RefreshCw, Trash2,
+} from 'lucide-react'
 
 type BookStatus = 'Available' | 'Borrowed' | 'Overdue'
 
@@ -64,6 +68,144 @@ function getCategoryClass(category: string) {
   }
 }
 
+// ─── Book Actions Dropdown Menu ───────────────────────────────────────────────
+type BookActionsMenuProps = {
+  isDarkMode: boolean
+  onViewDetails: () => void
+}
+
+function BookActionsMenu({ isDarkMode, onViewDetails }: BookActionsMenuProps) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  const surface = isDarkMode
+    ? 'bg-[#0f172a] border-slate-700 shadow-[0_8px_32px_rgba(0,0,0,0.6)]'
+    : 'bg-white border-slate-200 shadow-[0_8px_32px_rgba(0,0,0,0.12)]'
+
+  const itemBase =
+    'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-100 text-left'
+  const itemNormal = isDarkMode
+    ? 'text-slate-200 hover:bg-slate-800'
+    : 'text-slate-700 hover:bg-slate-50'
+  const itemDanger = isDarkMode
+    ? 'text-rose-400 hover:bg-rose-500/10'
+    : 'text-rose-600 hover:bg-rose-50'
+  const divider = isDarkMode ? 'border-slate-700/60' : 'border-slate-100'
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        id={`book-actions-btn-${Math.random()}`}
+        onClick={() => setOpen(v => !v)}
+        className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border transition-colors duration-150 ${
+          open
+            ? isDarkMode
+              ? 'border-slate-500 bg-slate-700 text-slate-100'
+              : 'border-emerald-300 bg-emerald-50 text-emerald-700'
+            : isDarkMode
+              ? 'border-slate-700 text-slate-300 hover:bg-slate-800'
+              : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+        }`}
+        aria-label="Book actions"
+        aria-haspopup="menu"
+        aria-expanded={open}
+      >
+        <MoreHorizontal size={16} />
+      </button>
+
+      {open && (
+        <div
+          className={`absolute right-0 z-50 mt-1.5 w-52 rounded-xl border p-1.5 ${surface} animate-[fadeIn_0.12s_ease]`}
+          role="menu"
+          style={{ animation: 'bookMenuIn 0.13s cubic-bezier(0.16,1,0.3,1)' }}
+        >
+          <style>{`
+            @keyframes bookMenuIn {
+              from { opacity: 0; transform: scale(0.95) translateY(-6px); }
+              to   { opacity: 1; transform: scale(1)    translateY(0);    }
+            }
+          `}</style>
+
+          {/* Group 1 */}
+          <button
+            type="button"
+            className={`${itemBase} ${itemNormal}`}
+            role="menuitem"
+            onClick={() => { setOpen(false); onViewDetails(); }}
+          >
+            <Eye size={15} className="shrink-0 text-sky-500" />
+            View Details
+          </button>
+          <button
+            type="button"
+            className={`${itemBase} ${itemNormal}`}
+            role="menuitem"
+            onClick={() => setOpen(false)}
+          >
+            <Pencil size={15} className="shrink-0 text-violet-500" />
+            Edit Book
+          </button>
+          <button
+            type="button"
+            className={`${itemBase} ${itemNormal}`}
+            role="menuitem"
+            onClick={() => setOpen(false)}
+          >
+            <BookMarked size={15} className="shrink-0 text-emerald-500" />
+            Borrow Book
+          </button>
+
+          <div className={`my-1.5 border-t ${divider}`} />
+
+          {/* Group 2 */}
+          <button
+            type="button"
+            className={`${itemBase} ${itemNormal}`}
+            role="menuitem"
+            onClick={() => setOpen(false)}
+          >
+            <PlusCircle size={15} className="shrink-0 text-amber-500" />
+            Add Copies
+          </button>
+          <button
+            type="button"
+            className={`${itemBase} ${itemNormal}`}
+            role="menuitem"
+            onClick={() => setOpen(false)}
+          >
+            <RefreshCw size={15} className="shrink-0 text-cyan-500" />
+            Update Status
+          </button>
+
+          <div className={`my-1.5 border-t ${divider}`} />
+
+          {/* Group 3 — Danger */}
+          <button
+            type="button"
+            className={`${itemBase} ${itemDanger}`}
+            role="menuitem"
+            onClick={() => setOpen(false)}
+          >
+            <Trash2 size={15} className="shrink-0" />
+            Delete Book
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
 export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: BooksPageProps) {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
 
@@ -200,9 +342,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
                       </td>
                       <td className={`px-3 py-3 font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{book.available}</td>
                       <td className="px-3 py-3 text-right">
-                        <button type="button" className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border ${isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
-                          <MoreHorizontal size={16} />
-                        </button>
+                        <BookActionsMenu isDarkMode={isDarkMode} onViewDetails={onOpenBookDetail} />
                       </td>
                     </tr>
                   ))}
@@ -234,9 +374,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
                   <div className="mt-auto pt-3">
                     <div className="flex items-center justify-between">
                       <span className={`rounded-md px-2 py-1 text-xs font-semibold ${getCategoryClass(book.category)}`}>{book.category}</span>
-                      <button type="button" className={`inline-flex h-9 w-9 items-center justify-center ${isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700'}`}>
-                        <MoreHorizontal size={15} />
-                      </button>
+                      <BookActionsMenu isDarkMode={isDarkMode} onViewDetails={onOpenBookDetail} />
                     </div>
                   </div>
                 </article>
