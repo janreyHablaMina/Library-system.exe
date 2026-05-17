@@ -89,6 +89,12 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
   // Tab states
   const [activeTab, setActiveTab] = useState<'basic' | 'catalog' | 'notes'>('basic')
 
+  // Cover Upload States & Ref
+  const coverInputRef = React.useRef<HTMLInputElement | null>(null)
+  const [coverFile, setCoverFile] = useState<File | null>(null)
+  const isRealImage = book.cover.startsWith('http') || book.cover.startsWith('data:') || book.cover.startsWith('blob:')
+  const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(isRealImage ? book.cover : null)
+
   // Form Fields
   const [title, setTitle] = useState(book.title)
   const [author, setAuthor] = useState(book.author)
@@ -121,6 +127,28 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
   // Additional Notes
   const [notes, setNotes] = useState('Recommended reading for introductory college sociology courses. Updated text includes recent census data.')
 
+  // Uploader Actions
+  const handleChooseFile = () => {
+    coverInputRef.current?.click()
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setCoverFile(file)
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setCoverPreviewUrl(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleRemoveCover = () => {
+    setCoverFile(null)
+    setCoverPreviewUrl(null)
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     onSave({
@@ -130,6 +158,7 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
       isbn,
       category,
       status,
+      cover: coverPreviewUrl || '📙', // Revert to emoji or custom color spine if no cover is set
       callNumber: catalogCallNumber,
       year: Number(year) || book.year,
       available: `${numberOfCopies} / ${book.available.split(' / ')[1] || '7'}`
@@ -153,7 +182,7 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
 
   return (
     <div className={`p-4 ${isDarkMode ? 'bg-[#020617]' : 'bg-[#f8fafc]'} h-[calc(100vh-64px)] max-h-[calc(100vh-64px)] min-h-0 flex-1 flex flex-col`}>
-      <div className={`mx-auto w-full max-w-[1650px] h-full max-h-full rounded-2xl border flex flex-col shadow-sm overflow-hidden ${cardClass}`}>
+      <form onSubmit={handleSubmit} className={`mx-auto w-full max-w-[1650px] h-full max-h-full rounded-2xl border flex flex-col shadow-sm overflow-hidden ${cardClass}`}>
         
         {/* Header Block (Unified exactly like screenshot) */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200/10">
@@ -525,22 +554,39 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
               </div>
 
               <div className="flex gap-4">
-                {/* Visual Cover Preview (High Fidelity rendering) */}
-                <HighFidelityBookCover title={title} author={author} />
+                {/* Visual Cover Preview (High Fidelity rendering or uploaded image) */}
+                {coverPreviewUrl ? (
+                  <div className="relative w-[145px] h-[195px] rounded-lg shadow-md overflow-hidden shrink-0 border border-slate-200/10">
+                    <img src={coverPreviewUrl} alt="Cover preview" className="w-full h-full object-cover" />
+                  </div>
+                ) : (
+                  <HighFidelityBookCover title={title} author={author} />
+                )}
                 
                 {/* Upload zone */}
-                <div className={`flex-1 rounded-xl border-2 border-dashed p-4 text-center flex flex-col justify-center items-center transition ${
-                  isDarkMode ? 'border-slate-700 bg-[#0f1f49]/50' : 'border-slate-200 bg-slate-50/40'
-                }`}>
+                <div
+                  onClick={handleChooseFile}
+                  className={`flex-1 rounded-xl border-2 border-dashed p-4 text-center flex flex-col justify-center items-center cursor-pointer transition ${
+                    isDarkMode ? 'border-slate-700 hover:border-slate-500 bg-[#0f1f49]/50 hover:bg-[#0f1f49]/70' : 'border-slate-200 hover:border-emerald-500 bg-slate-50/40 hover:bg-emerald-50/20'
+                  }`}
+                >
                   <CloudUpload size={28} className={`mb-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
                   <p className={`text-xs font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Drag and drop image here</p>
                   <p className={`text-[10px] my-1 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>or</p>
                   <button
                     type="button"
+                    onClick={(e) => { e.stopPropagation(); handleChooseFile(); }}
                     className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${isDarkMode ? 'border-slate-600 text-slate-200 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-100'}`}
                   >
                     Choose File
                   </button>
+                  <input
+                    ref={coverInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
                   <p className={`text-[9px] mt-2 leading-tight ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
                     Recommended: 600 x 800px (JPG, PNG)<br />Max file size: 2MB
                   </p>
@@ -550,6 +596,7 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
               {/* Remove cover button */}
               <button
                 type="button"
+                onClick={handleRemoveCover}
                 className="mt-4 w-full border border-rose-500/25 hover:bg-rose-500/5 text-rose-500 font-semibold text-xs h-10 rounded-xl inline-flex items-center justify-center gap-1.5 transition-colors"
               >
                 <Trash2 size={14} />
@@ -654,7 +701,7 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
           </button>
         </div>
 
-      </div>
+      </form>
     </div>
   )
 }
