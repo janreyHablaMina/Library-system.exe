@@ -408,7 +408,7 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
             </button>
           </div>
 
-          <div className="overflow-x-auto min-h-[340px]">
+          <div className="overflow-x-auto min-h-[340px] relative z-10">
             <table className="min-w-[1250px] w-full text-left text-sm">
               <thead className={isDarkMode ? 'bg-[#0f1f49] text-slate-300' : 'bg-slate-50 text-slate-600'}>
                 <tr>
