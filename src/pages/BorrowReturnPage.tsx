@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { ChevronDown, Ellipsis, IdCard, Search, X, Check, AlertTriangle } from 'lucide-react'
+import { ChevronDown, IdCard, Search, X, Check, AlertTriangle } from 'lucide-react'
 
 type BorrowReturnPageProps = {
   isDarkMode: boolean
@@ -528,7 +528,6 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions }: BorrowRetur
                       <th className="px-3 py-3 font-semibold">Borrow Date</th>
                       <th className="px-3 py-3 font-semibold">Due Date</th>
                       <th className="px-3 py-3 font-semibold">Status</th>
-                      <th className="px-3 py-3 font-semibold text-right"> </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -544,7 +543,6 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions }: BorrowRetur
                         <td className={`px-3 py-3 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{row.borrowDate}</td>
                         <td className={`px-3 py-3 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{row.dueDate}</td>
                         <td className="px-3 py-3"><span className={`rounded-md px-2 py-1 text-xs font-semibold ${getStatusClass(row.status)}`}>{row.status}</span></td>
-                        <td className="px-3 py-3 text-right"><button type="button" className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border ${isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}><Ellipsis size={14} /></button></td>
                       </tr>
                     ))}
                   </tbody>
