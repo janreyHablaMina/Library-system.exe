@@ -7,6 +7,7 @@ import {
   Bookmark,
   Calendar,
   Check,
+  ChevronDown,
   Clock,
   Copy,
   GraduationCap,
@@ -18,6 +19,7 @@ import {
   RefreshCw,
   User,
   UserCheck,
+  X,
 } from 'lucide-react'
 import bookCover from '../assets/login.avif'
 import { mockMembersData } from './memberDetailData'
@@ -30,10 +32,22 @@ type Props = {
 
 export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
   const d = mockMembersData[memberId && mockMembersData[memberId] ? memberId : 1]
+  const [member, setMember] = useState({ ...d, profileImage: bookCover })
   const [copied, setCopied] = useState(false)
-  const [notes, setNotes] = useState(d.notes)
+  const [notes, setNotes] = useState(member.notes)
   const [newNote, setNewNote] = useState('')
   const [addingNote, setAddingNote] = useState(false)
+  const [isEditOpen, setIsEditOpen] = useState(false)
+  const [editForm, setEditForm] = useState({
+    name: d.name,
+    email: d.email,
+    phone: d.phone,
+    address: d.address,
+    type: d.type,
+    department: d.department,
+    status: d.status,
+  })
+  const [editPhotoPreview, setEditPhotoPreview] = useState<string>(bookCover)
 
   const copyId = async () => {
     await navigator.clipboard.writeText(d.memberId)
@@ -47,6 +61,49 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
     setNotes((p) => [...p, newNote.trim()])
     setNewNote('')
     setAddingNote(false)
+  }
+
+  const openEditModal = () => {
+    setEditForm({
+      name: member.name,
+      email: member.email,
+      phone: member.phone,
+      address: member.address,
+      type: member.type,
+      department: member.department,
+      status: member.status,
+    })
+    setEditPhotoPreview(member.profileImage ?? bookCover)
+    setIsEditOpen(true)
+  }
+
+  const saveEditMember = (e: React.FormEvent) => {
+    e.preventDefault()
+    setMember((prev) => ({
+      ...prev,
+      name: editForm.name.trim() || prev.name,
+      email: editForm.email.trim() || prev.email,
+      phone: editForm.phone.trim() || prev.phone,
+      address: editForm.address.trim() || prev.address,
+      type: editForm.type.trim() || prev.type,
+      department: editForm.department.trim() || prev.department,
+      status: editForm.status,
+      profileImage: editPhotoPreview,
+      lastUpdated: 'Updated just now by Admin User',
+    }))
+    setIsEditOpen(false)
+  }
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setEditPhotoPreview(reader.result)
+      }
+    }
+    reader.readAsDataURL(file)
   }
 
   const cardClass = isDarkMode
@@ -65,7 +122,10 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
             Back to Members
           </button>
           <div className="flex items-center gap-3">
-            <button className="inline-flex items-center gap-2 rounded-xl h-11 px-5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold">
+            <button
+              onClick={openEditModal}
+              className="inline-flex items-center gap-2 rounded-xl h-11 px-5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold"
+            >
               <Pencil size={15} />
               Edit Member
             </button>
@@ -77,36 +137,36 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
             <div className="flex flex-col sm:flex-row sm:items-center gap-8 min-w-0">
               <div className="flex flex-col items-center gap-3 shrink-0">
                 <div className="h-32 w-32 rounded-full bg-slate-200 overflow-hidden">
-                  <img src={bookCover} alt={d.name} className="h-full w-full object-cover" />
+                  <img src={member.profileImage ?? bookCover} alt={member.name} className="h-full w-full object-cover" />
                 </div>
               </div>
 
               <div className="min-w-0 flex-1">
-                <h2 className={`text-[35px] font-semibold tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{d.name}</h2>
+                <h2 className={`text-[35px] font-semibold tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{member.name}</h2>
                 <div className="mt-1 flex items-center gap-1.5">
-                  <p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Member ID: {d.memberId}</p>
+                  <p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Member ID: {member.memberId}</p>
                   <button onClick={copyId} className={isDarkMode ? 'text-slate-400 hover:text-emerald-400' : 'text-slate-500 hover:text-emerald-600'}>
                     {copied ? <Check size={13} /> : <Copy size={13} />}
                   </button>
                 </div>
 
                 <div className={`mt-5 space-y-2 text-sm ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                  <p className="flex items-center gap-2.5"><Mail size={15} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />{d.email}</p>
-                  <p className="flex items-center gap-2.5"><Phone size={15} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />{d.phone}</p>
-                  <p className="flex items-start gap-2.5"><MapPin size={15} className={`${isDarkMode ? 'text-slate-400' : 'text-slate-500'} mt-0.5`} /><span>{d.address}</span></p>
+                  <p className="flex items-center gap-2.5"><Mail size={15} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />{member.email}</p>
+                  <p className="flex items-center gap-2.5"><Phone size={15} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />{member.phone}</p>
+                  <p className="flex items-start gap-2.5"><MapPin size={15} className={`${isDarkMode ? 'text-slate-400' : 'text-slate-500'} mt-0.5`} /><span>{member.address}</span></p>
                 </div>
               </div>
             </div>
 
             <div className={`space-y-4 xl:px-8 ${isDarkMode ? 'xl:border-x xl:border-slate-800' : 'xl:border-x xl:border-slate-200'}`}>
-              <Meta icon={<User size={15} className="text-emerald-500" />} label="Member Type" value={d.type} isDarkMode={isDarkMode} />
-              <Meta icon={<GraduationCap size={15} className="text-emerald-500" />} label="Department / Course" value={d.department} isDarkMode={isDarkMode} />
-              <Meta icon={<UserCheck size={15} className="text-emerald-500" />} label="Status" value={d.status} isDarkMode={isDarkMode} asBadge />
+              <Meta icon={<User size={15} className="text-emerald-500" />} label="Member Type" value={member.type} isDarkMode={isDarkMode} />
+              <Meta icon={<GraduationCap size={15} className="text-emerald-500" />} label="Department / Course" value={member.department} isDarkMode={isDarkMode} />
+              <Meta icon={<UserCheck size={15} className="text-emerald-500" />} label="Status" value={member.status} isDarkMode={isDarkMode} asBadge />
             </div>
             <div className="space-y-4">
-              <Meta icon={<Calendar size={15} className="text-emerald-500" />} label="Date Joined" value={d.dateJoined} isDarkMode={isDarkMode} />
-              <Meta icon={<Clock size={15} className="text-emerald-500" />} label="Member Since" value={d.memberSince} isDarkMode={isDarkMode} />
-              <Meta icon={<RefreshCw size={15} className="text-emerald-500" />} label="Last Updated" value={d.lastUpdated} isDarkMode={isDarkMode} />
+              <Meta icon={<Calendar size={15} className="text-emerald-500" />} label="Date Joined" value={member.dateJoined} isDarkMode={isDarkMode} />
+              <Meta icon={<Clock size={15} className="text-emerald-500" />} label="Member Since" value={member.memberSince} isDarkMode={isDarkMode} />
+              <Meta icon={<RefreshCw size={15} className="text-emerald-500" />} label="Last Updated" value={member.lastUpdated} isDarkMode={isDarkMode} />
             </div>
 
           </div>
@@ -249,6 +309,86 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
           </div>
         </section>
       </div>
+      {isEditOpen ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/45 p-4">
+          <section className={`w-full max-w-5xl rounded-2xl border shadow-2xl ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+            <div className={`flex items-start justify-between border-b px-6 py-5 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+              <div>
+                <h3 className={`text-3xl font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Edit Member</h3>
+                <p className={`mt-1 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Update this library member profile.</p>
+              </div>
+              <button type="button" onClick={() => setIsEditOpen(false)} className={`grid h-10 w-10 place-items-center rounded-xl border ${isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={saveEditMember} className="space-y-5 px-6 py-5">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Full Name <span className="text-rose-500">*</span></label>
+                  <input value={editForm.name} onChange={(e) => setEditForm((p) => ({ ...p, name: e.target.value }))} placeholder="Enter full name" className={`h-11 w-full rounded-xl border px-3 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500' : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400'}`} />
+                </div>
+                <div>
+                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Member Type <span className="text-rose-500">*</span></label>
+                  <input value={editForm.type} onChange={(e) => setEditForm((p) => ({ ...p, type: e.target.value }))} placeholder="Select member type" className={`h-11 w-full rounded-xl border px-3 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500' : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400'}`} />
+                </div>
+                <div>
+                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Member ID / Student ID <span className="text-rose-500">*</span></label>
+                  <input value={member.memberId} disabled className={`h-11 w-full rounded-xl border px-3 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#101b3f] text-slate-400' : 'border-slate-200 bg-slate-50 text-slate-500'}`} />
+                </div>
+                <div>
+                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Course / Department</label>
+                  <input value={editForm.department} onChange={(e) => setEditForm((p) => ({ ...p, department: e.target.value }))} placeholder="Select course / department" className={`h-11 w-full rounded-xl border px-3 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500' : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400'}`} />
+                </div>
+                <div>
+                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Contact Number</label>
+                  <input value={editForm.phone} onChange={(e) => setEditForm((p) => ({ ...p, phone: e.target.value }))} placeholder="Enter contact number" className={`h-11 w-full rounded-xl border px-3 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500' : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400'}`} />
+                </div>
+                <div>
+                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Email Address</label>
+                  <input value={editForm.email} onChange={(e) => setEditForm((p) => ({ ...p, email: e.target.value }))} placeholder="Enter email address" className={`h-11 w-full rounded-xl border px-3 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500' : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400'}`} />
+                </div>
+              </div>
+
+              <div>
+                <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Address</label>
+                <textarea value={editForm.address} onChange={(e) => setEditForm((p) => ({ ...p, address: e.target.value }))} maxLength={200} placeholder="Enter complete address" className={`min-h-24 w-full rounded-xl border px-3 py-2 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500' : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400'}`} />
+                <p className={`mt-1 text-right text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{editForm.address.length} / 200</p>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Profile Photo</label>
+                  <div className="flex items-center gap-3">
+                    <img src={editPhotoPreview} alt="Profile preview" className={`h-10 w-10 rounded-full object-cover ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`} />
+                    <label className={`h-10 rounded-lg border px-4 text-sm font-semibold inline-flex items-center cursor-pointer ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
+                      Upload Photo
+                      <input type="file" accept="image/png,image/jpeg,image/webp" onChange={handlePhotoChange} className="hidden" />
+                    </label>
+                    <span className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>JPG, PNG (Max 2MB)</span>
+                  </div>
+                </div>
+                <div>
+                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Status <span className="text-rose-500">*</span></label>
+                  <div className="relative">
+                    <select value={editForm.status} onChange={(e) => setEditForm((p) => ({ ...p, status: e.target.value as 'Active' | 'Inactive' | 'Overdue' }))} className={`h-11 w-full appearance-none rounded-xl border pl-3 pr-10 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100' : 'border-slate-200 bg-white text-slate-700'}`}>
+                      <option value="Active">Active</option>
+                      <option value="Inactive">Inactive</option>
+                      <option value="Overdue">Overdue</option>
+                    </select>
+                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-3 pt-1 sm:grid-cols-2">
+                <button type="button" onClick={() => setIsEditOpen(false)} className={`h-11 rounded-xl border text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>Cancel</button>
+                <button type="submit" className="h-11 rounded-xl bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-700">Save Member</button>
+              </div>
+            </form>
+          </section>
+        </div>
+      ) : null}
     </div>
   )
 }
