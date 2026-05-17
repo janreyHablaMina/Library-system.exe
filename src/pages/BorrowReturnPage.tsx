@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { ChevronDown, Ellipsis, IdCard, Mail, Phone, Search, X } from 'lucide-react'
+import { ChevronDown, Ellipsis, IdCard, Mail, Phone, Search, X, Check } from 'lucide-react'
 
 type BorrowReturnPageProps = {
   isDarkMode: boolean
@@ -179,8 +179,16 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions }: BorrowRetur
             <div className="mt-4 space-y-4">
               <div className="relative space-y-2" ref={memberDropdownRef}>
                 <p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>1. Select Member</p>
-                <label className={`group flex h-11 items-center rounded-xl border px-3 transition-all ${isDarkMode ? 'border-slate-700 focus-within:border-emerald-500 bg-[#0f1f49]/30' : 'border-slate-200 focus-within:border-emerald-500 bg-slate-55'}`}>
-                  <Search size={16} className={`mr-2 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+                <label className={`group flex h-11 items-center rounded-xl border px-3 transition-all ${
+                  selectedMember 
+                    ? (isDarkMode ? 'border-emerald-500/60 bg-emerald-950/20' : 'border-emerald-500 bg-emerald-50/50')
+                    : (isDarkMode ? 'border-slate-700 focus-within:border-emerald-500 bg-[#0f1f49]/30' : 'border-slate-200 focus-within:border-emerald-500 bg-slate-55')
+                }`}>
+                  {selectedMember ? (
+                    <Check size={16} className="mr-2 text-emerald-500 animate-[scaleIn_0.2s_ease-out]" />
+                  ) : (
+                    <Search size={16} className={`mr-2 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+                  )}
                   <input
                     value={selectedMember ? selectedMember.name : memberSearchQuery}
                     onChange={(e) => {
@@ -192,9 +200,14 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions }: BorrowRetur
                     }}
                     onFocus={() => setShowMemberDropdown(true)}
                     placeholder="Search by name, member ID or scan card..."
-                    className={`w-full bg-transparent text-sm outline-none ${isDarkMode ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400'}`}
+                    className={`w-full bg-transparent text-sm outline-none ${selectedMember ? 'font-semibold text-emerald-600 dark:text-emerald-400' : (isDarkMode ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400')}`}
                   />
-                  <ChevronDown size={16} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />
+                  {selectedMember && (
+                    <span className="mr-2 shrink-0 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 animate-[fadeIn_0.15s_ease-out]">
+                      Selected
+                    </span>
+                  )}
+                  <ChevronDown size={16} className={selectedMember ? 'text-emerald-500' : (isDarkMode ? 'text-slate-400' : 'text-slate-500')} />
                 </label>
 
                 {showMemberDropdown && (
@@ -260,8 +273,16 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions }: BorrowRetur
 
               <div className="relative space-y-2" ref={bookDropdownRef}>
                 <p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>2. Select Book</p>
-                <label className={`group flex h-11 items-center rounded-xl border px-3 transition-all ${isDarkMode ? 'border-slate-700 focus-within:border-emerald-500 bg-[#0f1f49]/30' : 'border-slate-200 focus-within:border-emerald-500 bg-slate-55'}`}>
-                  <Search size={16} className={`mr-2 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+                <label className={`group flex h-11 items-center rounded-xl border px-3 transition-all ${
+                  selectedBook 
+                    ? (isDarkMode ? 'border-emerald-500/60 bg-emerald-950/20' : 'border-emerald-500 bg-emerald-50/50')
+                    : (isDarkMode ? 'border-slate-700 focus-within:border-emerald-500 bg-[#0f1f49]/30' : 'border-slate-200 focus-within:border-emerald-500 bg-slate-55')
+                }`}>
+                  {selectedBook ? (
+                    <Check size={16} className="mr-2 text-emerald-500 animate-[scaleIn_0.2s_ease-out]" />
+                  ) : (
+                    <Search size={16} className={`mr-2 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+                  )}
                   <input
                     value={selectedBook ? selectedBook.title : bookSearchQuery}
                     onChange={(e) => {
@@ -273,9 +294,14 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions }: BorrowRetur
                     }}
                     onFocus={() => setShowBookDropdown(true)}
                     placeholder="Search by title, ISBN or scan barcode..."
-                    className={`w-full bg-transparent text-sm outline-none ${isDarkMode ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400'}`}
+                    className={`w-full bg-transparent text-sm outline-none ${selectedBook ? 'font-semibold text-emerald-600 dark:text-emerald-400' : (isDarkMode ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400')}`}
                   />
-                  <ChevronDown size={16} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />
+                  {selectedBook && (
+                    <span className="mr-2 shrink-0 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 animate-[fadeIn_0.15s_ease-out]">
+                      Selected
+                    </span>
+                  )}
+                  <ChevronDown size={16} className={selectedBook ? 'text-emerald-500' : (isDarkMode ? 'text-slate-400' : 'text-slate-500')} />
                 </label>
 
                 {showBookDropdown && (
