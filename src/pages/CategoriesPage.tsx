@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import type { FormEvent } from 'react'
-import { ChevronDown, Search, Plus, X, BookOpen, Layers, Monitor, GraduationCap, Globe, Palette, Briefcase, Atom, Library, Filter, Pencil, Trash2 } from 'lucide-react'
+import { ChevronDown, Search, Plus, X, BookOpen, Layers, Monitor, GraduationCap, Globe, Palette, Briefcase, Atom, Library, Filter, Pencil, Trash2, MoreHorizontal, AlertTriangle } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 type CategoryRow = {
@@ -50,9 +50,117 @@ const categoriesData: CategoryRow[] = [
   { id: 8, name: 'Business', icon: Briefcase, description: 'Business, management and finance', books: 345, status: 'Active', createdOn: 'Apr 28, 2026', createdTime: '09:05 AM', color: 'text-rose-500' },
 ]
 
+type CategoryActionsMenuProps = {
+  category: CategoryRow
+  onEdit: (category: CategoryRow) => void
+  onDelete: (category: CategoryRow) => void
+  isDarkMode: boolean
+}
+
+function CategoryActionsMenu({ category, onEdit, onDelete, isDarkMode }: CategoryActionsMenuProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const [openUpward, setOpenUpward] = useState(false)
+
+  const handleToggle = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!isOpen && menuRef.current) {
+      const rect = menuRef.current.getBoundingClientRect()
+      const spaceBelow = window.innerHeight - rect.bottom
+      setOpenUpward(spaceBelow < 180)
+    }
+    setIsOpen(!isOpen)
+  }
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isOpen])
+
+  return (
+    <div className="relative flex justify-center" ref={menuRef}>
+      <button
+        onClick={handleToggle}
+        type="button"
+        className={`grid h-8 w-8 place-items-center rounded-lg border transition-all ${
+          isDarkMode
+            ? 'border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+            : 'border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+        }`}
+      >
+        <MoreHorizontal size={16} />
+      </button>
+
+      {isOpen && (
+        <div
+          onClick={() => setIsOpen(false)}
+          className={`absolute right-0 z-50 w-36 animate-fadeIn rounded-xl border p-1.5 shadow-xl transition-all duration-150 ${
+            openUpward ? 'bottom-full mb-1' : 'top-full mt-1'
+          } ${
+            isDarkMode
+              ? 'border-slate-700 bg-[#0f1f49] text-slate-200'
+              : 'border-slate-200 bg-white text-slate-700'
+          }`}
+        >
+          <button
+            onClick={() => onEdit(category)}
+            type="button"
+            className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors ${
+              isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50'
+            }`}
+          >
+            <Pencil size={13} className="text-emerald-500" />
+            Edit Info
+          </button>
+          <button
+            onClick={() => onDelete(category)}
+            type="button"
+            className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors ${
+              isDarkMode ? 'hover:bg-slate-800/80 text-rose-400' : 'hover:bg-rose-50 text-rose-600'
+            }`}
+          >
+            <Trash2 size={13} className="text-rose-500" />
+            Delete
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [categoryForm, setCategoryForm] = useState<CategoryFormState>(initialFormState)
+  const [categoryToEdit, setCategoryToEdit] = useState<CategoryRow | null>(null)
+  const [categoryToDelete, setCategoryToDelete] = useState<CategoryRow | null>(null)
+  const [categoriesList, setCategoriesList] = useState<CategoryRow[]>(categoriesData)
+  const [showToast, setShowToast] = useState<string | null>(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState('All')
+
+  useEffect(() => {
+    if (showToast) {
+      const timer = setTimeout(() => setShowToast(null), 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [showToast])
+
+  const filteredCategories = useMemo(() => {
+    return categoriesList.filter(cat => {
+      const matchesSearch = cat.name.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesStatus = statusFilter === 'All' || cat.status === statusFilter
+      return matchesSearch && matchesStatus
+    })
+  }, [categoriesList, searchTerm, statusFilter])
 
   const handleFormChange = (field: keyof CategoryFormState, value: string) => {
     setCategoryForm((prev) => ({ ...prev, [field]: value }))
@@ -61,11 +169,53 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
   const closeAddModal = () => {
     setIsAddModalOpen(false)
     setCategoryForm(initialFormState)
+    setCategoryToEdit(null)
+  }
+
+  const handleOpenEditModal = (category: CategoryRow) => {
+    setCategoryToEdit(category)
+    setCategoryForm({
+      name: category.name,
+      description: category.description,
+      status: category.status,
+    })
+    setIsAddModalOpen(true)
   }
 
   const handleSave = (e: FormEvent) => {
     e.preventDefault()
+    if (categoryToEdit) {
+      setCategoriesList(prev => prev.map(c => c.id === categoryToEdit.id ? {
+        ...c,
+        name: categoryForm.name,
+        description: categoryForm.description,
+        status: categoryForm.status as any,
+      } : c))
+      setShowToast(`Successfully updated ${categoryForm.name}!`)
+    } else {
+      const newCategory: CategoryRow = {
+        id: Math.max(...categoriesList.map(c => c.id), 0) + 1,
+        name: categoryForm.name,
+        icon: BookOpen,
+        description: categoryForm.description,
+        books: 0,
+        status: categoryForm.status as any,
+        createdOn: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        createdTime: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+        color: 'text-emerald-600',
+      }
+      setCategoriesList(prev => [newCategory, ...prev])
+      setShowToast(`Successfully added ${categoryForm.name}!`)
+    }
     closeAddModal()
+  }
+
+  const handleDeleteCategory = () => {
+    if (categoryToDelete) {
+      setCategoriesList(prev => prev.filter(c => c.id !== categoryToDelete.id))
+      setShowToast(`Successfully deleted ${categoryToDelete.name}!`)
+      setCategoryToDelete(null)
+    }
   }
 
   return (
@@ -110,17 +260,17 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
           <div className={`flex flex-wrap items-center gap-4 p-4 rounded-t-xl border-b ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-100 bg-white'}`}>
             <label className={`group flex h-12 min-w-[320px] flex-1 items-center rounded-xl border px-3 transition-all ${isDarkMode ? 'border-slate-700 focus-within:border-emerald-500 bg-[#0f1f49]' : 'border-slate-200 focus-within:border-emerald-500 bg-slate-50'}`}>
               <Search size={18} className={`mr-2 transition-colors ${isDarkMode ? 'text-slate-500 group-focus-within:text-emerald-400' : 'text-slate-400 group-focus-within:text-emerald-600'}`} />
-              <input className={`w-full bg-transparent text-sm font-medium outline-none ${isDarkMode ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400'}`} placeholder="Search categories by name..." />
+              <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className={`w-full bg-transparent text-sm font-medium outline-none ${isDarkMode ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400'}`} placeholder="Search categories by name..." />
             </label>
             
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold text-slate-500">Status</span>
                 <div className="relative">
-                  <select className={`h-11 min-w-[120px] appearance-none rounded-xl border py-2 pl-4 pr-10 text-xs font-bold outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
-                    <option>All</option>
-                    <option>Active</option>
-                    <option>Inactive</option>
+                  <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={`h-11 min-w-[120px] appearance-none rounded-xl border py-2 pl-4 pr-10 text-xs font-bold outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
+                    <option value="All">All</option>
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
                   </select>
                   <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
                 </div>
@@ -146,7 +296,7 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
                 </tr>
               </thead>
               <tbody>
-                {categoriesData.map((cat) => {
+                {filteredCategories.map((cat) => {
                    const CatIcon = cat.icon
                    return (
                     <tr key={cat.id} className={`border-t transition-colors duration-150 ${isDarkMode ? 'border-slate-700 hover:bg-slate-800/30' : 'border-slate-100 hover:bg-slate-50'}`}>
@@ -176,14 +326,12 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
                         <p className={`text-[10px] font-medium ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{cat.createdTime}</p>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center justify-center gap-2">
-                          <button title="Edit Category" type="button" className={`grid h-8 w-8 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 text-slate-400 hover:bg-slate-800' : 'border-slate-200 text-slate-500 hover:bg-white hover:text-blue-600'}`}>
-                            <Pencil size={14} />
-                          </button>
-                          <button title="Delete Category" type="button" className={`grid h-8 w-8 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-rose-900/30 text-rose-500 hover:bg-rose-500/20' : 'border-rose-100 text-rose-500 hover:bg-rose-50'}`}>
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
+                        <CategoryActionsMenu
+                          category={cat}
+                          onEdit={handleOpenEditModal}
+                          onDelete={setCategoryToDelete}
+                          isDarkMode={isDarkMode}
+                        />
                       </td>
                     </tr>
                   )
@@ -213,8 +361,8 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
           <section className={`w-full max-w-4xl rounded-2xl border shadow-2xl ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
             <div className={`flex items-start justify-between border-b px-6 py-5 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
               <div>
-                <h3 className={`text-3xl font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Add Category</h3>
-                <p className={`mt-1 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Define a new book category for the library system.</p>
+                <h3 className={`text-3xl font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{categoryToEdit ? 'Edit Category' : 'Add Category'}</h3>
+                <p className={`mt-1 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{categoryToEdit ? 'Update book category details below.' : 'Define a new book category for the library system.'}</p>
               </div>
               <button type="button" onClick={closeAddModal} className={`grid h-10 w-10 place-items-center rounded-xl border ${isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
                 <X size={18} />
@@ -249,6 +397,35 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
                 <button type="submit" className="h-11 rounded-xl bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-700">Save Category</button>
               </div>
             </form>
+          </section>
+        </div>
+      )}
+
+      {/* Success Toast Notification */}
+      {showToast && (
+        <div className="fixed bottom-5 right-5 z-50 flex items-center gap-2.5 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-950/20 animate-in slide-in-from-bottom-5">
+          <BookOpen size={16} />
+          {showToast}
+        </div>
+      )}
+
+      {/* Delete Confirmation Warning Modal */}
+      {categoryToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
+          <section className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl animate-in zoom-in-95 duration-200 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+            <div className="flex flex-col items-center text-center">
+              <div className="grid h-12 w-12 place-items-center rounded-full bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400">
+                <AlertTriangle size={24} />
+              </div>
+              <h3 className={`mt-4 text-lg font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Delete Category</h3>
+              <p className={`mt-2 text-xs font-medium leading-relaxed ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                Are you sure you want to delete <strong className="font-bold">{categoryToDelete.name}</strong>? This action cannot be undone and all categorized books will be affected.
+              </p>
+            </div>
+            <div className="mt-6 flex gap-3">
+              <button type="button" onClick={() => setCategoryToDelete(null)} className={`h-10 flex-1 rounded-xl border text-xs font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>Cancel</button>
+              <button type="button" onClick={handleDeleteCategory} className="h-10 flex-1 rounded-xl bg-rose-600 text-xs font-semibold text-white hover:bg-rose-700 shadow-lg shadow-rose-600/20">Delete Category</button>
+            </div>
           </section>
         </div>
       )}
