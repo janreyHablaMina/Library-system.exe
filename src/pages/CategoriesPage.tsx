@@ -370,31 +370,85 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
             </div>
 
             <form onSubmit={handleSave} className="space-y-5 px-6 py-5">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Category Name <span className="text-rose-500">*</span></label>
-                  <input value={categoryForm.name} onChange={(e) => handleFormChange('name', e.target.value)} placeholder="e.g. Science Fiction" className={`h-11 w-full rounded-xl border px-3 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400 focus:border-emerald-500'}`} required />
-                </div>
-                <div>
-                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Status <span className="text-rose-500">*</span></label>
-                  <div className="relative">
-                    <select value={categoryForm.status} onChange={(e) => handleFormChange('status', e.target.value)} className={`h-11 w-full appearance-none rounded-xl border pl-3 pr-10 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`}>
-                      <option value="Active">Active</option>
-                      <option value="Inactive">Inactive</option>
-                    </select>
-                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+              <div className={`rounded-xl border p-5 sm:p-6 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]/30' : 'border-slate-200 bg-slate-50/40'}`}>
+                <div className="mb-5 flex items-start gap-3">
+                  <div className={`grid h-10 w-10 place-items-center rounded-full ${isDarkMode ? 'bg-emerald-500/15 text-emerald-300' : 'bg-emerald-50 text-emerald-700'}`}>
+                    <Layers size={18} />
+                  </div>
+                  <div>
+                    <h3 className={`text-[20px] font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Category Details</h3>
+                    <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Enter the basic organizational details for this category.</p>
                   </div>
                 </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label className={`text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>Category Name <span className="text-rose-500">*</span></label>
+                    <input
+                      value={categoryForm.name}
+                      onChange={(e) => handleFormChange('name', e.target.value)}
+                      placeholder="e.g. Science Fiction"
+                      className={`mt-1 h-11 w-full rounded-xl border px-4 outline-none focus:border-emerald-500 ${
+                        isDarkMode
+                          ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500'
+                          : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400'
+                      }`}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className={`text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>Status <span className="text-rose-500">*</span></label>
+                    <div className="relative mt-1">
+                      <select
+                        value={categoryForm.status}
+                        onChange={(e) => handleFormChange('status', e.target.value)}
+                        className={`h-11 w-full appearance-none rounded-xl border px-4 outline-none focus:border-emerald-500 ${
+                          isDarkMode
+                            ? 'border-slate-700 bg-[#0f1f49] text-slate-100'
+                            : 'border-slate-200 bg-white text-slate-700'
+                        }`}
+                      >
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                      </select>
+                      <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <label className={`text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>Description</label>
+                  <textarea
+                    value={categoryForm.description}
+                    onChange={(e) => handleFormChange('description', e.target.value.slice(0, 400))}
+                    placeholder="Enter a brief description of the category..."
+                    className={`mt-1 min-h-[116px] w-full rounded-xl border px-4 py-3 outline-none focus:border-emerald-500 ${
+                      isDarkMode
+                        ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500'
+                        : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400'
+                    }`}
+                  />
+                  <p className={`mt-1 text-right text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{categoryForm.description.length} / 400</p>
+                </div>
               </div>
 
-              <div>
-                <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Description</label>
-                <textarea value={categoryForm.description} onChange={(e) => handleFormChange('description', e.target.value)} placeholder="Briefly describe the category..." className={`min-h-24 w-full rounded-xl border px-3 py-2 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400 focus:border-emerald-500'}`} />
-              </div>
-
-              <div className="grid gap-3 pt-1 sm:grid-cols-2">
-                <button type="button" onClick={closeAddModal} className={`h-11 rounded-xl border text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>Cancel</button>
-                <button type="submit" className="h-11 rounded-xl bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-700">Save Category</button>
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={closeAddModal}
+                  className={`h-11 rounded-xl border px-8 text-sm font-semibold ${
+                    isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-8 text-sm font-semibold text-white hover:bg-emerald-700 transition-all shadow-sm"
+                >
+                  Save Category
+                </button>
               </div>
             </form>
           </section>
