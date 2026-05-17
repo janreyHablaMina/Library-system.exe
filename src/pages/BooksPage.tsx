@@ -6,7 +6,7 @@ import {
 } from 'lucide-react'
 import { EditBookPage } from './EditBookPage'
 
-type BookStatus = 'Available' | 'Borrowed' | 'Overdue'
+type BookStatus = 'Available' | 'Borrowed' | 'Overdue' | 'Archived'
 
 type BookRow = {
   id: number
@@ -27,14 +27,6 @@ type BooksPageProps = {
   onOpenAddBook: () => void
 }
 
-const stats = [
-  { label: 'All Books', value: '6,619', icon: BookOpen, active: true },
-  { label: 'Available', value: '5,547', icon: Bookmark, active: false },
-  { label: 'Borrowed', value: '320', icon: RotateCcw, active: false },
-  { label: 'Overdue', value: '45', icon: Clock3, active: false },
-  { label: 'Archived', value: '52', icon: Filter, active: false },
-]
-
 const initialBooks: BookRow[] = [
   { id: 1, cover: '📙', title: 'Sosyolohiya sa Filipino', isbn: '978-621-455-010-2', author: 'Kahayon, Alicia H.', category: 'Social Sciences', callNumber: '300.72 KAH', year: 2021, status: 'Available', available: '5 / 7' },
   { id: 2, cover: '📕', title: 'Understanding Philippine Social Realities through the Filipino Family', isbn: '978-971-009-123-4', author: 'Ramirez, Mina M.', category: 'Social Sciences', callNumber: '305.23 RAM', year: 2020, status: 'Borrowed', available: '1 / 3' },
@@ -44,11 +36,16 @@ const initialBooks: BookRow[] = [
   { id: 6, cover: '📓', title: 'Philippine Constitution Explained', isbn: '978-971-888-777-1', author: 'De Vera, Hector S.', category: 'Law', callNumber: '342.59903 DEV', year: 2022, status: 'Available', available: '4 / 6' },
   { id: 7, cover: '📙', title: 'The Life and Works of Jose Rizal', isbn: '978-971-245-678-3', author: 'Tellos, Ricardo', category: 'Biography', callNumber: '920 RIZ', year: 2016, status: 'Borrowed', available: '1 / 2' },
   { id: 8, cover: '📒', title: 'Introduction to Library Science', isbn: '978-971-333-222-8', author: 'Villanueva, Ma. Teresa', category: 'Library Science', callNumber: '025.1 VIL', year: 2021, status: 'Available', available: '6 / 8' },
+  { id: 9, cover: '📘', title: 'The Philippine Islands, 1493–1898', isbn: '978-971-555-025-7', author: 'Blair, Emma Helen', category: 'History', callNumber: '959.9 BLA', year: 2015, status: 'Archived', available: '0 / 5' },
+  { id: 10, cover: '📙', title: 'Florante at Laura', isbn: '978-971-08-6047-0', author: 'Balagtas, Francisco', category: 'Fiction', callNumber: '899.211 BAL', year: 2019, status: 'Available', available: '7 / 7' },
+  { id: 11, cover: '📗', title: 'Noli Me Tangere', isbn: '978-971-08-6046-3', author: 'Rizal, Jose', category: 'Fiction', callNumber: '899.211 RIZ', year: 2018, status: 'Borrowed', available: '2 / 5' },
+  { id: 12, cover: '📕', title: 'Web Development with React and Node', isbn: '978-1-80181-234-5', author: 'Freeman, Adam', category: 'Technology', callNumber: '005.276 FRE', year: 2022, status: 'Available', available: '3 / 3' },
 ]
 
 function getStatusClass(status: BookStatus) {
   if (status === 'Available') return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
   if (status === 'Borrowed') return 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
+  if (status === 'Archived') return 'bg-slate-100 text-slate-700 dark:bg-slate-500/15 dark:text-slate-300'
   return 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
 }
 
@@ -64,8 +61,12 @@ function getCategoryClass(category: string) {
       return 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
     case 'Biography':
       return 'bg-pink-50 text-pink-700 dark:bg-pink-500/15 dark:text-pink-300'
-    default:
+    case 'Fiction':
+      return 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
+    case 'Technology':
       return 'bg-cyan-50 text-cyan-700 dark:bg-cyan-500/15 dark:text-cyan-300'
+    default:
+      return 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
   }
 }
 
@@ -215,6 +216,64 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
 
   const [showToast, setShowToast] = useState<string | null>(null)
 
+  // Filter States
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('All')
+  const [selectedStatus, setSelectedStatus] = useState('All')
+  const [selectedAvailability, setSelectedAvailability] = useState('All')
+  const [selectedYear, setSelectedYear] = useState('All')
+  const [activeStatTab, setActiveStatTab] = useState<'All Books' | 'Available' | 'Borrowed' | 'Overdue' | 'Archived'>('All Books')
+
+  // Filter dynamic helper
+  const filteredBooks = bookList.filter((book) => {
+    // 1. Stat Tab Filter
+    if (activeStatTab === 'Available' && book.status !== 'Available') return false
+    if (activeStatTab === 'Borrowed' && book.status !== 'Borrowed') return false
+    if (activeStatTab === 'Overdue' && book.status !== 'Overdue') return false
+    if (activeStatTab === 'Archived' && book.status !== 'Archived') return false
+    if (activeStatTab === 'All Books' && book.status === 'Archived' && selectedStatus !== 'Archived') {
+      return false
+    }
+
+    // 2. Status Dropdown
+    if (selectedStatus !== 'All' && book.status !== selectedStatus) return false
+
+    // 3. Category Dropdown
+    if (selectedCategory !== 'All' && book.category !== selectedCategory) return false
+
+    // 4. Year Dropdown
+    if (selectedYear !== 'All' && String(book.year) !== selectedYear) return false
+
+    // 5. Availability Dropdown
+    if (selectedAvailability !== 'All') {
+      const copiesAvailable = parseInt(book.available.split(' / ')[0] || '0', 10)
+      if (selectedAvailability === 'In Stock' && copiesAvailable === 0) return false
+      if (selectedAvailability === 'Out of Stock' && copiesAvailable > 0) return false
+    }
+
+    // 6. Search input
+    if (searchTerm.trim() !== '') {
+      const term = searchTerm.toLowerCase()
+      const matchTitle = book.title.toLowerCase().includes(term)
+      const matchAuthor = book.author.toLowerCase().includes(term)
+      const matchIsbn = book.isbn.toLowerCase().includes(term)
+      const matchCallNumber = book.callNumber.toLowerCase().includes(term)
+      if (!matchTitle && !matchAuthor && !matchIsbn && !matchCallNumber) return false
+    }
+
+    return true
+  })
+
+  // Reset Filters
+  const handleResetFilters = () => {
+    setSearchTerm('')
+    setSelectedCategory('All')
+    setSelectedStatus('All')
+    setSelectedAvailability('All')
+    setSelectedYear('All')
+    setActiveStatTab('All Books')
+  }
+
   // Auto-dismiss toast
   useEffect(() => {
     if (showToast) {
@@ -328,14 +387,22 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
 
         <div className={`mt-5 overflow-x-auto rounded-xl border ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
           <div className={`flex min-w-[880px] items-center gap-2 px-3 py-3 ${isDarkMode ? 'bg-[#0b1738]' : 'bg-white'}`}>
-            {stats.map((item) => {
+            {[
+              { label: 'All Books', value: String(bookList.filter(b => b.status !== 'Archived').length), icon: BookOpen },
+              { label: 'Available', value: String(bookList.filter(b => b.status === 'Available').length), icon: Bookmark },
+              { label: 'Borrowed', value: String(bookList.filter(b => b.status === 'Borrowed').length), icon: RotateCcw },
+              { label: 'Overdue', value: String(bookList.filter(b => b.status === 'Overdue').length), icon: Clock3 },
+              { label: 'Archived', value: String(bookList.filter(b => b.status === 'Archived').length), icon: Filter },
+            ].map((item) => {
               const ItemIcon = item.icon
+              const isActive = activeStatTab === item.label
               return (
                 <button
                   key={item.label}
                   type="button"
-                  className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold ${
-                    item.active
+                  onClick={() => setActiveStatTab(item.label as any)}
+                  className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-colors duration-150 ${
+                    isActive
                       ? 'border border-emerald-600 bg-emerald-600 text-white'
                       : isDarkMode
                         ? 'border border-slate-700 bg-[#0f1f49] text-slate-300 hover:bg-slate-800'
@@ -344,7 +411,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
                 >
                   <ItemIcon size={15} />
                   {item.label}
-                  <span className={`rounded-full px-2 py-0.5 text-xs ${item.active ? 'bg-emerald-500 text-white' : isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
+                  <span className={`rounded-full px-2 py-0.5 text-xs ${isActive ? 'bg-emerald-500 text-white' : isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
                     {item.value}
                   </span>
                 </button>
@@ -357,19 +424,86 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
           <div className={`flex flex-wrap items-center gap-3 border-b p-3 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
             <label className={`group flex h-11 min-w-[280px] flex-1 items-center rounded-xl border px-3 ${isDarkMode ? 'border-slate-700 focus-within:border-emerald-500' : 'border-slate-200 focus-within:border-emerald-500'}`}>
               <Search size={16} className={`mr-2 ${isDarkMode ? 'text-slate-500 group-focus-within:text-emerald-400' : 'text-slate-400 group-focus-within:text-emerald-600'}`} />
-              <input className={`w-full bg-transparent text-sm outline-none ${isDarkMode ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400'}`} placeholder="Search by title, author, ISBN, or call number..." />
+              <input
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className={`w-full bg-transparent text-sm outline-none ${isDarkMode ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400'}`}
+                placeholder="Search by title, author, ISBN, or call number..."
+              />
             </label>
-            {['Category: All', 'Status: All', 'Availability: All', 'Year: All'].map((label, idx) => (
-              <div key={label} className="relative">
-                <select className={`h-11 appearance-none rounded-xl border py-2 pl-3 pr-9 text-sm outline-none ${
-                  idx === 0 ? 'min-w-[150px]' : idx === 1 ? 'min-w-[140px]' : idx === 2 ? 'min-w-[160px]' : 'min-w-[120px]'
-                } ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
-                  <option>{label}</option>
-                </select>
-                <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
-              </div>
-            ))}
-            <button type="button" className={`inline-flex h-11 items-center gap-2 rounded-xl border px-4 text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
+            
+            {/* Category Select */}
+            <div className="relative">
+              <select 
+                value={selectedCategory} 
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className={`h-11 appearance-none rounded-xl border py-2 pl-3 pr-9 text-sm outline-none min-w-[150px] ${
+                  isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'
+                }`}
+              >
+                <option value="All">Category: All</option>
+                {['Social Sciences', 'History', 'Education', 'Law', 'Biography', 'Library Science', 'Fiction', 'Technology'].map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+              <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+            </div>
+
+            {/* Status Select */}
+            <div className="relative">
+              <select 
+                value={selectedStatus} 
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                className={`h-11 appearance-none rounded-xl border py-2 pl-3 pr-9 text-sm outline-none min-w-[140px] ${
+                  isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'
+                }`}
+              >
+                <option value="All">Status: All</option>
+                {['Available', 'Borrowed', 'Overdue', 'Archived'].map(st => (
+                  <option key={st} value={st}>{st}</option>
+                ))}
+              </select>
+              <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+            </div>
+
+            {/* Availability Select */}
+            <div className="relative">
+              <select 
+                value={selectedAvailability} 
+                onChange={(e) => setSelectedAvailability(e.target.value)}
+                className={`h-11 appearance-none rounded-xl border py-2 pl-3 pr-9 text-sm outline-none min-w-[160px] ${
+                  isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'
+                }`}
+              >
+                <option value="All">Availability: All</option>
+                <option value="In Stock">In Stock (Available &gt; 0)</option>
+                <option value="Out of Stock">Out of Stock (= 0)</option>
+              </select>
+              <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+            </div>
+
+            {/* Year Select */}
+            <div className="relative">
+              <select 
+                value={selectedYear} 
+                onChange={(e) => setSelectedYear(e.target.value)}
+                className={`h-11 appearance-none rounded-xl border py-2 pl-3 pr-9 text-sm outline-none min-w-[120px] ${
+                  isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'
+                }`}
+              >
+                <option value="All">Year: All</option>
+                {['2022', '2021', '2020', '2019', '2018', '2017', '2016', '2015'].map(yr => (
+                  <option key={yr} value={yr}>{yr}</option>
+                ))}
+              </select>
+              <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+            </div>
+
+            <button 
+              type="button" 
+              onClick={handleResetFilters}
+              className={`inline-flex h-11 items-center gap-2 rounded-xl border px-4 text-sm font-semibold transition-colors duration-150 ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}
+            >
               <RotateCcw size={15} />
               Reset
             </button>
@@ -408,7 +542,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
                   </tr>
                 </thead>
                 <tbody>
-                  {bookList.map((book) => (
+                  {filteredBooks.map((book) => (
                     <tr key={book.id} className={`border-t transition-colors duration-150 ${isDarkMode ? 'border-slate-700 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}>
                       <td className="px-4 py-3 align-top"><input type="checkbox" /></td>
                       <td className="px-3 py-3">
@@ -446,7 +580,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
             </div>
           ) : (
             <div className={`grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-6 ${isDarkMode ? 'bg-[#0b1738]' : 'bg-white'}`}>
-              {bookList.map((book) => (
+              {filteredBooks.map((book) => (
                 <article key={book.id} className={`flex h-full flex-col rounded-xl border p-3 ${
                   isDarkMode
                     ? 'border-slate-700 bg-[#0b1738]'
@@ -484,7 +618,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
           )}
 
           <div className={`flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm ${isDarkMode ? 'border-slate-700 text-slate-300' : 'border-slate-200 text-slate-600'}`}>
-            <p>Showing 1 to {bookList.length} of {bookList.length} books</p>
+            <p>Showing 1 to {filteredBooks.length} of {filteredBooks.length} books</p>
             <div className="flex items-center gap-2">
               <select className={`h-9 rounded-lg border px-3 text-sm ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
                 <option>10 per page</option>
