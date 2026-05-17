@@ -79,6 +79,7 @@ type BookActionsMenuProps = {
 
 function BookActionsMenu({ isDarkMode, onViewDetails, onEdit, onDelete }: BookActionsMenuProps) {
   const [open, setOpen] = useState(false)
+  const [openUpward, setOpenUpward] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -89,6 +90,15 @@ function BookActionsMenu({ isDarkMode, onViewDetails, onEdit, onDelete }: BookAc
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [open])
+
+  const handleToggle = () => {
+    if (!open && ref.current) {
+      const rect = ref.current.getBoundingClientRect()
+      const spaceBelow = window.innerHeight - rect.bottom
+      setOpenUpward(spaceBelow < 185)
+    }
+    setOpen(v => !v)
+  }
 
   const surface = isDarkMode
     ? 'bg-[#0f172a] border-slate-700 shadow-[0_8px_32px_rgba(0,0,0,0.6)]'
@@ -109,7 +119,7 @@ function BookActionsMenu({ isDarkMode, onViewDetails, onEdit, onDelete }: BookAc
       <button
         type="button"
         id={`book-actions-btn-${Math.random()}`}
-        onClick={() => setOpen(v => !v)}
+        onClick={handleToggle}
         className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border transition-colors duration-150 ${
           open
             ? isDarkMode
@@ -128,13 +138,21 @@ function BookActionsMenu({ isDarkMode, onViewDetails, onEdit, onDelete }: BookAc
 
       {open && (
         <div
-          className={`absolute right-0 z-50 mt-1.5 w-52 rounded-xl border p-1.5 ${surface} animate-[fadeIn_0.12s_ease]`}
+          className={`absolute right-0 z-50 w-52 rounded-xl border p-1.5 ${surface} animate-[fadeIn_0.12s_ease] ${
+            openUpward 
+              ? 'bottom-full mb-1.5 origin-bottom-right' 
+              : 'top-full mt-1.5 origin-top-right'
+          }`}
           role="menu"
-          style={{ animation: 'bookMenuIn 0.13s cubic-bezier(0.16,1,0.3,1)' }}
+          style={{ animation: openUpward ? 'bookMenuInUp 0.13s cubic-bezier(0.16,1,0.3,1)' : 'bookMenuInDown 0.13s cubic-bezier(0.16,1,0.3,1)' }}
         >
           <style>{`
-            @keyframes bookMenuIn {
+            @keyframes bookMenuInDown {
               from { opacity: 0; transform: scale(0.95) translateY(-6px); }
+              to   { opacity: 1; transform: scale(1)    translateY(0);    }
+            }
+            @keyframes bookMenuInUp {
+              from { opacity: 0; transform: scale(0.95) translateY(6px); }
               to   { opacity: 1; transform: scale(1)    translateY(0);    }
             }
           `}</style>
