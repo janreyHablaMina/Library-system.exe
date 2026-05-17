@@ -530,10 +530,10 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
 
           {viewMode === 'list' ? (
             <div className={isDarkMode ? 'overflow-x-auto lg:overflow-visible bg-[#0b1738] min-h-[340px] relative z-10' : 'overflow-x-auto lg:overflow-visible bg-white min-h-[340px] relative z-10'}>
-              <table className="min-w-[980px] w-full text-left text-sm">
+              <table className="min-w-[980px] w-full text-left text-sm border-separate border-spacing-0">
                 <thead className={isDarkMode ? 'bg-[#0f1f49] text-slate-300' : 'bg-slate-50 text-slate-600'}>
                   <tr>
-                    <th className="px-4 py-3 font-semibold"><input type="checkbox" /></th>
+                    <th className="px-4 py-3 font-semibold rounded-tl-xl"><input type="checkbox" /></th>
                     <th className="px-3 py-3 font-semibold">Book</th>
                     <th className="px-3 py-3 font-semibold">Author</th>
                     <th className="px-3 py-3 font-semibold">Category</th>
@@ -541,7 +541,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
                     <th className="px-3 py-3 font-semibold">Year</th>
                     <th className="px-3 py-3 font-semibold">Status</th>
                     <th className="px-3 py-3 font-semibold">Available Copies</th>
-                    <th className="px-3 py-3 font-semibold text-right">Actions</th>
+                    <th className="px-3 py-3 font-semibold text-right rounded-tr-xl">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -620,7 +620,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
             </div>
           )}
 
-          <div className={`flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm ${isDarkMode ? 'border-slate-700 text-slate-300' : 'border-slate-200 text-slate-600'}`}>
+          <div className={`flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm rounded-b-xl ${isDarkMode ? 'border-slate-700 text-slate-300' : 'border-slate-200 text-slate-600'}`}>
             <p>Showing 1 to {filteredBooks.length} of {filteredBooks.length} books</p>
             <div className="flex items-center gap-2">
               <select className={`h-9 rounded-lg border px-3 text-sm ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
