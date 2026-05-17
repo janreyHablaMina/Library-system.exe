@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { ChevronDown, Ellipsis, IdCard, Search, X, Check } from 'lucide-react'
+import { ChevronDown, Ellipsis, IdCard, Search, X, Check, AlertTriangle } from 'lucide-react'
 
 type BorrowReturnPageProps = {
   isDarkMode: boolean
@@ -94,7 +94,20 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions }: BorrowRetur
   const [borrowDate, setBorrowDate] = useState('2026-05-06')
   const [dueDate, setDueDate] = useState('2026-05-20')
   const [returnDate, setReturnDate] = useState('2026-05-06')
+  const [originalDueDate, setOriginalDueDate] = useState('2026-04-30')
   const [bookCondition, setBookCondition] = useState<'Good' | 'Damaged' | 'Lost'>('Good')
+
+  const calculateOverdueDays = () => {
+    const ret = new Date(returnDate)
+    const due = new Date(originalDueDate)
+    const diffTime = ret.getTime() - due.getTime()
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    return diffDays > 0 ? diffDays : 0
+  }
+
+  const overdueDays = calculateOverdueDays()
+  const fineRate = 50
+  const totalFine = overdueDays * fineRate
 
   const [selectedMember, setSelectedMember] = useState<MemberItem | null>(null)
   const [selectedBook, setSelectedBook] = useState<BookItem | null>(null)
@@ -152,7 +165,11 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions }: BorrowRetur
     if (activeTab === 'borrow') {
       setShowToast(`Successfully borrowed "${selectedBook.title}" to ${selectedMember.name}!`)
     } else {
-      setShowToast(`Successfully returned "${selectedBook.title}" from ${selectedMember.name} (Condition: ${bookCondition})!`)
+      if (totalFine > 0) {
+        setShowToast(`Successfully returned "${selectedBook.title}" from ${selectedMember.name} (Condition: ${bookCondition})! Fine of ₱${totalFine.toFixed(2)} charged.`)
+      } else {
+        setShowToast(`Successfully returned "${selectedBook.title}" from ${selectedMember.name} (Condition: ${bookCondition})!`)
+      }
     }
     setSelectedMember(null)
     setSelectedBook(null)
@@ -361,46 +378,68 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions }: BorrowRetur
               </div>
 
               {activeTab === 'borrow' ? (
-                <div className="grid gap-3 md:grid-cols-2">
-                  <div>
-                    <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>3. Borrow Date</p>
-                    <label className={`flex h-11 items-center rounded-xl border px-3 text-sm ${isDarkMode ? 'border-slate-700 text-slate-200' : 'border-slate-200 text-slate-700'}`}>
-                      <input
-                        type="date"
-                        value={borrowDate}
-                        onChange={(event) => setBorrowDate(event.target.value)}
-                        className={`date-input w-full bg-transparent outline-none ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}
-                      />
-                    </label>
+                <>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div>
+                      <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>3. Borrow Date</p>
+                      <label className={`flex h-11 items-center rounded-xl border px-3 text-sm ${isDarkMode ? 'border-slate-700 text-slate-200' : 'border-slate-200 text-slate-700'}`}>
+                        <input
+                          type="date"
+                          value={borrowDate}
+                          onChange={(event) => setBorrowDate(event.target.value)}
+                          className={`date-input w-full bg-transparent outline-none ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}
+                        />
+                      </label>
+                    </div>
+                    <div>
+                      <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>4. Due Date</p>
+                      <label className={`flex h-11 items-center rounded-xl border px-3 text-sm ${isDarkMode ? 'border-slate-700 text-slate-200' : 'border-slate-200 text-slate-700'}`}>
+                        <input
+                          type="date"
+                          value={dueDate}
+                          onChange={(event) => setDueDate(event.target.value)}
+                          className={`date-input w-full bg-transparent outline-none ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}
+                        />
+                      </label>
+                      <p className="mt-1 text-xs font-semibold text-emerald-600">Borrowing period: 14 days</p>
+                    </div>
                   </div>
+
                   <div>
-                    <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>4. Due Date</p>
-                    <label className={`flex h-11 items-center rounded-xl border px-3 text-sm ${isDarkMode ? 'border-slate-700 text-slate-200' : 'border-slate-200 text-slate-700'}`}>
-                      <input
-                        type="date"
-                        value={dueDate}
-                        onChange={(event) => setDueDate(event.target.value)}
-                        className={`date-input w-full bg-transparent outline-none ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}
-                      />
-                    </label>
-                    <p className="mt-1 text-xs font-semibold text-emerald-600">Borrowing period: 14 days</p>
+                    <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>5. Notes (Optional)</p>
+                    <textarea maxLength={200} placeholder="Add any notes here..." className={`min-h-20 w-full rounded-xl border px-3 py-2 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500' : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400'}`} />
+                    <p className={`mt-1 text-right text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>0 / 200</p>
                   </div>
-                </div>
+                </>
               ) : (
-                <div className="grid gap-3 md:grid-cols-2">
-                  <div>
-                    <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>3. Return Date</p>
-                    <label className={`flex h-11 items-center rounded-xl border px-3 text-sm ${isDarkMode ? 'border-slate-700 text-slate-200' : 'border-slate-200 text-slate-700'}`}>
-                      <input
-                        type="date"
-                        value={returnDate}
-                        onChange={(event) => setReturnDate(event.target.value)}
-                        className={`date-input w-full bg-transparent outline-none ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}
-                      />
-                    </label>
+                <>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div>
+                      <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>3. Return Date</p>
+                      <label className={`flex h-11 items-center rounded-xl border px-3 text-sm ${isDarkMode ? 'border-slate-700 text-slate-200' : 'border-slate-200 text-slate-700'}`}>
+                        <input
+                          type="date"
+                          value={returnDate}
+                          onChange={(event) => setReturnDate(event.target.value)}
+                          className={`date-input w-full bg-transparent outline-none ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}
+                        />
+                      </label>
+                    </div>
+                    <div>
+                      <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>4. Original Due Date</p>
+                      <label className={`flex h-11 items-center rounded-xl border px-3 text-sm ${isDarkMode ? 'border-slate-700 text-slate-200' : 'border-slate-200 text-slate-700'}`}>
+                        <input
+                          type="date"
+                          value={originalDueDate}
+                          onChange={(event) => setOriginalDueDate(event.target.value)}
+                          className={`date-input w-full bg-transparent outline-none ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}
+                        />
+                      </label>
+                    </div>
                   </div>
+
                   <div>
-                    <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>4. Book Condition</p>
+                    <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>5. Book Condition</p>
                     <div className="flex gap-2">
                       {(['Good', 'Damaged', 'Lost'] as const).map((cond) => (
                         <button
@@ -410,7 +449,7 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions }: BorrowRetur
                           className={`flex-1 h-11 text-xs font-semibold rounded-xl border transition-all ${
                             bookCondition === cond
                               ? 'bg-emerald-600 border-emerald-600 text-white shadow-md shadow-emerald-600/10'
-                              : (isDarkMode ? 'border-slate-700 hover:bg-slate-800 bg-[#0f1f49]/20 text-slate-300' : 'border-slate-200 hover:bg-slate-50 bg-slate-50 text-slate-600')
+                              : (isDarkMode ? 'border-slate-700 hover:bg-slate-800 bg-[#0f1f49]/20 text-slate-300' : 'border-slate-200 hover:bg-slate-50 bg-slate-55 text-slate-600')
                           }`}
                         >
                           {cond === 'Good' ? 'Good 👍' : cond === 'Damaged' ? 'Damaged ⚠️' : 'Lost ❌'}
@@ -418,18 +457,55 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions }: BorrowRetur
                       ))}
                     </div>
                   </div>
-                </div>
+
+                  {selectedMember && selectedBook && overdueDays > 0 && (
+                    <div className="rounded-xl border border-rose-200 bg-rose-50/50 p-4 dark:border-rose-950 dark:bg-rose-950/20 animate-[fadeIn_0.15s_ease-out]">
+                      <div className="flex items-start gap-3">
+                        <AlertTriangle className="mt-0.5 text-rose-600 dark:text-rose-400 shrink-0" size={18} />
+                        <div className="flex-1">
+                          <h4 className="text-sm font-bold text-rose-800 dark:text-rose-300">Late Return Detected</h4>
+                          <p className="mt-1 text-xs text-rose-700 dark:text-rose-400 font-medium">
+                            This return is overdue by <span className="font-bold text-rose-950 dark:text-rose-200">{overdueDays} days</span> (Expected Due: {originalDueDate}).
+                          </p>
+                          <div className="mt-3 flex items-center justify-between border-t border-rose-200/50 pt-2 dark:border-rose-950/50">
+                            <span className="text-xs font-bold text-rose-700 dark:text-rose-400">Overdue Fine (₱{fineRate}/day):</span>
+                            <span className="text-base font-black text-rose-600 dark:text-rose-400">₱{totalFine.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div>
+                    <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>6. Notes (Optional)</p>
+                    <textarea maxLength={200} placeholder="Add any notes here..." className={`min-h-20 w-full rounded-xl border px-3 py-2 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500' : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400'}`} />
+                    <p className={`mt-1 text-right text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>0 / 200</p>
+                  </div>
+                </>
               )}
 
-              <div>
-                <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>5. Notes (Optional)</p>
-                <textarea maxLength={200} placeholder="Add any notes here..." className={`min-h-20 w-full rounded-xl border px-3 py-2 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500' : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400'}`} />
-                <p className={`mt-1 text-right text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>0 / 200</p>
-              </div>
-
-              <button type="button" onClick={handleConfirmAction} className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-semibold text-white hover:bg-emerald-700">
-                {activeTab === 'borrow' ? <IdCard size={15} /> : <Check size={15} />}
-                {activeTab === 'borrow' ? 'Confirm Borrow' : 'Confirm Return'}
+              <button 
+                type="button" 
+                onClick={handleConfirmAction} 
+                className={`inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold text-white transition-colors ${
+                  activeTab === 'return' && selectedMember && selectedBook && overdueDays > 0 
+                    ? 'bg-rose-600 hover:bg-rose-700' 
+                    : 'bg-emerald-600 hover:bg-emerald-700'
+                }`}
+              >
+                {activeTab === 'borrow' ? (
+                  <IdCard size={15} />
+                ) : overdueDays > 0 && selectedMember && selectedBook ? (
+                  <AlertTriangle size={15} />
+                ) : (
+                  <Check size={15} />
+                )}
+                {activeTab === 'borrow' 
+                  ? 'Confirm Borrow' 
+                  : overdueDays > 0 && selectedMember && selectedBook
+                    ? `Confirm Return & Charge Fine (₱${totalFine.toFixed(2)})`
+                    : 'Confirm Return'
+                }
               </button>
             </div>
           </article>
