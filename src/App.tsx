@@ -126,6 +126,7 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null)
   const [isMemberDetailOpen, setIsMemberDetailOpen] = useState(false)
   const [selectedMemberId, setSelectedMemberId] = useState<number | null>(null)
+  const [transactionActiveTab, setTransactionActiveTab] = useState<'all' | 'borrowed' | 'returned' | 'overdue'>('all')
   const profileMenuRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -460,7 +461,13 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
               />
             )
           ) : activePage === 'Transactions' ? (
-            <BorrowReturnPage isDarkMode={isDarkMode} onOpenTransactions={() => setActivePage('All Transactions')} />
+            <BorrowReturnPage
+              isDarkMode={isDarkMode}
+              onOpenTransactions={(tab) => {
+                setTransactionActiveTab(tab)
+                setActivePage('All Transactions')
+              }}
+            />
           ) : activePage === 'All Transactions' ? (
             isTransactionDetailOpen ? (
               <TransactionDetailPage
@@ -476,6 +483,7 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
                   setSelectedTransactionId(id)
                   setIsTransactionDetailOpen(true)
                 }}
+                initialTab={transactionActiveTab}
               />
             )
           ) : activePage === 'Reports' ? (

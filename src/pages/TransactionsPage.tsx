@@ -1,10 +1,11 @@
 import { ArrowLeft, CalendarDays, ChevronDown, Download, RotateCcw, Search, ClipboardList, ArrowDownToLine, ArrowUpFromLine, AlertTriangle } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 
 type TransactionsPageProps = {
   isDarkMode: boolean
   onBack: () => void
   onOpenTransactionDetail: (id: string) => void
+  initialTab?: TransactionTab
 }
 
 type TransactionType = 'Borrow' | 'Return'
@@ -48,8 +49,12 @@ function getStatusClass(status: TransactionStatus) {
   return 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
 }
 
-export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail }: TransactionsPageProps) {
-  const [activeTab, setActiveTab] = useState<TransactionTab>('all')
+export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, initialTab = 'all' }: TransactionsPageProps) {
+  const [activeTab, setActiveTab] = useState<TransactionTab>(initialTab)
+
+  useEffect(() => {
+    setActiveTab(initialTab)
+  }, [initialTab])
 
   const counts = useMemo(() => {
     const borrowed = transactions.filter((row) => row.type === 'Borrow').length

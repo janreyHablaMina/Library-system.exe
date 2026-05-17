@@ -3,7 +3,7 @@ import { ChevronDown, IdCard, Search, X, Check, AlertTriangle } from 'lucide-rea
 
 type BorrowReturnPageProps = {
   isDarkMode: boolean
-  onOpenTransactions: () => void
+  onOpenTransactions: (tab: 'all' | 'borrowed' | 'returned' | 'overdue') => void
 }
 
 type BorrowedRow = {
@@ -517,7 +517,7 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions }: BorrowRetur
                   <h3 className={`text-xl font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Current Borrowed Books (4)</h3>
                   <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Books currently borrowed by members.</p>
                 </div>
-                <button type="button" onClick={onOpenTransactions} className="text-sm font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
+                <button type="button" onClick={() => onOpenTransactions('borrowed')} className="text-sm font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-[760px] w-full text-left text-sm">
@@ -556,7 +556,7 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions }: BorrowRetur
                   <h3 className={`text-xl font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Recent Returned (4)</h3>
                   <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Recently returned books.</p>
                 </div>
-                <button type="button" onClick={onOpenTransactions} className="text-sm font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
+                <button type="button" onClick={() => onOpenTransactions('returned')} className="text-sm font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-[760px] w-full text-left text-sm">
