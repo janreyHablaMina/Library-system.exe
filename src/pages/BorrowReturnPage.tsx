@@ -93,6 +93,8 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions }: BorrowRetur
   const [activeTab, setActiveTab] = useState<'borrow' | 'return'>('borrow')
   const [borrowDate, setBorrowDate] = useState('2026-05-06')
   const [dueDate, setDueDate] = useState('2026-05-20')
+  const [returnDate, setReturnDate] = useState('2026-05-06')
+  const [bookCondition, setBookCondition] = useState<'Good' | 'Damaged' | 'Lost'>('Good')
 
   const [selectedMember, setSelectedMember] = useState<MemberItem | null>(null)
   const [selectedBook, setSelectedBook] = useState<BookItem | null>(null)
@@ -150,7 +152,7 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions }: BorrowRetur
     if (activeTab === 'borrow') {
       setShowToast(`Successfully borrowed "${selectedBook.title}" to ${selectedMember.name}!`)
     } else {
-      setShowToast(`Successfully returned "${selectedBook.title}" from ${selectedMember.name}!`)
+      setShowToast(`Successfully returned "${selectedBook.title}" from ${selectedMember.name} (Condition: ${bookCondition})!`)
     }
     setSelectedMember(null)
     setSelectedBook(null)
@@ -358,31 +360,66 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions }: BorrowRetur
                 )}
               </div>
 
-              <div className="grid gap-3 md:grid-cols-2">
-                <div>
-                  <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>3. Borrow Date</p>
-                  <label className={`flex h-11 items-center rounded-xl border px-3 text-sm ${isDarkMode ? 'border-slate-700 text-slate-200' : 'border-slate-200 text-slate-700'}`}>
-                    <input
-                      type="date"
-                      value={borrowDate}
-                      onChange={(event) => setBorrowDate(event.target.value)}
-                      className={`date-input w-full bg-transparent outline-none ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}
-                    />
-                  </label>
+              {activeTab === 'borrow' ? (
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div>
+                    <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>3. Borrow Date</p>
+                    <label className={`flex h-11 items-center rounded-xl border px-3 text-sm ${isDarkMode ? 'border-slate-700 text-slate-200' : 'border-slate-200 text-slate-700'}`}>
+                      <input
+                        type="date"
+                        value={borrowDate}
+                        onChange={(event) => setBorrowDate(event.target.value)}
+                        className={`date-input w-full bg-transparent outline-none ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}
+                      />
+                    </label>
+                  </div>
+                  <div>
+                    <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>4. Due Date</p>
+                    <label className={`flex h-11 items-center rounded-xl border px-3 text-sm ${isDarkMode ? 'border-slate-700 text-slate-200' : 'border-slate-200 text-slate-700'}`}>
+                      <input
+                        type="date"
+                        value={dueDate}
+                        onChange={(event) => setDueDate(event.target.value)}
+                        className={`date-input w-full bg-transparent outline-none ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}
+                      />
+                    </label>
+                    <p className="mt-1 text-xs font-semibold text-emerald-600">Borrowing period: 14 days</p>
+                  </div>
                 </div>
-                <div>
-                  <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>4. Due Date</p>
-                  <label className={`flex h-11 items-center rounded-xl border px-3 text-sm ${isDarkMode ? 'border-slate-700 text-slate-200' : 'border-slate-200 text-slate-700'}`}>
-                    <input
-                      type="date"
-                      value={dueDate}
-                      onChange={(event) => setDueDate(event.target.value)}
-                      className={`date-input w-full bg-transparent outline-none ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}
-                    />
-                  </label>
-                  <p className="mt-1 text-xs font-semibold text-emerald-600">Borrowing period: 14 days</p>
+              ) : (
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div>
+                    <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>3. Return Date</p>
+                    <label className={`flex h-11 items-center rounded-xl border px-3 text-sm ${isDarkMode ? 'border-slate-700 text-slate-200' : 'border-slate-200 text-slate-700'}`}>
+                      <input
+                        type="date"
+                        value={returnDate}
+                        onChange={(event) => setReturnDate(event.target.value)}
+                        className={`date-input w-full bg-transparent outline-none ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}
+                      />
+                    </label>
+                  </div>
+                  <div>
+                    <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>4. Book Condition</p>
+                    <div className="flex gap-2">
+                      {(['Good', 'Damaged', 'Lost'] as const).map((cond) => (
+                        <button
+                          key={cond}
+                          type="button"
+                          onClick={() => setBookCondition(cond)}
+                          className={`flex-1 h-11 text-xs font-semibold rounded-xl border transition-all ${
+                            bookCondition === cond
+                              ? 'bg-emerald-600 border-emerald-600 text-white shadow-md shadow-emerald-600/10'
+                              : (isDarkMode ? 'border-slate-700 hover:bg-slate-800 bg-[#0f1f49]/20 text-slate-300' : 'border-slate-200 hover:bg-slate-50 bg-slate-50 text-slate-600')
+                          }`}
+                        >
+                          {cond === 'Good' ? 'Good 👍' : cond === 'Damaged' ? 'Damaged ⚠️' : 'Lost ❌'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div>
                 <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>5. Notes (Optional)</p>
@@ -391,7 +428,7 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions }: BorrowRetur
               </div>
 
               <button type="button" onClick={handleConfirmAction} className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-semibold text-white hover:bg-emerald-700">
-                <IdCard size={15} />
+                {activeTab === 'borrow' ? <IdCard size={15} /> : <Check size={15} />}
                 {activeTab === 'borrow' ? 'Confirm Borrow' : 'Confirm Return'}
               </button>
             </div>
