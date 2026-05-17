@@ -6,6 +6,7 @@ import heroImage from './assets/login.avif'
 import { BooksPage } from './pages/BooksPage'
 import { AddBookPage } from './pages/AddBookPage'
 import { MembersPage } from './pages/MembersPage'
+import { MemberDetailPage } from './pages/MemberDetailPage'
 import { BorrowReturnPage } from './pages/BorrowReturnPage'
 import { TransactionsPage } from './pages/TransactionsPage'
 import { BookDetailPage } from './pages/BookDetailPage'
@@ -123,6 +124,8 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
   const [isBookDetailOpen, setIsBookDetailOpen] = useState(false)
   const [isTransactionDetailOpen, setIsTransactionDetailOpen] = useState(false)
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null)
+  const [isMemberDetailOpen, setIsMemberDetailOpen] = useState(false)
+  const [selectedMemberId, setSelectedMemberId] = useState<number | null>(null)
   const profileMenuRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -151,6 +154,10 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
     if (activePage !== 'Books') {
       setIsAddBookOpen(false)
       setIsBookDetailOpen(false)
+    }
+    if (activePage !== 'Members') {
+      setIsMemberDetailOpen(false)
+      setSelectedMemberId(null)
     }
   }, [activePage])
 
@@ -437,7 +444,21 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
               />
             )
           ) : activePage === 'Members' ? (
-            <MembersPage isDarkMode={isDarkMode} />
+            isMemberDetailOpen ? (
+              <MemberDetailPage
+                isDarkMode={isDarkMode}
+                onBack={() => setIsMemberDetailOpen(false)}
+                memberId={selectedMemberId || undefined}
+              />
+            ) : (
+              <MembersPage
+                isDarkMode={isDarkMode}
+                onOpenMemberDetail={(memberId) => {
+                  setSelectedMemberId(memberId)
+                  setIsMemberDetailOpen(true)
+                }}
+              />
+            )
           ) : activePage === 'Transactions' ? (
             <BorrowReturnPage isDarkMode={isDarkMode} onOpenTransactions={() => setActivePage('All Transactions')} />
           ) : activePage === 'All Transactions' ? (

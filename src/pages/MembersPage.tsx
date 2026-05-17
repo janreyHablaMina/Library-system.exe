@@ -21,6 +21,7 @@ type MemberRow = {
 
 type MembersPageProps = {
   isDarkMode: boolean
+  onOpenMemberDetail: (id: number) => void
 }
 
 type MemberFormState = {
@@ -79,7 +80,7 @@ function getStatusClass(status: MemberStatus) {
   return 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
 }
 
-export function MembersPage({ isDarkMode }: MembersPageProps) {
+export function MembersPage({ isDarkMode, onOpenMemberDetail }: MembersPageProps) {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [memberForm, setMemberForm] = useState<MemberFormState>(initialFormState)
@@ -317,9 +318,20 @@ export function MembersPage({ isDarkMode }: MembersPageProps) {
                       <td className="px-4 py-3 align-top"><input type="checkbox" /></td>
                       <td className="px-3 py-3">
                         <div className="flex items-start gap-3">
-                          <span className={`grid h-11 w-11 place-items-center rounded-full text-lg ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>{member.avatar}</span>
+                          <span 
+                            onClick={() => onOpenMemberDetail(member.id)}
+                            className={`grid h-11 w-11 place-items-center rounded-full text-lg cursor-pointer hover:scale-105 transition-transform ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}
+                          >
+                            {member.avatar}
+                          </span>
                           <div>
-                            <p className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{member.name}</p>
+                            <button
+                              type="button"
+                              onClick={() => onOpenMemberDetail(member.id)}
+                              className={`text-left font-semibold hover:text-emerald-600 hover:underline transition-all ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}
+                            >
+                              {member.name}
+                            </button>
                             <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{member.email}</p>
                           </div>
                         </div>
@@ -356,11 +368,22 @@ export function MembersPage({ isDarkMode }: MembersPageProps) {
                     : 'border-slate-200 bg-white hover:border-emerald-200 hover:shadow-[0_12px_24px_-16px_rgba(15,23,42,0.35)]'
                 }`}>
                   <div className="flex items-center justify-between">
-                    <span className={`grid h-11 w-11 place-items-center rounded-full text-lg ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>{member.avatar}</span>
+                    <span 
+                      onClick={() => onOpenMemberDetail(member.id)}
+                      className={`grid h-11 w-11 place-items-center rounded-full text-lg cursor-pointer hover:scale-105 transition-transform ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}
+                    >
+                      {member.avatar}
+                    </span>
                     <span className={`rounded-md px-2 py-1 text-xs font-semibold ${getStatusClass(member.status)}`}>{member.status}</span>
                   </div>
-                  <div className="mt-3">
-                    <p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{member.name}</p>
+                  <div className="mt-3 flex flex-col items-start">
+                    <button
+                      type="button"
+                      onClick={() => onOpenMemberDetail(member.id)}
+                      className={`text-sm font-semibold hover:text-emerald-600 hover:underline text-left transition-all ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}
+                    >
+                      {member.name}
+                    </button>
                     <p className={`mt-1 text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{member.email}</p>
                     <p className={`mt-2 text-xs font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{member.memberId}</p>
                   </div>
