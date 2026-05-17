@@ -1,5 +1,13 @@
-import { ArrowLeft, CalendarDays, ChevronDown, Download, RotateCcw, Search, ClipboardList, ArrowDownToLine, ArrowUpFromLine, AlertTriangle } from 'lucide-react'
-import { useMemo, useState, useEffect } from 'react'
+import { 
+  ArrowLeft, CalendarDays, ChevronDown, Download, RotateCcw, Search, 
+  ClipboardList, ArrowDownToLine, ArrowUpFromLine, AlertTriangle,
+  MoreHorizontal, Eye, CheckCircle, Receipt, Printer, Send
+} from 'lucide-react'
+import { useMemo, useState, useEffect, useRef } from 'react'
+
+type TransactionType = 'Borrow' | 'Return'
+type TransactionStatus = 'Active' | 'Returned' | 'Overdue'
+type TransactionTab = 'all' | 'borrowed' | 'returned' | 'overdue'
 
 type TransactionsPageProps = {
   isDarkMode: boolean
@@ -7,10 +15,6 @@ type TransactionsPageProps = {
   onOpenTransactionDetail: (id: string) => void
   initialTab?: TransactionTab
 }
-
-type TransactionType = 'Borrow' | 'Return'
-type TransactionStatus = 'Active' | 'Returned' | 'Overdue'
-type TransactionTab = 'all' | 'borrowed' | 'returned' | 'overdue'
 
 type TransactionRow = {
   id: string
@@ -49,32 +53,238 @@ function getStatusClass(status: TransactionStatus) {
   return 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
 }
 
+// ─── Transaction Actions Dropdown Menu ───────────────────────────────────────────
+type TransactionActionsMenuProps = {
+  isDarkMode: boolean
+  status: TransactionStatus
+  hasFine: boolean
+  onViewDetails: () => void
+  onMarkReturned: () => void
+  onSendReminder: () => void
+  onRecordPayment: () => void
+  onPrintReceipt: () => void
+}
+
+function TransactionActionsMenu({
+  isDarkMode,
+  status,
+  hasFine,
+  onViewDetails,
+  onMarkReturned,
+  onSendReminder,
+  onRecordPayment,
+  onPrintReceipt
+}: TransactionActionsMenuProps) {
+  const [open, setOpen] = useState(false)
+  const [openUpward, setOpenUpward] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  const handleToggle = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!open && ref.current) {
+      const rect = ref.current.getBoundingClientRect()
+      const spaceBelow = window.innerHeight - rect.bottom
+      setOpenUpward(spaceBelow < 225)
+    }
+    setOpen(v => !v)
+  }
+
+  const surface = isDarkMode
+    ? 'bg-[#0f172a] border-slate-700 shadow-[0_8px_32px_rgba(0,0,0,0.6)] text-slate-200'
+    : 'bg-white border-slate-200 shadow-[0_8px_32px_rgba(0,0,0,0.12)] text-slate-700'
+
+  const itemBase =
+    'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-100 text-left'
+  const itemNormal = isDarkMode
+    ? 'text-slate-200 hover:bg-slate-800'
+    : 'text-slate-700 hover:bg-slate-50'
+  const divider = isDarkMode ? 'border-slate-700/60' : 'border-slate-100'
+
+  return (
+    <div ref={ref} className="relative inline-block" onClick={(e) => e.stopPropagation()}>
+      <button
+        type="button"
+        onClick={handleToggle}
+        className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border transition-all duration-150 ${
+          open
+            ? isDarkMode
+              ? 'border-slate-500 bg-slate-700 text-slate-100'
+              : 'border-emerald-300 bg-emerald-50 text-emerald-700 shadow-md shadow-emerald-500/5'
+            : isDarkMode
+              ? 'border-slate-700 text-slate-300 hover:bg-slate-800'
+              : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+        }`}
+        aria-label="Transaction actions"
+        aria-haspopup="menu"
+        aria-expanded={open}
+      >
+        <MoreHorizontal size={14} />
+      </button>
+
+      {open && (
+        <div
+          className={`absolute right-0 z-50 w-56 rounded-xl border p-1.5 ${surface} animate-[fadeIn_0.12s_ease] ${
+            openUpward 
+              ? 'bottom-full mb-1.5 origin-bottom-right' 
+              : 'top-full mt-1.5 origin-top-right'
+          }`}
+          role="menu"
+          style={{ animation: openUpward ? 'trxMenuInUp 0.13s cubic-bezier(0.16,1,0.3,1)' : 'trxMenuInDown 0.13s cubic-bezier(0.16,1,0.3,1)' }}
+        >
+          <style>{`
+            @keyframes trxMenuInDown {
+              from { opacity: 0; transform: scale(0.95) translateY(-6px); }
+              to   { opacity: 1; transform: scale(1)    translateY(0);    }
+            }
+            @keyframes trxMenuInUp {
+              from { opacity: 0; transform: scale(0.95) translateY(6px); }
+              to   { opacity: 1; transform: scale(1)    translateY(0);    }
+            }
+          `}</style>
+
+          <button
+            type="button"
+            className={`${itemBase} ${itemNormal}`}
+            role="menuitem"
+            onClick={() => { setOpen(false); onViewDetails(); }}
+          >
+            <Eye size={15} className="shrink-0 text-sky-500" />
+            View Details
+          </button>
+
+          {(status === 'Active' || status === 'Overdue') && (
+            <button
+              type="button"
+              className={`${itemBase} ${itemNormal}`}
+              role="menuitem"
+              onClick={() => { setOpen(false); onMarkReturned(); }}
+            >
+              <CheckCircle size={15} className="shrink-0 text-emerald-500" />
+              Mark as Returned
+            </button>
+          )}
+
+          {status === 'Overdue' && (
+            <button
+              type="button"
+              className={`${itemBase} ${itemNormal}`}
+              role="menuitem"
+              onClick={() => { setOpen(false); onSendReminder(); }}
+            >
+              <Send size={15} className="shrink-0 text-amber-500" />
+              Send Reminder
+            </button>
+          )}
+
+          {hasFine && status !== 'Returned' && (
+            <button
+              type="button"
+              className={`${itemBase} ${itemNormal}`}
+              role="menuitem"
+              onClick={() => { setOpen(false); onRecordPayment(); }}
+            >
+              <Receipt size={15} className="shrink-0 text-rose-500" />
+              Settle Fine
+            </button>
+          )}
+
+          <div className={`my-1 border-t ${divider}`} />
+
+          <button
+            type="button"
+            className={`${itemBase} ${itemNormal}`}
+            role="menuitem"
+            onClick={() => { setOpen(false); onPrintReceipt(); }}
+          >
+            <Printer size={15} className="shrink-0 text-slate-400" />
+            Print Receipt
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Main Component ─────────────────────────────────────────────────────────────
 export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, initialTab = 'all' }: TransactionsPageProps) {
   const [activeTab, setActiveTab] = useState<TransactionTab>(initialTab)
+  const [transactionList, setTransactionList] = useState<TransactionRow[]>(transactions)
+  const [showToast, setShowToast] = useState<string | null>(null)
 
   useEffect(() => {
     setActiveTab(initialTab)
   }, [initialTab])
 
+  const triggerToast = (msg: string) => {
+    setShowToast(msg)
+    const timer = setTimeout(() => setShowToast(null), 3000)
+    return () => clearTimeout(timer)
+  }
+
+  // Action Handler Callback functions
+  const handleMarkReturned = (id: string, bookTitle: string) => {
+    setTransactionList(prev => prev.map(row => {
+      if (row.id === id) {
+        return {
+          ...row,
+          status: 'Returned',
+          returnDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+        }
+      }
+      return row
+    }))
+    triggerToast(`Successfully marked "${bookTitle}" as returned!`)
+  }
+
+  const handleSendReminder = (memberName: string) => {
+    triggerToast(`Overdue reminder successfully sent to ${memberName}!`)
+  }
+
+  const handleSettleFine = (id: string, fineAmount: string) => {
+    setTransactionList(prev => prev.map(row => {
+      if (row.id === id) {
+        return {
+          ...row,
+          fine: 'PHP 0.00'
+        }
+      }
+      return row
+    }))
+    triggerToast(`Outstanding fine of ${fineAmount} settled successfully!`)
+  }
+
+  const handlePrintReceipt = (id: string) => {
+    triggerToast(`Receipt PDF for transaction ${id} printed successfully!`)
+  }
+
   const counts = useMemo(() => {
-    const borrowed = transactions.filter((row) => row.type === 'Borrow').length
-    const returned = transactions.filter((row) => row.status === 'Returned').length
-    const overdue = transactions.filter((row) => row.status === 'Overdue').length
+    const borrowed = transactionList.filter((row) => row.type === 'Borrow').length
+    const returned = transactionList.filter((row) => row.status === 'Returned').length
+    const overdue = transactionList.filter((row) => row.status === 'Overdue').length
 
     return {
-      all: transactions.length,
+      all: transactionList.length,
       borrowed,
       returned,
       overdue,
     }
-  }, [])
+  }, [transactionList])
 
   const filteredTransactions = useMemo(() => {
-    if (activeTab === 'borrowed') return transactions.filter((row) => row.type === 'Borrow')
-    if (activeTab === 'returned') return transactions.filter((row) => row.status === 'Returned')
-    if (activeTab === 'overdue') return transactions.filter((row) => row.status === 'Overdue')
-    return transactions
-  }, [activeTab])
+    if (activeTab === 'borrowed') return transactionList.filter((row) => row.type === 'Borrow')
+    if (activeTab === 'returned') return transactionList.filter((row) => row.status === 'Returned')
+    if (activeTab === 'overdue') return transactionList.filter((row) => row.status === 'Overdue')
+    return transactionList
+  }, [activeTab, transactionList])
 
   return (
     <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
@@ -238,7 +448,16 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
                     <td className="px-3 py-3"><span className={`rounded-md px-2 py-1 text-xs font-semibold ${getStatusClass(row.status)}`}>{row.status}</span></td>
                     <td className={`px-3 py-3 font-semibold ${row.fine !== 'PHP 0.00' ? 'text-rose-600' : isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{row.fine}</td>
                     <td className="px-3 py-3 text-right">
-                      <button type="button" className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border ${isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>...</button>
+                      <TransactionActionsMenu
+                        isDarkMode={isDarkMode}
+                        status={row.status}
+                        hasFine={row.fine !== 'PHP 0.00'}
+                        onViewDetails={() => onOpenTransactionDetail(row.id)}
+                        onMarkReturned={() => handleMarkReturned(row.id, row.book)}
+                        onSendReminder={() => handleSendReminder(row.member)}
+                        onRecordPayment={() => handleSettleFine(row.id, row.fine)}
+                        onPrintReceipt={() => handlePrintReceipt(row.id)}
+                      />
                     </td>
                   </tr>
                 ))}
@@ -261,6 +480,19 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
           </div>
         </div>
       </section>
+
+      {showToast && (
+        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl border px-5 py-4 shadow-xl transition-all duration-300 animate-[fadeIn_0.2s_ease-out] ${
+          isDarkMode 
+            ? 'border-slate-700 bg-slate-900 text-slate-100' 
+            : 'border-slate-200 bg-white text-slate-800'
+        }`}>
+          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">
+            <span className="text-sm font-bold">✓</span>
+          </div>
+          <p className="text-sm font-semibold">{showToast}</p>
+        </div>
+      )}
     </div>
   )
 }
