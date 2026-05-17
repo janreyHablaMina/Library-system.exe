@@ -417,7 +417,13 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
                       <td className="px-4 py-3 align-top"><input type="checkbox" /></td>
                       <td className="px-3 py-3">
                         <div className="flex items-start gap-3">
-                          <span className={`grid h-12 w-9 place-items-center rounded text-xl ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>{book.cover}</span>
+                          <span className={`grid h-12 w-9 place-items-center rounded text-xl overflow-hidden shrink-0 ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                            {book.cover.startsWith('data:') || book.cover.startsWith('http') || book.cover.startsWith('blob:') ? (
+                              <img src={book.cover} alt="" className="h-full w-full object-cover" />
+                            ) : (
+                              book.cover
+                            )}
+                          </span>
                           <div>
                             <button type="button" onClick={onOpenBookDetail} className={`text-left font-semibold hover:underline ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{book.title}</button>
                             <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>ISBN: {book.isbn}</p>
@@ -451,7 +457,13 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
                     : 'border-slate-200 bg-white'
                 }`}>
                   <div className="flex items-start justify-between">
-                    <span className={`grid h-24 w-16 place-items-center rounded-lg text-4xl ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>{book.cover}</span>
+                    <span className={`grid h-24 w-16 place-items-center rounded-lg text-4xl overflow-hidden shrink-0 ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                      {book.cover.startsWith('data:') || book.cover.startsWith('http') || book.cover.startsWith('blob:') ? (
+                        <img src={book.cover} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        book.cover
+                      )}
+                    </span>
                     <div className="flex flex-col items-end gap-2">
                       <span className={`rounded-md px-2.5 py-1 text-xs font-semibold ${getStatusClass(book.status)}`}>{book.status}</span>
                       <p className={`text-xs font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{book.available} copies</p>
