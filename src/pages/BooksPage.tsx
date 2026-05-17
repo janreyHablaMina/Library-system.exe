@@ -529,7 +529,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
           </div>
 
           {viewMode === 'list' ? (
-            <div className={isDarkMode ? 'overflow-x-auto lg:overflow-visible bg-[#0b1738] min-h-[340px] relative z-10' : 'overflow-x-auto lg:overflow-visible bg-white min-h-[340px] relative z-10'}>
+            <div className={isDarkMode ? 'overflow-x-auto lg:overflow-visible bg-[#0b1738] relative z-10' : 'overflow-x-auto lg:overflow-visible bg-white relative z-10'}>
               <table className="min-w-[980px] w-full text-left text-sm border-separate border-spacing-0">
                 <thead className={isDarkMode ? 'bg-[#0f1f49] text-slate-300' : 'bg-slate-50 text-slate-600'}>
                   <tr>
