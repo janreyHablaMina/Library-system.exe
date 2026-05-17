@@ -170,28 +170,6 @@ function BookActionsMenu({ isDarkMode, onViewDetails, onEdit, onDelete }: BookAc
 
           <div className={`my-1.5 border-t ${divider}`} />
 
-          {/* Group 2 */}
-          <button
-            type="button"
-            className={`${itemBase} ${itemNormal}`}
-            role="menuitem"
-            onClick={() => setOpen(false)}
-          >
-            <PlusCircle size={15} className="shrink-0 text-amber-500" />
-            Add Copies
-          </button>
-          <button
-            type="button"
-            className={`${itemBase} ${itemNormal}`}
-            role="menuitem"
-            onClick={() => setOpen(false)}
-          >
-            <RefreshCw size={15} className="shrink-0 text-cyan-500" />
-            Update Status
-          </button>
-
-          <div className={`my-1.5 border-t ${divider}`} />
-
           {/* Group 3 — Danger */}
           <button
             type="button"
