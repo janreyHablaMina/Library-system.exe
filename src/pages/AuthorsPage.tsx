@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import type { FormEvent } from 'react'
-import { ChevronDown, Download, Eye, Pencil, Plus, Search, Trash2, Users, X, BookOpen, Star, Calendar, Filter, ChevronLeft, ChevronRight, MoreHorizontal, AlertTriangle } from 'lucide-react'
+import { ChevronDown, Download, Eye, Pencil, Plus, Search, Trash2, Users, X, BookOpen, Star, Calendar, Filter, ChevronLeft, ChevronRight, MoreHorizontal, AlertTriangle, Mail, Globe } from 'lucide-react'
 
 type AuthorRow = {
   id: number
@@ -14,6 +14,7 @@ type AuthorRow = {
   addedOn: string
   addedTime: string
   avatar: string
+  biography?: string
 }
 
 type AuthorsPageProps = {
@@ -26,6 +27,7 @@ type AuthorFormState = {
   nationality: string
   dob: string
   status: string
+  biography: string
 }
 
 const initialFormState: AuthorFormState = {
@@ -34,6 +36,7 @@ const initialFormState: AuthorFormState = {
   nationality: '',
   dob: '',
   status: 'Active',
+  biography: '',
 }
 
 const stats = [
@@ -196,6 +199,7 @@ export function AuthorsPage({ isDarkMode }: AuthorsPageProps) {
       nationality: author.nationality,
       dob: author.dob ? new Date(author.dob).toISOString().split('T')[0] : '',
       status: author.status,
+      biography: author.biography || '',
     })
     setIsAddModalOpen(true)
   }
@@ -210,6 +214,7 @@ export function AuthorsPage({ isDarkMode }: AuthorsPageProps) {
         nationality: authorForm.nationality,
         dob: authorForm.dob ? new Date(authorForm.dob).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '',
         status: authorForm.status as any,
+        biography: authorForm.biography,
       } : a))
       setShowToast(`Successfully updated ${authorForm.name}'s profile!`)
     } else {
@@ -220,6 +225,7 @@ export function AuthorsPage({ isDarkMode }: AuthorsPageProps) {
         nationality: authorForm.nationality,
         dob: authorForm.dob ? new Date(authorForm.dob).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '',
         status: authorForm.status as any,
+        biography: authorForm.biography,
         flag: '🏳️',
         books: 0,
         addedOn: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
@@ -455,55 +461,79 @@ export function AuthorsPage({ isDarkMode }: AuthorsPageProps) {
       </section>
 
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
-          <section className={`w-full max-w-2xl rounded-3xl border shadow-2xl animate-in zoom-in-95 duration-200 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
-            <div className={`flex items-start justify-between border-b px-8 py-6 ${isDarkMode ? 'border-slate-700' : 'border-slate-100'}`}>
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/45 p-4 backdrop-blur-[1px]">
+          <section className={`w-full max-w-4xl rounded-2xl border shadow-2xl ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+            <div className={`flex items-start justify-between border-b px-6 py-5 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
               <div>
-                <h3 className={`text-3xl font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Add New Author</h3>
-                <p className={`mt-1 text-sm font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Create a new author profile in the library system.</p>
+                <h3 className={`text-3xl font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{authorToEdit ? 'Edit Author Profile' : 'Add New Author'}</h3>
+                <p className={`mt-1 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{authorToEdit ? 'Update author details below.' : 'Create a new library author profile.'}</p>
               </div>
-              <button type="button" onClick={closeAddModal} className={`grid h-10 w-10 place-items-center rounded-xl border transition-all ${isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
+              <button type="button" onClick={closeAddModal} className={`grid h-10 w-10 place-items-center rounded-xl border ${isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
                 <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleSave} className="space-y-6 px-8 py-8">
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="space-y-2">
-                  <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Author Name <span className="text-rose-500">*</span></label>
-                  <input value={authorForm.name} onChange={(e) => handleFormChange('name', e.target.value)} placeholder="Full Name" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-slate-50 text-slate-700 focus:border-emerald-500'}`} required />
+            <form onSubmit={handleSave} className="space-y-5 px-6 py-5">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Author Name <span className="text-rose-500">*</span></label>
+                  <input value={authorForm.name} onChange={(e) => handleFormChange('name', e.target.value)} placeholder="Enter full name" className={`h-11 w-full rounded-xl border px-3 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400 focus:border-emerald-500'}`} required />
                 </div>
-                <div className="space-y-2">
-                  <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Email Address</label>
-                  <input value={authorForm.email} onChange={(e) => handleFormChange('email', e.target.value)} placeholder="email@example.com" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-slate-50 text-slate-700 focus:border-emerald-500'}`} />
+                <div>
+                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Email Address</label>
+                  <div className={`flex h-11 items-center rounded-xl border px-3 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] focus-within:border-emerald-500' : 'border-slate-200 bg-white focus-within:border-emerald-500'}`}>
+                    <Mail size={15} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />
+                    <input value={authorForm.email} onChange={(e) => handleFormChange('email', e.target.value)} placeholder="Enter email address" className={`ml-2 w-full bg-transparent text-sm outline-none ${isDarkMode ? 'text-slate-100 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400'}`} />
+                  </div>
                 </div>
-              </div>
-
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="space-y-2">
-                  <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Nationality</label>
-                  <input value={authorForm.nationality} onChange={(e) => handleFormChange('nationality', e.target.value)} placeholder="Nationality" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-slate-50 text-slate-700 focus:border-emerald-500'}`} />
+                <div>
+                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Nationality</label>
+                  <div className={`flex h-11 items-center rounded-xl border px-3 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] focus-within:border-emerald-500' : 'border-slate-200 bg-white focus-within:border-emerald-500'}`}>
+                    <Globe size={15} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />
+                    <input value={authorForm.nationality} onChange={(e) => handleFormChange('nationality', e.target.value)} placeholder="Enter nationality" className={`ml-2 w-full bg-transparent text-sm outline-none ${isDarkMode ? 'text-slate-100 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400'}`} />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Date of Birth</label>
-                  <input type="date" value={authorForm.dob} onChange={(e) => handleFormChange('dob', e.target.value)} className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-slate-50 text-slate-700 focus:border-emerald-500'}`} />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Status</label>
-                <div className="relative">
-                  <select value={authorForm.status} onChange={(e) => handleFormChange('status', e.target.value)} className={`h-12 w-full appearance-none rounded-xl border pl-4 pr-10 text-sm font-bold outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-slate-50 text-slate-700 focus:border-emerald-500'}`}>
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                  </select>
-                  <ChevronDown size={18} className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                <div>
+                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Date of Birth</label>
+                  <div className={`flex h-11 items-center rounded-xl border px-3 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] focus-within:border-emerald-500' : 'border-slate-200 bg-white focus-within:border-emerald-500'}`}>
+                    <Calendar size={15} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />
+                    <input type="date" value={authorForm.dob} onChange={(e) => handleFormChange('dob', e.target.value)} className={`ml-2 w-full bg-transparent text-sm outline-none ${isDarkMode ? 'text-slate-100' : 'text-slate-700'}`} />
+                  </div>
                 </div>
               </div>
 
-              <div className="flex gap-4 pt-4">
-                <button type="button" onClick={closeAddModal} className={`h-12 flex-1 rounded-xl border font-bold transition-all ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>Cancel</button>
-                <button type="submit" className="h-12 flex-1 rounded-xl bg-emerald-600 font-bold text-white shadow-lg shadow-emerald-600/30 hover:bg-emerald-700 transition-all">Save Author</button>
+              <div>
+                <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Biography / Description</label>
+                <textarea value={authorForm.biography} onChange={(e) => handleFormChange('biography', e.target.value)} maxLength={200} placeholder="Enter author's short biography or description" className={`min-h-24 w-full rounded-xl border px-3 py-2 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400 focus:border-emerald-500'}`} />
+                <p className={`mt-1 text-right text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{authorForm.biography.length} / 200</p>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Author Photo</label>
+                  <div className="flex items-center gap-3">
+                    <div className={`grid h-10 w-10 place-items-center rounded-full ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
+                      <Users size={16} />
+                    </div>
+                    <button type="button" className={`h-10 rounded-lg border px-4 text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>Upload Photo</button>
+                    <span className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>JPG, PNG (Max 2MB)</span>
+                  </div>
+                </div>
+                <div>
+                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Status <span className="text-rose-500">*</span></label>
+                  <div className="relative">
+                    <select value={authorForm.status} onChange={(e) => handleFormChange('status', e.target.value)} className={`h-11 w-full appearance-none rounded-xl border pl-3 pr-10 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`}>
+                      <option value="Active">Active</option>
+                      <option value="Inactive">Inactive</option>
+                    </select>
+                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-3 pt-1 sm:grid-cols-2">
+                <button type="button" onClick={closeAddModal} className={`h-11 rounded-xl border text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>Cancel</button>
+                <button type="submit" className="h-11 rounded-xl bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-700">{authorToEdit ? 'Save Changes' : 'Save Author'}</button>
               </div>
             </form>
           </section>
