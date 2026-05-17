@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { ChevronDown, Download, Grid2x2, List, Mail, MoreHorizontal, Phone, Printer, RotateCcw, Search, UserPlus, Users, X } from 'lucide-react'
+import { AlertTriangle, ChevronDown, Download, Eye, Grid2x2, List, Mail, MoreHorizontal, Pencil, Phone, RotateCcw, Search, Trash2, UserPlus, Users, X } from 'lucide-react'
 
 type MemberType = 'Student' | 'Teacher' | 'Staff' | 'Visitor'
 type MemberStatus = 'Active' | 'Overdue' | 'Inactive'
@@ -46,13 +46,7 @@ const initialFormState: MemberFormState = {
   status: 'Active',
 }
 
-const stats = [
-  { label: 'All Members', value: '1,245', active: true },
-  { label: 'Students', value: '890', active: false },
-  { label: 'Teachers', value: '180', active: false },
-  { label: 'Staff', value: '120', active: false },
-  { label: 'Visitors', value: '55', active: false },
-]
+
 
 const members: MemberRow[] = [
   { id: 1, name: 'Juan Dela Cruz', email: 'juan.delacruz@email.com', memberId: 'STU-2026-001', type: 'Student', department: 'BS Computer Science', yearOrRole: '3rd Year', contact: '0917 123 4567', borrowed: 2, status: 'Active', avatar: '👨🏻' },
@@ -80,10 +74,145 @@ function getStatusClass(status: MemberStatus) {
   return 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
 }
 
+// ─── Member Actions Dropdown Menu ─────────────────────────────────────────────
+type MemberActionsMenuProps = {
+  isDarkMode: boolean
+  onViewDetails: () => void
+  onEdit: () => void
+  onDelete: () => void
+}
+
+function MemberActionsMenu({ isDarkMode, onViewDetails, onEdit, onDelete }: MemberActionsMenuProps) {
+  const [open, setOpen] = useState(false)
+  const [openUpward, setOpenUpward] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  const handleToggle = () => {
+    if (!open && ref.current) {
+      const rect = ref.current.getBoundingClientRect()
+      const spaceBelow = window.innerHeight - rect.bottom
+      setOpenUpward(spaceBelow < 185)
+    }
+    setOpen(v => !v)
+  }
+
+  const surface = isDarkMode
+    ? 'bg-[#0f172a] border-slate-700 shadow-[0_8px_32px_rgba(0,0,0,0.6)]'
+    : 'bg-white border-slate-200 shadow-[0_8px_32px_rgba(0,0,0,0.12)]'
+
+  const itemBase =
+    'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-100 text-left'
+  const itemNormal = isDarkMode
+    ? 'text-slate-200 hover:bg-slate-800'
+    : 'text-slate-700 hover:bg-slate-50'
+  const itemDanger = isDarkMode
+    ? 'text-rose-400 hover:bg-rose-500/10'
+    : 'text-rose-600 hover:bg-rose-50'
+  const divider = isDarkMode ? 'border-slate-700/60' : 'border-slate-100'
+
+  return (
+    <div ref={ref} className="relative inline-block text-left">
+      <button
+        type="button"
+        id={`member-actions-btn-${Math.random()}`}
+        onClick={handleToggle}
+        className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border transition-colors duration-150 ${
+          open
+            ? isDarkMode
+              ? 'border-slate-500 bg-slate-700 text-slate-100'
+              : 'border-emerald-300 bg-emerald-50 text-emerald-700'
+            : isDarkMode
+              ? 'border-slate-700 text-slate-300 hover:bg-slate-800'
+              : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+        }`}
+        aria-label="Member actions"
+        aria-haspopup="menu"
+        aria-expanded={open}
+      >
+        <MoreHorizontal size={16} />
+      </button>
+
+      {open && (
+        <div
+          className={`absolute right-0 z-50 w-52 rounded-xl border p-1.5 ${surface} animate-[fadeIn_0.12s_ease] ${
+            openUpward 
+              ? 'bottom-full mb-1.5 origin-bottom-right' 
+              : 'top-full mt-1.5 origin-top-right'
+          }`}
+          role="menu"
+          style={{ animation: openUpward ? 'memberMenuInUp 0.13s cubic-bezier(0.16,1,0.3,1)' : 'memberMenuInDown 0.13s cubic-bezier(0.16,1,0.3,1)' }}
+        >
+          <style>{`
+            @keyframes memberMenuInDown {
+              from { opacity: 0; transform: scale(0.95) translateY(-6px); }
+              to   { opacity: 1; transform: scale(1)    translateY(0);    }
+            }
+            @keyframes memberMenuInUp {
+              from { opacity: 0; transform: scale(0.95) translateY(6px); }
+              to   { opacity: 1; transform: scale(1)    translateY(0);    }
+            }
+          `}</style>
+
+          <button
+            type="button"
+            className={`${itemBase} ${itemNormal}`}
+            role="menuitem"
+            onClick={() => { setOpen(false); onViewDetails(); }}
+          >
+            <Eye size={15} className="shrink-0 text-sky-500" />
+            View Details
+          </button>
+          <button
+            type="button"
+            className={`${itemBase} ${itemNormal}`}
+            role="menuitem"
+            onClick={() => { setOpen(false); onEdit(); }}
+          >
+            <Pencil size={15} className="shrink-0 text-violet-500" />
+            Edit Profile
+          </button>
+
+          <div className={`my-1.5 border-t ${divider}`} />
+
+          <button
+            type="button"
+            className={`${itemBase} ${itemDanger}`}
+            role="menuitem"
+            onClick={() => { setOpen(false); onDelete(); }}
+          >
+            <Trash2 size={15} className="shrink-0" />
+            Delete Member
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function MembersPage({ isDarkMode, onOpenMemberDetail }: MembersPageProps) {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [memberForm, setMemberForm] = useState<MemberFormState>(initialFormState)
+  const [memberToEdit, setMemberToEdit] = useState<MemberRow | null>(null)
+  const [memberToDelete, setMemberToDelete] = useState<MemberRow | null>(null)
+  const [showToast, setShowToast] = useState<string | null>(null)
+
+  // Auto-dismiss toast
+  useEffect(() => {
+    if (showToast) {
+      const t = setTimeout(() => setShowToast(null), 3000)
+      return () => clearTimeout(t)
+    }
+  }, [showToast])
 
   // Dynamic States
   const [memberList, setMemberList] = useState<MemberRow[]>(members)
@@ -138,7 +267,23 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail }: MembersPageProps
 
   const closeAddModal = () => {
     setIsAddModalOpen(false)
+    setMemberToEdit(null)
     setMemberForm(initialFormState)
+  }
+
+  const handleOpenEditModal = (member: MemberRow) => {
+    setMemberToEdit(member)
+    setMemberForm({
+      fullName: member.name,
+      memberType: member.type,
+      memberId: member.memberId,
+      courseDepartment: member.department || '',
+      contactNumber: member.contact === 'n/a' ? '' : member.contact,
+      email: member.email === 'n/a' ? '' : member.email,
+      address: '',
+      status: member.status,
+    })
+    setIsAddModalOpen(true)
   }
 
   const handleSaveMember = (event: FormEvent<HTMLFormElement>) => {
@@ -147,26 +292,101 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail }: MembersPageProps
     // Basic validation
     if (!memberForm.fullName.trim() || !memberForm.memberType || !memberForm.memberId) return
 
-    const newMember: MemberRow = {
-      id: Date.now(),
-      name: memberForm.fullName,
-      email: memberForm.email || 'n/a',
-      memberId: memberForm.memberId,
-      type: memberForm.memberType as MemberType,
-      department: memberForm.courseDepartment || 'General',
-      yearOrRole: memberForm.memberType === 'Student' ? '1st Year' : 'Support',
-      contact: memberForm.contactNumber || 'n/a',
-      borrowed: 0,
-      status: (memberForm.status as MemberStatus) || 'Active',
-      avatar: memberForm.memberType === 'Student' ? '🧑🏻' : memberForm.memberType === 'Teacher' ? '👨🏾' : '👨‍💼',
+    if (memberToEdit) {
+      setMemberList(prev => prev.map(m => m.id === memberToEdit.id ? {
+        ...m,
+        name: memberForm.fullName,
+        email: memberForm.email || 'n/a',
+        memberId: memberForm.memberId,
+        type: memberForm.memberType as MemberType,
+        department: memberForm.courseDepartment || 'General',
+        contact: memberForm.contactNumber || 'n/a',
+        status: (memberForm.status as MemberStatus) || 'Active',
+        avatar: memberForm.memberType === 'Student' ? '🧑🏻' : memberForm.memberType === 'Teacher' ? '👨🏾' : '👨‍💼',
+      } : m))
+      setShowToast(`Successfully updated "${memberForm.fullName}"`)
+    } else {
+      const newMember: MemberRow = {
+        id: Date.now(),
+        name: memberForm.fullName,
+        email: memberForm.email || 'n/a',
+        memberId: memberForm.memberId,
+        type: memberForm.memberType as MemberType,
+        department: memberForm.courseDepartment || 'General',
+        yearOrRole: memberForm.memberType === 'Student' ? '1st Year' : 'Support',
+        contact: memberForm.contactNumber || 'n/a',
+        borrowed: 0,
+        status: (memberForm.status as MemberStatus) || 'Active',
+        avatar: memberForm.memberType === 'Student' ? '🧑🏻' : memberForm.memberType === 'Teacher' ? '👨🏾' : '👨‍💼',
+      }
+      setMemberList(prev => [newMember, ...prev])
+      setShowToast(`Successfully added "${memberForm.fullName}"`)
     }
-
-    setMemberList(prev => [newMember, ...prev])
+    
     closeAddModal()
+  }
+
+  const handleDeleteConfirm = () => {
+    if (memberToDelete) {
+      setMemberList(prev => prev.filter(m => m.id !== memberToDelete.id))
+      setShowToast(`Successfully deleted "${memberToDelete.name}"`)
+      setMemberToDelete(null)
+    }
   }
 
   return (
     <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
+      {/* Toast Notification */}
+      {showToast && (
+        <div className="fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-lg animate-slide-in">
+          <span>{showToast}</span>
+          <button onClick={() => setShowToast(null)} className="rounded p-0.5 hover:bg-emerald-500">
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
+      {/* Styled Confirmation Modal (Delete) */}
+      {memberToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
+          <div className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl transition-all ${
+            isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'
+          }`}>
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-rose-500/10 text-rose-500">
+                <AlertTriangle size={24} />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold leading-6">Delete Member</h3>
+                <p className={`mt-2 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                  Are you sure you want to delete member <span className="font-semibold text-rose-500">"{memberToDelete.name}"</span>? This action cannot be undone and will remove all their records.
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setMemberToDelete(null)}
+                className={`rounded-xl px-4 py-2 text-sm font-semibold border ${
+                  isDarkMode
+                    ? 'border-slate-700 hover:bg-slate-800 text-slate-300'
+                    : 'border-slate-200 hover:bg-slate-50 text-slate-700'
+                }`}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteConfirm}
+                className="rounded-xl bg-rose-600 hover:bg-rose-700 px-4 py-2 text-sm font-semibold text-white"
+              >
+                Yes, Delete Member
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <section className="p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
@@ -181,10 +401,6 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail }: MembersPageProps
             <button type="button" className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
               <Download size={15} />
               Export
-            </button>
-            <button type="button" className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
-              <Printer size={15} />
-              Print ID
             </button>
           </div>
         </div>
@@ -223,8 +439,8 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail }: MembersPageProps
           </div>
         </div>
 
-        <div className={`mt-4 overflow-hidden rounded-xl border ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
-          <div className={`flex flex-wrap items-center gap-3 border-b p-3 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+        <div className={`mt-4 rounded-xl border ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+          <div className={`flex flex-wrap items-center gap-3 border-b p-3 rounded-t-xl ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
             <label className={`group flex h-11 min-w-[280px] flex-1 items-center rounded-xl border px-3 ${isDarkMode ? 'border-slate-700 focus-within:border-emerald-500' : 'border-slate-200 focus-within:border-emerald-500'}`}>
               <Search size={16} className={`mr-2 ${isDarkMode ? 'text-slate-500 group-focus-within:text-emerald-400' : 'text-slate-400 group-focus-within:text-emerald-600'}`} />
               <input
@@ -297,7 +513,7 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail }: MembersPageProps
           </div>
 
           {viewMode === 'list' ? (
-            <div className={isDarkMode ? 'overflow-x-auto bg-[#0b1738]' : 'overflow-x-auto bg-white'}>
+            <div className={`relative z-20 ${isDarkMode ? 'overflow-x-auto bg-[#0b1738]' : 'overflow-x-auto bg-white'}`}>
               <table className="min-w-[1080px] w-full text-left text-sm">
                 <thead className={isDarkMode ? 'bg-[#0f1f49] text-slate-300' : 'bg-slate-50 text-slate-600'}>
                   <tr>
@@ -350,9 +566,12 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail }: MembersPageProps
                         <span className={`rounded-md px-2 py-1 text-xs font-semibold ${getStatusClass(member.status)}`}>{member.status}</span>
                       </td>
                       <td className="px-3 py-3 text-right">
-                        <button type="button" className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border ${isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
-                          <MoreHorizontal size={16} />
-                        </button>
+                        <MemberActionsMenu
+                          isDarkMode={isDarkMode}
+                          onViewDetails={() => onOpenMemberDetail(member.id)}
+                          onEdit={() => handleOpenEditModal(member)}
+                          onDelete={() => setMemberToDelete(member)}
+                        />
                       </td>
                     </tr>
                   ))}
@@ -360,9 +579,9 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail }: MembersPageProps
               </table>
             </div>
           ) : (
-            <div className={`grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5 ${isDarkMode ? 'bg-[#0b1738]' : 'bg-white'}`}>
+            <div className={`relative z-20 grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5 ${isDarkMode ? 'bg-[#0b1738]' : 'bg-white'}`}>
               {filteredMembers.map((member) => (
-                <article key={member.id} className={`flex h-full flex-col rounded-xl border p-3 transition-all duration-200 hover:-translate-y-0.5 ${
+                <article key={member.id} className={`relative z-10 hover:z-20 flex h-full flex-col rounded-xl border p-3 transition-all duration-200 hover:-translate-y-0.5 ${
                   isDarkMode
                     ? 'border-slate-700 bg-[#0f1f49] hover:border-emerald-500/60 hover:shadow-[0_12px_24px_-16px_rgba(16,185,129,0.45)]'
                     : 'border-slate-200 bg-white hover:border-emerald-200 hover:shadow-[0_12px_24px_-16px_rgba(15,23,42,0.35)]'
@@ -389,14 +608,22 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail }: MembersPageProps
                   </div>
                   <div className="mt-3 flex items-center justify-between">
                     <span className={`rounded-md px-2 py-1 text-xs font-semibold ${getTypeClass(member.type)}`}>{member.type}</span>
-                    <span className={`text-xs font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{member.borrowed} borrowed</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{member.borrowed} borrowed</span>
+                      <MemberActionsMenu
+                        isDarkMode={isDarkMode}
+                        onViewDetails={() => onOpenMemberDetail(member.id)}
+                        onEdit={() => handleOpenEditModal(member)}
+                        onDelete={() => setMemberToDelete(member)}
+                      />
+                    </div>
                   </div>
                 </article>
               ))}
             </div>
           )}
 
-          <div className={`flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm ${isDarkMode ? 'border-slate-700 text-slate-300' : 'border-slate-200 text-slate-600'}`}>
+          <div className={`relative z-0 flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm rounded-b-xl ${isDarkMode ? 'border-slate-700 bg-[#0b1738] text-slate-300' : 'border-slate-200 bg-white text-slate-600'}`}>
             <p>Showing 1 to {filteredMembers.length} of {filteredMembers.length} members</p>
             <div className="flex items-center gap-2">
               <select className={`h-9 rounded-lg border px-3 text-sm ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
@@ -417,8 +644,8 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail }: MembersPageProps
           <section className={`w-full max-w-4xl rounded-2xl border shadow-2xl ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
             <div className={`flex items-start justify-between border-b px-6 py-5 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
               <div>
-                <h3 className={`text-3xl font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Add New Member</h3>
-                <p className={`mt-1 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Create a new library member profile.</p>
+                <h3 className={`text-3xl font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{memberToEdit ? 'Edit Member Profile' : 'Add New Member'}</h3>
+                <p className={`mt-1 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{memberToEdit ? 'Update member details below.' : 'Create a new library member profile.'}</p>
               </div>
               <button type="button" onClick={closeAddModal} className={`grid h-10 w-10 place-items-center rounded-xl border ${isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
                 <X size={18} />
@@ -500,7 +727,7 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail }: MembersPageProps
 
               <div className="grid gap-3 pt-1 sm:grid-cols-2">
                 <button type="button" onClick={closeAddModal} className={`h-11 rounded-xl border text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>Cancel</button>
-                <button type="submit" className="h-11 rounded-xl bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-700">Save Member</button>
+                <button type="submit" className="h-11 rounded-xl bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-700">{memberToEdit ? 'Save Changes' : 'Save Member'}</button>
               </div>
             </form>
           </section>
