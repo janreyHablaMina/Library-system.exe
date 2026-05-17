@@ -384,7 +384,7 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
           </div>
         </div>
 
-        <div className={`mt-4 overflow-hidden rounded-xl border ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+        <div className={`mt-4 overflow-hidden lg:overflow-visible rounded-xl border ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
           <div className={`flex flex-wrap items-center gap-3 border-b p-3 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
             <label className={`group flex h-11 min-w-[280px] flex-1 items-center rounded-xl border px-3 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
               <Search size={16} className={`mr-2 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
@@ -408,7 +408,7 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
             </button>
           </div>
 
-          <div className="overflow-x-auto min-h-[340px] relative z-10">
+          <div className="overflow-x-auto lg:overflow-visible min-h-[340px] relative z-10">
             <table className="min-w-[1250px] w-full text-left text-sm">
               <thead className={isDarkMode ? 'bg-[#0f1f49] text-slate-300' : 'bg-slate-50 text-slate-600'}>
                 <tr>

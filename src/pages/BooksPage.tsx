@@ -421,7 +421,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
           </div>
         </div>
 
-        <div className={`mt-4 overflow-hidden rounded-xl border ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+        <div className={`mt-4 overflow-hidden lg:overflow-visible rounded-xl border ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
           <div className={`flex flex-wrap items-center gap-3 border-b p-3 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
             <label className={`group flex h-11 min-w-[280px] flex-1 items-center rounded-xl border px-3 ${isDarkMode ? 'border-slate-700 focus-within:border-emerald-500' : 'border-slate-200 focus-within:border-emerald-500'}`}>
               <Search size={16} className={`mr-2 ${isDarkMode ? 'text-slate-500 group-focus-within:text-emerald-400' : 'text-slate-400 group-focus-within:text-emerald-600'}`} />
@@ -529,7 +529,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
           </div>
 
           {viewMode === 'list' ? (
-            <div className={isDarkMode ? 'overflow-x-auto bg-[#0b1738] min-h-[340px] relative z-10' : 'overflow-x-auto bg-white min-h-[340px] relative z-10'}>
+            <div className={isDarkMode ? 'overflow-x-auto lg:overflow-visible bg-[#0b1738] min-h-[340px] relative z-10' : 'overflow-x-auto lg:overflow-visible bg-white min-h-[340px] relative z-10'}>
               <table className="min-w-[980px] w-full text-left text-sm">
                 <thead className={isDarkMode ? 'bg-[#0f1f49] text-slate-300' : 'bg-slate-50 text-slate-600'}>
                   <tr>
