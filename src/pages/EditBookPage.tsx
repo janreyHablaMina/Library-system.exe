@@ -87,7 +87,7 @@ function HighFidelityBookCover({ title, author }: { title: string; author: strin
 
 export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageProps) {
   // Tab states
-  const [activeTab, setActiveTab] = useState<'basic' | 'catalog' | 'inventory' | 'notes'>('basic')
+  const [activeTab, setActiveTab] = useState<'basic' | 'catalog' | 'notes'>('basic')
 
   // Form Fields
   const [title, setTitle] = useState(book.title)
@@ -142,7 +142,7 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
     ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500 focus:border-emerald-500'
     : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400 focus:border-emerald-500'
 
-  const tabItemClass = (tab: 'basic' | 'catalog' | 'inventory' | 'notes') => {
+  const tabItemClass = (tab: 'basic' | 'catalog' | 'notes') => {
     const isActive = activeTab === tab
     return `flex items-center gap-2 px-1 py-3 text-sm font-semibold border-b-2 transition-all duration-150 ${
       isActive
@@ -189,10 +189,6 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
             <Files size={16} />
             Library Cataloging
           </button>
-          <button type="button" onClick={() => setActiveTab('inventory')} className={tabItemClass('inventory')}>
-            <Package size={16} />
-            Inventory Information
-          </button>
           <button type="button" onClick={() => setActiveTab('notes')} className={tabItemClass('notes')}>
             <StickyNote size={16} />
             Additional Notes
@@ -200,7 +196,7 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
         </div>
 
         {/* Content Body */}
-        <div className="p-6 grid gap-6 xl:grid-cols-[1fr_450px]">
+        <div className="p-6 grid gap-6 xl:grid-cols-[1fr_450px] items-start">
           
           {/* Left Column - Switches dynamically based on Active Tab */}
           <div className="space-y-6">
