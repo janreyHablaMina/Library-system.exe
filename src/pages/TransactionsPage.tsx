@@ -409,10 +409,10 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
           </div>
 
           <div className="overflow-x-auto lg:overflow-visible relative z-10">
-            <table className="min-w-[1250px] w-full text-left text-sm border-separate border-spacing-0">
+            <table className="min-w-[1250px] w-full text-left text-sm">
               <thead className={isDarkMode ? 'bg-[#0f1f49] text-slate-300' : 'bg-slate-50 text-slate-600'}>
                 <tr>
-                  <th className="px-4 py-3 font-semibold rounded-tl-xl">ID</th>
+                  <th className="px-4 py-3 font-semibold">ID</th>
                   <th className="px-3 py-3 font-semibold">Type</th>
                   <th className="px-3 py-3 font-semibold">Member</th>
                   <th className="px-3 py-3 font-semibold">Book</th>
@@ -422,7 +422,7 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
                   <th className="px-3 py-3 font-semibold">Return Date</th>
                   <th className="px-3 py-3 font-semibold">Status</th>
                   <th className="px-3 py-3 font-semibold">Fine</th>
-                  <th className="px-3 py-3 font-semibold text-right rounded-tr-xl">Actions</th>
+                  <th className="px-3 py-3 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>

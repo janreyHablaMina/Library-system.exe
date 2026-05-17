@@ -405,7 +405,7 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail }: MembersPageProps
           </div>
         </div>
 
-        <div className={`mt-5 overflow-x-auto rounded-xl border ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+        <div className={`mt-5 overflow-hidden lg:overflow-visible rounded-xl border ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
           <div className={`flex min-w-[880px] items-center gap-2 px-3 py-3 ${isDarkMode ? 'bg-[#0b1738]' : 'bg-white'}`}>
             {[
               { label: 'All Members', value: String(memberList.length) },
@@ -513,7 +513,7 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail }: MembersPageProps
           </div>
 
           {viewMode === 'list' ? (
-            <div className={`relative z-20 ${isDarkMode ? 'overflow-x-auto bg-[#0b1738]' : 'overflow-x-auto bg-white'}`}>
+            <div className={`relative z-10 ${isDarkMode ? 'overflow-x-auto lg:overflow-visible bg-[#0b1738]' : 'overflow-x-auto lg:overflow-visible bg-white'}`}>
               <table className="min-w-[1080px] w-full text-left text-sm">
                 <thead className={isDarkMode ? 'bg-[#0f1f49] text-slate-300' : 'bg-slate-50 text-slate-600'}>
                   <tr>

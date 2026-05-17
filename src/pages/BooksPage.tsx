@@ -529,11 +529,11 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
           </div>
 
           {viewMode === 'list' ? (
-            <div className={isDarkMode ? 'overflow-x-auto lg:overflow-visible bg-[#0b1738] relative z-10' : 'overflow-x-auto lg:overflow-visible bg-white relative z-10'}>
-              <table className="min-w-[980px] w-full text-left text-sm border-separate border-spacing-0">
+            <div className={`relative z-10 ${isDarkMode ? 'overflow-x-auto lg:overflow-visible bg-[#0b1738]' : 'overflow-x-auto lg:overflow-visible bg-white'}`}>
+              <table className="min-w-[980px] w-full text-left text-sm">
                 <thead className={isDarkMode ? 'bg-[#0f1f49] text-slate-300' : 'bg-slate-50 text-slate-600'}>
                   <tr>
-                    <th className="px-4 py-3 font-semibold rounded-tl-xl"><input type="checkbox" /></th>
+                    <th className="px-4 py-3 font-semibold"><input type="checkbox" /></th>
                     <th className="px-3 py-3 font-semibold">Book</th>
                     <th className="px-3 py-3 font-semibold">Author</th>
                     <th className="px-3 py-3 font-semibold">Category</th>
@@ -541,7 +541,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
                     <th className="px-3 py-3 font-semibold">Year</th>
                     <th className="px-3 py-3 font-semibold">Status</th>
                     <th className="px-3 py-3 font-semibold">Available Copies</th>
-                    <th className="px-3 py-3 font-semibold text-right rounded-tr-xl">Actions</th>
+                    <th className="px-3 py-3 font-semibold text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
