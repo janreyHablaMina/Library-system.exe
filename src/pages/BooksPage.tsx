@@ -220,7 +220,6 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [selectedStatus, setSelectedStatus] = useState('All')
-  const [selectedAvailability, setSelectedAvailability] = useState('All')
   const [selectedYear, setSelectedYear] = useState('All')
   const [activeStatTab, setActiveStatTab] = useState<'All Books' | 'Available' | 'Borrowed' | 'Overdue' | 'Archived'>('All Books')
 
@@ -244,14 +243,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
     // 4. Year Dropdown
     if (selectedYear !== 'All' && String(book.year) !== selectedYear) return false
 
-    // 5. Availability Dropdown
-    if (selectedAvailability !== 'All') {
-      const copiesAvailable = parseInt(book.available.split(' / ')[0] || '0', 10)
-      if (selectedAvailability === 'In Stock' && copiesAvailable === 0) return false
-      if (selectedAvailability === 'Out of Stock' && copiesAvailable > 0) return false
-    }
-
-    // 6. Search input
+    // 5. Search input
     if (searchTerm.trim() !== '') {
       const term = searchTerm.toLowerCase()
       const matchTitle = book.title.toLowerCase().includes(term)
@@ -269,7 +261,6 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
     setSearchTerm('')
     setSelectedCategory('All')
     setSelectedStatus('All')
-    setSelectedAvailability('All')
     setSelectedYear('All')
     setActiveStatTab('All Books')
   }
@@ -466,21 +457,6 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
               <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
             </div>
 
-            {/* Availability Select */}
-            <div className="relative">
-              <select 
-                value={selectedAvailability} 
-                onChange={(e) => setSelectedAvailability(e.target.value)}
-                className={`h-11 appearance-none rounded-xl border py-2 pl-3 pr-9 text-sm outline-none min-w-[160px] ${
-                  isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'
-                }`}
-              >
-                <option value="All">Availability: All</option>
-                <option value="In Stock">In Stock (Available &gt; 0)</option>
-                <option value="Out of Stock">Out of Stock (= 0)</option>
-              </select>
-              <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
-            </div>
 
             {/* Year Select */}
             <div className="relative">
