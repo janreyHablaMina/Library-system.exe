@@ -152,8 +152,8 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
   }
 
   return (
-    <div className={`p-4 ${isDarkMode ? 'bg-[#020617]' : 'bg-[#f8fafc]'} min-h-0 flex-1 flex flex-col`}>
-      <div className={`mx-auto w-full max-w-[1650px] rounded-2xl border flex flex-col shadow-sm overflow-hidden ${cardClass}`}>
+    <div className={`p-4 ${isDarkMode ? 'bg-[#020617]' : 'bg-[#f8fafc]'} h-[calc(100vh-64px)] max-h-[calc(100vh-64px)] min-h-0 flex-1 flex flex-col`}>
+      <div className={`mx-auto w-full max-w-[1650px] h-full max-h-full rounded-2xl border flex flex-col shadow-sm overflow-hidden ${cardClass}`}>
         
         {/* Header Block (Unified exactly like screenshot) */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200/10">
@@ -196,7 +196,7 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
         </div>
 
         {/* Content Body */}
-        <div className="p-6 grid gap-6 xl:grid-cols-[1fr_450px] items-start">
+        <div className="p-6 pb-16 grid gap-6 xl:grid-cols-[1fr_450px] items-start flex-1 overflow-y-auto min-h-0">
           
           {/* Left Column - Switches dynamically based on Active Tab */}
           <div className="space-y-6">
