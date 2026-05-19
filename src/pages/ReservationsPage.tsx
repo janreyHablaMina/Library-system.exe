@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Calendar, Clock3, CheckCircle2, XCircle, MapPin, Eye, Trash2, Download, Plus, Search, ChevronDown, Filter, ChevronLeft, ChevronRight, MoreHorizontal, BookOpen, UserRound, ArrowLeft, Info, X, Check, Mail, Smartphone } from 'lucide-react'
+import { Calendar, Clock3, CheckCircle2, XCircle, MapPin, Eye, Trash2, Download, Plus, Search, ChevronDown, Filter, ChevronLeft, ChevronRight, MoreHorizontal, BookOpen, UserRound, ArrowLeft, Info, X, Check, Mail, Smartphone, Printer, Pencil } from 'lucide-react'
 
 type ReservationStatus = 'Pending' | 'Ready for Pickup' | 'Completed' | 'Cancelled'
 
@@ -226,8 +226,430 @@ function ReservationActionsMenu({ isDarkMode, onViewDetails, onCancel }: Reserva
   )
 }
 
+type ReservationDetailsViewProps = {
+  reservationId: string
+  isDarkMode: boolean
+  onBack: () => void
+}
+
+function ReservationDetailsView({ reservationId, isDarkMode, onBack }: ReservationDetailsViewProps) {
+  const res = reservationsData.find(r => r.id === reservationId) || reservationsData[0]
+  const book = mockBooks.find(b => b.title === res.book.title) || mockBooks[0]
+  const member = mockMembers.find(m => m.name === res.member.name) || mockMembers[0]
+
+  return (
+    <section className="mx-auto w-full max-w-[1650px] px-2 pt-2 pb-0 animate-[fadeIn_0.15s_ease-out]">
+      {/* Breadcrumb Header */}
+      <div className="flex items-center gap-3 mb-6">
+        <button
+          type="button"
+          onClick={onBack}
+          className={`grid h-10 w-10 place-items-center rounded-xl border transition-all ${
+            isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+          }`}
+        >
+          <ArrowLeft size={18} />
+        </button>
+        <div>
+          <h2 className={`text-xl font-bold tracking-tight ${isDarkMode ? 'text-slate-100' : 'text-[#0a1b4f]'}`}>Reservation Details</h2>
+          <div className="flex items-center gap-1.5 text-xs text-slate-500 font-semibold mt-0.5">
+            <span className="cursor-pointer hover:underline" onClick={onBack}>Reservations</span>
+            <ChevronRight size={12} className="text-slate-400" />
+            <span className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>{res.id}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Top Status & Info Strip Card */}
+      <article className={`rounded-2xl border p-6 mb-6 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b pb-5 mb-5 border-slate-100 dark:border-slate-800">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl font-black tracking-tight">{res.id}</span>
+            <span className="rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
+              {res.status}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button type="button" className={`inline-flex h-9 items-center gap-2 rounded-xl border px-4 text-xs font-bold transition-all ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
+              <Printer size={14} />
+              Print
+            </button>
+            <button type="button" className={`inline-flex h-9 items-center gap-2 rounded-xl border px-4 text-xs font-bold transition-all ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
+              <Pencil size={14} />
+              Edit
+            </button>
+            <button type="button" className={`inline-flex h-9 items-center gap-2 rounded-xl border px-4 text-xs font-bold transition-all ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
+              <MoreHorizontal size={14} />
+              More
+            </button>
+          </div>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 divide-y md:divide-y-0 lg:divide-x divide-slate-100 dark:divide-slate-800">
+          <div className="flex items-center gap-3">
+            <div className={`grid h-10 w-10 place-items-center rounded-xl shrink-0 ${isDarkMode ? 'bg-[#0f1f49] text-emerald-400' : 'bg-emerald-50 text-emerald-600'}`}>
+              <Calendar size={18} />
+            </div>
+            <div>
+              <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Reservation Date</span>
+              <span className={`text-xs font-black block mt-0.5 ${isDarkMode ? 'text-slate-100' : 'text-[#0a1b4f]'}`}>
+                {res.reservedOn}, {res.reservedTime}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 pt-4 md:pt-0 lg:pl-6">
+            <div className={`grid h-10 w-10 place-items-center rounded-xl shrink-0 ${isDarkMode ? 'bg-[#0f1f49] text-rose-400' : 'bg-rose-50 text-rose-600'}`}>
+              <Calendar size={18} />
+            </div>
+            <div>
+              <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Expires On</span>
+              <span className={`text-xs font-black block mt-0.5 ${isDarkMode ? 'text-slate-100' : 'text-[#0a1b4f]'}`}>
+                {res.expiresOn}, {res.expiresTime !== '(Picked up)' && res.expiresTime !== '10:30 AM' ? res.expiresTime : '09:45 AM'}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 pt-4 md:pt-0 lg:pl-6">
+            <div className={`grid h-10 w-10 place-items-center rounded-xl shrink-0 ${isDarkMode ? 'bg-[#0f1f49] text-amber-400' : 'bg-amber-50 text-amber-600'}`}>
+              <MapPin size={18} />
+            </div>
+            <div>
+              <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Pickup Location</span>
+              <span className={`text-xs font-black block mt-0.5 ${isDarkMode ? 'text-slate-100' : 'text-[#0a1b4f]'}`}>
+                {res.pickupBranch}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 pt-4 md:pt-0 lg:pl-6">
+            <div className={`grid h-10 w-10 place-items-center rounded-xl shrink-0 ${isDarkMode ? 'bg-[#0f1f49] text-blue-400' : 'bg-blue-50 text-blue-600'}`}>
+              <Clock3 size={18} />
+            </div>
+            <div>
+              <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Estimated Wait Time</span>
+              <span className={`text-xs font-black block mt-0.5 ${isDarkMode ? 'text-slate-100' : 'text-[#0a1b4f]'}`}>
+                ~ 2 days
+              </span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      {/* Two-Column Responsive Layout */}
+      <div className="grid grid-cols-1 xl:grid-cols-[7fr_3fr] gap-6">
+        {/* Left Column (70% Width) */}
+        <div className="space-y-6">
+          {/* Book Information Card */}
+          <article className={`rounded-2xl border p-6 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+            <h3 className={`text-sm font-bold border-b pb-3 ${isDarkMode ? 'text-slate-100' : 'text-[#0a1b4f]'}`}>Book Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-10 gap-6 pt-5">
+              <div className="col-span-3 flex justify-start shrink-0">
+                <div className="w-full aspect-[2/3] max-w-[125px]">
+                  <img 
+                    src={book.coverUrl} 
+                    alt={`${book.title} cover`} 
+                    className={`w-full h-full object-cover border ${
+                      isDarkMode ? 'border-slate-700/60' : 'border-slate-200'
+                    }`} 
+                  />
+                </div>
+              </div>
+              <div className="col-span-7">
+                <div>
+                  <h4 className={`text-base font-bold leading-tight ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{book.title}</h4>
+                  <p className="text-xs font-semibold text-slate-400 mt-1">{book.author}</p>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-5 text-xs leading-normal">
+                  <div>
+                    <span className="text-[9px] font-bold text-slate-400 block uppercase tracking-wider">Category</span>
+                    <span className={`font-black block mt-0.5 truncate ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{book.category}</span>
+                  </div>
+                  <div>
+                    <span className="text-[9px] font-bold text-slate-400 block uppercase tracking-wider">ISBN</span>
+                    <span className={`font-mono font-black block mt-0.5 truncate ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{book.isbn}</span>
+                  </div>
+                  <div>
+                    <span className="text-[9px] font-bold text-slate-400 block uppercase tracking-wider">Publisher</span>
+                    <span className={`font-black block mt-0.5 truncate ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{book.publisher}</span>
+                  </div>
+                  <div>
+                    <span className="text-[9px] font-bold text-slate-400 block uppercase tracking-wider">Language</span>
+                    <span className={`font-black block mt-0.5 truncate ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>English</span>
+                  </div>
+                  <div>
+                    <span className="text-[9px] font-bold text-slate-400 block uppercase tracking-wider">Available Copies</span>
+                    <span className="font-black block mt-0.5 text-emerald-600 dark:text-emerald-400">{book.availableCopies} copy</span>
+                  </div>
+                  <div>
+                    <span className="text-[9px] font-bold text-slate-400 block uppercase tracking-wider">Total Copies</span>
+                    <span className={`font-black block mt-0.5 ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>4</span>
+                  </div>
+                  <div>
+                    <span className="text-[9px] font-bold text-slate-400 block uppercase tracking-wider">Reservations / Queue</span>
+                    <span className={`font-black block mt-0.5 ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>2 people</span>
+                  </div>
+                  <div>
+                    <span className="text-[9px] font-bold text-slate-400 block uppercase tracking-wider">Location</span>
+                    <span className={`font-black block mt-0.5 truncate ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`} title="Central Library - Fiction Section">Central - Fiction</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          {/* Member Information Card */}
+          <article className={`rounded-2xl border p-6 mt-6 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+            <h3 className={`text-sm font-bold border-b pb-3 ${isDarkMode ? 'text-slate-100' : 'text-[#0a1b4f]'}`}>Member Information</h3>
+            <div className="flex flex-col sm:flex-row gap-5 pt-5 items-start">
+              <div className="w-16 h-16 rounded-full border overflow-hidden shrink-0 flex items-center justify-center">
+                <img 
+                  src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80" 
+                  alt={member.name} 
+                  className="w-full h-full object-cover" 
+                />
+              </div>
+              <div className="flex-1 min-w-0 w-full">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 w-full">
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <h4 className={`text-base font-bold leading-tight ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{member.name}</h4>
+                    <span className={`text-[10px] font-bold text-slate-400 font-mono`}>{member.memberId}</span>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 text-[9px] font-extrabold text-emerald-700 dark:text-emerald-400">
+                      <span className="h-1 w-1 rounded-full bg-emerald-500"></span>
+                      Active Member
+                    </span>
+                  </div>
+                  <p className={`text-xs font-semibold text-slate-400 shrink-0`}>Member Since <span className={`font-black ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Jan 15, 2023</span></p>
+                </div>
+                <div className="flex flex-wrap gap-4 mt-3 text-xs">
+                  <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                    <Smartphone size={13} />
+                    <span className="font-semibold">{member.phone}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                    <Mail size={13} />
+                    <span className="font-semibold">{member.email}</span>
+                  </div>
+                </div>
+                
+                <hr className={`my-4 border-t ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`} />
+
+                <div className="grid grid-cols-3 gap-4 text-xs">
+                  <div>
+                    <span className="text-[9px] font-bold text-slate-400 block uppercase tracking-wider">Currently Borrowed</span>
+                    <span className={`font-black block mt-0.5 ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{member.borrowedCount} books</span>
+                  </div>
+                  <div>
+                    <span className="text-[9px] font-bold text-slate-400 block uppercase tracking-wider">Overdue Books</span>
+                    <span className={`font-black block mt-0.5 ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>0</span>
+                  </div>
+                  <div>
+                    <span className="text-[9px] font-bold text-slate-400 block uppercase tracking-wider">Outstanding Fines</span>
+                    <span className="font-black block mt-0.5 text-emerald-600 dark:text-emerald-400">₱0.00</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          {/* Reservation Information Card */}
+          <article className={`rounded-2xl border p-6 mt-6 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+            <h3 className={`text-sm font-bold border-b pb-3 ${isDarkMode ? 'text-slate-100' : 'text-[#0a1b4f]'}`}>Reservation Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-5">
+              <div className="space-y-4">
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Priority</span>
+                  <span className={`font-black block mt-1.5 text-xs ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Normal</span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Notify Member Via</span>
+                  <div className="flex items-center gap-4 mt-2.5">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-600 dark:text-slate-300">
+                      <span className="grid h-4.5 w-4.5 place-items-center rounded bg-emerald-600 border border-emerald-600 text-white shrink-0">
+                        <Check size={11} strokeWidth={3.5} />
+                      </span>
+                      <span>Email</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-600 dark:text-slate-300">
+                      <span className="grid h-4.5 w-4.5 place-items-center rounded bg-emerald-600 border border-emerald-600 text-white shrink-0">
+                        <Check size={11} strokeWidth={3.5} />
+                      </span>
+                      <span>SMS</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-600 dark:text-slate-300">
+                      <span className="grid h-4.5 w-4.5 place-items-center rounded bg-emerald-600 border border-emerald-600 text-white shrink-0">
+                        <Check size={11} strokeWidth={3.5} />
+                      </span>
+                      <span>In-App</span>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Notes</span>
+                  <span className={`block mt-1.5 text-xs font-medium leading-relaxed ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                    Member requested the book for personal development.
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-4 md:border-l md:pl-6 border-slate-100 dark:border-slate-800">
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Created By</span>
+                  <div className="flex items-center gap-2.5 mt-2">
+                    <div className="w-8 h-8 rounded-full border overflow-hidden shrink-0">
+                      <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80" alt="Admin" className="w-full h-full object-cover" />
+                    </div>
+                    <div>
+                      <span className={`text-xs font-black block leading-none ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Admin User</span>
+                      <span className="text-[10px] font-semibold text-slate-400 block mt-1">May 14, 2026, 09:45 AM</span>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Last Updated By</span>
+                  <div className="flex items-center gap-2.5 mt-2">
+                    <div className="w-8 h-8 rounded-full border overflow-hidden shrink-0">
+                      <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80" alt="Admin" className="w-full h-full object-cover" />
+                    </div>
+                    <div>
+                      <span className={`text-xs font-black block leading-none ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Admin User</span>
+                      <span className="text-[10px] font-semibold text-slate-400 block mt-1">May 14, 2026, 09:45 AM</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        {/* Right Column (30% Width) */}
+        <div className="space-y-6">
+          {/* Reservation Timeline Card */}
+          <article className={`rounded-2xl border p-6 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+            <h3 className={`text-sm font-bold border-b pb-3 ${isDarkMode ? 'text-slate-100' : 'text-[#0a1b4f]'}`}>Reservation Timeline</h3>
+            <div className="relative pl-6 border-l-2 border-slate-200 dark:border-slate-800 mt-6 ml-2.5 space-y-6 text-xs leading-normal">
+              {/* Step 1 */}
+              <div className="relative">
+                <span className="absolute -left-[31px] top-0.5 grid h-4 w-4 place-items-center rounded-full bg-blue-600 text-white ring-4 ring-blue-50 dark:ring-blue-950/40">
+                  <span className="h-1.5 w-1.5 rounded-full bg-white"></span>
+                </span>
+                <p className={`font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-850'}`}>Reservation Created</p>
+                <p className="text-[10px] font-semibold text-slate-400 mt-0.5">May 14, 2026, 09:45 AM</p>
+                <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 mt-0.5">Admin User</p>
+              </div>
+
+              {/* Step 2 */}
+              <div className="relative">
+                <span className="absolute -left-[31px] top-0.5 grid h-4 w-4 place-items-center rounded-full bg-blue-600 text-white ring-4 ring-blue-50 dark:ring-blue-950/40">
+                  <span className="h-1.5 w-1.5 rounded-full bg-white"></span>
+                </span>
+                <p className={`font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-850'}`}>Notified Member</p>
+                <p className="text-[10px] font-semibold text-slate-400 mt-0.5">May 14, 2026, 09:46 AM</p>
+                <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 mt-0.5">Email, SMS, In-App</p>
+              </div>
+
+              {/* Step 3 */}
+              <div className="relative">
+                <span className="absolute -left-[31px] top-0.5 h-3 w-3 rounded-full bg-slate-300 dark:bg-slate-700 ml-0.5"></span>
+                <p className={`font-black text-slate-400 dark:text-slate-650`}>Ready for Pickup</p>
+                <p className="text-[10px] font-semibold text-slate-400 mt-0.5">-</p>
+                <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-600 mt-0.5">Pending</p>
+              </div>
+
+              {/* Step 4 */}
+              <div className="relative">
+                <span className="absolute -left-[31px] top-0.5 h-3 w-3 rounded-full bg-slate-300 dark:bg-slate-700 ml-0.5"></span>
+                <p className={`font-black text-slate-400 dark:text-slate-650`}>Picked Up</p>
+                <p className="text-[10px] font-semibold text-slate-400 mt-0.5">-</p>
+                <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-600 mt-0.5">Pending</p>
+              </div>
+
+              {/* Step 5 */}
+              <div className="relative pb-1">
+                <span className="absolute -left-[31px] top-0.5 h-3 w-3 rounded-full bg-slate-300 dark:bg-slate-700 ml-0.5"></span>
+                <p className={`font-black text-slate-400 dark:text-slate-650`}>Completed / Cancelled</p>
+                <p className="text-[10px] font-semibold text-slate-400 mt-0.5">-</p>
+                <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-600 mt-0.5">Pending</p>
+              </div>
+            </div>
+
+            {/* Info notice banner inside card */}
+            <div className={`mt-5 flex items-start gap-2.5 rounded-xl p-3 text-[11px] font-semibold border ${
+              isDarkMode 
+                ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' 
+                : 'bg-blue-50/70 text-blue-800 border-blue-100'
+            }`}>
+              <Info size={16} className="shrink-0 mt-0.5 text-blue-500" />
+              <span>The member will be notified when the book becomes available for pickup.</span>
+            </div>
+          </article>
+
+          {/* Quick Actions Card */}
+          <article className={`rounded-2xl border p-6 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+            <h3 className={`text-sm font-bold border-b pb-3 ${isDarkMode ? 'text-slate-100' : 'text-[#0a1b4f]'}`}>Quick Actions</h3>
+            <div className="mt-5 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <button type="button" className={`h-10 rounded-xl border flex items-center justify-center gap-2 text-xs font-bold transition-all ${
+                  isDarkMode 
+                    ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-400 hover:bg-emerald-950/40' 
+                    : 'bg-emerald-50/70 border-emerald-100 text-emerald-800 hover:bg-emerald-50'
+                }`}>
+                  <Check size={14} className={isDarkMode ? 'text-emerald-400' : 'text-emerald-600'} />
+                  Mark as Ready
+                </button>
+                <button type="button" className={`h-10 rounded-xl border flex items-center justify-center gap-2 text-xs font-bold transition-all ${
+                  isDarkMode 
+                    ? 'bg-rose-950/20 border-rose-500/30 text-rose-400 hover:bg-rose-950/40' 
+                    : 'bg-rose-50/70 border-rose-100 text-rose-800 hover:bg-rose-50'
+                }`}>
+                  <X size={14} className={isDarkMode ? 'text-rose-400' : 'text-rose-600'} />
+                  Cancel
+                </button>
+              </div>
+              <button type="button" className={`w-full h-10 rounded-xl border flex items-center justify-center gap-2 text-xs font-bold transition-all ${
+                isDarkMode 
+                  ? 'border-slate-700 text-slate-200 hover:bg-slate-800' 
+                  : 'border-slate-200 text-slate-700 hover:bg-slate-50'
+              }`}>
+                <Smartphone size={14} />
+                Contact Member
+              </button>
+            </div>
+          </article>
+
+          {/* Related Card */}
+          <article className={`rounded-2xl border p-6 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+            <h3 className={`text-sm font-bold border-b pb-3 ${isDarkMode ? 'text-slate-100' : 'text-[#0a1b4f]'}`}>Related</h3>
+            <div className="mt-4 divide-y divide-slate-100 dark:divide-slate-800">
+              <button type="button" className={`w-full py-3 flex items-center justify-between text-xs font-semibold transition-all text-left ${
+                isDarkMode ? 'text-slate-300 hover:text-slate-100' : 'text-slate-600 hover:text-slate-900'
+              }`}>
+                <div className="flex items-center gap-2">
+                  <UserRound size={14} className="text-slate-400" />
+                  <span>View Member Profile</span>
+                </div>
+                <ChevronRight size={14} className="text-slate-400" />
+              </button>
+              <button type="button" className={`w-full py-3 flex items-center justify-between text-xs font-semibold transition-all text-left ${
+                isDarkMode ? 'text-slate-300 hover:text-slate-100' : 'text-slate-600 hover:text-slate-900'
+              }`}>
+                <div className="flex items-center gap-2">
+                  <BookOpen size={14} className="text-slate-400" />
+                  <span>View Book Details</span>
+                </div>
+                <ChevronRight size={14} className="text-slate-400" />
+              </button>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [activeViewReservationId, setActiveViewReservationId] = useState<string | null>(null)
   const [reservationDate, setReservationDate] = useState('2026-05-21')
   const [expiresOn, setExpiresOn] = useState('2026-05-28')
   const [notes, setNotes] = useState('')
@@ -308,8 +730,14 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
   }
 
   return (
-    <div className={`min-h-0 flex-1 overflow-auto ${isAddModalOpen ? 'px-4 pt-4 pb-0' : 'p-4'} ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
-      {!isAddModalOpen ? (
+    <div className={`min-h-0 flex-1 overflow-auto ${isAddModalOpen || activeViewReservationId ? 'px-4 pt-4 pb-0' : 'p-4'} ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
+      {activeViewReservationId ? (
+        <ReservationDetailsView 
+          reservationId={activeViewReservationId} 
+          isDarkMode={isDarkMode} 
+          onBack={() => setActiveViewReservationId(null)} 
+        />
+      ) : !isAddModalOpen ? (
         <section className="p-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
@@ -447,7 +875,7 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
                       <td className="px-6 py-4 text-center">
                         <ReservationActionsMenu
                           isDarkMode={isDarkMode}
-                          onViewDetails={() => {}}
+                          onViewDetails={() => setActiveViewReservationId(res.id)}
                           onCancel={() => {}}
                         />
                       </td>
