@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Calendar, Clock3, CheckCircle2, XCircle, MapPin, Eye, Trash2, Download, Plus, Search, ChevronDown, Filter, ChevronLeft, ChevronRight, X, MoreHorizontal, AlertTriangle } from 'lucide-react'
+import { Calendar, Clock3, CheckCircle2, XCircle, MapPin, Eye, Trash2, Download, Plus, Search, ChevronDown, Filter, ChevronLeft, ChevronRight, X, MoreHorizontal, AlertTriangle, BookOpen, UserRound, ShieldCheck, Check, ArrowLeft } from 'lucide-react'
 
 type ReservationStatus = 'Pending' | 'Ready for Pickup' | 'Completed' | 'Cancelled'
 
@@ -187,23 +187,27 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
   return (
     <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
       <section className="p-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h2 className={`text-4xl font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Reservations</h2>
-            <p className={`mt-1 text-base font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>View and manage all book reservations.</p>
+        {!isAddModalOpen && (
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h2 className={`text-4xl font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Reservations</h2>
+              <p className={`mt-1 text-base font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>View and manage all book reservations.</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-bold transition-all ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
+                <Download size={16} />
+                Export
+              </button>
+              <button type="button" onClick={() => setIsAddModalOpen(true)} className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white hover:bg-emerald-700 transition-all shadow-sm">
+                <Plus size={18} />
+                New Reservation
+              </button>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-bold transition-all ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
-              <Download size={16} />
-              Export
-            </button>
-            <button type="button" onClick={() => setIsAddModalOpen(true)} className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white hover:bg-emerald-700 transition-all shadow-sm">
-              <Plus size={18} />
-              New Reservation
-            </button>
-          </div>
-        </div>
+        )}
 
+        {!isAddModalOpen && (
+        <>
         <section className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
           {stats.map((stat) => {
             const Icon = stat.icon
@@ -359,6 +363,8 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
             </div>
           </div>
         </div>
+        </>
+        )}
       </section>
 
       {/* Cancellation Confirmation Modal */}
@@ -498,69 +504,186 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
       )}
 
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
-          <section className={`w-full max-w-2xl rounded-3xl border shadow-2xl animate-in zoom-in-95 duration-200 ${isDarkMode ? 'border-slate-800 bg-[#0a1633]' : 'border-slate-200 bg-white'}`}>
-            <div className={`flex items-start justify-between border-b px-8 py-6 ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
-              <div>
-                <h3 className={`text-3xl font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>New Reservation</h3>
-                <p className={`mt-1 text-sm font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Create a new book reservation record.</p>
+        <section className="p-5">
+          <section className="mx-auto w-full max-w-[1650px] px-2 pt-2 pb-0">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-sm">
+                <button
+                  type="button"
+                  onClick={() => setIsAddModalOpen(false)}
+                  className={`inline-flex items-center gap-1.5 font-semibold ${isDarkMode ? 'text-slate-300 hover:text-slate-100' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                  <ArrowLeft size={15} />
+                  Reservations
+                </button>
+                <span className={isDarkMode ? 'text-slate-500' : 'text-slate-400'}>{'>'}</span>
+                <span className={isDarkMode ? 'text-slate-200' : 'text-slate-700'}>Add New Reservation</span>
               </div>
-              <button type="button" onClick={() => setIsAddModalOpen(false)} className={`grid h-10 w-10 place-items-center rounded-xl border transition-all ${isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
-                <X size={18} />
+
+              <button
+                type="button"
+                onClick={() => setIsAddModalOpen(false)}
+                className={`inline-flex h-10 items-center gap-2 rounded-xl border px-4 text-sm font-semibold ${
+                  isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-100'
+                }`}
+              >
+                <ArrowLeft size={15} />
+                Back to Reservations
               </button>
             </div>
 
-            <form className="space-y-6 px-8 py-8">
-               <div className="grid gap-6 md:grid-cols-2">
-                <div className="space-y-2">
-                  <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Select Book <span className="text-rose-500">*</span></label>
-                  <div className="relative">
-                    <select className={`h-12 w-full appearance-none rounded-xl border pl-4 pr-10 text-sm font-bold outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-slate-50 text-slate-700 focus:border-emerald-500'}`}>
-                      <option>Select a book</option>
-                      <option>The Alchemist</option>
-                      <option>Atomic Habits</option>
-                    </select>
-                    <ChevronDown size={18} className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
-                  </div>
+            <h2 className={`text-4xl font-black tracking-tight ${isDarkMode ? 'text-slate-100' : 'text-[#0a1b4f]'}`}>Add New Reservation</h2>
+            <p className={`mt-1 text-lg ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Create a reservation for a book.</p>
+            <form className="mt-5">
+              <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_430px]">
+                <div className="space-y-4">
+                  <article className={`rounded-2xl border p-5 sm:p-6 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+                    <div className="mb-5 flex items-start gap-3">
+                      <div className={`grid h-10 w-10 place-items-center rounded-full ${isDarkMode ? 'bg-emerald-500/15 text-emerald-300' : 'bg-emerald-50 text-emerald-700'}`}>
+                        <BookOpen size={18} />
+                      </div>
+                      <div>
+                        <h3 className={`text-[20px] font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Reservation Information</h3>
+                        <p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Set member, book, and reservation details.</p>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <label className={`text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>Reservation ID</label>
+                        <input className={`mt-1 h-11 w-full rounded-xl border px-4 outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500' : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400'}`} placeholder="Auto-generated" />
+                      </div>
+                      <div>
+                        <label className={`text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>Status</label>
+                        <div className="relative mt-1">
+                          <select className={`h-11 w-full appearance-none rounded-xl border px-4 pr-10 outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100' : 'border-slate-200 bg-white text-slate-700'}`}>
+                            <option>Pending</option>
+                            <option>Ready for Pickup</option>
+                            <option>Completed</option>
+                            <option>Cancelled</option>
+                          </select>
+                          <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 grid gap-4 md:grid-cols-2">
+                      <div>
+                        <label className={`text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>Select Book *</label>
+                        <input className={`mt-1 h-11 w-full rounded-xl border px-4 outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500' : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400'}`} placeholder="Search by title or ISBN" />
+                      </div>
+                      <div>
+                        <label className={`text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>Select Member *</label>
+                        <input className={`mt-1 h-11 w-full rounded-xl border px-4 outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500' : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400'}`} placeholder="Search by name or ID" />
+                      </div>
+                    </div>
+
+                    <div className="mt-4 grid gap-4 md:grid-cols-2">
+                      <div>
+                        <label className={`text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>Reserved On</label>
+                        <div className={`mt-1 flex h-11 items-center gap-2 rounded-xl border px-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                          <Calendar size={16} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />
+                          <input type="date" className={`w-full bg-transparent outline-none ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`} />
+                        </div>
+                      </div>
+                      <div>
+                        <label className={`text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>Expires On</label>
+                        <div className={`mt-1 flex h-11 items-center gap-2 rounded-xl border px-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                          <Calendar size={16} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />
+                          <input type="date" className={`w-full bg-transparent outline-none ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4">
+                      <label className={`text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>Notes</label>
+                      <textarea className={`mt-1 min-h-[116px] w-full rounded-xl border px-4 py-3 outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500' : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400'}`} placeholder="Add reservation notes..." />
+                    </div>
+                  </article>
+
+                  <article className={`rounded-2xl border p-5 sm:p-6 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+                    <div className="mb-5 flex items-start gap-3">
+                      <div className={`grid h-10 w-10 place-items-center rounded-full ${isDarkMode ? 'bg-emerald-500/15 text-emerald-300' : 'bg-emerald-50 text-emerald-700'}`}>
+                        <ShieldCheck size={18} />
+                      </div>
+                      <div>
+                        <h3 className={`text-[20px] font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Pickup & Policies</h3>
+                        <p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Configure pickup location and notifications.</p>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <label className={`text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>Pickup Branch</label>
+                        <div className="relative mt-1">
+                          <select className={`h-11 w-full appearance-none rounded-xl border px-4 pr-10 outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100' : 'border-slate-200 bg-white text-slate-700'}`}>
+                            <option>Central Library</option>
+                            <option>North Branch</option>
+                            <option>West Branch</option>
+                          </select>
+                          <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                        </div>
+                      </div>
+                      <div>
+                        <label className={`text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>Notify Member</label>
+                        <div className={`mt-1 flex h-11 items-center rounded-xl border px-4 text-sm ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
+                          Email + In-app
+                        </div>
+                      </div>
+                    </div>
+                  </article>
                 </div>
-                <div className="space-y-2">
-                  <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Select Member <span className="text-rose-500">*</span></label>
-                  <div className="relative">
-                    <select className={`h-12 w-full appearance-none rounded-xl border pl-4 pr-10 text-sm font-bold outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-slate-50 text-slate-700 focus:border-emerald-500'}`}>
-                      <option>Select a member</option>
-                      <option>Maria Santos</option>
-                      <option>Juan Dela Cruz</option>
-                    </select>
-                    <ChevronDown size={18} className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
-                  </div>
-                </div>
+
+                <aside className="space-y-4">
+                  <article className={`rounded-2xl border p-5 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+                    <div className="mb-4 flex items-start gap-3">
+                      <div className={`grid h-10 w-10 place-items-center rounded-full ${isDarkMode ? 'bg-emerald-500/15 text-emerald-300' : 'bg-emerald-50 text-emerald-700'}`}>
+                        <BookOpen size={18} />
+                      </div>
+                      <div>
+                        <h3 className={`text-[20px] font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Reservation Summary</h3>
+                        <p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Preview selected details.</p>
+                      </div>
+                    </div>
+                    <div className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-slate-50/40'}`}>
+                      <p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>No book selected</p>
+                    </div>
+                  </article>
+
+                  <article className={`rounded-2xl border p-5 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+                    <div className="mb-4 flex items-start gap-3">
+                      <div className={`grid h-10 w-10 place-items-center rounded-full ${isDarkMode ? 'bg-emerald-500/15 text-emerald-300' : 'bg-emerald-50 text-emerald-700'}`}>
+                        <UserRound size={18} />
+                      </div>
+                      <div>
+                        <h3 className={`text-[20px] font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Member Information</h3>
+                        <p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Selected member preview.</p>
+                      </div>
+                    </div>
+                    <div className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-slate-50/40'}`}>
+                      <p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>No member selected</p>
+                    </div>
+                  </article>
+                </aside>
               </div>
 
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="space-y-2">
-                  <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Pickup Branch</label>
-                  <div className="relative">
-                    <select className={`h-12 w-full appearance-none rounded-xl border pl-4 pr-10 text-sm font-bold outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-slate-50 text-slate-700 focus:border-emerald-500'}`}>
-                      <option>Central Library</option>
-                      <option>North Branch</option>
-                      <option>West Branch</option>
-                    </select>
-                    <ChevronDown size={18} className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
-                  </div>
+              <div className="-mx-6 sticky bottom-0 mt-4 border-t border-slate-200 bg-white px-6 py-3">
+                <div className="flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsAddModalOpen(false)}
+                    className={`h-11 rounded-xl border px-8 text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-100'}`}
+                  >
+                    Cancel
+                  </button>
+                  <button type="button" className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-700 px-8 text-sm font-semibold text-white hover:bg-emerald-800">
+                    Create Reservation
+                  </button>
                 </div>
-                <div className="space-y-2">
-                  <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Expiration Date</label>
-                  <input type="date" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-slate-50 text-slate-700 focus:border-emerald-500'}`} />
-                </div>
-              </div>
-
-              <div className="flex gap-4 pt-4">
-                <button type="button" onClick={() => setIsAddModalOpen(false)} className={`h-12 flex-1 rounded-xl border font-bold transition-all ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>Cancel</button>
-                <button type="button" onClick={() => setIsAddModalOpen(false)} className="h-12 flex-1 rounded-xl bg-emerald-600 font-bold text-white shadow-lg shadow-emerald-600/30 hover:bg-emerald-700 transition-all">Create Reservation</button>
               </div>
             </form>
           </section>
-        </div>
+        </section>
       )}
     </div>
   )
