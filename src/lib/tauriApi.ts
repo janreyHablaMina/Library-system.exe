@@ -37,6 +37,33 @@ export type SessionUser = {
   loginAt: string
 }
 
+export type Member = {
+  id: number
+  fullName: string
+  memberType: string
+  memberId: string
+  department: string | null
+  contactNumber: string | null
+  email: string | null
+  address: string | null
+  profilePhotoData: string | null
+  status: string
+  borrowed: number
+  createdAt: string
+}
+
+export type CreateMemberPayload = {
+  fullName: string
+  memberType: string
+  memberId: string
+  department?: string | null
+  contactNumber?: string | null
+  email?: string | null
+  address?: string | null
+  profilePhotoData?: string | null
+  status?: string | null
+}
+
 export async function initDb(): Promise<string> {
   return invoke<string>('init_db')
 }
@@ -63,6 +90,14 @@ export async function updateBook(payload: UpdateBookPayload): Promise<void> {
 
 export async function deleteBook(id: number): Promise<void> {
   return invoke<void>('delete_book', { id })
+}
+
+export async function createMember(payload: CreateMemberPayload): Promise<number> {
+  return invoke<number>('create_member', { payload })
+}
+
+export async function listMembers(limit?: number): Promise<Member[]> {
+  return invoke<Member[]>('list_members', { limit })
 }
 
 export async function sendEmailSmtp(to: string, subject: string, body: string): Promise<string> {

@@ -51,6 +51,37 @@ struct SessionUser {
   login_at: String,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct Member {
+  id: i64,
+  full_name: String,
+  member_type: String,
+  member_id: String,
+  department: Option<String>,
+  contact_number: Option<String>,
+  email: Option<String>,
+  address: Option<String>,
+  profile_photo_data: Option<String>,
+  status: String,
+  borrowed: i64,
+  created_at: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct CreateMemberPayload {
+  full_name: String,
+  member_type: String,
+  member_id: String,
+  department: Option<String>,
+  contact_number: Option<String>,
+  email: Option<String>,
+  address: Option<String>,
+  profile_photo_data: Option<String>,
+  status: Option<String>,
+}
+
 fn open_db(path: &PathBuf) -> Result<Connection, String> {
   Connection::open(path).map_err(|e| format!("open db failed: {e}"))
 }
@@ -102,6 +133,20 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
         logout_at TEXT,
         is_active INTEGER NOT NULL DEFAULT 1
       );
+      CREATE TABLE IF NOT EXISTS members (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        full_name TEXT NOT NULL,
+        member_type TEXT NOT NULL,
+        member_id TEXT NOT NULL UNIQUE,
+        department TEXT,
+        contact_number TEXT,
+        email TEXT,
+        address TEXT,
+        profile_photo_data TEXT,
+        status TEXT NOT NULL DEFAULT 'Active',
+        borrowed INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL
+      );
       ",
     )
     .map_err(|e| format!("init schema failed: {e}"))?;
@@ -111,6 +156,12 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
     let msg = e.to_string();
     if !msg.contains("duplicate column name") {
       return Err(format!("books migration failed: {e}"));
+    }
+  }
+  if let Err(e) = conn.execute("ALTER TABLE members ADD COLUMN profile_photo_data TEXT", []) {
+    let msg = e.to_string();
+    if !msg.contains("duplicate column name") {
+      return Err(format!("members migration failed: {e}"));
     }
   }
 
@@ -258,6 +309,81 @@ fn delete_book(app: tauri::AppHandle, id: i64) -> Result<(), String> {
     .execute("DELETE FROM books WHERE id = ?1", params![id])
     .map_err(|e| format!("delete book failed: {e}"))?;
   Ok(())
+}
+
+#[tauri::command]
+fn create_member(app: tauri::AppHandle, payload: CreateMemberPayload) -> Result<i64, String> {
+  let full_name = payload.full_name.trim();
+  let member_type = payload.member_type.trim();
+  let member_id = payload.member_id.trim();
+  if full_name.is_empty() || member_type.is_empty() || member_id.is_empty() {
+    return Err("fullName, memberType, and memberId are required".to_string());
+  }
+
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  conn
+    .execute(
+      "
+      INSERT INTO members (full_name, member_type, member_id, department, contact_number, email, address, profile_photo_data, status, borrowed, created_at)
+      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, 0, ?10)
+      ",
+      params![
+        full_name,
+        member_type,
+        member_id,
+        payload.department.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
+        payload.contact_number.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
+        payload.email.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
+        payload.address.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
+        payload.profile_photo_data,
+        payload.status.unwrap_or_else(|| "Active".to_string()),
+        Utc::now().to_rfc3339()
+      ],
+    )
+    .map_err(|e| format!("create member failed: {e}"))?;
+
+  Ok(conn.last_insert_rowid())
+}
+
+#[tauri::command]
+fn list_members(app: tauri::AppHandle, limit: Option<i64>) -> Result<Vec<Member>, String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  let max_rows = limit.unwrap_or(500).clamp(1, 1000);
+  let mut stmt = conn
+    .prepare(
+      "
+      SELECT id, full_name, member_type, member_id, department, contact_number, email, address, profile_photo_data, status, borrowed, created_at
+      FROM members
+      ORDER BY id DESC
+      LIMIT ?1
+      ",
+    )
+    .map_err(|e| format!("prepare list members query failed: {e}"))?;
+
+  let rows = stmt
+    .query_map(params![max_rows], |row| {
+      Ok(Member {
+        id: row.get(0)?,
+        full_name: row.get(1)?,
+        member_type: row.get(2)?,
+        member_id: row.get(3)?,
+        department: row.get(4)?,
+        contact_number: row.get(5)?,
+        email: row.get(6)?,
+        address: row.get(7)?,
+        profile_photo_data: row.get(8)?,
+        status: row.get(9)?,
+        borrowed: row.get(10)?,
+        created_at: row.get(11)?,
+      })
+    })
+    .map_err(|e| format!("list members failed: {e}"))?;
+
+  rows
+    .collect::<Result<Vec<_>, _>>()
+    .map_err(|e| format!("collect members failed: {e}"))
 }
 
 #[tauri::command]
@@ -434,6 +560,8 @@ pub fn run() {
       list_books,
       update_book,
       delete_book,
+      create_member,
+      list_members,
       login,
       logout,
       get_active_session,

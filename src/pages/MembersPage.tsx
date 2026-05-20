@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { FormEvent } from 'react'
+import type { ChangeEvent, FormEvent } from 'react'
 import { AlertTriangle, ChevronDown, Download, Eye, Grid2x2, List, Mail, MoreHorizontal, Pencil, Phone, RotateCcw, Search, Trash2, UserPlus, Users, X } from 'lucide-react'
+import { createMember, listMembers, type Member } from '../lib/tauriApi'
 
 type MemberType = 'Student' | 'Teacher' | 'Staff' | 'Visitor'
 type MemberStatus = 'Active' | 'Overdue' | 'Inactive'
@@ -17,6 +18,7 @@ type MemberRow = {
   borrowed: number
   status: MemberStatus
   avatar: string
+  profilePhotoData?: string | null
 }
 
 type MembersPageProps = {
@@ -49,16 +51,16 @@ const initialFormState: MemberFormState = {
 
 
 const members: MemberRow[] = [
-  { id: 1, name: 'Juan Dela Cruz', email: 'juan.delacruz@email.com', memberId: 'STU-2026-001', type: 'Student', department: 'BS Computer Science', yearOrRole: '3rd Year', contact: '0917 123 4567', borrowed: 2, status: 'Active', avatar: '👨🏻' },
-  { id: 2, name: 'Maria Santos', email: 'maria.santos@email.com', memberId: 'STU-2026-002', type: 'Student', department: 'BS Education', yearOrRole: '2nd Year', contact: '0921 456 7890', borrowed: 1, status: 'Active', avatar: '👩🏻' },
-  { id: 3, name: 'Pedro Reyes', email: 'pedro.reyes@email.com', memberId: 'STU-2026-003', type: 'Student', department: 'BS Information Tech', yearOrRole: '4th Year', contact: '0999 555 1212', borrowed: 0, status: 'Active', avatar: '👨🏽' },
-  { id: 4, name: 'Ana Lim', email: 'ana.lim@email.com', memberId: 'STU-2026-004', type: 'Student', department: 'BS Psychology', yearOrRole: '1st Year', contact: '0916 888 3434', borrowed: 3, status: 'Overdue', avatar: '👩🏽' },
-  { id: 5, name: 'Mark Anthony Villanueva', email: 'mark.villanueva@school.edu', memberId: 'TCH-2026-001', type: 'Teacher', department: 'Mathematics', yearOrRole: 'Department', contact: '0918 222 3344', borrowed: 1, status: 'Active', avatar: '👨🏾' },
-  { id: 6, name: 'Grace Mendoza', email: 'grace.mendoza@school.edu', memberId: 'TCH-2026-002', type: 'Teacher', department: 'English', yearOrRole: 'Department', contact: '0927 333 4455', borrowed: 0, status: 'Active', avatar: '👩🏾' },
-  { id: 7, name: 'Rogelio Cruz', email: 'rogelio.cruz@school.edu', memberId: 'STA-2026-001', type: 'Staff', department: 'Library Staff', yearOrRole: 'Support', contact: '0915 777 8899', borrowed: 0, status: 'Active', avatar: '👨‍💼' },
-  { id: 8, name: 'Liza Montero', email: 'liza.montero@school.edu', memberId: 'STA-2026-002', type: 'Staff', department: 'Administrative', yearOrRole: 'Department', contact: '0933 444 5566', borrowed: 0, status: 'Active', avatar: '👩‍💼' },
-  { id: 9, name: 'Visitor - Alex Tan', email: 'alextan@gmail.com', memberId: 'VIS-2026-001', type: 'Visitor', department: 'Visitor', yearOrRole: 'Guest', contact: '0906 123 7890', borrowed: 0, status: 'Inactive', avatar: '🧑🏻' },
-  { id: 10, name: 'Visitor - Joy Reyes', email: 'joy.reyes@gmail.com', memberId: 'VIS-2026-002', type: 'Visitor', department: 'Visitor', yearOrRole: 'Guest', contact: '0912 654 0987', borrowed: 0, status: 'Inactive', avatar: '🧑🏽' },
+  { id: 1, name: 'Juan Dela Cruz', email: 'juan.delacruz@email.com', memberId: 'STU-2026-001', type: 'Student', department: 'BS Computer Science', yearOrRole: '3rd Year', contact: '0917 123 4567', borrowed: 2, status: 'Active', avatar: 'ðŸ‘¨ðŸ»' },
+  { id: 2, name: 'Maria Santos', email: 'maria.santos@email.com', memberId: 'STU-2026-002', type: 'Student', department: 'BS Education', yearOrRole: '2nd Year', contact: '0921 456 7890', borrowed: 1, status: 'Active', avatar: 'ðŸ‘©ðŸ»' },
+  { id: 3, name: 'Pedro Reyes', email: 'pedro.reyes@email.com', memberId: 'STU-2026-003', type: 'Student', department: 'BS Information Tech', yearOrRole: '4th Year', contact: '0999 555 1212', borrowed: 0, status: 'Active', avatar: 'ðŸ‘¨ðŸ½' },
+  { id: 4, name: 'Ana Lim', email: 'ana.lim@email.com', memberId: 'STU-2026-004', type: 'Student', department: 'BS Psychology', yearOrRole: '1st Year', contact: '0916 888 3434', borrowed: 3, status: 'Overdue', avatar: 'ðŸ‘©ðŸ½' },
+  { id: 5, name: 'Mark Anthony Villanueva', email: 'mark.villanueva@school.edu', memberId: 'TCH-2026-001', type: 'Teacher', department: 'Mathematics', yearOrRole: 'Department', contact: '0918 222 3344', borrowed: 1, status: 'Active', avatar: 'ðŸ‘¨ðŸ¾' },
+  { id: 6, name: 'Grace Mendoza', email: 'grace.mendoza@school.edu', memberId: 'TCH-2026-002', type: 'Teacher', department: 'English', yearOrRole: 'Department', contact: '0927 333 4455', borrowed: 0, status: 'Active', avatar: 'ðŸ‘©ðŸ¾' },
+  { id: 7, name: 'Rogelio Cruz', email: 'rogelio.cruz@school.edu', memberId: 'STA-2026-001', type: 'Staff', department: 'Library Staff', yearOrRole: 'Support', contact: '0915 777 8899', borrowed: 0, status: 'Active', avatar: 'ðŸ‘¨â€ðŸ’¼' },
+  { id: 8, name: 'Liza Montero', email: 'liza.montero@school.edu', memberId: 'STA-2026-002', type: 'Staff', department: 'Administrative', yearOrRole: 'Department', contact: '0933 444 5566', borrowed: 0, status: 'Active', avatar: 'ðŸ‘©â€ðŸ’¼' },
+  { id: 9, name: 'Visitor - Alex Tan', email: 'alextan@gmail.com', memberId: 'VIS-2026-001', type: 'Visitor', department: 'Visitor', yearOrRole: 'Guest', contact: '0906 123 7890', borrowed: 0, status: 'Inactive', avatar: 'ðŸ§‘ðŸ»' },
+  { id: 10, name: 'Visitor - Joy Reyes', email: 'joy.reyes@gmail.com', memberId: 'VIS-2026-002', type: 'Visitor', department: 'Visitor', yearOrRole: 'Guest', contact: '0912 654 0987', borrowed: 0, status: 'Inactive', avatar: 'ðŸ§‘ðŸ½' },
 ]
 
 function getTypeClass(type: MemberType) {
@@ -74,7 +76,13 @@ function getStatusClass(status: MemberStatus) {
   return 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
 }
 
-// ─── Member Actions Dropdown Menu ─────────────────────────────────────────────
+function getAvatarByType(type: MemberType) {
+  if (type === 'Student') return 'S'
+  if (type === 'Teacher') return 'T'
+  return 'M'
+}
+
+// â”€â”€â”€ Member Actions Dropdown Menu â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 type MemberActionsMenuProps = {
   isDarkMode: boolean
   onViewDetails: () => void
@@ -205,6 +213,9 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail }: MembersPageProps
   const [memberToEdit, setMemberToEdit] = useState<MemberRow | null>(null)
   const [memberToDelete, setMemberToDelete] = useState<MemberRow | null>(null)
   const [showToast, setShowToast] = useState<string | null>(null)
+  const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(null)
+  const [profilePhotoName, setProfilePhotoName] = useState<string>('')
+  const photoInputRef = useRef<HTMLInputElement>(null)
 
   // Auto-dismiss toast
   useEffect(() => {
@@ -225,6 +236,46 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail }: MembersPageProps
   const uniqueDepts = useMemo(() => {
     return Array.from(new Set(memberList.map(m => m.department))).sort()
   }, [memberList])
+
+  const toMemberRow = (member: Member): MemberRow => {
+    const memberType = member.memberType as MemberType
+    const safeType: MemberType = ['Student', 'Teacher', 'Staff', 'Visitor'].includes(memberType)
+      ? memberType
+      : 'Visitor'
+    const memberStatus = member.status as MemberStatus
+    const safeStatus: MemberStatus = ['Active', 'Overdue', 'Inactive'].includes(memberStatus)
+      ? memberStatus
+      : 'Active'
+
+    return {
+      id: member.id,
+      name: member.fullName,
+      email: member.email || 'n/a',
+      memberId: member.memberId,
+      type: safeType,
+      department: member.department || 'General',
+      yearOrRole: safeType === 'Student' ? '1st Year' : 'Support',
+      contact: member.contactNumber || 'n/a',
+      borrowed: member.borrowed,
+      status: safeStatus,
+      avatar: getAvatarByType(safeType),
+      profilePhotoData: member.profilePhotoData || null,
+    }
+  }
+
+  useEffect(() => {
+    const loadMembers = async () => {
+      try {
+        const rows = await listMembers(500)
+        if (rows.length > 0) {
+          setMemberList(rows.map(toMemberRow))
+        }
+      } catch {
+        // Keep local mock list if DB is unavailable.
+      }
+    }
+    void loadMembers()
+  }, [])
 
   // Filter members dynamically
   const filteredMembers = memberList.filter((member) => {
@@ -269,6 +320,9 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail }: MembersPageProps
     setIsAddModalOpen(false)
     setMemberToEdit(null)
     setMemberForm(initialFormState)
+    setProfilePhotoPreview(null)
+    setProfilePhotoName('')
+    if (photoInputRef.current) photoInputRef.current.value = ''
   }
 
   const handleOpenEditModal = (member: MemberRow) => {
@@ -283,12 +337,44 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail }: MembersPageProps
       address: '',
       status: member.status,
     })
+    setProfilePhotoPreview(member.profilePhotoData || null)
+    setProfilePhotoName(member.profilePhotoData ? 'Current photo' : '')
+    if (photoInputRef.current) photoInputRef.current.value = ''
     setIsAddModalOpen(true)
   }
 
-  const handleSaveMember = (event: FormEvent<HTMLFormElement>) => {
+  const handleProfilePhotoChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    const acceptedTypes = ['image/jpeg', 'image/png']
+    if (!acceptedTypes.includes(file.type)) {
+      setShowToast('Only JPG and PNG files are allowed.')
+      event.target.value = ''
+      return
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setShowToast('Photo must be 2MB or smaller.')
+      event.target.value = ''
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      const dataUrl = typeof reader.result === 'string' ? reader.result : null
+      setProfilePhotoPreview(dataUrl)
+      setProfilePhotoName(file.name)
+    }
+    reader.onerror = () => {
+      setShowToast('Failed to read photo file.')
+      event.target.value = ''
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleSaveMember = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    
+
     // Basic validation
     if (!memberForm.fullName.trim() || !memberForm.memberType || !memberForm.memberId) return
 
@@ -302,30 +388,37 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail }: MembersPageProps
         department: memberForm.courseDepartment || 'General',
         contact: memberForm.contactNumber || 'n/a',
         status: (memberForm.status as MemberStatus) || 'Active',
-        avatar: memberForm.memberType === 'Student' ? '🧑🏻' : memberForm.memberType === 'Teacher' ? '👨🏾' : '👨‍💼',
+        avatar: getAvatarByType(memberForm.memberType as MemberType),
+        profilePhotoData: profilePhotoPreview || null,
       } : m))
       setShowToast(`Successfully updated "${memberForm.fullName}"`)
     } else {
-      const newMember: MemberRow = {
-        id: Date.now(),
-        name: memberForm.fullName,
-        email: memberForm.email || 'n/a',
-        memberId: memberForm.memberId,
-        type: memberForm.memberType as MemberType,
-        department: memberForm.courseDepartment || 'General',
-        yearOrRole: memberForm.memberType === 'Student' ? '1st Year' : 'Support',
-        contact: memberForm.contactNumber || 'n/a',
-        borrowed: 0,
-        status: (memberForm.status as MemberStatus) || 'Active',
-        avatar: memberForm.memberType === 'Student' ? '🧑🏻' : memberForm.memberType === 'Teacher' ? '👨🏾' : '👨‍💼',
+      try {
+        await createMember({
+          fullName: memberForm.fullName.trim(),
+          memberType: memberForm.memberType,
+          memberId: memberForm.memberId.trim(),
+          department: memberForm.courseDepartment.trim() || null,
+          contactNumber: memberForm.contactNumber.trim() || null,
+          email: memberForm.email.trim() || null,
+          address: memberForm.address.trim() || null,
+          profilePhotoData: profilePhotoPreview || null,
+          status: memberForm.status || 'Active',
+        })
+        const rows = await listMembers(500)
+        if (rows.length > 0) {
+          setMemberList(rows.map(toMemberRow))
+        }
+        setShowToast(`Successfully added "${memberForm.fullName}"`)
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to add member.'
+        setShowToast(message)
+        return
       }
-      setMemberList(prev => [newMember, ...prev])
-      setShowToast(`Successfully added "${memberForm.fullName}"`)
     }
-    
+
     closeAddModal()
   }
-
   const handleDeleteConfirm = () => {
     if (memberToDelete) {
       setMemberList(prev => prev.filter(m => m.id !== memberToDelete.id))
@@ -536,9 +629,13 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail }: MembersPageProps
                         <div className="flex items-start gap-3">
                           <span 
                             onClick={() => onOpenMemberDetail(member.id)}
-                            className={`grid h-11 w-11 place-items-center rounded-full text-lg cursor-pointer hover:scale-105 transition-transform ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}
+                            className={`grid h-11 w-11 place-items-center overflow-hidden rounded-full text-lg cursor-pointer hover:scale-105 transition-transform ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}
                           >
-                            {member.avatar}
+                            {member.profilePhotoData ? (
+                              <img src={member.profilePhotoData} alt={`${member.name} thumbnail`} className="h-full w-full object-cover" />
+                            ) : (
+                              member.avatar
+                            )}
                           </span>
                           <div>
                             <button
@@ -589,9 +686,13 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail }: MembersPageProps
                   <div className="flex items-center justify-between">
                     <span 
                       onClick={() => onOpenMemberDetail(member.id)}
-                      className={`grid h-11 w-11 place-items-center rounded-full text-lg cursor-pointer hover:scale-105 transition-transform ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}
+                      className={`grid h-11 w-11 place-items-center overflow-hidden rounded-full text-lg cursor-pointer hover:scale-105 transition-transform ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}
                     >
-                      {member.avatar}
+                      {member.profilePhotoData ? (
+                        <img src={member.profilePhotoData} alt={`${member.name} thumbnail`} className="h-full w-full object-cover" />
+                      ) : (
+                        member.avatar
+                      )}
                     </span>
                     <span className={`rounded-md px-2 py-1 text-xs font-semibold ${getStatusClass(member.status)}`}>{member.status}</span>
                   </div>
@@ -704,12 +805,31 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail }: MembersPageProps
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Profile Photo</label>
+                  <input
+                    ref={photoInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png"
+                    className="hidden"
+                    onChange={handleProfilePhotoChange}
+                  />
                   <div className="flex items-center gap-3">
-                    <div className={`grid h-10 w-10 place-items-center rounded-full ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
-                      <Users size={16} />
+                    <div className={`grid h-10 w-10 place-items-center overflow-hidden rounded-full ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
+                      {profilePhotoPreview ? (
+                        <img src={profilePhotoPreview} alt="Profile preview" className="h-full w-full object-cover" />
+                      ) : (
+                        <Users size={16} />
+                      )}
                     </div>
-                    <button type="button" className={`h-10 rounded-lg border px-4 text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>Upload Photo</button>
-                    <span className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>JPG, PNG (Max 2MB)</span>
+                    <button
+                      type="button"
+                      onClick={() => photoInputRef.current?.click()}
+                      className={`h-10 rounded-lg border px-4 text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}
+                    >
+                      Upload Photo
+                    </button>
+                    <span className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                      {profilePhotoName || 'JPG, PNG (Max 2MB)'}
+                    </span>
                   </div>
                 </div>
                 <div>
@@ -736,3 +856,4 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail }: MembersPageProps
     </div>
   )
 }
+
