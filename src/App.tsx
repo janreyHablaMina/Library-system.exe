@@ -128,6 +128,10 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
   const [selectedMemberId, setSelectedMemberId] = useState<number | null>(null)
   const [transactionActiveTab, setTransactionActiveTab] = useState<'all' | 'borrowed' | 'returned' | 'overdue'>('all')
   const profileMenuRef = useRef<HTMLDivElement | null>(null)
+  const openTransactionsPage = (tab: 'all' | 'borrowed' | 'returned' | 'overdue' = 'all') => {
+    setTransactionActiveTab(tab)
+    setActivePage('Transactions')
+  }
 
   useEffect(() => {
     const handlePointerDown = (event: MouseEvent) => {
@@ -216,13 +220,22 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
 
   return (
     <main className={`h-screen overflow-hidden p-0 ${dashboardTheme.main} ${isDarkMode ? 'dashboard-dark' : ''}`}>
-      <div className={`flex h-full w-full overflow-hidden border ${dashboardTheme.frame}`}>
-        <aside className={`hidden h-full shrink-0 border-r transition-all duration-200 lg:flex lg:flex-col ${dashboardTheme.aside} ${sidebarCollapsed ? 'w-20' : 'w-64'}`}>
-          <div className={`border-b py-6 ${dashboardTheme.profileBorder} ${sidebarCollapsed ? 'px-3' : 'px-6'}`}>
-            <h1 className={`font-black tracking-tight ${dashboardTheme.asideTitle} ${sidebarCollapsed ? 'text-2xl text-center' : 'text-4xl'}`}>info<span className="text-emerald-300">Lib</span></h1>
-            {!sidebarCollapsed ? <p className={`mt-1 text-[10px] font-semibold uppercase tracking-[0.08em] ${dashboardTheme.asideSub}`}>Library Management System</p> : null}
+      <div className={`flex h-full w-full overflow-hidden ${dashboardTheme.frame}`}>
+        <aside className={`hidden h-full shrink-0 border-r border-slate-900 bg-[#0b1220] transition-all duration-200 lg:flex lg:flex-col ${sidebarCollapsed ? 'w-20' : 'w-64'}`}>
+          <div className={`border-b border-slate-800 ${sidebarCollapsed ? 'px-2 py-4' : 'px-6 py-6'}`}>
+            <div className="flex flex-col items-center">
+              <div className={`grid place-items-center rounded-full border border-slate-700 bg-slate-900 shadow-sm ${sidebarCollapsed ? 'h-14 w-14' : 'h-20 w-20'}`}>
+                <div className={`grid place-items-center rounded-full border-2 border-emerald-500 font-black text-emerald-300 ${sidebarCollapsed ? 'h-10 w-10 text-base' : 'h-14 w-14 text-sm'}`}>CC</div>
+              </div>
+              {!sidebarCollapsed ? (
+                <>
+                  <p className="mt-4 text-center text-[22px] font-black tracking-tight text-white">info<span className="text-emerald-400">Lib</span></p>
+                  <p className="mt-1 text-center text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400">Library Management System</p>
+                </>
+              ) : null}
+            </div>
           </div>
-          <nav className={`flex-1 overflow-y-auto py-5 text-sm`}>
+          <nav className="flex-1 overflow-y-auto py-5 text-sm">
                 {/* Top Section - Dashboard */}
                 <div className="px-4 mt-4">
                    {(() => {
@@ -231,15 +244,15 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
                        <button
                         key={navItems[0].id}
                         onClick={() => setActivePage(navItems[0].id as any)}
-                        className={`group flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200 ${
+                        className={`group flex w-full items-center gap-3 rounded-xl py-3 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-2' : 'px-4'} ${
                           activePage === navItems[0].id
-                            ? 'bg-emerald-600/20 text-emerald-400 shadow-[inset_0_0_12px_rgba(16,185,129,0.1)]'
-                            : 'text-slate-400 hover:bg-slate-800/50 hover:text-emerald-300'
+                            ? 'bg-emerald-500/20 text-emerald-300'
+                            : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
                         }`}
                       >
-                        <DashIcon size={20} className={activePage === navItems[0].id ? 'text-emerald-400' : ''} />
-                        <span className="flex-1 text-left font-semibold">{navItems[0].label}</span>
-                        {activePage === navItems[0].id && <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />}
+                        <DashIcon size={18} className={activePage === navItems[0].id ? 'text-emerald-300' : 'text-slate-400'} />
+                        {!sidebarCollapsed ? <span className="flex-1 text-left font-semibold">{navItems[0].label}</span> : null}
+                        {activePage === navItems[0].id && !sidebarCollapsed ? <div className="h-5 w-1 rounded-full bg-emerald-500" /> : null}
                       </button>
                      )
                    })()}
@@ -247,21 +260,21 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
 
                 {/* LIBRARY Section */}
                 <div className="mt-8 px-4">
-                  <p className="px-4 text-[11px] font-bold uppercase tracking-[2px] text-slate-500">Library</p>
+                  {!sidebarCollapsed ? <p className="px-4 text-[11px] font-bold uppercase tracking-[2px] text-slate-500">Library</p> : null}
                   <div className="mt-4 space-y-1">
                     {navItems.slice(1, 5).map((item) => (
                       <button
                         key={item.id}
                         onClick={() => setActivePage(item.id as any)}
-                        className={`group flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200 ${
+                        className={`group flex w-full items-center gap-3 rounded-xl py-3 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-2' : 'px-4'} ${
                           activePage === item.id
-                            ? 'bg-emerald-600/20 text-emerald-400 shadow-[inset_0_0_12px_rgba(16,185,129,0.1)]'
-                            : 'text-slate-400 hover:bg-slate-800/50 hover:text-emerald-300'
+                            ? 'bg-emerald-500/20 text-emerald-300'
+                            : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
                         }`}
                       >
-                        <item.icon size={20} className={activePage === item.id ? 'text-emerald-400' : ''} />
-                        <span className="flex-1 text-left font-semibold">{item.label}</span>
-                        <ChevronRight size={14} className={`transition-transform duration-300 ${activePage === item.id ? 'rotate-90 text-emerald-400' : 'text-emerald-100/40'}`} />
+                        <item.icon size={18} className={activePage === item.id ? 'text-emerald-300' : 'text-slate-400'} />
+                        {!sidebarCollapsed ? <span className="flex-1 text-left font-semibold">{item.label}</span> : null}
+                        {!sidebarCollapsed ? <ChevronRight size={14} className={`transition-transform duration-300 ${activePage === item.id ? 'rotate-90 text-emerald-400' : 'text-slate-600'}`} /> : null}
                       </button>
                     ))}
                   </div>
@@ -269,21 +282,21 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
 
                 {/* CIRCULATION Section */}
                 <div className="mt-6 px-4">
-                  <p className="px-4 text-[11px] font-bold uppercase tracking-[2px] text-slate-500">Circulation</p>
+                  {!sidebarCollapsed ? <p className="px-4 text-[11px] font-bold uppercase tracking-[2px] text-slate-500">Circulation</p> : null}
                   <div className="mt-4 space-y-1">
                     {navItems.slice(5, 7).map((item) => (
                       <button
                         key={item.id}
                         onClick={() => setActivePage(item.id as any)}
-                        className={`group flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200 ${
+                        className={`group flex w-full items-center gap-3 rounded-xl py-3 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-2' : 'px-4'} ${
                           activePage === item.id
-                            ? 'bg-emerald-600/20 text-emerald-400 shadow-[inset_0_0_12px_rgba(16,185,129,0.1)]'
-                            : 'text-slate-400 hover:bg-slate-800/50 hover:text-emerald-300'
+                            ? 'bg-emerald-500/20 text-emerald-300'
+                            : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
                         }`}
                       >
-                        <item.icon size={20} className={activePage === item.id ? 'text-emerald-400' : ''} />
-                        <span className="flex-1 text-left font-semibold">{item.label}</span>
-                        <ChevronRight size={14} className={`transition-transform duration-300 ${activePage === item.id ? 'rotate-90 text-emerald-400' : 'text-emerald-100/40'}`} />
+                        <item.icon size={18} className={activePage === item.id ? 'text-emerald-300' : 'text-slate-400'} />
+                        {!sidebarCollapsed ? <span className="flex-1 text-left font-semibold">{item.label}</span> : null}
+                        {!sidebarCollapsed ? <ChevronRight size={14} className={`transition-transform duration-300 ${activePage === item.id ? 'rotate-90 text-emerald-400' : 'text-slate-600'}`} /> : null}
                       </button>
                     ))}
                   </div>
@@ -291,21 +304,21 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
 
                 {/* MANAGEMENT Section */}
                 <div className="mt-6 px-4">
-                  <p className="px-4 text-[11px] font-bold uppercase tracking-[2px] text-slate-500">Management</p>
+                  {!sidebarCollapsed ? <p className="px-4 text-[11px] font-bold uppercase tracking-[2px] text-slate-500">Management</p> : null}
                   <div className="mt-4 space-y-1">
                     {navItems.slice(7, 9).map((item) => (
                       <button
                         key={item.id}
                         onClick={() => setActivePage(item.id as any)}
-                        className={`group flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200 ${
+                        className={`group flex w-full items-center gap-3 rounded-xl py-3 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-2' : 'px-4'} ${
                           activePage === item.id
-                            ? 'bg-emerald-600/20 text-emerald-400 shadow-[inset_0_0_12px_rgba(16,185,129,0.1)]'
-                            : 'text-slate-400 hover:bg-slate-800/50 hover:text-emerald-300'
+                            ? 'bg-emerald-500/20 text-emerald-300'
+                            : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
                         }`}
                       >
-                        <item.icon size={20} className={activePage === item.id ? 'text-emerald-400' : ''} />
-                        <span className="flex-1 text-left font-semibold">{item.label}</span>
-                        <ChevronRight size={14} className={`transition-transform duration-300 ${activePage === item.id ? 'rotate-90 text-emerald-400' : 'text-emerald-100/40'}`} />
+                        <item.icon size={18} className={activePage === item.id ? 'text-emerald-300' : 'text-slate-400'} />
+                        {!sidebarCollapsed ? <span className="flex-1 text-left font-semibold">{item.label}</span> : null}
+                        {!sidebarCollapsed ? <ChevronRight size={14} className={`transition-transform duration-300 ${activePage === item.id ? 'rotate-90 text-emerald-400' : 'text-slate-600'}`} /> : null}
                       </button>
                     ))}
                   </div>
@@ -313,32 +326,34 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
 
                 {/* SYSTEM Section */}
                 <div className="mt-6 px-4 pb-4">
-                  <p className="px-4 text-[11px] font-bold uppercase tracking-[2px] text-slate-500">System</p>
+                  {!sidebarCollapsed ? <p className="px-4 text-[11px] font-bold uppercase tracking-[2px] text-slate-500">System</p> : null}
                   <div className="mt-4 space-y-1">
                     <button
                       onClick={() => {
                         setActivePage('Settings')
                         setActiveSettingsTab('Overview')
                       }}
-                      className={`group flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200 ${
+                      className={`group flex w-full items-center gap-3 rounded-xl py-3 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-2' : 'px-4'} ${
                         activePage === 'Settings'
-                          ? 'bg-emerald-600/20 text-emerald-400 shadow-[inset_0_0_12px_rgba(16,185,129,0.1)]'
-                          : 'text-slate-400 hover:bg-slate-800/50 hover:text-emerald-300'
+                          ? 'bg-emerald-500/20 text-emerald-300'
+                          : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
                       }`}
                     >
-                      <Settings2 size={20} className={activePage === 'Settings' ? 'text-emerald-400' : ''} />
-                      <span className="flex-1 text-left font-semibold">{!sidebarCollapsed && 'Settings'}</span>
+                      <Settings2 size={18} className={activePage === 'Settings' ? 'text-emerald-300' : 'text-slate-400'} />
+                      <span className="flex-1 text-left font-semibold">{!sidebarCollapsed ? 'Settings' : ''}</span>
                     </button>
                   </div>
                 </div>
           </nav>
-          <div className={`border-t ${dashboardTheme.profileBorder} ${sidebarCollapsed ? 'p-2' : 'p-4'}`}>
+          <div className={`border-t border-slate-800 ${sidebarCollapsed ? 'p-2' : 'p-4'}`}>
             {!sidebarCollapsed ? (
-              <div className="rounded-xl border border-emerald-400/25 bg-emerald-700/20 p-3">
-                <p className={`text-sm font-semibold ${dashboardTheme.profileName}`}>Admin User</p>
-                <p className={`text-xs ${dashboardTheme.profileRole}`}>Librarian</p>
+              <div className="rounded-xl border border-slate-700 bg-slate-800/80 p-3">
+                <p className="text-sm font-semibold text-slate-100">Admin User</p>
+                <p className="text-xs text-slate-400">Librarian</p>
               </div>
-            ) : null}
+            ) : (
+              <div className="grid h-10 w-10 place-items-center rounded-full border border-slate-700 bg-slate-800 text-xs font-bold text-slate-200">AU</div>
+            )}
           </div>
         </aside>
 
@@ -487,7 +502,16 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
               />
             )
           ) : activePage === 'Reports' ? (
-            <ReportsPage isDarkMode={isDarkMode} />
+            <ReportsPage
+              isDarkMode={isDarkMode}
+              onViewOverdueActivity={() => {
+                setTransactionActiveTab('overdue')
+                setActivePage('All Transactions')
+              }}
+              onViewTopMembers={() => {
+                setActivePage('Members')
+              }}
+            />
           ) : activePage === 'Settings' ? (
             <SettingsPage isDarkMode={isDarkMode} activeTab={activeSettingsTab} onTabChange={setActiveSettingsTab} />
           ) : activePage === 'Authors' ? (
@@ -607,7 +631,7 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
               <article className={`overflow-hidden rounded-2xl border shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="flex items-center justify-between px-4 py-3">
                   <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Recent Borrowed Books</h3>
-                  <button className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
+                  <button type="button" onClick={() => openTransactionsPage('borrowed')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
                 </div>
                 <div>
                   <div className="grid grid-cols-1 gap-2 border-b border-slate-100 px-4 py-2.5 transition-colors duration-150 hover:bg-slate-50 md:grid-cols-[40px_1.8fr_1fr_auto] md:items-center">
@@ -646,7 +670,7 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
               <article className={`overflow-hidden rounded-2xl border shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="flex items-center justify-between px-4 py-3">
                   <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Overdue Returns</h3>
-                  <button className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
+                  <button type="button" onClick={() => openTransactionsPage('overdue')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
                 </div>
                 <div>
                   <div className="grid grid-cols-1 gap-2 border-b border-slate-100 px-4 py-3 transition-colors duration-150 hover:bg-slate-50 md:grid-cols-[1.8fr_1fr_auto] md:items-center">
@@ -675,7 +699,7 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
               <article className={`rounded-2xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-3 flex items-center justify-between pb-3">
                   <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Today&apos;s Activity</h3>
-                  <button className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
+                  <button type="button" onClick={() => setActivePage('Reports')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
                 </div>
                 <div className="space-y-0">
                   {todayActivityItems.map((item, idx) => (
@@ -701,7 +725,7 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
               <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Most Borrowed Categories</h3>
-                  <button className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
+                  <button type="button" onClick={() => setActivePage('Reports')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
                 </div>
                 <div className="flex min-h-[220px] items-center">
                   <div className="grid w-full gap-4 md:grid-cols-[190px_1fr] md:items-center md:justify-center">
@@ -721,7 +745,7 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
               <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Low Stock / Missing Copies</h3>
-                  <button className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
+                  <button type="button" onClick={() => setActivePage('Books')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
                 </div>
                 <div className="space-y-0 text-xs">
                   <div className="flex items-start justify-between gap-3 border-b border-slate-100 rounded-md px-1 py-2 transition-colors duration-150 hover:bg-slate-50">
@@ -766,6 +790,12 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
                       <button
                         key={item.label}
                         type="button"
+                        onClick={() => {
+                          if (item.label === 'Top Borrowed Books') openTransactionsPage('borrowed')
+                          else if (item.label === 'Overdue Books Report') openTransactionsPage('overdue')
+                          else if (item.label === 'Monthly Activities') setActivePage('Reports')
+                          else setActivePage('Books')
+                        }}
                         className="flex w-full items-center justify-between border-b border-slate-100 last:border-b-0 rounded-md px-2 py-2 text-left transition-colors duration-150 hover:bg-slate-50"
                         aria-label={item.label}
                       >
@@ -784,7 +814,7 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
               <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Upcoming Due Dates</h3>
-                  <button className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
+                  <button type="button" onClick={() => openTransactionsPage('overdue')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
                 </div>
                 <div className="space-y-0">
                   <div className="flex items-start justify-between gap-3 border-b border-slate-100 rounded-md px-2 py-2 transition-colors duration-150 hover:bg-slate-50">
@@ -917,6 +947,7 @@ function App() {
 }
 
 export default App
+
 
 
 
