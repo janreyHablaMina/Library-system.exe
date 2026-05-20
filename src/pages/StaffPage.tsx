@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Users, UserCheck, UserX, ShieldCheck, Calendar, Search, ChevronDown, Filter, Plus, Download, Pencil, Trash2, ChevronLeft, ChevronRight, X } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { Users, UserCheck, UserX, ShieldCheck, Calendar, Search, ChevronDown, Filter, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, X, MoreHorizontal } from 'lucide-react'
 
 type StaffRole = 'Administrator' | 'Librarian' | 'Assistant Librarian' | 'Library Clerk'
 type StaffStatus = 'Active' | 'Inactive'
@@ -18,6 +18,12 @@ type StaffMember = {
 
 type StaffPageProps = {
   isDarkMode: boolean
+}
+
+type StaffActionsMenuProps = {
+  isDarkMode: boolean
+  onEdit: () => void
+  onDelete: () => void
 }
 
 const stats = [
@@ -39,8 +45,94 @@ const staffData: StaffMember[] = [
   { id: 'ST-008', name: 'Alicia H.', email: 'alicia.h@infolib.com', role: 'Assistant Librarian', branch: 'West Branch', status: 'Active', joinedOn: 'Apr 20, 2026', joinedTime: '11:30 AM', avatar: '👩🏻' },
 ]
 
+function StaffActionsMenu({ isDarkMode, onEdit, onDelete }: StaffActionsMenuProps) {
+  const [open, setOpen] = useState(false)
+  const [openUpward, setOpenUpward] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  const surface = isDarkMode
+    ? 'bg-[#0f172a] border-slate-700 text-slate-200 shadow-[0_8px_32px_rgba(0,0,0,0.6)]'
+    : 'bg-white border-slate-200 text-slate-700 shadow-[0_8px_32px_rgba(0,0,0,0.12)]'
+
+  const handleToggle = (event: React.MouseEvent) => {
+    event.stopPropagation()
+    if (!open && ref.current) {
+      const rect = ref.current.getBoundingClientRect()
+      const spaceBelow = window.innerHeight - rect.bottom
+      setOpenUpward(spaceBelow < 160)
+    }
+    setOpen((prev) => !prev)
+  }
+
+  return (
+    <div ref={ref} className="relative inline-block text-left">
+      <button
+        type="button"
+        onClick={handleToggle}
+        className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border transition-colors ${
+          open
+            ? isDarkMode
+              ? 'border-slate-500 bg-slate-700 text-slate-100'
+              : 'border-emerald-300 bg-emerald-50 text-emerald-700'
+            : isDarkMode
+              ? 'border-slate-700 text-slate-300 hover:bg-slate-800'
+              : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+        }`}
+      >
+        <MoreHorizontal size={15} />
+      </button>
+
+      {open ? (
+        <div
+          className={`absolute right-0 z-50 w-44 rounded-xl border p-1.5 ${surface} ${
+            openUpward ? 'bottom-full mb-1.5' : 'top-full mt-1.5'
+          }`}
+          role="menu"
+        >
+          <button
+            type="button"
+            className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium ${
+              isDarkMode ? 'text-slate-200 hover:bg-slate-800' : 'text-slate-700 hover:bg-slate-50'
+            }`}
+            onClick={() => { setOpen(false); onEdit() }}
+          >
+            <Pencil size={14} className="text-blue-500" />
+            Edit Staff
+          </button>
+          <button
+            type="button"
+            className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium ${
+              isDarkMode ? 'text-rose-400 hover:bg-rose-500/10' : 'text-rose-600 hover:bg-rose-50'
+            }`}
+            onClick={() => { setOpen(false); onDelete() }}
+          >
+            <Trash2 size={14} className="text-rose-500" />
+            Delete Staff
+          </button>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 export function StaffPage({ isDarkMode }: StaffPageProps) {
+  const [staffMembers, setStaffMembers] = useState<StaffMember[]>(staffData)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null)
+  const [staffToDelete, setStaffToDelete] = useState<StaffMember | null>(null)
+  const [staffSearch, setStaffSearch] = useState('')
+  const [roleFilter, setRoleFilter] = useState<'All Roles' | StaffRole>('All Roles')
+  const [statusFilter, setStatusFilter] = useState<'All Status' | StaffStatus>('All Status')
+  const [branchFilter, setBranchFilter] = useState<'All Branches' | string>('All Branches')
 
   const getRoleStyle = (role: StaffRole) => {
     switch (role) {
@@ -51,6 +143,22 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
     }
   }
 
+  const filteredStaff = staffMembers.filter((staff) => {
+    const normalizedSearch = staffSearch.trim().toLowerCase()
+    const matchesSearch =
+      normalizedSearch.length === 0 ||
+      staff.name.toLowerCase().includes(normalizedSearch) ||
+      staff.email.toLowerCase().includes(normalizedSearch) ||
+      staff.role.toLowerCase().includes(normalizedSearch) ||
+      staff.id.toLowerCase().includes(normalizedSearch)
+
+    const matchesRole = roleFilter === 'All Roles' || staff.role === roleFilter
+    const matchesStatus = statusFilter === 'All Status' || staff.status === statusFilter
+    const matchesBranch = branchFilter === 'All Branches' || staff.branch === branchFilter
+
+    return matchesSearch && matchesRole && matchesStatus && matchesBranch
+  })
+
   return (
     <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
       <section className="p-5">
@@ -60,11 +168,11 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
             <p className={`mt-1 text-base font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Manage library staff and their access to the system.</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button type="button" className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-bold transition-all ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
-              <Download size={16} />
-              Export
-            </button>
-            <button type="button" onClick={() => setIsAddModalOpen(true)} className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white hover:bg-emerald-700 transition-all shadow-sm">
+            <button
+              type="button"
+              onClick={() => { setEditingStaff(null); setIsAddModalOpen(true) }}
+              className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white hover:bg-emerald-700 transition-all shadow-sm"
+            >
               <Plus size={18} />
               Add Staff Member
             </button>
@@ -97,19 +205,28 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
           <div className={`flex flex-wrap items-center gap-4 p-4 ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
             <label className={`group flex h-12 min-w-[320px] flex-1 items-center rounded-xl border px-3 transition-all ${isDarkMode ? 'border-slate-700 focus-within:border-emerald-500 bg-[#0f1f49]' : 'border-slate-200 focus-within:border-emerald-500 bg-slate-50'}`}>
               <Search size={18} className={`mr-2 transition-colors ${isDarkMode ? 'text-slate-500 group-focus-within:text-emerald-400' : 'text-slate-400 group-focus-within:text-emerald-600'}`} />
-              <input className={`w-full bg-transparent text-sm font-medium outline-none ${isDarkMode ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400'}`} placeholder="Search staff by name, email or role..." />
+              <input
+                value={staffSearch}
+                onChange={(event) => setStaffSearch(event.target.value)}
+                className={`w-full bg-transparent text-sm font-medium outline-none ${isDarkMode ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400'}`}
+                placeholder="Search staff by name, email or role..."
+              />
             </label>
             
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold text-slate-500">Role</span>
                 <div className="relative">
-                  <select className={`h-11 min-w-[120px] appearance-none rounded-xl border py-2 pl-4 pr-10 text-xs font-bold outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
-                    <option>All Roles</option>
-                    <option>Administrator</option>
-                    <option>Librarian</option>
-                    <option>Assistant Librarian</option>
-                    <option>Library Clerk</option>
+                  <select
+                    value={roleFilter}
+                    onChange={(event) => setRoleFilter(event.target.value as 'All Roles' | StaffRole)}
+                    className={`h-11 min-w-[120px] appearance-none rounded-xl border py-2 pl-4 pr-10 text-xs font-bold outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}
+                  >
+                    <option value="All Roles">All Roles</option>
+                    <option value="Administrator">Administrator</option>
+                    <option value="Librarian">Librarian</option>
+                    <option value="Assistant Librarian">Assistant Librarian</option>
+                    <option value="Library Clerk">Library Clerk</option>
                   </select>
                   <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
                 </div>
@@ -118,10 +235,14 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold text-slate-500">Status</span>
                 <div className="relative">
-                  <select className={`h-11 min-w-[120px] appearance-none rounded-xl border py-2 pl-4 pr-10 text-xs font-bold outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
-                    <option>All Status</option>
-                    <option>Active</option>
-                    <option>Inactive</option>
+                  <select
+                    value={statusFilter}
+                    onChange={(event) => setStatusFilter(event.target.value as 'All Status' | StaffStatus)}
+                    className={`h-11 min-w-[120px] appearance-none rounded-xl border py-2 pl-4 pr-10 text-xs font-bold outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}
+                  >
+                    <option value="All Status">All Status</option>
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
                   </select>
                   <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
                 </div>
@@ -130,19 +251,33 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold text-slate-500">Branch</span>
                 <div className="relative">
-                  <select className={`h-11 min-w-[140px] appearance-none rounded-xl border py-2 pl-4 pr-10 text-xs font-bold outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
-                    <option>All Branches</option>
-                    <option>Central Library</option>
-                    <option>North Branch</option>
-                    <option>West Branch</option>
+                  <select
+                    value={branchFilter}
+                    onChange={(event) => setBranchFilter(event.target.value)}
+                    className={`h-11 min-w-[140px] appearance-none rounded-xl border py-2 pl-4 pr-10 text-xs font-bold outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}
+                  >
+                    <option value="All Branches">All Branches</option>
+                    <option value="Central Library">Central Library</option>
+                    <option value="North Branch">North Branch</option>
+                    <option value="West Branch">West Branch</option>
+                    <option value="South Branch">South Branch</option>
                   </select>
                   <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
                 </div>
               </div>
 
-              <button className={`inline-flex h-11 items-center gap-2 rounded-xl border px-4 text-xs font-bold transition-all ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-white'}`}>
+              <button
+                type="button"
+                onClick={() => {
+                  setStaffSearch('')
+                  setRoleFilter('All Roles')
+                  setStatusFilter('All Status')
+                  setBranchFilter('All Branches')
+                }}
+                className={`inline-flex h-11 items-center gap-2 rounded-xl border px-4 text-xs font-bold transition-all ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-white'}`}
+              >
                 <Filter size={16} />
-                Filter
+                Reset
               </button>
             </div>
           </div>
@@ -161,7 +296,7 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
                 </tr>
               </thead>
               <tbody>
-                {staffData.map((staff) => (
+                {filteredStaff.map((staff) => (
                   <tr key={staff.id} className={`border-t transition-colors duration-150 ${isDarkMode ? 'border-slate-800 hover:bg-slate-800/30' : 'border-slate-100 hover:bg-slate-50'}`}>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -190,23 +325,29 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
                       <p className={`text-[10px] font-medium ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{staff.joinedTime}</p>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center justify-center gap-2">
-                        <button title="Edit Staff" type="button" className={`grid h-8 w-8 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 text-slate-400 hover:bg-slate-800' : 'border-slate-200 text-slate-500 hover:bg-white hover:text-blue-600'}`}>
-                          <Pencil size={14} />
-                        </button>
-                        <button title="Delete Staff" type="button" className={`grid h-8 w-8 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-rose-900/30 text-rose-500 hover:bg-rose-500/20' : 'border-rose-100 text-rose-500 hover:bg-rose-50'}`}>
-                          <Trash2 size={14} />
-                        </button>
+                      <div className="flex items-center justify-center">
+                        <StaffActionsMenu
+                          isDarkMode={isDarkMode}
+                          onEdit={() => { setEditingStaff(staff); setIsAddModalOpen(true) }}
+                          onDelete={() => setStaffToDelete(staff)}
+                        />
                       </div>
                     </td>
                   </tr>
                 ))}
+                {filteredStaff.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className={`px-6 py-12 text-center text-sm font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                      No staff members match your current filters.
+                    </td>
+                  </tr>
+                ) : null}
               </tbody>
             </table>
           </div>
 
           <div className={`flex flex-wrap items-center justify-between gap-4 border-t p-4 text-xs font-bold ${isDarkMode ? 'border-slate-800 text-slate-500' : 'border-slate-100 text-slate-400'}`}>
-            <p>Showing 1 to 8 of 18 staff members</p>
+            <p>Showing {filteredStaff.length} of {staffMembers.length} staff members</p>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1.5">
                 <button type="button" className={`grid h-8 w-8 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 text-slate-400 hover:bg-slate-800' : 'border-slate-200 text-slate-400 hover:bg-white'}`}>
@@ -233,64 +374,180 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
 
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
-          <section className={`w-full max-w-2xl rounded-3xl border shadow-2xl animate-in zoom-in-95 duration-200 ${isDarkMode ? 'border-slate-800 bg-[#0a1633]' : 'border-slate-200 bg-white'}`}>
+          <section className={`flex w-full max-w-4xl max-h-[92vh] flex-col overflow-hidden rounded-3xl border shadow-2xl animate-in zoom-in-95 duration-200 ${isDarkMode ? 'border-slate-800 bg-[#0a1633]' : 'border-slate-200 bg-white'}`}>
             <div className={`flex items-start justify-between border-b px-8 py-6 ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
               <div>
-                <h3 className={`text-3xl font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Add Staff Member</h3>
-                <p className={`mt-1 text-sm font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Create a new staff profile and set system permissions.</p>
+                <h3 className={`text-3xl font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+                  {editingStaff ? 'Edit Staff Member' : 'Add Staff Member'}
+                </h3>
+                <p className={`mt-1 text-sm font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                  {editingStaff ? 'Update staff profile details and account access.' : 'Create a new staff profile and set system permissions.'}
+                </p>
               </div>
-              <button type="button" onClick={() => setIsAddModalOpen(false)} className={`grid h-10 w-10 place-items-center rounded-xl border transition-all ${isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
+              <button
+                type="button"
+                onClick={() => { setIsAddModalOpen(false); setEditingStaff(null) }}
+                className={`grid h-10 w-10 place-items-center rounded-xl border transition-all ${isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+              >
                 <X size={18} />
               </button>
             </div>
 
-            <form className="space-y-6 px-8 py-8">
-               <div className="grid gap-6 md:grid-cols-2">
-                <div className="space-y-2">
-                  <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Full Name <span className="text-rose-500">*</span></label>
-                  <input placeholder="e.g. James Anderson" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-slate-50 text-slate-700 focus:border-emerald-500'}`} required />
-                </div>
-                <div className="space-y-2">
-                  <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Email Address <span className="text-rose-500">*</span></label>
-                  <input placeholder="email@infolib.com" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-slate-50 text-slate-700 focus:border-emerald-500'}`} required />
-                </div>
-              </div>
-
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="space-y-2">
-                  <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>System Role</label>
-                  <div className="relative">
-                    <select className={`h-12 w-full appearance-none rounded-xl border pl-4 pr-10 text-sm font-bold outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-slate-50 text-slate-700 focus:border-emerald-500'}`}>
-                      <option>Librarian</option>
-                      <option>Administrator</option>
-                      <option>Assistant Librarian</option>
-                      <option>Library Clerk</option>
-                    </select>
-                    <ChevronDown size={18} className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+            <form className="flex min-h-0 flex-1 flex-col">
+              <div className="min-h-0 flex-1 overflow-y-auto px-8 py-7">
+                <div className="space-y-7">
+                <div>
+                <h4 className={`mb-4 text-sm font-black uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Identity & Contact</h4>
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Full Name <span className="text-rose-500">*</span></label>
+                    <input defaultValue={editingStaff?.name ?? ''} placeholder="e.g. James Anderson" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} required />
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Assigned Branch</label>
-                  <div className="relative">
-                    <select className={`h-12 w-full appearance-none rounded-xl border pl-4 pr-10 text-sm font-bold outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-slate-50 text-slate-700 focus:border-emerald-500'}`}>
-                      <option>Central Library</option>
-                      <option>North Branch</option>
-                      <option>West Branch</option>
-                      <option>South Branch</option>
-                    </select>
-                    <ChevronDown size={18} className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                  <div className="space-y-2">
+                    <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Email Address <span className="text-rose-500">*</span></label>
+                    <input defaultValue={editingStaff?.email ?? ''} placeholder="email@infolib.com" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} required />
+                  </div>
+                  <div className="space-y-2">
+                    <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Staff ID</label>
+                    <input defaultValue={editingStaff?.id ?? ''} placeholder="Auto-generate (e.g. ST-009)" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} />
+                  </div>
+                  <div className="space-y-2">
+                    <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Phone Number</label>
+                    <input type="tel" placeholder="0917 123 4567" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Emergency Contact (Optional)</label>
+                    <input placeholder="Name and phone number" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} />
                   </div>
                 </div>
               </div>
 
-              <div className="flex gap-4 pt-4">
-                <button type="button" onClick={() => setIsAddModalOpen(false)} className={`h-12 flex-1 rounded-xl border font-bold transition-all ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>Cancel</button>
-                <button type="button" onClick={() => setIsAddModalOpen(false)} className="h-12 flex-1 rounded-xl bg-emerald-600 font-bold text-white shadow-lg shadow-emerald-600/30 hover:bg-emerald-700 transition-all">Add Staff Member</button>
+              <div className={`${isDarkMode ? 'border-slate-800' : 'border-slate-100'} border-t pt-6`}>
+                <h4 className={`mb-4 text-sm font-black uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Role & Employment</h4>
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>System Role</label>
+                    <div className="relative">
+                      <select defaultValue={editingStaff?.role ?? 'Librarian'} className={`h-12 w-full appearance-none rounded-xl border pl-4 pr-10 text-sm font-bold outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`}>
+                        <option>Librarian</option>
+                        <option>Administrator</option>
+                        <option>Assistant Librarian</option>
+                        <option>Library Clerk</option>
+                      </select>
+                      <ChevronDown size={18} className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Assigned Branch</label>
+                    <div className="relative">
+                      <select defaultValue={editingStaff?.branch ?? 'Central Library'} className={`h-12 w-full appearance-none rounded-xl border pl-4 pr-10 text-sm font-bold outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`}>
+                        <option>Central Library</option>
+                        <option>North Branch</option>
+                        <option>West Branch</option>
+                        <option>South Branch</option>
+                      </select>
+                      <ChevronDown size={18} className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Status</label>
+                    <div className="relative">
+                      <select defaultValue={editingStaff?.status ?? 'Active'} className={`h-12 w-full appearance-none rounded-xl border pl-4 pr-10 text-sm font-bold outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`}>
+                        <option>Active</option>
+                        <option>Inactive</option>
+                      </select>
+                      <ChevronDown size={18} className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Employee Type</label>
+                    <div className="relative">
+                      <select className={`h-12 w-full appearance-none rounded-xl border pl-4 pr-10 text-sm font-bold outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`}>
+                        <option>Full-time</option>
+                        <option>Part-time</option>
+                        <option>Contract</option>
+                      </select>
+                      <ChevronDown size={18} className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                    </div>
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Start Date</label>
+                    <input type="date" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} />
+                  </div>
+                </div>
+              </div>
+
+              <div className={`${isDarkMode ? 'border-slate-800' : 'border-slate-100'} border-t pt-6`}>
+                <h4 className={`mb-4 text-sm font-black uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Account Access</h4>
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Username</label>
+                    <input placeholder="j.anderson" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} />
+                  </div>
+                  <div className="space-y-2">
+                    <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Temporary Password</label>
+                    <input type="password" placeholder="Enter temporary password" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Confirm Password</label>
+                    <input type="password" placeholder="Re-enter temporary password" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} />
+                  </div>
+                </div>
+                <label className={`mt-4 inline-flex items-center gap-2 text-sm font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                  <input type="checkbox" defaultChecked className="h-4 w-4 rounded border-slate-300 text-emerald-600" />
+                  Require password reset on first login
+                </label>
+              </div>
+                </div>
+              </div>
+
+              <div className={`flex gap-4 border-t px-8 py-5 ${isDarkMode ? 'border-slate-800 bg-[#0b1738]' : 'border-slate-100 bg-slate-50/60'}`}>
+                <button type="button" onClick={() => { setIsAddModalOpen(false); setEditingStaff(null) }} className={`h-12 flex-1 rounded-xl border font-bold transition-all ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>Cancel</button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAddModalOpen(false)
+                    setEditingStaff(null)
+                  }}
+                  className="h-12 flex-1 rounded-xl bg-emerald-600 font-bold text-white shadow-lg shadow-emerald-600/30 hover:bg-emerald-700 transition-all"
+                >
+                  {editingStaff ? 'Save Changes' : 'Add Staff Member'}
+                </button>
               </div>
             </form>
           </section>
         </div>
       )}
+
+      {staffToDelete ? (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
+          <section className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl ${isDarkMode ? 'border-slate-800 bg-[#0a1633]' : 'border-slate-200 bg-white'}`}>
+            <h4 className={`text-xl font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Delete Staff Member</h4>
+            <p className={`mt-2 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+              Are you sure you want to remove <span className={isDarkMode ? 'text-slate-200 font-bold' : 'text-slate-900 font-bold'}>{staffToDelete.name}</span>? This is a UI-only action for now.
+            </p>
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setStaffToDelete(null)}
+                className={`h-11 flex-1 rounded-xl border font-bold transition-all ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setStaffMembers((prev) => prev.filter((item) => item.id !== staffToDelete.id))
+                  setStaffToDelete(null)
+                }}
+                className="h-11 flex-1 rounded-xl bg-rose-600 font-bold text-white shadow-lg shadow-rose-600/30 hover:bg-rose-700 transition-all"
+              >
+                Delete
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </div>
   )
 }
