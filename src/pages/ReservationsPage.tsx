@@ -122,10 +122,11 @@ const mockBooks: BookItem[] = [
 type ReservationActionsMenuProps = {
   isDarkMode: boolean
   onViewDetails: () => void
+  onComplete: () => void
   onCancel: () => void
 }
 
-function ReservationActionsMenu({ isDarkMode, onViewDetails, onCancel }: ReservationActionsMenuProps) {
+function ReservationActionsMenu({ isDarkMode, onViewDetails, onComplete, onCancel }: ReservationActionsMenuProps) {
   const [open, setOpen] = useState(false)
   const [openUpward, setOpenUpward] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -209,6 +210,16 @@ function ReservationActionsMenu({ isDarkMode, onViewDetails, onCancel }: Reserva
           >
             <Eye size={15} className="shrink-0 text-sky-500" />
             View Details
+          </button>
+
+          <button
+            type="button"
+            className={`${itemBase} ${itemNormal}`}
+            role="menuitem"
+            onClick={(e) => { e.stopPropagation(); setOpen(false); onComplete(); }}
+          >
+            <CheckCircle2 size={15} className="shrink-0 text-emerald-500" />
+            Mark as Completed
           </button>
           
           <button
@@ -577,6 +588,9 @@ function ReservationDetailsViewNew({ reservationId, isDarkMode, onBack }: Reserv
 export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [activeViewReservationId, setActiveViewReservationId] = useState<string | null>(null)
+  const [reservationSearch, setReservationSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState<'All' | ReservationStatus>('All')
+  const [branchFilter, setBranchFilter] = useState<'All Branches' | string>('All Branches')
   const [reservationDate, setReservationDate] = useState('2026-05-21')
   const [expiresOn, setExpiresOn] = useState('2026-05-28')
   const [notes, setNotes] = useState('')
@@ -656,6 +670,22 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
     }
   }
 
+  const filteredReservations = reservationsData.filter((reservation) => {
+    const normalizedSearch = reservationSearch.trim().toLowerCase()
+    const matchesSearch =
+      normalizedSearch.length === 0 ||
+      reservation.id.toLowerCase().includes(normalizedSearch) ||
+      reservation.book.title.toLowerCase().includes(normalizedSearch) ||
+      reservation.book.author.toLowerCase().includes(normalizedSearch) ||
+      reservation.member.name.toLowerCase().includes(normalizedSearch) ||
+      reservation.member.id.toLowerCase().includes(normalizedSearch)
+
+    const matchesStatus = statusFilter === 'All' || reservation.status === statusFilter
+    const matchesBranch = branchFilter === 'All Branches' || reservation.pickupBranch === branchFilter
+
+    return matchesSearch && matchesStatus && matchesBranch
+  })
+
   return (
     <div className={`min-h-0 flex-1 overflow-auto ${isAddModalOpen || activeViewReservationId ? 'px-4 pt-4 pb-0' : 'p-4'} ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
       {activeViewReservationId ? (
@@ -709,19 +739,28 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
             <div className={`flex flex-wrap items-center gap-3 border-b p-3 rounded-t-xl ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
               <label className={`group flex h-12 min-w-[320px] flex-1 items-center rounded-xl border px-3 transition-all ${isDarkMode ? 'border-slate-700 focus-within:border-emerald-500 bg-[#0f1f49]' : 'border-slate-200 focus-within:border-emerald-500 bg-slate-50'}`}>
                 <Search size={18} className={`mr-2 transition-colors ${isDarkMode ? 'text-slate-500 group-focus-within:text-emerald-400' : 'text-slate-400 group-focus-within:text-emerald-600'}`} />
-                <input className={`w-full bg-transparent text-sm font-medium outline-none ${isDarkMode ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400'}`} placeholder="Search by book title, member name..." />
+                <input
+                  value={reservationSearch}
+                  onChange={(event) => setReservationSearch(event.target.value)}
+                  className={`w-full bg-transparent text-sm font-medium outline-none ${isDarkMode ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400'}`}
+                  placeholder="Search by book title, member name..."
+                />
               </label>
               
               <div className="flex flex-wrap items-center gap-3">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-slate-500">Status</span>
                   <div className="relative">
-                    <select className={`h-11 min-w-[120px] appearance-none rounded-xl border py-2 pl-4 pr-10 text-xs font-bold outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
-                      <option>All</option>
-                      <option>Pending</option>
-                      <option>Ready for Pickup</option>
-                      <option>Completed</option>
-                      <option>Cancelled</option>
+                    <select
+                      value={statusFilter}
+                      onChange={(event) => setStatusFilter(event.target.value as 'All' | ReservationStatus)}
+                      className={`h-11 min-w-[120px] appearance-none rounded-xl border py-2 pl-4 pr-10 text-xs font-bold outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}
+                    >
+                      <option value="All">All</option>
+                      <option value="Pending">Pending</option>
+                      <option value="Ready for Pickup">Ready for Pickup</option>
+                      <option value="Completed">Completed</option>
+                      <option value="Cancelled">Cancelled</option>
                     </select>
                     <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
                   </div>
@@ -730,19 +769,32 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-slate-500">Branch</span>
                   <div className="relative">
-                    <select className={`h-11 min-w-[140px] appearance-none rounded-xl border py-2 pl-4 pr-10 text-xs font-bold outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
-                      <option>All Branches</option>
-                      <option>Central Library</option>
-                      <option>North Branch</option>
-                      <option>West Branch</option>
+                    <select
+                      value={branchFilter}
+                      onChange={(event) => setBranchFilter(event.target.value)}
+                      className={`h-11 min-w-[140px] appearance-none rounded-xl border py-2 pl-4 pr-10 text-xs font-bold outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}
+                    >
+                      <option value="All Branches">All Branches</option>
+                      <option value="Central Library">Central Library</option>
+                      <option value="North Branch">North Branch</option>
+                      <option value="West Branch">West Branch</option>
+                      <option value="South Branch">South Branch</option>
                     </select>
                     <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
                   </div>
                 </div>
 
-                <button className={`inline-flex h-11 items-center gap-2 rounded-xl border px-4 text-xs font-bold transition-all ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-white'}`}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setReservationSearch('')
+                    setStatusFilter('All')
+                    setBranchFilter('All Branches')
+                  }}
+                  className={`inline-flex h-11 items-center gap-2 rounded-xl border px-4 text-xs font-bold transition-all ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-white'}`}
+                >
                   <Filter size={16} />
-                  Filter
+                  Reset
                 </button>
               </div>
             </div>
@@ -762,7 +814,7 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
                   </tr>
                 </thead>
                 <tbody>
-                  {reservationsData.map((res) => (
+                  {filteredReservations.map((res) => (
                     <tr key={res.id} className={`border-t transition-colors duration-150 ${isDarkMode ? 'border-slate-800 hover:bg-slate-800/30' : 'border-slate-100 hover:bg-slate-50'}`}>
                       <td className="px-6 py-4">
                         <span className={`text-xs font-bold ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{res.id}</span>
@@ -803,17 +855,25 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
                         <ReservationActionsMenu
                           isDarkMode={isDarkMode}
                           onViewDetails={() => setActiveViewReservationId(res.id)}
+                          onComplete={() => {}}
                           onCancel={() => {}}
                         />
                       </td>
                     </tr>
                   ))}
+                  {filteredReservations.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className={`px-6 py-12 text-center text-sm font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                        No reservations match your current filters.
+                      </td>
+                    </tr>
+                  ) : null}
                 </tbody>
               </table>
             </div>
 
             <div className={`flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm rounded-b-xl ${isDarkMode ? 'border-slate-700 bg-[#0b1738] text-slate-300' : 'border-slate-200 bg-white text-slate-600'}`}>
-              <p>Showing 1 to 8 of 56 reservations</p>
+              <p>Showing {filteredReservations.length} of {reservationsData.length} reservations</p>
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1.5">
                   <button type="button" className={`grid h-8 w-8 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 text-slate-400 hover:bg-slate-800' : 'border-slate-200 text-slate-400 hover:bg-white'}`}>
