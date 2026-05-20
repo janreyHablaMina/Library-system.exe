@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import {
   Settings2,
   UsersRound,
@@ -44,6 +44,7 @@ import {
   Clock,
   MoreVertical,
   MoreHorizontal,
+  X,
   UserCircle,
   UserX,
   Smartphone,
@@ -55,6 +56,106 @@ type SettingsPageProps = {
   onTabChange?: (tab: string) => void
 }
 
+type SystemUserStatus = 'Active' | 'Inactive'
+type SystemUser = {
+  name: string
+  email: string
+  role: string
+  status: SystemUserStatus
+  login: string
+  color: string
+}
+
+type UserRowActionsMenuProps = {
+  isDarkMode: boolean
+  onView: () => void
+  onEdit: () => void
+  onResetPassword: () => void
+  onToggleStatus: () => void
+  onDelete: () => void
+  isActive: boolean
+}
+
+function UserRowActionsMenu({
+  isDarkMode,
+  onView,
+  onEdit,
+  onResetPassword,
+  onToggleStatus,
+  onDelete,
+  isActive
+}: UserRowActionsMenuProps) {
+  const [open, setOpen] = useState(false)
+  const [openUpward, setOpenUpward] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  const handleToggle = (event: React.MouseEvent) => {
+    event.stopPropagation()
+    if (!open && ref.current) {
+      const rect = ref.current.getBoundingClientRect()
+      const spaceBelow = window.innerHeight - rect.bottom
+      setOpenUpward(spaceBelow < 215)
+    }
+    setOpen((prev) => !prev)
+  }
+
+  const surface = isDarkMode
+    ? 'bg-[#0f172a] border-slate-700 text-slate-200 shadow-[0_8px_32px_rgba(0,0,0,0.6)]'
+    : 'bg-white border-slate-200 text-slate-700 shadow-[0_8px_32px_rgba(0,0,0,0.12)]'
+
+  const item = `flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium ${
+    isDarkMode ? 'text-slate-200 hover:bg-slate-800' : 'text-slate-700 hover:bg-slate-50'
+  }`
+
+  return (
+    <div ref={ref} className="relative inline-block text-left">
+      <button
+        type="button"
+        onClick={handleToggle}
+        className={`grid h-9 w-9 place-items-center rounded-xl border transition-colors ${
+          open
+            ? isDarkMode
+              ? 'border-slate-500 bg-slate-700 text-slate-100'
+              : 'border-emerald-300 bg-emerald-50 text-emerald-700'
+            : isDarkMode
+              ? 'border-slate-700 text-slate-300 hover:bg-slate-800'
+              : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+        }`}
+      >
+        <MoreHorizontal size={16} />
+      </button>
+
+      {open ? (
+        <div className={`absolute right-0 z-50 w-48 rounded-xl border p-1.5 ${surface} ${openUpward ? 'bottom-full mb-1.5' : 'top-full mt-1.5'}`}>
+          <button type="button" className={item} onClick={() => { setOpen(false); onView() }}><Eye size={14} className="text-blue-500" />View Profile</button>
+          <button type="button" className={item} onClick={() => { setOpen(false); onEdit() }}><Pencil size={14} className="text-indigo-500" />Edit User</button>
+          <button type="button" className={item} onClick={() => { setOpen(false); onResetPassword() }}><Lock size={14} className="text-amber-500" />Reset Password</button>
+          <button type="button" className={item} onClick={() => { setOpen(false); onToggleStatus() }}><UserX size={14} className="text-orange-500" />{isActive ? 'Deactivate User' : 'Activate User'}</button>
+          <button
+            type="button"
+            className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium ${
+              isDarkMode ? 'text-rose-400 hover:bg-rose-500/10' : 'text-rose-600 hover:bg-rose-50'
+            }`}
+            onClick={() => { setOpen(false); onDelete() }}
+          >
+            <Trash2 size={14} className="text-rose-500" />
+            Delete User
+          </button>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPageProps) {
   const activeMenu = activeTab
   const [notifications, setNotifications] = useState(true)
@@ -62,6 +163,22 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
   const [showCurrentPass, setShowCurrentPass] = useState(false)
   const [showNewPass, setShowNewPass] = useState(false)
   const [showConfirmPass, setShowConfirmPass] = useState(false)
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false)
+  const [editingUser, setEditingUser] = useState<SystemUser | null>(null)
+  const [userToDelete, setUserToDelete] = useState<SystemUser | null>(null)
+  const [userForm, setUserForm] = useState({
+    name: '',
+    email: '',
+    role: 'Librarian',
+    status: 'Active' as SystemUserStatus,
+  })
+  const [users, setUsers] = useState<SystemUser[]>([
+    { name: 'Admin User', email: 'admin@citycentralschool.edu.ph', role: 'Librarian', status: 'Active', login: 'May 15, 2026 • 10:30 AM', color: 'bg-emerald-50 text-emerald-600' },
+    { name: 'Maria Santos', email: 'maria.santos@citycentralschool.edu.ph', role: 'Librarian', status: 'Active', login: 'May 15, 2026 • 09:15 AM', color: 'bg-emerald-50 text-emerald-600' },
+    { name: 'John Dela Cruz', email: 'john.delacruz@citycentralschool.edu.ph', role: 'Assistant', status: 'Active', login: 'May 14, 2026 • 02:20 PM', color: 'bg-blue-50 text-blue-600' },
+    { name: 'Ana Lim', email: 'ana.lim@citycentralschool.edu.ph', role: 'Assistant', status: 'Active', login: 'May 14, 2026 • 11:05 AM', color: 'bg-blue-50 text-blue-600' },
+    { name: 'Guest User', email: 'guest@citycentralschool.edu.ph', role: 'Viewer', status: 'Inactive', login: 'Apr 20, 2026 • 04:45 PM', color: 'bg-slate-50 text-slate-600' },
+  ])
 
   const cardClass = isDarkMode ? 'border-slate-800 bg-[#0a1633]' : 'border-slate-200 bg-white'
   const iconBoxBg = isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-[#f0fdf4] text-emerald-600'
@@ -70,6 +187,69 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
   const inputClass = isDarkMode
     ? 'border-slate-800 bg-[#0f1f49] text-slate-200'
     : 'border-slate-200 bg-white text-slate-700'
+
+  const roleColor = (role: string) => {
+    switch (role) {
+      case 'Librarian': return 'bg-emerald-50 text-emerald-600'
+      case 'Assistant': return 'bg-blue-50 text-blue-600'
+      default: return 'bg-slate-50 text-slate-600'
+    }
+  }
+
+  const openAddUserModal = () => {
+    setEditingUser(null)
+    setUserForm({ name: '', email: '', role: 'Librarian', status: 'Active' })
+    setIsUserModalOpen(true)
+  }
+
+  const openEditUserModal = (user: SystemUser) => {
+    setEditingUser(user)
+    setUserForm({
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+    })
+    setIsUserModalOpen(true)
+  }
+
+  const saveUserFromModal = () => {
+    const trimmedName = userForm.name.trim()
+    const trimmedEmail = userForm.email.trim()
+    if (!trimmedName || !trimmedEmail) return
+
+    if (editingUser) {
+      setUsers((prev) =>
+        prev.map((item) =>
+          item.email === editingUser.email
+            ? {
+                ...item,
+                name: trimmedName,
+                email: trimmedEmail,
+                role: userForm.role,
+                status: userForm.status,
+                color: roleColor(userForm.role),
+              }
+            : item
+        )
+      )
+    } else {
+      setUsers((prev) => [
+        {
+          name: trimmedName,
+          email: trimmedEmail,
+          role: userForm.role,
+          status: userForm.status,
+          login: 'Just now',
+          color: roleColor(userForm.role),
+        },
+        ...prev,
+      ])
+    }
+
+    setIsUserModalOpen(false)
+    setEditingUser(null)
+  }
 
 
   const renderUsersAndRoles = () => (
@@ -132,13 +312,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                 </tr>
               </thead>
               <tbody className={isDarkMode ? 'bg-[#0b1738]' : 'bg-white'}>
-                {[
-                  { name: 'Admin User', email: 'admin@citycentralschool.edu.ph', role: 'Librarian', status: 'Active', login: 'May 15, 2026 • 10:30 AM', color: 'bg-emerald-50 text-emerald-600' },
-                  { name: 'Maria Santos', email: 'maria.santos@citycentralschool.edu.ph', role: 'Librarian', status: 'Active', login: 'May 15, 2026 • 09:15 AM', color: 'bg-emerald-50 text-emerald-600' },
-                  { name: 'John Dela Cruz', email: 'john.delacruz@citycentralschool.edu.ph', role: 'Assistant', status: 'Active', login: 'May 14, 2026 • 02:20 PM', color: 'bg-blue-50 text-blue-600' },
-                  { name: 'Ana Lim', email: 'ana.lim@citycentralschool.edu.ph', role: 'Assistant', status: 'Active', login: 'May 14, 2026 • 11:05 AM', color: 'bg-blue-50 text-blue-600' },
-                  { name: 'Guest User', email: 'guest@citycentralschool.edu.ph', role: 'Viewer', status: 'Inactive', login: 'Apr 20, 2026 • 04:45 PM', color: 'bg-slate-50 text-slate-600' },
-                ].map((user) => (
+                {users.map((user) => (
                   <tr key={user.email} className={`border-b last:border-0 transition-colors ${isDarkMode ? 'border-slate-800/50 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}>
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-4">
@@ -164,9 +338,20 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                     </td>
                     <td className="px-8 py-5 text-[12px] font-semibold text-slate-500">{user.login}</td>
                     <td className="px-8 py-5 text-right">
-                      <button className={`grid h-9 w-9 place-items-center rounded-xl border ${inputClass} hover:border-emerald-500 transition-colors`}>
-                        <MoreHorizontal size={16} />
-                      </button>
+                      <UserRowActionsMenu
+                        isDarkMode={isDarkMode}
+                        isActive={user.status === 'Active'}
+                        onView={() => alert(`Viewing ${user.name} profile...`)}
+                        onEdit={() => openEditUserModal(user)}
+                        onResetPassword={() => alert(`Password reset email sent to ${user.email}`)}
+                        onToggleStatus={() => {
+                          setUsers((prev) => prev.map((item) => item.email === user.email
+                            ? { ...item, status: item.status === 'Active' ? 'Inactive' : 'Active' }
+                            : item
+                          ))
+                        }}
+                        onDelete={() => setUserToDelete(user)}
+                      />
                     </td>
                   </tr>
                 ))}
@@ -175,7 +360,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
           </div>
 
           <div className="px-8 py-6 flex items-center justify-between border-t border-slate-100 dark:border-slate-800">
-            <p className={`text-[12px] font-bold ${subLabelClass}`}>Showing 1 to 5 of 12 users</p>
+            <p className={`text-[12px] font-bold ${subLabelClass}`}>Showing 1 to {users.length} of 12 users</p>
             <div className="flex items-center gap-2">
               <button className={`grid h-10 w-10 place-items-center rounded-xl border ${inputClass}`}><ChevronLeft size={16} /></button>
               <button className="h-10 w-10 rounded-xl bg-emerald-600 text-[13px] font-bold text-white">1</button>
@@ -753,7 +938,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
             </button>
           </div>
 
-          <div className={`overflow-hidden rounded-2xl border ${isDarkMode ? 'border-slate-800/50 bg-[#0b1738]' : 'border-slate-100 bg-white shadow-sm'}`}>
+          <div className={`overflow-hidden rounded-2xl border ${cardClass}`}>
             <table className="w-full text-left text-sm">
               <thead className={isDarkMode ? 'bg-[#0f1f49]/50 text-slate-300' : 'bg-slate-50/50 text-slate-600'}>
                 <tr>
@@ -841,7 +1026,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                   <Download size={16} /> Export
                 </button>
                 <button 
-                  onClick={() => alert('Opening Add New User modal...')}
+                  onClick={openAddUserModal}
                   className="inline-flex items-center gap-2 rounded-xl bg-[#059669] px-5 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-emerald-700 active:scale-[0.98]"
                 >
                   <Plus size={16} /> Add New User
@@ -873,6 +1058,105 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
             renderSettingsOverview()
           )}
       </div>
+
+      {isUserModalOpen ? (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/45 p-4 backdrop-blur-[1px]">
+          <section className={`w-full max-w-4xl rounded-2xl border shadow-2xl ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+            <div className={`flex items-start justify-between border-b px-6 py-5 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+              <div>
+                <h3 className={`text-3xl font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+                  {editingUser ? 'Edit User' : 'Add New User'}
+                </h3>
+                <p className={`mt-1 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                  {editingUser ? 'Update user profile and role permissions.' : 'Create a new user account with assigned role.'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setIsUserModalOpen(false); setEditingUser(null) }}
+                className={`grid h-10 w-10 place-items-center rounded-xl border ${isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <form className="space-y-5 px-6 py-5">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className={`text-sm font-bold ${labelClass}`}>Full Name</label>
+                  <input
+                    value={userForm.name}
+                    onChange={(event) => setUserForm((prev) => ({ ...prev, name: event.target.value }))}
+                    placeholder="e.g. Maria Santos"
+                    className={`h-11 w-full rounded-xl border px-3 text-sm outline-none focus:border-emerald-500 ${inputClass}`}
+                  />
+                  </div>
+                  <div className="space-y-2">
+                    <label className={`text-sm font-bold ${labelClass}`}>Email Address</label>
+                  <input
+                    value={userForm.email}
+                    onChange={(event) => setUserForm((prev) => ({ ...prev, email: event.target.value }))}
+                    placeholder="user@library.com"
+                    className={`h-11 w-full rounded-xl border px-3 text-sm outline-none focus:border-emerald-500 ${inputClass}`}
+                  />
+                  </div>
+                  <div className="space-y-2">
+                    <label className={`text-sm font-bold ${labelClass}`}>Role</label>
+                  <select
+                    value={userForm.role}
+                    onChange={(event) => setUserForm((prev) => ({ ...prev, role: event.target.value }))}
+                    className={`h-11 w-full rounded-xl border px-3 text-sm font-semibold outline-none focus:border-emerald-500 ${inputClass}`}
+                  >
+                    <option>Librarian</option>
+                    <option>Assistant</option>
+                    <option>Viewer</option>
+                  </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className={`text-sm font-bold ${labelClass}`}>Status</label>
+                  <select
+                    value={userForm.status}
+                    onChange={(event) => setUserForm((prev) => ({ ...prev, status: event.target.value as SystemUserStatus }))}
+                    className={`h-11 w-full rounded-xl border px-3 text-sm font-semibold outline-none focus:border-emerald-500 ${inputClass}`}
+                  >
+                    <option>Active</option>
+                    <option>Inactive</option>
+                  </select>
+                  </div>
+                </div>
+              <div className="grid gap-3 pt-1 sm:grid-cols-2">
+                <button type="button" onClick={() => { setIsUserModalOpen(false); setEditingUser(null) }} className={`h-11 rounded-xl border text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>Cancel</button>
+                <button type="button" onClick={saveUserFromModal} className="h-11 rounded-xl bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-700">
+                  {editingUser ? 'Save Changes' : 'Add User'}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      ) : null}
+
+      {userToDelete ? (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
+          <section className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl ${cardClass}`}>
+            <h4 className={`text-xl font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Delete User</h4>
+            <p className={`mt-2 text-sm ${subLabelClass}`}>
+              Are you sure you want to remove <span className={isDarkMode ? 'text-slate-100 font-bold' : 'text-slate-900 font-bold'}>{userToDelete.name}</span>?
+            </p>
+            <div className="mt-6 flex gap-3">
+              <button type="button" onClick={() => setUserToDelete(null)} className={`h-11 flex-1 rounded-xl border font-bold ${inputClass}`}>Cancel</button>
+              <button
+                type="button"
+                onClick={() => {
+                  setUsers((prev) => prev.filter((item) => item.email !== userToDelete.email))
+                  setUserToDelete(null)
+                }}
+                className="h-11 flex-1 rounded-xl bg-rose-600 font-bold text-white transition-all hover:bg-rose-700"
+              >
+                Delete
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </div>
   )
 }
