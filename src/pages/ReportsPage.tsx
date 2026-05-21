@@ -55,9 +55,11 @@ const categoryData = [
 
 type ReportsPageProps = {
   isDarkMode: boolean
+  onViewOverdueActivity?: () => void
+  onViewTopMembers?: () => void
 }
 
-export function ReportsPage({ isDarkMode }: ReportsPageProps) {
+export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMembers }: ReportsPageProps) {
   const cardClass = isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'
   const labelClass = isDarkMode ? 'text-slate-400' : 'text-slate-500'
 
@@ -255,7 +257,11 @@ export function ReportsPage({ isDarkMode }: ReportsPageProps) {
                     <TriangleAlert size={18} className="text-rose-500" />
                     <h3 className="text-sm font-bold">Overdue Books</h3>
                  </div>
-                 <button className="text-emerald-600 hover:underline text-xs font-bold">
+                 <button
+                    type="button"
+                    onClick={onViewOverdueActivity}
+                    className="text-emerald-600 hover:underline text-xs font-bold"
+                 >
                     View Activity &rarr;
                  </button>
               </div>
@@ -317,7 +323,11 @@ export function ReportsPage({ isDarkMode }: ReportsPageProps) {
                  <div className="flex items-center gap-2">
                     <h3 className="text-sm font-bold">Top Members (Most Borrowed)</h3>
                  </div>
-                 <button className="text-indigo-600 hover:underline text-xs font-bold">
+                 <button
+                    type="button"
+                    onClick={onViewTopMembers}
+                    className="text-indigo-600 hover:underline text-xs font-bold"
+                 >
                     View All &rarr;
                  </button>
               </div>
