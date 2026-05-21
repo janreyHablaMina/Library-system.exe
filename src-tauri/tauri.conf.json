@@ -15,7 +15,7 @@
                                     "title":  "infoLib",
                                     "width":  820,
                                     "height":  560,
-                                    "resizable":  false,
+                                    "resizable":  true,
                                     "fullscreen":  false,
                                     "minWidth":  820,
                                     "minHeight":  560

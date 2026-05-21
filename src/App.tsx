@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { ArrowLeft, ArrowLeftRight, ArrowRight, BarChart3, Bell, BookOpen, BookPlus, Bookmark, Calendar, ChevronRight, Clock3, Feather, FileText, Grid2x2, LayoutDashboard, Library, Mail, MessageCircle, Moon, RotateCcw, Search, Settings2, Shield, Sun, Undo2, UserCircle, UserPlus, Users, UsersRound } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, ArrowLeftRight, ArrowRight, BarChart3, Bell, BookOpen, BookPlus, Bookmark, Calendar, ChevronRight, Clock3, Feather, FileText, Grid2x2, LayoutDashboard, Library, Mail, MessageCircle, Moon, RotateCcw, Search, Settings2, Shield, Sun, Undo2, UserCircle, UserPlus, Users, UsersRound } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import heroImage from './assets/login.avif'
 import { BooksPage } from './pages/BooksPage'
@@ -17,6 +17,7 @@ import { AuthorsPage } from './pages/AuthorsPage'
 import { CategoriesPage } from './pages/CategoriesPage'
 import { ReservationsPage } from './pages/ReservationsPage'
 import { StaffPage } from './pages/StaffPage'
+import { expandMainWindow, getActiveSession, login as loginWithDb, logout as logoutFromDb, restoreLoginWindow } from './lib/tauriApi'
 
 
 type LoginFormState = {
@@ -114,9 +115,11 @@ const quickReportItems: QuickReportItem[] = [
   { label: 'Monthly Activities', icon: FileText },
 ]
 
-function DashboardShell({ onLogout }: { onLogout: () => void }) {
+function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(false)
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [activePage, setActivePage] = useState<ActivePage>('Dashboard')
   const [activeSettingsTab, setActiveSettingsTab] = useState('Overview')
@@ -165,6 +168,16 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
       setSelectedMemberId(null)
     }
   }, [activePage])
+
+  const handleConfirmLogout = async () => {
+    setIsLoggingOut(true)
+    try {
+      await onLogout()
+      setShowLogoutConfirm(false)
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }
 
   const dashboardTheme = isDarkMode
     ? {
@@ -425,7 +438,10 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
                     <div id="profile-menu" role="menu" className="absolute right-0 top-14 z-20 w-36 rounded-lg border border-slate-200 bg-white p-1 shadow-lg">
                       <button
                         type="button"
-                        onClick={onLogout}
+                        onClick={() => {
+                          setIsProfileOpen(false)
+                          setShowLogoutConfirm(true)
+                        }}
                         role="menuitem"
                         className="w-full rounded-md px-3 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-100"
                       >
@@ -845,6 +861,43 @@ function DashboardShell({ onLogout }: { onLogout: () => void }) {
           )}
         </section>
       </div>
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
+          <div className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-rose-500/10 text-rose-500">
+                <AlertTriangle size={24} />
+              </div>
+              <div className="flex-1">
+                <h3 className={`text-lg font-bold leading-6 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Logout</h3>
+                <p className={`mt-2 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                  Are you sure you want to log out of your account?
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowLogoutConfirm(false)}
+                disabled={isLoggingOut}
+                className={`rounded-xl border px-4 py-2 text-sm font-semibold ${
+                  isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmLogout}
+                disabled={isLoggingOut}
+                className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {isLoggingOut ? 'Logging out...' : 'Yes, Logout'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
@@ -853,17 +906,103 @@ function App() {
   const [formState, setFormState] = useState<LoginFormState>(initialState)
   const [showPassword, setShowPassword] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [loginError, setLoginError] = useState('')
+  const [isSigningIn, setIsSigningIn] = useState(false)
+  const [isCheckingSession, setIsCheckingSession] = useState(true)
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  useEffect(() => {
+    if (!isAuthenticated) return
+
+    let mounted = true
+    const expandWindow = async () => {
+      try {
+        await expandMainWindow()
+      } catch (error) {
+        if (mounted) {
+          console.error('Window expand failed:', error)
+        }
+      }
+    }
+
+    expandWindow()
+    return () => {
+      mounted = false
+    }
+  }, [isAuthenticated])
+
+  useEffect(() => {
+    let mounted = true
+    const loadSession = async () => {
+      try {
+        const session = await getActiveSession()
+        if (mounted) {
+          setIsAuthenticated(Boolean(session))
+        }
+      } catch (error) {
+        console.error('Session check failed:', error)
+      } finally {
+        if (mounted) {
+          setIsCheckingSession(false)
+        }
+      }
+    }
+    loadSession()
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!formState.username.trim() || !formState.password.trim()) {
+    const username = formState.username.trim()
+    const password = formState.password.trim()
+
+    if (!username || !password) {
+      setLoginError('Please enter both username and password.')
       return
     }
-    setIsAuthenticated(true)
+
+    setIsSigningIn(true)
+    try {
+      const isValid = await loginWithDb({ username, password })
+      if (isValid) {
+        setLoginError('')
+        setIsAuthenticated(true)
+        return
+      }
+      setLoginError('Invalid username or password. Please try again.')
+    } catch (error) {
+      console.error('Login failed:', error)
+      setLoginError('Unable to sign in right now. Please try again.')
+    } finally {
+      setIsSigningIn(false)
+    }
+  }
+
+  const handleLogout = async () => {
+    try {
+      await logoutFromDb()
+      await restoreLoginWindow()
+    } catch (error) {
+      console.error('Logout failed:', error)
+    } finally {
+      setFormState(initialState)
+      setShowPassword(false)
+      setLoginError('')
+      setIsAuthenticated(false)
+    }
+  }
+
+  if (isCheckingSession) {
+    return (
+      <main className="grid h-screen place-items-center bg-[#f4f6f8] text-slate-600">
+        <p className="text-sm font-semibold">Loading session...</p>
+      </main>
+    )
   }
 
   if (isAuthenticated) {
-    return <DashboardShell onLogout={() => setIsAuthenticated(false)} />
+    return <DashboardShell onLogout={handleLogout} />
   }
 
   return (
@@ -908,18 +1047,24 @@ function App() {
                 <div className="space-y-1">
                   <label htmlFor="username" className="block text-sm font-semibold text-slate-700">User Name</label>
                   <div className="flex h-10 items-center rounded-xl border border-slate-300 bg-white px-3 focus-within:border-emerald-600 focus-within:ring-2 focus-within:ring-emerald-100">
-                    <input id="username" type="text" autoComplete="username" value={formState.username} onChange={(event) => setFormState((previous) => ({ ...previous, username: event.target.value }))} placeholder="Enter your username" className="h-full w-full bg-transparent text-sm text-slate-800 outline-none" required />
+                    <input id="username" type="text" autoComplete="username" value={formState.username} onChange={(event) => { setLoginError(''); setFormState((previous) => ({ ...previous, username: event.target.value })) }} placeholder="Enter your username" className="h-full w-full bg-transparent text-sm text-slate-800 outline-none" required />
                   </div>
                 </div>
 
                 <div className="space-y-1">
                   <label htmlFor="password" className="block text-sm font-semibold text-slate-700">Password</label>
                   <div className="flex h-10 items-center rounded-xl border border-slate-300 bg-white px-3 focus-within:border-emerald-600 focus-within:ring-2 focus-within:ring-emerald-100">
-                    <input id="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" value={formState.password} onChange={(event) => setFormState((previous) => ({ ...previous, password: event.target.value }))} placeholder="Enter your password" className="h-full w-full bg-transparent text-sm text-slate-800 outline-none" required />
+                    <input id="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" value={formState.password} onChange={(event) => { setLoginError(''); setFormState((previous) => ({ ...previous, password: event.target.value })) }} placeholder="Enter your password" className="h-full w-full bg-transparent text-sm text-slate-800 outline-none" required />
                     <button type="button" onClick={() => setShowPassword((value) => !value)} className="text-slate-500 hover:text-slate-700" aria-label={showPassword ? 'Hide password' : 'Show password'}>
                       {showPassword ? 'Hide' : 'Show'}
                     </button>
                   </div>
+                  {loginError ? (
+                    <p role="alert" aria-live="assertive" className="inline-flex items-center gap-2 rounded-md bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700">
+                      <span className="grid h-4 w-4 place-items-center rounded-full bg-rose-100 text-[10px] font-bold">!</span>
+                      {loginError}
+                    </p>
+                  ) : null}
                 </div>
 
                 <div className="flex items-center justify-between text-xs">
@@ -930,9 +1075,9 @@ function App() {
                   <button type="button" className="font-semibold text-emerald-700 hover:text-emerald-800">Forgot password?</button>
                 </div>
 
-                <button type="submit" className="flex h-11 w-full items-center justify-between rounded-full bg-gradient-to-r from-emerald-700 to-emerald-500 px-5 text-base font-bold text-white shadow-[0_12px_24px_-12px_rgba(5,150,105,0.7)] transition hover:brightness-110">
+                <button type="submit" disabled={isSigningIn} className="flex h-11 w-full items-center justify-between rounded-full bg-gradient-to-r from-emerald-700 to-emerald-500 px-5 text-base font-bold text-white shadow-[0_12px_24px_-12px_rgba(5,150,105,0.7)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70">
                   <span className="w-8" />
-                  <span>Sign In</span>
+                  <span>{isSigningIn ? 'Signing In...' : 'Sign In'}</span>
                   <span className="grid h-7 w-7 place-items-center rounded-full bg-white text-emerald-700">?</span>
                 </button>
               </div>
