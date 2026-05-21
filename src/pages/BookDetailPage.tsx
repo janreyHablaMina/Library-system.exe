@@ -21,10 +21,12 @@ import {
   UserRound,
 } from 'lucide-react'
 import bookCoverPlaceholder from '../assets/login.avif'
+import type { BookDetailData } from './BooksPage'
 
 type BookDetailPageProps = {
   isDarkMode: boolean
   onBack: () => void
+  book: BookDetailData | null
 }
 
 type DetailItem = {
@@ -70,18 +72,6 @@ type ReviewItem = {
   date: string
 }
 
-const detailItems: DetailItem[] = [
-  { label: 'Author', value: 'James Clear', icon: <UserRound size={14} /> },
-  { label: 'Publisher', value: 'Avery', icon: <Library size={14} /> },
-  { label: 'Published Year', value: '2018', icon: <Calendar size={14} /> },
-  { label: 'Category', value: 'Self-Help', icon: <Tag size={14} /> },
-  { label: 'ISBN', value: '978-0735211292', icon: <Hash size={14} /> },
-  { label: 'Language', value: 'English', icon: <Languages size={14} /> },
-  { label: 'Pages', value: '320', icon: <BookMarked size={14} /> },
-  { label: 'Added On', value: 'May 12, 2024', icon: <Calendar size={14} /> },
-  { label: 'Shelf Location', value: 'A-12-04', icon: <MapPin size={14} /> },
-]
-
 const recentHistory: HistoryItem[] = [
   { name: 'Michael Johnson', borrowedOn: 'Borrowed on May 10, 2024', status: 'Returned', avatar: '👨🏻' },
   { name: 'Sarah Williams', borrowedOn: 'Borrowed on Apr 28, 2024', status: 'Returned', avatar: '👩🏻' },
@@ -124,10 +114,26 @@ function getHistoryStatusClass(status: HistoryItem['status']) {
   return 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
 }
 
-export function BookDetailPage({ isDarkMode, onBack }: BookDetailPageProps) {
+export function BookDetailPage({ isDarkMode, onBack, book }: BookDetailPageProps) {
   const [activeTab, setActiveTab] = useState<DetailTab>('overview')
   const cardClass = isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-[#e9ecf5] bg-white'
   const softCardClass = isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-[#e9ecf5] bg-[#fafbff]'
+  const coverSrc = book && (book.cover.startsWith('data:') || book.cover.startsWith('http') || book.cover.startsWith('blob:'))
+    ? book.cover
+    : bookCoverPlaceholder
+  const bookId = book ? `BK-${String(book.id).padStart(6, '0')}` : 'BK-000000'
+  const bookTitle = book?.title ?? 'Book Details'
+  const detailItemsDynamic: DetailItem[] = [
+    { label: 'Author', value: book?.author ?? '-', icon: <UserRound size={14} /> },
+    { label: 'Publisher', value: '-', icon: <Library size={14} /> },
+    { label: 'Published Year', value: String(book?.year ?? '-'), icon: <Calendar size={14} /> },
+    { label: 'Category', value: book?.category ?? '-', icon: <Tag size={14} /> },
+    { label: 'ISBN', value: book?.isbn ?? '-', icon: <Hash size={14} /> },
+    { label: 'Language', value: 'English', icon: <Languages size={14} /> },
+    { label: 'Pages', value: '-', icon: <BookMarked size={14} /> },
+    { label: 'Added On', value: '-', icon: <Calendar size={14} /> },
+    { label: 'Shelf Location', value: book?.callNumber ?? '-', icon: <MapPin size={14} /> },
+  ]
 
   return (
     <div className={`min-h-0 flex-1 overflow-auto p-4 md:p-5 ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f6f7fb] text-[#161a2d]'}`}>
@@ -142,7 +148,7 @@ export function BookDetailPage({ isDarkMode, onBack }: BookDetailPageProps) {
               <ArrowLeft size={14} />
               Back to Books
             </button>
-            <h2 className={`mt-1 text-[42px] font-bold tracking-tight ${isDarkMode ? 'text-slate-100' : 'text-[#15182a]'}`}>Atomic Habits</h2>
+            <h2 className={`mt-1 text-[42px] font-bold tracking-tight ${isDarkMode ? 'text-slate-100' : 'text-[#15182a]'}`}>{bookTitle}</h2>
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -168,28 +174,28 @@ export function BookDetailPage({ isDarkMode, onBack }: BookDetailPageProps) {
             <article className={`rounded-2xl border p-5 shadow-[0_16px_35px_-30px_rgba(99,102,241,0.35)] ${cardClass}`}>
               <div className="grid gap-5 lg:grid-cols-[282px_1fr]">
                 <img
-                  src={bookCoverPlaceholder}
-                  alt="Book cover placeholder"
+                  src={coverSrc}
+                  alt={bookTitle}
                   className={`mx-auto h-[340px] w-full max-w-[260px] rounded-xl object-cover ${isDarkMode ? 'border border-slate-700' : 'border border-[#d8dce9]'}`}
                 />
 
                 <div>
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                    <span className={`rounded-md px-2.5 py-1 text-xs font-semibold ${isDarkMode ? 'bg-emerald-500/15 text-emerald-200' : 'bg-emerald-50 text-emerald-700'}`}>ID: BK-000123</span>
+                    <span className={`rounded-md px-2.5 py-1 text-xs font-semibold ${isDarkMode ? 'bg-emerald-500/15 text-emerald-200' : 'bg-emerald-50 text-emerald-700'}`}>ID: {bookId}</span>
                     <div className="flex items-center gap-1.5">
                       <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">In Catalog</span>
                       <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700 dark:bg-blue-500/15 dark:text-blue-300">English</span>
                     </div>
                   </div>
 
-                  <p className={`text-xl font-semibold ${isDarkMode ? 'text-slate-200' : 'text-[#2f3960]'}`}>Tiny Changes, Remarkable Results</p>
-                  <p className={`mt-1 text-sm ${isDarkMode ? 'text-slate-400' : 'text-[#6b769c]'}`}>Practical guide to building good habits and eliminating bad ones through small daily improvements.</p>
+                  <p className={`text-xl font-semibold ${isDarkMode ? 'text-slate-200' : 'text-[#2f3960]'}`}>{book?.author ?? '-'}</p>
+                  <p className={`mt-1 text-sm ${isDarkMode ? 'text-slate-400' : 'text-[#6b769c]'}`}>{book?.isbn ? `ISBN: ${book.isbn}` : 'No ISBN provided.'}</p>
 
                   <div className="mt-4 grid gap-3 xl:grid-cols-2">
                     <div className={`rounded-xl border p-3 ${softCardClass}`}>
                       <p className={`mb-2 text-xs font-semibold uppercase tracking-[0.1em] ${isDarkMode ? 'text-slate-400' : 'text-[#6b769c]'}`}>Book Information</p>
                       <div className="space-y-2.5">
-                        {detailItems.slice(0, 5).map((item) => (
+                        {detailItemsDynamic.slice(0, 5).map((item) => (
                           <div key={item.label} className="flex items-center gap-2 text-sm">
                             <span className={isDarkMode ? 'text-slate-400' : 'text-[#616c92]'}>{item.icon}</span>
                             <span className={`min-w-[100px] ${isDarkMode ? 'text-slate-400' : 'text-[#616c92]'}`}>{item.label}</span>
@@ -207,7 +213,7 @@ export function BookDetailPage({ isDarkMode, onBack }: BookDetailPageProps) {
                     <div className={`rounded-xl border p-3 ${softCardClass}`}>
                       <p className={`mb-2 text-xs font-semibold uppercase tracking-[0.1em] ${isDarkMode ? 'text-slate-400' : 'text-[#6b769c]'}`}>Catalog Information</p>
                       <div className="space-y-2.5">
-                        {detailItems.slice(5).map((item) => (
+                        {detailItemsDynamic.slice(5).map((item) => (
                           <div key={item.label} className="flex items-center gap-2 text-sm">
                             <span className={isDarkMode ? 'text-slate-400' : 'text-[#616c92]'}>{item.icon}</span>
                             <span className={`min-w-[100px] ${isDarkMode ? 'text-slate-400' : 'text-[#616c92]'}`}>{item.label}</span>
@@ -269,9 +275,8 @@ export function BookDetailPage({ isDarkMode, onBack }: BookDetailPageProps) {
                 <div className="pt-4">
                   <h4 className={`text-base font-bold ${isDarkMode ? 'text-slate-100' : 'text-[#1d2240]'}`}>Description</h4>
                   <p className={`mt-2 max-w-[820px] text-sm leading-relaxed ${isDarkMode ? 'text-slate-300' : 'text-[#566084]'}`}>
-                    An easy and proven way to build good habits and break bad ones. Atomic Habits reveals
-                    practical strategies that will teach you exactly how to form good habits, break bad
-                    ones, and master the tiny behaviors that lead to remarkable results.
+                    {bookTitle} is currently in your library catalog. You can view and manage this
+                    book's details, copies, and borrowing activity from this page.
                   </p>
 
                   <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">

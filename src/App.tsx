@@ -4,6 +4,7 @@ import { AlertTriangle, ArrowLeft, ArrowLeftRight, ArrowRight, BarChart3, Bell, 
 import type { LucideIcon } from 'lucide-react'
 import heroImage from './assets/login.avif'
 import { BooksPage } from './pages/BooksPage'
+import type { BookDetailData } from './pages/BooksPage'
 import { AddBookPage } from './pages/AddBookPage'
 import type { AddBookFormData } from './pages/AddBookPage'
 import { MembersPage } from './pages/MembersPage'
@@ -128,6 +129,7 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
   const [booksRefreshKey, setBooksRefreshKey] = useState(0)
   const [booksToastMessage, setBooksToastMessage] = useState<string | null>(null)
   const [isBookDetailOpen, setIsBookDetailOpen] = useState(false)
+  const [selectedBook, setSelectedBook] = useState<BookDetailData | null>(null)
   const [isTransactionDetailOpen, setIsTransactionDetailOpen] = useState(false)
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null)
   const [isMemberDetailOpen, setIsMemberDetailOpen] = useState(false)
@@ -487,13 +489,18 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
                 onSave={handleSaveBook}
               />
             ) : isBookDetailOpen ? (
-              <BookDetailPage isDarkMode={isDarkMode} onBack={() => setIsBookDetailOpen(false)} />
+              <BookDetailPage
+                isDarkMode={isDarkMode}
+                onBack={() => setIsBookDetailOpen(false)}
+                book={selectedBook}
+              />
             ) : (
               <BooksPage
                 isDarkMode={isDarkMode}
                 refreshKey={booksRefreshKey}
                 externalToastMessage={booksToastMessage}
-                onOpenBookDetail={() => {
+                onOpenBookDetail={(book) => {
+                  setSelectedBook(book)
                   setIsAddBookOpen(false)
                   setIsBookDetailOpen(true)
                 }}

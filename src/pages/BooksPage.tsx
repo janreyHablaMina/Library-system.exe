@@ -22,9 +22,11 @@ type BookRow = {
   available: string
 }
 
+export type BookDetailData = BookRow
+
 type BooksPageProps = {
   isDarkMode: boolean
-  onOpenBookDetail: () => void
+  onOpenBookDetail: (book: BookDetailData) => void
   onOpenAddBook: () => void
   refreshKey?: number
   externalToastMessage?: string | null
@@ -340,7 +342,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
         onSave={(updatedBook) => {
           const normalizedBook: BookRow = {
             ...updatedBook,
-            status: (updatedBook.status === 'Archived' ? 'Archived' : updatedBook.status) as BookStatus,
+            status: updatedBook.status as BookStatus,
           }
           const persist = async () => {
             try {
@@ -616,7 +618,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
                             )}
                           </span>
                           <div>
-                            <button type="button" onClick={onOpenBookDetail} className={`text-left font-semibold hover:underline ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{book.title}</button>
+                            <button type="button" onClick={() => onOpenBookDetail(book)} className={`text-left font-semibold hover:underline ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{book.title}</button>
                             <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>ISBN: {book.isbn}</p>
                           </div>
                         </div>
@@ -632,7 +634,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
                       </td>
                       <td className={`px-3 py-3 font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{book.available}</td>
                       <td className="px-3 py-3 text-right">
-                        <BookActionsMenu isDarkMode={isDarkMode} onViewDetails={onOpenBookDetail} onEdit={() => setBookToEdit(book)} onDelete={() => setBookToDelete(book)} />
+                        <BookActionsMenu isDarkMode={isDarkMode} onViewDetails={() => onOpenBookDetail(book)} onEdit={() => setBookToEdit(book)} onDelete={() => setBookToDelete(book)} />
                       </td>
                     </tr>
                   ))}
@@ -662,7 +664,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
                   </div>
 
                   <div className="mt-3">
-                    <button type="button" onClick={onOpenBookDetail} className={`line-clamp-2 text-left text-sm font-semibold leading-5 hover:underline ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{book.title}</button>
+                    <button type="button" onClick={() => onOpenBookDetail(book)} className={`line-clamp-2 text-left text-sm font-semibold leading-5 hover:underline ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{book.title}</button>
                     <p className={`mt-1.5 text-xs font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{book.author}</p>
                     <p className={`mt-1 text-xs font-medium ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>ISBN: {book.isbn}</p>
                   </div>
@@ -670,7 +672,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
                   <div className="mt-auto pt-3">
                     <div className="flex items-center justify-between">
                       <span className={`rounded-md px-2 py-1 text-xs font-semibold ${getCategoryClass(book.category)}`}>{book.category}</span>
-                      <BookActionsMenu isDarkMode={isDarkMode} onViewDetails={onOpenBookDetail} onEdit={() => setBookToEdit(book)} onDelete={() => setBookToDelete(book)} />
+                      <BookActionsMenu isDarkMode={isDarkMode} onViewDetails={() => onOpenBookDetail(book)} onEdit={() => setBookToEdit(book)} onDelete={() => setBookToDelete(book)} />
                     </div>
                   </div>
                 </article>
