@@ -11,6 +11,7 @@ struct Book {
   title: String,
   author: String,
   isbn: Option<String>,
+  cover_data: Option<String>,
   available: bool,
   created_at: String,
 }
@@ -21,6 +22,18 @@ struct CreateBookPayload {
   title: String,
   author: String,
   isbn: Option<String>,
+  cover_data: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct UpdateBookPayload {
+  id: i64,
+  title: String,
+  author: String,
+  isbn: Option<String>,
+  cover_data: Option<String>,
+  available: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -69,6 +82,7 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
         title TEXT NOT NULL,
         author TEXT NOT NULL,
         isbn TEXT,
+        cover_data TEXT,
         available INTEGER NOT NULL DEFAULT 1,
         created_at TEXT NOT NULL
       );
@@ -91,6 +105,14 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
       ",
     )
     .map_err(|e| format!("init schema failed: {e}"))?;
+
+  // Backward-compatible migration for older local DBs created before cover_data existed.
+  if let Err(e) = conn.execute("ALTER TABLE books ADD COLUMN cover_data TEXT", []) {
+    let msg = e.to_string();
+    if !msg.contains("duplicate column name") {
+      return Err(format!("books migration failed: {e}"));
+    }
+  }
 
   conn
     .execute(
@@ -155,11 +177,12 @@ fn create_book(app: tauri::AppHandle, payload: CreateBookPayload) -> Result<i64,
   init_schema(&conn)?;
   conn
     .execute(
-      "INSERT INTO books (title, author, isbn, available, created_at) VALUES (?1, ?2, ?3, 1, ?4)",
+      "INSERT INTO books (title, author, isbn, cover_data, available, created_at) VALUES (?1, ?2, ?3, ?4, 1, ?5)",
       params![
         payload.title,
         payload.author,
         payload.isbn,
+        payload.cover_data,
         Utc::now().to_rfc3339()
       ],
     )
@@ -174,7 +197,7 @@ fn list_books(app: tauri::AppHandle, limit: Option<i64>) -> Result<Vec<Book>, St
   let max_rows = limit.unwrap_or(50).clamp(1, 500);
   let mut stmt = conn
     .prepare(
-      "SELECT id, title, author, isbn, available, created_at
+      "SELECT id, title, author, isbn, cover_data, available, created_at
        FROM books
        ORDER BY id DESC
        LIMIT ?1",
@@ -187,8 +210,9 @@ fn list_books(app: tauri::AppHandle, limit: Option<i64>) -> Result<Vec<Book>, St
         title: row.get(1)?,
         author: row.get(2)?,
         isbn: row.get(3)?,
-        available: row.get::<_, i64>(4)? == 1,
-        created_at: row.get(5)?,
+        cover_data: row.get(4)?,
+        available: row.get::<_, i64>(5)? == 1,
+        created_at: row.get(6)?,
       })
     })
     .map_err(|e| format!("list books failed: {e}"))?;
@@ -196,6 +220,44 @@ fn list_books(app: tauri::AppHandle, limit: Option<i64>) -> Result<Vec<Book>, St
   rows
     .collect::<Result<Vec<_>, _>>()
     .map_err(|e| format!("collect rows failed: {e}"))
+}
+
+#[tauri::command]
+fn update_book(app: tauri::AppHandle, payload: UpdateBookPayload) -> Result<(), String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  conn
+    .execute(
+      "
+      UPDATE books
+      SET title = ?1,
+          author = ?2,
+          isbn = ?3,
+          cover_data = ?4,
+          available = ?5
+      WHERE id = ?6
+      ",
+      params![
+        payload.title,
+        payload.author,
+        payload.isbn,
+        payload.cover_data,
+        if payload.available { 1 } else { 0 },
+        payload.id
+      ],
+    )
+    .map_err(|e| format!("update book failed: {e}"))?;
+  Ok(())
+}
+
+#[tauri::command]
+fn delete_book(app: tauri::AppHandle, id: i64) -> Result<(), String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  conn
+    .execute("DELETE FROM books WHERE id = ?1", params![id])
+    .map_err(|e| format!("delete book failed: {e}"))?;
+  Ok(())
 }
 
 #[tauri::command]
@@ -370,6 +432,8 @@ pub fn run() {
       get_setting,
       create_book,
       list_books,
+      update_book,
+      delete_book,
       login,
       logout,
       get_active_session,

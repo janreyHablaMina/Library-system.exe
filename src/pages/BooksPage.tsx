@@ -5,6 +5,7 @@ import {
   Eye, Pencil, BookMarked, PlusCircle, RefreshCw, Trash2, AlertTriangle, X
 } from 'lucide-react'
 import { EditBookPage } from './EditBookPage'
+import { deleteBook, listBooks, updateBook } from '../lib/tauriApi'
 
 type BookStatus = 'Available' | 'Borrowed' | 'Overdue' | 'Archived'
 
@@ -25,6 +26,8 @@ type BooksPageProps = {
   isDarkMode: boolean
   onOpenBookDetail: () => void
   onOpenAddBook: () => void
+  refreshKey?: number
+  externalToastMessage?: string | null
 }
 
 const initialBooks: BookRow[] = [
@@ -206,7 +209,7 @@ function BookActionsMenu({ isDarkMode, onViewDetails, onEdit, onDelete }: BookAc
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
-export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: BooksPageProps) {
+export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refreshKey = 0, externalToastMessage = null }: BooksPageProps) {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
   const [bookList, setBookList] = useState<BookRow[]>(initialBooks)
   const [bookToDelete, setBookToDelete] = useState<BookRow | null>(null)
@@ -215,6 +218,31 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
   const [bookToEdit, setBookToEdit] = useState<BookRow | null>(null)
 
   const [showToast, setShowToast] = useState<string | null>(null)
+
+  useEffect(() => {
+    const loadBooksFromDb = async () => {
+      try {
+        const rows = await listBooks(500)
+        const mapped: BookRow[] = rows.map((row) => ({
+          id: row.id,
+          cover: row.coverData || '📘',
+          title: row.title,
+          isbn: row.isbn ?? '-',
+          author: row.author,
+          category: 'Uncategorized',
+          callNumber: '-',
+          year: new Date(row.createdAt).getFullYear() || new Date().getFullYear(),
+          status: row.available ? 'Available' : 'Borrowed',
+          available: row.available ? '1 / 1' : '0 / 1',
+        }))
+        setBookList(mapped.length > 0 ? mapped : [])
+      } catch (error) {
+        console.error('Failed to load books from DB:', error)
+      }
+    }
+
+    loadBooksFromDb()
+  }, [refreshKey])
 
   // Filter States
   const [searchTerm, setSearchTerm] = useState('')
@@ -283,8 +311,19 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
     }
   }, [showToast])
 
-  const handleDeleteConfirm = () => {
+  useEffect(() => {
+    if (externalToastMessage) {
+      setShowToast(externalToastMessage)
+    }
+  }, [externalToastMessage])
+
+  const handleDeleteConfirm = async () => {
     if (bookToDelete) {
+      try {
+        await deleteBook(bookToDelete.id)
+      } catch (error) {
+        console.error('Failed to delete book:', error)
+      }
       setBookList(prev => prev.filter(b => b.id !== bookToDelete.id))
       setShowToast(`Successfully deleted "${bookToDelete.title}"`)
       setBookToDelete(null)
@@ -299,8 +338,27 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook }: Books
         isDarkMode={isDarkMode}
         onBack={() => setBookToEdit(null)}
         onSave={(updatedBook) => {
-          setBookList(prev => prev.map(b => b.id === updatedBook.id ? updatedBook : b))
-          setShowToast(`Successfully updated "${updatedBook.title}"`)
+          const normalizedBook: BookRow = {
+            ...updatedBook,
+            status: (updatedBook.status === 'Archived' ? 'Archived' : updatedBook.status) as BookStatus,
+          }
+          const persist = async () => {
+            try {
+              await updateBook({
+                id: normalizedBook.id,
+                title: normalizedBook.title,
+                author: normalizedBook.author,
+                isbn: normalizedBook.isbn === '-' ? null : normalizedBook.isbn,
+                coverData: normalizedBook.cover.startsWith('data:') ? normalizedBook.cover : null,
+                available: normalizedBook.status === 'Available',
+              })
+            } catch (error) {
+              console.error('Failed to update book:', error)
+            }
+          }
+          void persist()
+          setBookList((prev) => prev.map((b) => (b.id === normalizedBook.id ? normalizedBook : b)))
+          setShowToast(`Successfully updated "${normalizedBook.title}"`)
           setBookToEdit(null)
         }}
       />

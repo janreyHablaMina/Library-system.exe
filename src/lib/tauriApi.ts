@@ -5,6 +5,7 @@ export type Book = {
   title: string
   author: string
   isbn: string | null
+  coverData: string | null
   available: boolean
   createdAt: string
 }
@@ -13,6 +14,16 @@ export type CreateBookPayload = {
   title: string
   author: string
   isbn?: string | null
+  coverData?: string | null
+}
+
+export type UpdateBookPayload = {
+  id: number
+  title: string
+  author: string
+  isbn?: string | null
+  coverData?: string | null
+  available: boolean
 }
 
 export type LoginPayload = {
@@ -44,6 +55,14 @@ export async function createBook(payload: CreateBookPayload): Promise<number> {
 
 export async function listBooks(limit?: number): Promise<Book[]> {
   return invoke<Book[]>('list_books', { limit })
+}
+
+export async function updateBook(payload: UpdateBookPayload): Promise<void> {
+  return invoke<void>('update_book', { payload })
+}
+
+export async function deleteBook(id: number): Promise<void> {
+  return invoke<void>('delete_book', { id })
 }
 
 export async function sendEmailSmtp(to: string, subject: string, body: string): Promise<string> {

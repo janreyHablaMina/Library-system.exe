@@ -17,7 +17,7 @@ import {
 type AddBookPageProps = {
   isDarkMode: boolean
   onBack: () => void
-  onSave?: (data: AddBookFormData) => void
+  onSave?: (data: AddBookFormData) => Promise<void> | void
 }
 
 type BookAvailability = 'Available' | 'Unavailable' | 'Archived'
@@ -110,6 +110,7 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
   const [errors, setErrors] = useState<FormErrors>({})
   const [isDragging, setIsDragging] = useState(false)
   const [coverError, setCoverError] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
   const coverInputRef = useRef<HTMLInputElement | null>(null)
 
   const coverPreviewUrl = useMemo(() => {
@@ -153,15 +154,20 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
     setField('coverFile', file)
   }
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const nextErrors = validateForm(form)
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors)
       return
     }
-    onSave?.(form)
-    onBack()
+    setIsSaving(true)
+    try {
+      await onSave?.(form)
+      onBack()
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   return (
@@ -559,9 +565,13 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
             >
               Cancel
             </button>
-            <button type="submit" className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-700 px-8 text-sm font-semibold text-white hover:bg-emerald-800">
+            <button
+              type="submit"
+              disabled={isSaving}
+              className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-700 px-8 text-sm font-semibold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-70"
+            >
               <Save size={15} />
-              Save Book
+              {isSaving ? 'Saving...' : 'Save Book'}
             </button>
           </div>
         </div>

@@ -5,6 +5,7 @@ import type { LucideIcon } from 'lucide-react'
 import heroImage from './assets/login.avif'
 import { BooksPage } from './pages/BooksPage'
 import { AddBookPage } from './pages/AddBookPage'
+import type { AddBookFormData } from './pages/AddBookPage'
 import { MembersPage } from './pages/MembersPage'
 import { MemberDetailPage } from './pages/MemberDetailPage'
 import { BorrowReturnPage } from './pages/BorrowReturnPage'
@@ -17,7 +18,7 @@ import { AuthorsPage } from './pages/AuthorsPage'
 import { CategoriesPage } from './pages/CategoriesPage'
 import { ReservationsPage } from './pages/ReservationsPage'
 import { StaffPage } from './pages/StaffPage'
-import { expandMainWindow, getActiveSession, login as loginWithDb, logout as logoutFromDb, restoreLoginWindow } from './lib/tauriApi'
+import { createBook, expandMainWindow, getActiveSession, login as loginWithDb, logout as logoutFromDb, restoreLoginWindow } from './lib/tauriApi'
 
 
 type LoginFormState = {
@@ -124,6 +125,8 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
   const [activePage, setActivePage] = useState<ActivePage>('Dashboard')
   const [activeSettingsTab, setActiveSettingsTab] = useState('Overview')
   const [isAddBookOpen, setIsAddBookOpen] = useState(false)
+  const [booksRefreshKey, setBooksRefreshKey] = useState(0)
+  const [booksToastMessage, setBooksToastMessage] = useState<string | null>(null)
   const [isBookDetailOpen, setIsBookDetailOpen] = useState(false)
   const [isTransactionDetailOpen, setIsTransactionDetailOpen] = useState(false)
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null)
@@ -177,6 +180,28 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
     } finally {
       setIsLoggingOut(false)
     }
+  }
+
+  const handleSaveBook = async (data: AddBookFormData) => {
+    const coverData = await new Promise<string | null>((resolve) => {
+      if (!data.coverFile) {
+        resolve(null)
+        return
+      }
+      const reader = new FileReader()
+      reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : null)
+      reader.onerror = () => resolve(null)
+      reader.readAsDataURL(data.coverFile)
+    })
+
+    await createBook({
+      title: data.title.trim(),
+      author: data.author.trim(),
+      isbn: data.isbn.trim() || null,
+      coverData,
+    })
+    setBooksRefreshKey((value) => value + 1)
+    setBooksToastMessage(`Successfully added "${data.title.trim()}"`)
   }
 
   const dashboardTheme = isDarkMode
@@ -459,18 +484,22 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
               <AddBookPage
                 isDarkMode={isDarkMode}
                 onBack={() => setIsAddBookOpen(false)}
+                onSave={handleSaveBook}
               />
             ) : isBookDetailOpen ? (
               <BookDetailPage isDarkMode={isDarkMode} onBack={() => setIsBookDetailOpen(false)} />
             ) : (
               <BooksPage
                 isDarkMode={isDarkMode}
+                refreshKey={booksRefreshKey}
+                externalToastMessage={booksToastMessage}
                 onOpenBookDetail={() => {
                   setIsAddBookOpen(false)
                   setIsBookDetailOpen(true)
                 }}
                 onOpenAddBook={() => {
                   setIsBookDetailOpen(false)
+                  setBooksToastMessage(null)
                   setIsAddBookOpen(true)
                 }}
               />
