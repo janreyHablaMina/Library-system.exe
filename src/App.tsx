@@ -16,6 +16,7 @@ import { TransactionDetailPage } from './pages/TransactionDetailPage'
 import { ReportsPage } from './pages/ReportsPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { AuthorsPage } from './pages/AuthorsPage'
+import { AuthorDetailPage } from './pages/AuthorDetailPage'
 import { CategoriesPage } from './pages/CategoriesPage'
 import { ReservationsPage } from './pages/ReservationsPage'
 import { StaffPage } from './pages/StaffPage'
@@ -134,6 +135,8 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null)
   const [isMemberDetailOpen, setIsMemberDetailOpen] = useState(false)
   const [selectedMemberId, setSelectedMemberId] = useState<number | null>(null)
+  const [isAuthorDetailOpen, setIsAuthorDetailOpen] = useState(false)
+  const [selectedAuthorId, setSelectedAuthorId] = useState<number | null>(null)
   const [transactionActiveTab, setTransactionActiveTab] = useState<'all' | 'borrowed' | 'returned' | 'overdue'>('all')
   const profileMenuRef = useRef<HTMLDivElement | null>(null)
   const openTransactionsPage = (tab: 'all' | 'borrowed' | 'returned' | 'overdue' = 'all') => {
@@ -171,6 +174,10 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
     if (activePage !== 'Members') {
       setIsMemberDetailOpen(false)
       setSelectedMemberId(null)
+    }
+    if (activePage !== 'Authors') {
+      setIsAuthorDetailOpen(false)
+      setSelectedAuthorId(null)
     }
   }, [activePage])
 
@@ -567,7 +574,21 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
           ) : activePage === 'Settings' ? (
             <SettingsPage isDarkMode={isDarkMode} activeTab={activeSettingsTab} onTabChange={setActiveSettingsTab} />
           ) : activePage === 'Authors' ? (
-            <AuthorsPage isDarkMode={isDarkMode} />
+            isAuthorDetailOpen ? (
+              <AuthorDetailPage
+                isDarkMode={isDarkMode}
+                onBack={() => setIsAuthorDetailOpen(false)}
+                authorId={selectedAuthorId || undefined}
+              />
+            ) : (
+              <AuthorsPage
+                isDarkMode={isDarkMode}
+                onOpenAuthorDetail={(authorId) => {
+                  setSelectedAuthorId(authorId)
+                  setIsAuthorDetailOpen(true)
+                }}
+              />
+            )
           ) : activePage === 'Categories' ? (
             <CategoriesPage isDarkMode={isDarkMode} />
           ) : activePage === 'Reservations' ? (

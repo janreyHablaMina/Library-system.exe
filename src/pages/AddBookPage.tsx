@@ -12,7 +12,10 @@ import {
   Package,
   Save,
   StickyNote,
+  UserPlus,
+  X,
 } from 'lucide-react'
+import { createAuthor, listAuthors, listBooks } from '../lib/tauriApi'
 
 type AddBookPageProps = {
   isDarkMode: boolean
@@ -48,6 +51,12 @@ export type AddBookFormData = {
 }
 
 type FormErrors = Partial<Record<'title' | 'author' | 'category' | 'numberOfCopies', string>>
+type AuthorOption = {
+  id: number
+  name: string
+  booksPublished: number
+  profilePhotoData: string | null
+}
 
 const DESCRIPTION_MAX = 1000
 const NOTES_MAX = 2000
@@ -111,7 +120,17 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [coverError, setCoverError] = useState('')
   const [isSaving, setIsSaving] = useState(false)
+  const [authors, setAuthors] = useState<AuthorOption[]>([])
+  const [authorsLoading, setAuthorsLoading] = useState(false)
+  const [authorSearch, setAuthorSearch] = useState('')
+  const [authorDropdownOpen, setAuthorDropdownOpen] = useState(false)
+  const [isAddAuthorOpen, setIsAddAuthorOpen] = useState(false)
+  const [newAuthorName, setNewAuthorName] = useState('')
+  const [newAuthorEmail, setNewAuthorEmail] = useState('')
+  const [isCreatingAuthor, setIsCreatingAuthor] = useState(false)
+  const [authorCreateError, setAuthorCreateError] = useState('')
   const coverInputRef = useRef<HTMLInputElement | null>(null)
+  const authorDropdownRef = useRef<HTMLDivElement | null>(null)
 
   const coverPreviewUrl = useMemo(() => {
     if (!form.coverFile) return null
@@ -125,6 +144,44 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
       }
     }
   }, [coverPreviewUrl])
+
+  useEffect(() => {
+    const handleOutside = (event: MouseEvent) => {
+      if (authorDropdownRef.current && !authorDropdownRef.current.contains(event.target as Node)) {
+        setAuthorDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleOutside)
+    return () => document.removeEventListener('mousedown', handleOutside)
+  }, [])
+
+  useEffect(() => {
+    const loadAuthors = async () => {
+      setAuthorsLoading(true)
+      try {
+        const [rows, books] = await Promise.all([listAuthors(1000), listBooks(2000)])
+        const bookCountByAuthor = new Map<string, number>()
+        for (const book of books) {
+          const key = book.author.trim().toLowerCase()
+          if (!key) continue
+          bookCountByAuthor.set(key, (bookCountByAuthor.get(key) || 0) + 1)
+        }
+        setAuthors(
+          rows.map((row) => ({
+            id: row.id,
+            name: row.name,
+            booksPublished: bookCountByAuthor.get(row.name.trim().toLowerCase()) || 0,
+            profilePhotoData: row.profilePhotoData || null,
+          })),
+        )
+      } catch {
+        setAuthors([])
+      } finally {
+        setAuthorsLoading(false)
+      }
+    }
+    void loadAuthors()
+  }, [])
 
   const cardClass = isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'
   const iconBoxClass = isDarkMode ? 'bg-emerald-500/15 text-emerald-300' : 'bg-emerald-50 text-emerald-700'
@@ -167,6 +224,42 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
       onBack()
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  const filteredAuthors = useMemo(() => {
+    const q = authorSearch.trim().toLowerCase()
+    if (!q) return authors
+    return authors.filter((a) => a.name.toLowerCase().includes(q))
+  }, [authors, authorSearch])
+  const displayedAuthors = useMemo(() => filteredAuthors.slice(0, 5), [filteredAuthors])
+
+  const handleCreateAuthor = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const name = newAuthorName.trim()
+    if (!name) {
+      setAuthorCreateError('Author name is required.')
+      return
+    }
+    setIsCreatingAuthor(true)
+    setAuthorCreateError('')
+    try {
+      await createAuthor({
+        name,
+        email: newAuthorEmail.trim() || null,
+        status: 'Active',
+      })
+      const rows = await listAuthors(1000)
+      const options = rows.map((row) => ({ id: row.id, name: row.name }))
+      setAuthors(options)
+      setField('author', name)
+      setIsAddAuthorOpen(false)
+      setNewAuthorName('')
+      setNewAuthorEmail('')
+    } catch (error) {
+      setAuthorCreateError(error instanceof Error ? error.message : 'Failed to create author.')
+    } finally {
+      setIsCreatingAuthor(false)
     }
   }
 
@@ -231,12 +324,84 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
                 </div>
                 <div>
                   <label className={`text-sm font-semibold ${labelClass}`}>Author *</label>
-                  <input
-                    value={form.author}
-                    onChange={(e) => setField('author', e.target.value)}
-                    className={`mt-1 h-11 w-full rounded-xl border px-4 outline-none focus:border-emerald-500 ${inputClass}`}
-                    placeholder="Enter author name"
-                  />
+                  <div className="relative mt-1" ref={authorDropdownRef}>
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <input
+                          value={authorSearch}
+                          onChange={(e) => {
+                            setAuthorSearch(e.target.value)
+                            setAuthorDropdownOpen(true)
+                          }}
+                          onFocus={() => setAuthorDropdownOpen(true)}
+                          className={`h-11 w-full rounded-xl border px-4 pr-10 outline-none focus:border-emerald-500 ${inputClass}`}
+                          placeholder={authorsLoading ? 'Loading authors...' : 'Search author by name...'}
+                        />
+                        <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                      </div>
+                    </div>
+
+                    {authorDropdownOpen ? (
+                      <div className={`absolute left-0 right-0 top-full z-30 mt-2 max-h-56 overflow-y-auto rounded-xl border p-2 shadow-xl ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                        <div className="mb-2 flex items-center justify-between px-1">
+                          <p className={`text-[11px] font-semibold ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Authors ({Math.min(filteredAuthors.length, 5)} shown)</p>
+                          <button
+                            type="button"
+                            onClick={() => setAuthorDropdownOpen(false)}
+                            className={`grid h-6 w-6 place-items-center rounded-md ${isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-100'}`}
+                            aria-label="Close author list"
+                          >
+                            <X size={13} />
+                          </button>
+                        </div>
+                        {displayedAuthors.length > 0 ? (
+                          displayedAuthors.map((author) => (
+                            <button
+                              key={author.id}
+                              type="button"
+                              onClick={() => {
+                                setField('author', author.name)
+                                setAuthorSearch(author.name)
+                                setAuthorDropdownOpen(false)
+                              }}
+                              className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm ${isDarkMode ? 'text-slate-200 hover:bg-slate-800' : 'text-slate-700 hover:bg-slate-50'}`}
+                            >
+                              <span className={`grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
+                                {author.profilePhotoData ? (
+                                  <img src={author.profilePhotoData} alt={`${author.name} avatar`} className="h-full w-full object-cover" />
+                                ) : (
+                                  <span className="text-xs font-bold">{author.name.charAt(0).toUpperCase()}</span>
+                                )}
+                              </span>
+                              <span className="min-w-0">
+                                <p className={`truncate text-sm font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>{author.name}</p>
+                                <p className={`truncate text-[11px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                                  {author.booksPublished} book{author.booksPublished === 1 ? '' : 's'} published
+                                </p>
+                              </span>
+                            </button>
+                          ))
+                        ) : (
+                          <p className={`px-3 py-2 text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>No authors found</p>
+                        )}
+                        {filteredAuthors.length > 5 ? (
+                          <p className={`px-3 pt-1 text-[11px] ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                            Showing first 5 results. Type to refine search.
+                          </p>
+                        ) : null}
+                        <div className={`mt-2 border-t pt-2 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                          <button
+                            type="button"
+                            onClick={() => setIsAddAuthorOpen(true)}
+                            className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-3 text-sm font-semibold text-white hover:bg-emerald-700"
+                          >
+                            <UserPlus size={14} />
+                            Add New Author
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
                   <FieldError error={errors.author} />
                 </div>
                 <div>
@@ -576,6 +741,51 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
           </div>
         </div>
       </section>
+
+      {isAddAuthorOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
+          <section className={`w-full max-w-md rounded-2xl border shadow-2xl ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+            <div className={`flex items-start justify-between border-b px-5 py-4 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+              <div>
+                <h3 className={`text-xl font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Add New Author</h3>
+                <p className={`mt-1 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Create an author and use it for this book.</p>
+              </div>
+              <button type="button" onClick={() => setIsAddAuthorOpen(false)} className={`grid h-9 w-9 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
+                <X size={16} />
+              </button>
+            </div>
+            <form onSubmit={handleCreateAuthor} className="space-y-4 px-5 py-4">
+              <div>
+                <label className={`text-sm font-semibold ${labelClass}`}>Author Name *</label>
+                <input
+                  value={newAuthorName}
+                  onChange={(e) => setNewAuthorName(e.target.value)}
+                  className={`mt-1 h-11 w-full rounded-xl border px-4 outline-none focus:border-emerald-500 ${inputClass}`}
+                  placeholder="Enter full name"
+                />
+              </div>
+              <div>
+                <label className={`text-sm font-semibold ${labelClass}`}>Email (Optional)</label>
+                <input
+                  value={newAuthorEmail}
+                  onChange={(e) => setNewAuthorEmail(e.target.value)}
+                  className={`mt-1 h-11 w-full rounded-xl border px-4 outline-none focus:border-emerald-500 ${inputClass}`}
+                  placeholder="Enter email address"
+                />
+              </div>
+              {authorCreateError ? <p className="text-xs font-semibold text-rose-600">{authorCreateError}</p> : null}
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <button type="button" onClick={() => setIsAddAuthorOpen(false)} className={`h-10 rounded-xl border text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-100'}`}>
+                  Cancel
+                </button>
+                <button type="submit" disabled={isCreatingAuthor} className="h-10 rounded-xl bg-emerald-700 text-sm font-semibold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-70">
+                  {isCreatingAuthor ? 'Saving...' : 'Save Author'}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      ) : null}
     </form>
   )
 }

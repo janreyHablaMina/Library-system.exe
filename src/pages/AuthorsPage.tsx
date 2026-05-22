@@ -1,14 +1,13 @@
 ﻿import { useState, useRef, useEffect, useMemo } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 import { ChevronDown, Download, Eye, Pencil, Plus, Search, Trash2, Users, X, BookOpen, Star, Calendar, Filter, ChevronLeft, ChevronRight, MoreHorizontal, AlertTriangle, Mail, Globe } from 'lucide-react'
-import { createAuthor, listAuthors, type Author as DbAuthor } from '../lib/tauriApi'
+import { createAuthor, deleteAuthor, listAuthors, listBooks, type Author as DbAuthor, type Book } from '../lib/tauriApi'
 
 type AuthorRow = {
   id: number
   name: string
   email: string
   nationality: string
-  flag: string
   books: number
   dob: string
   status: 'Active' | 'Inactive'
@@ -21,6 +20,7 @@ type AuthorRow = {
 
 type AuthorsPageProps = {
   isDarkMode: boolean
+  onOpenAuthorDetail: (id: number) => void
 }
 
 type AuthorFormState = {
@@ -41,23 +41,15 @@ const initialFormState: AuthorFormState = {
   biography: '',
 }
 
-const stats = [
-  { label: 'Total Authors', value: '156', subValue: 'â†‘ 12 this month', icon: Users, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-  { label: 'Active Authors', value: '142', subValue: '90.9% of total', icon: Pencil, color: 'text-blue-600', bg: 'bg-blue-50' },
-  { label: 'Books by Authors', value: '1,245', subValue: 'Total books written', icon: BookOpen, color: 'text-amber-600', bg: 'bg-amber-50' },
-  { label: 'Top Nationality', value: 'American', subValue: '42 authors', icon: Star, color: 'text-violet-600', bg: 'bg-violet-50' },
-  { label: 'New This Month', value: '6', subValue: 'New authors added', icon: Calendar, color: 'text-rose-600', bg: 'bg-rose-50' },
-]
-
 const authors: AuthorRow[] = [
-  { id: 1, name: 'J.K. Rowling', email: 'jk.rowling@example.com', nationality: 'British', flag: 'ðŸ‡¬ðŸ‡§', books: 12, dob: 'July 31, 1965', status: 'Active', addedOn: 'May 6, 2026', addedTime: '10:15 AM', avatar: 'ðŸ‘©ðŸ¼' },
-  { id: 2, name: 'George R. R. Martin', email: 'grrmartin@example.com', nationality: 'American', flag: 'ðŸ‡ºðŸ‡¸', books: 8, dob: 'September 20, 1948', status: 'Active', addedOn: 'May 5, 2026', addedTime: '02:30 PM', avatar: 'ðŸ‘¨ðŸ¼' },
-  { id: 3, name: 'Agatha Christie', email: 'agatha.christie@example.com', nationality: 'British', flag: 'ðŸ‡¬ðŸ‡§', books: 66, dob: 'September 15, 1890', status: 'Active', addedOn: 'May 4, 2026', addedTime: '11:20 AM', avatar: 'ðŸ‘©ðŸ»' },
-  { id: 4, name: 'Stephen King', email: 'stephen.king@example.com', nationality: 'American', flag: 'ðŸ‡ºðŸ‡¸', books: 61, dob: 'September 21, 1947', status: 'Active', addedOn: 'May 3, 2026', addedTime: '09:45 AM', avatar: 'ðŸ‘¨ðŸ»' },
-  { id: 5, name: 'Haruki Murakami', email: 'murakami@example.com', nationality: 'Japanese', flag: 'ðŸ‡¯ðŸ‡µ', books: 14, dob: 'January 12, 1949', status: 'Active', addedOn: 'May 2, 2026', addedTime: '03:10 PM', avatar: 'ðŸ‘¨ðŸ»' },
-  { id: 6, name: 'Dan Brown', email: 'dan.brown@example.com', nationality: 'American', flag: 'ðŸ‡ºðŸ‡¸', books: 6, dob: 'June 22, 1964', status: 'Inactive', addedOn: 'May 1, 2026', addedTime: '01:05 PM', avatar: 'ðŸ‘¨ðŸ»' },
-  { id: 7, name: 'Jane Austen', email: 'jane.austen@example.com', nationality: 'British', flag: 'ðŸ‡¬ðŸ‡§', books: 6, dob: 'December 16, 1775', status: 'Active', addedOn: 'Apr 30, 2026', addedTime: '04:25 PM', avatar: 'ðŸ‘©ðŸ¼' },
-  { id: 8, name: 'Paulo Coelho', email: 'paulo.coelho@example.com', nationality: 'Brazilian', flag: 'ðŸ‡§ðŸ‡·', books: 11, dob: 'August 24, 1947', status: 'Active', addedOn: 'Apr 29, 2026', addedTime: '10:50 AM', avatar: 'ðŸ‘¨ðŸ»' },
+  { id: 1, name: 'J.K. Rowling', email: 'jk.rowling@example.com', nationality: 'British', books: 12, dob: 'July 31, 1965', status: 'Active', addedOn: 'May 6, 2026', addedTime: '10:15 AM', avatar: 'ðŸ‘©ðŸ¼' },
+  { id: 2, name: 'George R. R. Martin', email: 'grrmartin@example.com', nationality: 'American', books: 8, dob: 'September 20, 1948', status: 'Active', addedOn: 'May 5, 2026', addedTime: '02:30 PM', avatar: 'ðŸ‘¨ðŸ¼' },
+  { id: 3, name: 'Agatha Christie', email: 'agatha.christie@example.com', nationality: 'British', books: 66, dob: 'September 15, 1890', status: 'Active', addedOn: 'May 4, 2026', addedTime: '11:20 AM', avatar: 'ðŸ‘©ðŸ»' },
+  { id: 4, name: 'Stephen King', email: 'stephen.king@example.com', nationality: 'American', books: 61, dob: 'September 21, 1947', status: 'Active', addedOn: 'May 3, 2026', addedTime: '09:45 AM', avatar: 'ðŸ‘¨ðŸ»' },
+  { id: 5, name: 'Haruki Murakami', email: 'murakami@example.com', nationality: 'Japanese', books: 14, dob: 'January 12, 1949', status: 'Active', addedOn: 'May 2, 2026', addedTime: '03:10 PM', avatar: 'ðŸ‘¨ðŸ»' },
+  { id: 6, name: 'Dan Brown', email: 'dan.brown@example.com', nationality: 'American', books: 6, dob: 'June 22, 1964', status: 'Inactive', addedOn: 'May 1, 2026', addedTime: '01:05 PM', avatar: 'ðŸ‘¨ðŸ»' },
+  { id: 7, name: 'Jane Austen', email: 'jane.austen@example.com', nationality: 'British', books: 6, dob: 'December 16, 1775', status: 'Active', addedOn: 'Apr 30, 2026', addedTime: '04:25 PM', avatar: 'ðŸ‘©ðŸ¼' },
+  { id: 8, name: 'Paulo Coelho', email: 'paulo.coelho@example.com', nationality: 'Brazilian', books: 11, dob: 'August 24, 1947', status: 'Active', addedOn: 'Apr 29, 2026', addedTime: '10:50 AM', avatar: 'ðŸ‘¨ðŸ»' },
 ]
 
 type AuthorActionsMenuProps = {
@@ -161,26 +153,57 @@ export function AuthorActionsMenu({ isDarkMode, onViewDetails, onEdit, onDelete 
   )
 }
 
-export function AuthorsPage({ isDarkMode }: AuthorsPageProps) {
+export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [authorForm, setAuthorForm] = useState<AuthorFormState>(initialFormState)
   const [authorToEdit, setAuthorToEdit] = useState<AuthorRow | null>(null)
   const [authorToDelete, setAuthorToDelete] = useState<AuthorRow | null>(null)
   const [authorsList, setAuthorsList] = useState<AuthorRow[]>(authors)
+  const [allBooksCount, setAllBooksCount] = useState(0)
   const [showToast, setShowToast] = useState<string | null>(null)
   const [authorPhotoPreview, setAuthorPhotoPreview] = useState<string | null>(null)
   const [authorPhotoName, setAuthorPhotoName] = useState<string>('')
   const authorPhotoInputRef = useRef<HTMLInputElement>(null)
 
-  const toAuthorRow = (author: DbAuthor): AuthorRow => {
+  const getBookCountsByAuthorId = (authors: DbAuthor[], books: Book[]) => {
+    const countsByAuthorId = new Map<number, number>()
+    const authorsByName = new Map<string, DbAuthor[]>()
+
+    for (const author of authors) {
+      const key = author.name.trim().toLowerCase()
+      if (!key) continue
+      const bucket = authorsByName.get(key) ?? []
+      bucket.push(author)
+      authorsByName.set(key, bucket)
+    }
+
+    // Pick one canonical author per duplicate name (lowest id) so counts are not duplicated.
+    for (const bucket of authorsByName.values()) {
+      bucket.sort((a, b) => a.id - b.id)
+    }
+
+    for (const book of books) {
+      const key = book.author.trim().toLowerCase()
+      if (!key) continue
+      const matchingAuthors = authorsByName.get(key)
+      if (!matchingAuthors || matchingAuthors.length === 0) continue
+      const canonicalAuthor = matchingAuthors[0]
+      countsByAuthorId.set(canonicalAuthor.id, (countsByAuthorId.get(canonicalAuthor.id) ?? 0) + 1)
+    }
+
+    return countsByAuthorId
+  }
+
+  const toAuthorRow = (author: DbAuthor, booksCountByAuthorId?: Map<number, number>): AuthorRow => {
     const created = author.createdAt ? new Date(author.createdAt) : new Date()
+    const books = booksCountByAuthorId?.get(author.id) ?? 0
+    const cleanNationality = author.nationality?.trim() || 'Unknown'
     return {
       id: author.id,
       name: author.name,
       email: author.email || 'n/a',
-      nationality: author.nationality || 'Unknown',
-      flag: 'ðŸ³ï¸',
-      books: 0,
+      nationality: cleanNationality,
+      books,
       dob: author.dob
         ? new Date(author.dob).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
         : '',
@@ -210,9 +233,11 @@ export function AuthorsPage({ isDarkMode }: AuthorsPageProps) {
   useEffect(() => {
     const loadAuthors = async () => {
       try {
-        const rows = await listAuthors(500)
+        const [rows, books] = await Promise.all([listAuthors(500), listBooks(2000)])
+        const booksCountByAuthorId = getBookCountsByAuthorId(rows, books)
+        setAllBooksCount(books.length)
         if (rows.length > 0) {
-          setAuthorsList(rows.map(toAuthorRow))
+          setAuthorsList(rows.map((row) => toAuthorRow(row, booksCountByAuthorId)))
         }
       } catch {
         // Keep local seed list if DB is unavailable.
@@ -303,9 +328,11 @@ export function AuthorsPage({ isDarkMode }: AuthorsPageProps) {
           status: authorForm.status || 'Active',
           biography: authorForm.biography.trim() || null,
         })
-        const rows = await listAuthors(500)
+        const [rows, books] = await Promise.all([listAuthors(500), listBooks(2000)])
+        const booksCountByAuthorId = getBookCountsByAuthorId(rows, books)
+        setAllBooksCount(books.length)
         if (rows.length > 0) {
-          setAuthorsList(rows.map(toAuthorRow))
+          setAuthorsList(rows.map((row) => toAuthorRow(row, booksCountByAuthorId)))
         }
         setShowToast(`Successfully added ${authorForm.name} as a new author!`)
       } catch (error) {
@@ -316,11 +343,20 @@ export function AuthorsPage({ isDarkMode }: AuthorsPageProps) {
     }
     closeAddModal()
   }
-  const handleDeleteConfirm = () => {
-    if (authorToDelete) {
-      setAuthorsList(prev => prev.filter(a => a.id !== authorToDelete.id))
+  const handleDeleteConfirm = async () => {
+    if (!authorToDelete) return
+
+    try {
+      await deleteAuthor(authorToDelete.id)
+      const [rows, books] = await Promise.all([listAuthors(500), listBooks(2000)])
+      const booksCountByAuthorId = getBookCountsByAuthorId(rows, books)
+      setAllBooksCount(books.length)
+      setAuthorsList(rows.map((row) => toAuthorRow(row, booksCountByAuthorId)))
       setShowToast(`Successfully deleted ${authorToDelete.name}!`)
       setAuthorToDelete(null)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to delete author.'
+      setShowToast(message)
     }
   }
 
@@ -351,6 +387,33 @@ export function AuthorsPage({ isDarkMode }: AuthorsPageProps) {
 
     return result
   }, [authorsList, searchTerm, selectedNationality, selectedStatus, sortBy])
+
+  const stats = useMemo(() => {
+    const totalAuthors = authorsList.length
+    const activeAuthors = authorsList.filter((a) => a.status === 'Active').length
+    const activePct = totalAuthors > 0 ? ((activeAuthors / totalAuthors) * 100).toFixed(1) : '0.0'
+    const nationalityCounts = authorsList.reduce<Record<string, number>>((acc, author) => {
+      const key = author.nationality?.trim() || 'Unknown'
+      acc[key] = (acc[key] ?? 0) + 1
+      return acc
+    }, {})
+    let topNationality = 'Unknown'
+    let topNationalityCount = 0
+    for (const [name, count] of Object.entries(nationalityCounts)) {
+      if (count > topNationalityCount) {
+        topNationality = name
+        topNationalityCount = count
+      }
+    }
+
+    return [
+      { label: 'Total Authors', value: totalAuthors.toLocaleString('en-US'), subValue: 'From database records', icon: Users, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+      { label: 'Active Authors', value: activeAuthors.toLocaleString('en-US'), subValue: `${activePct}% of total`, icon: Pencil, color: 'text-blue-600', bg: 'bg-blue-50' },
+      { label: 'Books by Authors', value: allBooksCount.toLocaleString('en-US'), subValue: 'Total books written', icon: BookOpen, color: 'text-amber-600', bg: 'bg-amber-50' },
+      { label: 'Top Nationality', value: topNationality, subValue: `${topNationalityCount.toLocaleString('en-US')} author(s)`, icon: Star, color: 'text-violet-600', bg: 'bg-violet-50' },
+      { label: 'New This Month', value: '0', subValue: 'New authors added', icon: Calendar, color: 'text-rose-600', bg: 'bg-rose-50' },
+    ]
+  }, [authorsList, allBooksCount])
 
   return (
     <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
@@ -480,7 +543,7 @@ export function AuthorsPage({ isDarkMode }: AuthorsPageProps) {
                     </td>
                     <td className="px-6 py-4">
                        <div className="flex items-center gap-2 font-medium text-slate-600 dark:text-slate-300">
-                         <span className="text-base leading-none">{author.flag}</span>
+                         <Globe size={14} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />
                          <span className="text-xs">{author.nationality}</span>
                        </div>
                     </td>
@@ -504,7 +567,7 @@ export function AuthorsPage({ isDarkMode }: AuthorsPageProps) {
                     <td className="px-6 py-4 text-center">
                       <AuthorActionsMenu
                         isDarkMode={isDarkMode}
-                        onViewDetails={() => setShowToast(`Author Details: ${author.name} (${author.nationality}, Born: ${author.dob})`)}
+                        onViewDetails={() => onOpenAuthorDetail(author.id)}
                         onEdit={() => handleOpenEditModal(author)}
                         onDelete={() => setAuthorToDelete(author)}
                       />

@@ -146,6 +146,10 @@ export async function listAuthors(limit?: number): Promise<Author[]> {
   return invoke<Author[]>('list_authors', { limit })
 }
 
+export async function deleteAuthor(id: number): Promise<void> {
+  return invoke<void>('delete_author', { id })
+}
+
 export async function sendEmailSmtp(to: string, subject: string, body: string): Promise<string> {
   return invoke<string>('send_email_smtp', { to, subject, body })
 }

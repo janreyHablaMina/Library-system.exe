@@ -551,6 +551,16 @@ fn list_authors(app: tauri::AppHandle, limit: Option<i64>) -> Result<Vec<Author>
 }
 
 #[tauri::command]
+fn delete_author(app: tauri::AppHandle, id: i64) -> Result<(), String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  conn
+    .execute("DELETE FROM authors WHERE id = ?1", params![id])
+    .map_err(|e| format!("delete author failed: {e}"))?;
+  Ok(())
+}
+
+#[tauri::command]
 fn send_email_smtp(to: String, subject: String, body: String) -> Result<String, String> {
   let summary = format!(
     "SMTP stub queued. To: {to}, Subject: {subject}, Body chars: {}",
@@ -729,6 +739,7 @@ pub fn run() {
       update_member,
       create_author,
       list_authors,
+      delete_author,
       login,
       logout,
       get_active_session,
