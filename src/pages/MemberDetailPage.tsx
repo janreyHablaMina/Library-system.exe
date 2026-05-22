@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Activity,
   ArrowLeft,
@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 import bookCover from '../assets/login.avif'
 import { mockMembersData } from './memberDetailData'
+import { listMembers, type Member as DbMember } from '../lib/tauriApi'
 
 type Props = {
   isDarkMode: boolean
@@ -31,7 +32,54 @@ type Props = {
 }
 
 export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
-  const d = mockMembersData[memberId && mockMembersData[memberId] ? memberId : 1]
+  const [dbMember, setDbMember] = useState<DbMember | null>(null)
+  const [loadingMember, setLoadingMember] = useState(true)
+  const d = useMemo(() => {
+    if (dbMember) {
+      const dateJoined = dbMember.createdAt
+        ? new Date(dbMember.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
+        : 'N/A'
+      return {
+        name: dbMember.fullName,
+        memberId: dbMember.memberId,
+        email: dbMember.email || 'n/a',
+        phone: dbMember.contactNumber || 'n/a',
+        address: dbMember.address || 'n/a',
+        initials: dbMember.fullName
+          .split(' ')
+          .filter(Boolean)
+          .slice(0, 2)
+          .map((part) => part[0]?.toUpperCase() || '')
+          .join('') || 'MB',
+        avatarColor: 'bg-emerald-500',
+        type: dbMember.memberType,
+        department: dbMember.department || 'General',
+        status: (dbMember.status as 'Active' | 'Inactive' | 'Overdue') || 'Active',
+        dateJoined,
+        memberSince: 'N/A',
+        lastUpdated: 'Synced from database',
+        totalLoans: dbMember.borrowed,
+        currentLoans: dbMember.borrowed,
+        reservationsCount: 0,
+        fines: 'PHP 0.00',
+        loansList: [],
+        reservationsList: [],
+        notes: [],
+        activities: [
+          {
+            dateTime: dbMember.createdAt
+              ? new Date(dbMember.createdAt).toLocaleString('en-US')
+              : 'N/A',
+            activity: 'Member Registered',
+            description: 'Member profile stored in database',
+            performedBy: 'System',
+          },
+        ],
+      }
+    }
+    return mockMembersData[memberId && mockMembersData[memberId] ? memberId : 1]
+  }, [dbMember, memberId])
+
   const [member, setMember] = useState({ ...d, profileImage: bookCover })
   const [copied, setCopied] = useState(false)
   const [notes, setNotes] = useState(member.notes)
@@ -49,8 +97,42 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
   })
   const [editPhotoPreview, setEditPhotoPreview] = useState<string>(bookCover)
 
+  useEffect(() => {
+    let mounted = true
+    const load = async () => {
+      setLoadingMember(true)
+      try {
+        const rows = await listMembers(1000)
+        const found = typeof memberId === 'number' ? rows.find((row) => row.id === memberId) ?? null : null
+        if (mounted) {
+          setDbMember(found)
+        }
+      } catch {
+        if (mounted) {
+          setDbMember(null)
+        }
+      } finally {
+        if (mounted) {
+          setLoadingMember(false)
+        }
+      }
+    }
+    void load()
+    return () => {
+      mounted = false
+    }
+  }, [memberId])
+
+  useEffect(() => {
+    setMember({
+      ...d,
+      profileImage: dbMember?.profilePhotoData || bookCover,
+    })
+    setNotes(d.notes)
+  }, [d, dbMember])
+
   const copyId = async () => {
-    await navigator.clipboard.writeText(d.memberId)
+    await navigator.clipboard.writeText(member.memberId)
     setCopied(true)
     setTimeout(() => setCopied(false), 1600)
   }
@@ -143,6 +225,9 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
 
               <div className="min-w-0 flex-1">
                 <h2 className={`text-[35px] font-semibold tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{member.name}</h2>
+                {loadingMember ? (
+                  <p className={`mt-1 text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Loading member details...</p>
+                ) : null}
                 <div className="mt-1 flex items-center gap-1.5">
                   <p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Member ID: {member.memberId}</p>
                   <button onClick={copyId} className={isDarkMode ? 'text-slate-400 hover:text-emerald-400' : 'text-slate-500 hover:text-emerald-600'}>
@@ -176,20 +261,45 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
           <section className={cardClass}>
             <CardHeader title="Current Loans" count={`${d.loansList.length} Item(s)`} isDarkMode={isDarkMode} />
             <div className="px-6 pb-5">
-              {d.loansList.map((loan) => (
-                <div key={loan.id} className={`py-3 flex items-center gap-4 ${isDarkMode ? 'border-slate-800' : 'border-slate-100'} border-b last:border-b-0`}>
-                  <img src={bookCover} alt={loan.title} className="h-16 w-12 rounded-md object-cover" />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold truncate">{loan.title}</p>
-                    <p className={isDarkMode ? 'text-xs text-slate-400' : 'text-xs text-slate-500'}>{loan.author}</p>
+              {d.loansList.length > 0 ? (
+                d.loansList.map((loan) => (
+                  <div key={loan.id} className={`py-3 flex items-center gap-4 ${isDarkMode ? 'border-slate-800' : 'border-slate-100'} border-b last:border-b-0`}>
+                    <img src={bookCover} alt={loan.title} className="h-16 w-12 rounded-md object-cover" />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold truncate">{loan.title}</p>
+                      <p className={isDarkMode ? 'text-xs text-slate-400' : 'text-xs text-slate-500'}>{loan.author}</p>
+                    </div>
+                    <div className="text-right mr-2">
+                      <p className={isDarkMode ? 'text-xs text-slate-400' : 'text-xs text-slate-500'}>Due Date</p>
+                      <p className={`text-sm font-semibold ${loan.status === 'Overdue' ? 'text-rose-500' : ''}`}>{loan.dueDate}</p>
+                    </div>
+                    <span className={`text-xs font-semibold rounded-lg px-3 py-1.5 ${loan.status === 'Overdue' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'}`}>{loan.statusLabel}</span>
                   </div>
-                  <div className="text-right mr-2">
-                    <p className={isDarkMode ? 'text-xs text-slate-400' : 'text-xs text-slate-500'}>Due Date</p>
-                    <p className={`text-sm font-semibold ${loan.status === 'Overdue' ? 'text-rose-500' : ''}`}>{loan.dueDate}</p>
+                ))
+              ) : (
+                <div className={`mt-4 overflow-hidden rounded-2xl border ${isDarkMode ? 'border-emerald-900/45 bg-[radial-gradient(circle_at_18%_22%,rgba(16,185,129,0.14),transparent_44%),linear-gradient(145deg,#0a162b_0%,#0b1220_100%)]' : 'border-emerald-100 bg-[radial-gradient(circle_at_18%_22%,rgba(16,185,129,0.12),transparent_44%),linear-gradient(145deg,#f8fffc_0%,#f1f5f9_100%)]'}`}>
+                  <div className={`flex items-start gap-4 p-6 ${isDarkMode ? 'backdrop-blur-[1px]' : ''}`}>
+                    <div className={`grid h-12 w-12 place-items-center rounded-xl ${isDarkMode ? 'bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/35' : 'bg-white text-emerald-600 ring-1 ring-emerald-200'}`}>
+                      <BookOpen size={20} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className={`text-sm font-bold tracking-tight ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>No current loans</p>
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${isDarkMode ? 'bg-emerald-500/20 text-emerald-300' : 'bg-emerald-100 text-emerald-700'}`}>All clear</span>
+                      </div>
+                      <p className={`mt-1 text-xs leading-relaxed ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                        This member does not have any borrowed books right now.
+                      </p>
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <button className={`inline-flex h-8 items-center rounded-lg px-3 text-xs font-semibold ${isDarkMode ? 'bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25' : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'}`}>
+                          Start New Borrow
+                        </button>
+                        <span className={`text-[11px] ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>No overdue items detected</span>
+                      </div>
+                    </div>
                   </div>
-                  <span className={`text-xs font-semibold rounded-lg px-3 py-1.5 ${loan.status === 'Overdue' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'}`}>{loan.statusLabel}</span>
                 </div>
-              ))}
+              )}
               <div className="pt-3 text-right">
                 <button className="inline-flex items-center gap-1 text-sm font-semibold text-emerald-600 hover:text-emerald-700">View all loans <ArrowUpRight size={14} /></button>
               </div>
@@ -215,20 +325,45 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
           <section className={cardClass}>
             <CardHeader title="Recent Reservations" count={`${d.reservationsList.length} Item(s)`} isDarkMode={isDarkMode} />
             <div className="px-6 pb-5">
-              {d.reservationsList.map((reservation) => (
-                <div key={reservation.id} className={`py-3 flex items-center gap-4 ${isDarkMode ? 'border-slate-800' : 'border-slate-100'} border-b last:border-b-0`}>
-                  <img src={bookCover} alt={reservation.title} className="h-16 w-12 rounded-md object-cover" />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold truncate">{reservation.title}</p>
-                    <p className={isDarkMode ? 'text-xs text-slate-400' : 'text-xs text-slate-500'}>{reservation.author}</p>
+              {d.reservationsList.length > 0 ? (
+                d.reservationsList.map((reservation) => (
+                  <div key={reservation.id} className={`py-3 flex items-center gap-4 ${isDarkMode ? 'border-slate-800' : 'border-slate-100'} border-b last:border-b-0`}>
+                    <img src={bookCover} alt={reservation.title} className="h-16 w-12 rounded-md object-cover" />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold truncate">{reservation.title}</p>
+                      <p className={isDarkMode ? 'text-xs text-slate-400' : 'text-xs text-slate-500'}>{reservation.author}</p>
+                    </div>
+                    <div className="text-right mr-2">
+                      <p className={isDarkMode ? 'text-xs text-slate-400' : 'text-xs text-slate-500'}>Reserved On</p>
+                      <p className="text-sm font-semibold">{reservation.reservedOn}</p>
+                    </div>
+                    <span className="text-xs font-semibold rounded-lg px-3 py-1.5 bg-indigo-100 text-indigo-700">{reservation.statusLabel}</span>
                   </div>
-                  <div className="text-right mr-2">
-                    <p className={isDarkMode ? 'text-xs text-slate-400' : 'text-xs text-slate-500'}>Reserved On</p>
-                    <p className="text-sm font-semibold">{reservation.reservedOn}</p>
+                ))
+              ) : (
+                <div className={`mt-4 overflow-hidden rounded-2xl border ${isDarkMode ? 'border-indigo-900/45 bg-[radial-gradient(circle_at_18%_22%,rgba(99,102,241,0.16),transparent_44%),linear-gradient(145deg,#0a162b_0%,#0b1220_100%)]' : 'border-indigo-100 bg-[radial-gradient(circle_at_18%_22%,rgba(99,102,241,0.12),transparent_44%),linear-gradient(145deg,#f8fbff_0%,#f1f5f9_100%)]'}`}>
+                  <div className={`flex items-start gap-4 p-6 ${isDarkMode ? 'backdrop-blur-[1px]' : ''}`}>
+                    <div className={`grid h-12 w-12 place-items-center rounded-xl ${isDarkMode ? 'bg-indigo-500/15 text-indigo-300 ring-1 ring-indigo-500/35' : 'bg-white text-indigo-600 ring-1 ring-indigo-200'}`}>
+                      <Bookmark size={20} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className={`text-sm font-bold tracking-tight ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>No recent reservations</p>
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${isDarkMode ? 'bg-indigo-500/20 text-indigo-300' : 'bg-indigo-100 text-indigo-700'}`}>Quiet</span>
+                      </div>
+                      <p className={`mt-1 text-xs leading-relaxed ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                        This member has not placed any reservations yet.
+                      </p>
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <button className={`inline-flex h-8 items-center rounded-lg px-3 text-xs font-semibold ${isDarkMode ? 'bg-indigo-500/15 text-indigo-300 hover:bg-indigo-500/25' : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'}`}>
+                          Create Reservation
+                        </button>
+                        <span className={`text-[11px] ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>No pending queue requests</span>
+                      </div>
+                    </div>
                   </div>
-                  <span className="text-xs font-semibold rounded-lg px-3 py-1.5 bg-indigo-100 text-indigo-700">{reservation.statusLabel}</span>
                 </div>
-              ))}
+              )}
               <div className="pt-3 text-right">
                 <button className="inline-flex items-center gap-1 text-sm font-semibold text-emerald-600 hover:text-emerald-700">View all reservations <ArrowUpRight size={14} /></button>
               </div>
