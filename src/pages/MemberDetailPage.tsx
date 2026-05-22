@@ -23,7 +23,7 @@ import {
 } from 'lucide-react'
 import bookCover from '../assets/login.avif'
 import { mockMembersData } from './memberDetailData'
-import { listMembers, type Member as DbMember } from '../lib/tauriApi'
+import { listMembers, updateMember, type Member as DbMember } from '../lib/tauriApi'
 
 type Props = {
   isDarkMode: boolean
@@ -86,6 +86,8 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
   const [newNote, setNewNote] = useState('')
   const [addingNote, setAddingNote] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
+  const [isSavingEdit, setIsSavingEdit] = useState(false)
+  const [editError, setEditError] = useState<string | null>(null)
   const [editForm, setEditForm] = useState({
     name: d.name,
     email: d.email,
@@ -146,6 +148,7 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
   }
 
   const openEditModal = () => {
+    setEditError(null)
     setEditForm({
       name: member.name,
       email: member.email,
@@ -159,21 +162,51 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
     setIsEditOpen(true)
   }
 
-  const saveEditMember = (e: React.FormEvent) => {
+  const saveEditMember = async (e: React.FormEvent) => {
     e.preventDefault()
-    setMember((prev) => ({
-      ...prev,
-      name: editForm.name.trim() || prev.name,
-      email: editForm.email.trim() || prev.email,
-      phone: editForm.phone.trim() || prev.phone,
-      address: editForm.address.trim() || prev.address,
-      type: editForm.type.trim() || prev.type,
-      department: editForm.department.trim() || prev.department,
-      status: editForm.status,
-      profileImage: editPhotoPreview,
-      lastUpdated: 'Updated just now by Admin User',
-    }))
-    setIsEditOpen(false)
+    if (!dbMember) {
+      setMember((prev) => ({
+        ...prev,
+        name: editForm.name.trim() || prev.name,
+        email: editForm.email.trim() || prev.email,
+        phone: editForm.phone.trim() || prev.phone,
+        address: editForm.address.trim() || prev.address,
+        type: editForm.type.trim() || prev.type,
+        department: editForm.department.trim() || prev.department,
+        status: editForm.status,
+        profileImage: editPhotoPreview,
+        lastUpdated: 'Updated just now by Admin User',
+      }))
+      setIsEditOpen(false)
+      return
+    }
+
+    setIsSavingEdit(true)
+    setEditError(null)
+    try {
+      await updateMember({
+        id: dbMember.id,
+        fullName: editForm.name.trim() || dbMember.fullName,
+        memberType: editForm.type.trim() || dbMember.memberType,
+        department: editForm.department.trim() || null,
+        contactNumber: editForm.phone.trim() || null,
+        email: editForm.email.trim() || null,
+        address: editForm.address.trim() || null,
+        profilePhotoData: editPhotoPreview || null,
+        status: editForm.status,
+      })
+
+      const rows = await listMembers(1000)
+      const updated = rows.find((row) => row.id === dbMember.id) ?? null
+      if (updated) {
+        setDbMember(updated)
+      }
+      setIsEditOpen(false)
+    } catch (error) {
+      setEditError(error instanceof Error ? error.message : 'Failed to save profile.')
+    } finally {
+      setIsSavingEdit(false)
+    }
   }
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -458,6 +491,11 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
             </div>
 
             <form onSubmit={saveEditMember} className="space-y-5 px-6 py-5">
+              {editError ? (
+                <div className={`rounded-xl border px-3 py-2 text-xs font-semibold ${isDarkMode ? 'border-rose-500/35 bg-rose-500/10 text-rose-300' : 'border-rose-200 bg-rose-50 text-rose-700'}`}>
+                  {editError}
+                </div>
+              ) : null}
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Full Name <span className="text-rose-500">*</span></label>
@@ -517,8 +555,8 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
               </div>
 
               <div className="grid gap-3 pt-1 sm:grid-cols-2">
-                <button type="button" onClick={() => setIsEditOpen(false)} className={`h-11 rounded-xl border text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>Cancel</button>
-                <button type="submit" className="h-11 rounded-xl bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-700">Save Member</button>
+                <button type="button" disabled={isSavingEdit} onClick={() => setIsEditOpen(false)} className={`h-11 rounded-xl border text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'} disabled:opacity-60 disabled:cursor-not-allowed`}>Cancel</button>
+                <button type="submit" disabled={isSavingEdit} className="h-11 rounded-xl bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-70 disabled:cursor-not-allowed">{isSavingEdit ? 'Saving...' : 'Save Member'}</button>
               </div>
             </form>
           </section>

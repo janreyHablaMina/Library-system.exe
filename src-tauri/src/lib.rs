@@ -82,6 +82,20 @@ struct CreateMemberPayload {
   status: Option<String>,
 }
 
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct UpdateMemberPayload {
+  id: i64,
+  full_name: String,
+  member_type: String,
+  department: Option<String>,
+  contact_number: Option<String>,
+  email: Option<String>,
+  address: Option<String>,
+  profile_photo_data: Option<String>,
+  status: String,
+}
+
 fn open_db(path: &PathBuf) -> Result<Connection, String> {
   Connection::open(path).map_err(|e| format!("open db failed: {e}"))
 }
@@ -387,6 +401,46 @@ fn list_members(app: tauri::AppHandle, limit: Option<i64>) -> Result<Vec<Member>
 }
 
 #[tauri::command]
+fn update_member(app: tauri::AppHandle, payload: UpdateMemberPayload) -> Result<(), String> {
+  let full_name = payload.full_name.trim();
+  let member_type = payload.member_type.trim();
+  if full_name.is_empty() || member_type.is_empty() {
+    return Err("fullName and memberType are required".to_string());
+  }
+
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  conn
+    .execute(
+      "
+      UPDATE members
+      SET full_name = ?1,
+          member_type = ?2,
+          department = ?3,
+          contact_number = ?4,
+          email = ?5,
+          address = ?6,
+          profile_photo_data = ?7,
+          status = ?8
+      WHERE id = ?9
+      ",
+      params![
+        full_name,
+        member_type,
+        payload.department.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
+        payload.contact_number.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
+        payload.email.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
+        payload.address.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
+        payload.profile_photo_data,
+        payload.status,
+        payload.id
+      ],
+    )
+    .map_err(|e| format!("update member failed: {e}"))?;
+  Ok(())
+}
+
+#[tauri::command]
 fn send_email_smtp(to: String, subject: String, body: String) -> Result<String, String> {
   let summary = format!(
     "SMTP stub queued. To: {to}, Subject: {subject}, Body chars: {}",
@@ -562,6 +616,7 @@ pub fn run() {
       delete_book,
       create_member,
       list_members,
+      update_member,
       login,
       logout,
       get_active_session,

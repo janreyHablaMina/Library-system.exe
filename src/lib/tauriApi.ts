@@ -64,6 +64,18 @@ export type CreateMemberPayload = {
   status?: string | null
 }
 
+export type UpdateMemberPayload = {
+  id: number
+  fullName: string
+  memberType: string
+  department?: string | null
+  contactNumber?: string | null
+  email?: string | null
+  address?: string | null
+  profilePhotoData?: string | null
+  status: string
+}
+
 export async function initDb(): Promise<string> {
   return invoke<string>('init_db')
 }
@@ -98,6 +110,10 @@ export async function createMember(payload: CreateMemberPayload): Promise<number
 
 export async function listMembers(limit?: number): Promise<Member[]> {
   return invoke<Member[]>('list_members', { limit })
+}
+
+export async function updateMember(payload: UpdateMemberPayload): Promise<void> {
+  return invoke<void>('update_member', { payload })
 }
 
 export async function sendEmailSmtp(to: string, subject: string, body: string): Promise<string> {
