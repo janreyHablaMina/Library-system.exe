@@ -152,6 +152,42 @@ struct UpdateCategoryPayload {
   status: String,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct BorrowTransactionRow {
+  id: i64,
+  member_id: i64,
+  member_name: String,
+  member_code: String,
+  book_id: i64,
+  book_title: String,
+  borrow_date: String,
+  due_date: String,
+  return_date: Option<String>,
+  notes: Option<String>,
+  status: String,
+  fine: f64,
+  created_at: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct CreateBorrowPayload {
+  member_id: i64,
+  book_id: i64,
+  borrow_date: String,
+  due_date: String,
+  notes: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ReturnBorrowPayload {
+  transaction_id: i64,
+  return_date: String,
+  fine: Option<f64>,
+}
+
 fn open_db(path: &PathBuf) -> Result<Connection, String> {
   Connection::open(path).map_err(|e| format!("open db failed: {e}"))
 }
@@ -235,6 +271,20 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
         description TEXT,
         status TEXT NOT NULL DEFAULT 'Active',
         created_at TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS borrow_transactions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        member_id INTEGER NOT NULL,
+        book_id INTEGER NOT NULL,
+        borrow_date TEXT NOT NULL,
+        due_date TEXT NOT NULL,
+        return_date TEXT,
+        notes TEXT,
+        status TEXT NOT NULL DEFAULT 'Active',
+        fine REAL NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY(member_id) REFERENCES members(id) ON DELETE CASCADE,
+        FOREIGN KEY(book_id) REFERENCES books(id) ON DELETE CASCADE
       );
       ",
     )
@@ -707,6 +757,207 @@ fn delete_category(app: tauri::AppHandle, id: i64) -> Result<(), String> {
 }
 
 #[tauri::command]
+fn create_borrow_transaction(app: tauri::AppHandle, payload: CreateBorrowPayload) -> Result<i64, String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+
+  let tx = conn
+    .unchecked_transaction()
+    .map_err(|e| format!("start borrow transaction failed: {e}"))?;
+
+  let available = tx
+    .query_row(
+      "SELECT available FROM books WHERE id = ?1",
+      params![payload.book_id],
+      |row| row.get::<_, i64>(0),
+    )
+    .map_err(|e| format!("fetch book availability failed: {e}"))?;
+
+  if available != 1 {
+    return Err("Book is not available for borrowing.".to_string());
+  }
+
+  tx
+    .execute(
+      "
+      INSERT INTO borrow_transactions (member_id, book_id, borrow_date, due_date, notes, status, fine, created_at)
+      VALUES (?1, ?2, ?3, ?4, ?5, 'Active', 0, ?6)
+      ",
+      params![
+        payload.member_id,
+        payload.book_id,
+        payload.borrow_date,
+        payload.due_date,
+        payload.notes.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
+        Utc::now().to_rfc3339()
+      ],
+    )
+    .map_err(|e| format!("create borrow transaction failed: {e}"))?;
+
+  let borrow_id = tx.last_insert_rowid();
+
+  tx
+    .execute(
+      "UPDATE books SET available = 0 WHERE id = ?1",
+      params![payload.book_id],
+    )
+    .map_err(|e| format!("update book availability failed: {e}"))?;
+
+  tx
+    .execute(
+      "UPDATE members SET borrowed = borrowed + 1 WHERE id = ?1",
+      params![payload.member_id],
+    )
+    .map_err(|e| format!("update member borrowed count failed: {e}"))?;
+
+  tx.commit()
+    .map_err(|e| format!("commit borrow transaction failed: {e}"))?;
+
+  Ok(borrow_id)
+}
+
+#[tauri::command]
+fn return_borrow_transaction(app: tauri::AppHandle, payload: ReturnBorrowPayload) -> Result<(), String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+
+  let tx = conn
+    .unchecked_transaction()
+    .map_err(|e| format!("start return transaction failed: {e}"))?;
+
+  let (member_id, book_id, status): (i64, i64, String) = tx
+    .query_row(
+      "SELECT member_id, book_id, status FROM borrow_transactions WHERE id = ?1",
+      params![payload.transaction_id],
+      |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
+    )
+    .map_err(|e| format!("fetch borrow transaction failed: {e}"))?;
+
+  if status != "Active" && status != "Overdue" {
+    return Err("This transaction is already returned.".to_string());
+  }
+
+  tx
+    .execute(
+      "
+      UPDATE borrow_transactions
+      SET return_date = ?1, fine = ?2, status = 'Returned'
+      WHERE id = ?3
+      ",
+      params![payload.return_date, payload.fine.unwrap_or(0.0), payload.transaction_id],
+    )
+    .map_err(|e| format!("update borrow transaction failed: {e}"))?;
+
+  tx
+    .execute("UPDATE books SET available = 1 WHERE id = ?1", params![book_id])
+    .map_err(|e| format!("mark book available failed: {e}"))?;
+
+  tx
+    .execute(
+      "UPDATE members SET borrowed = CASE WHEN borrowed > 0 THEN borrowed - 1 ELSE 0 END WHERE id = ?1",
+      params![member_id],
+    )
+    .map_err(|e| format!("update member borrowed count failed: {e}"))?;
+
+  tx.commit()
+    .map_err(|e| format!("commit return transaction failed: {e}"))?;
+
+  Ok(())
+}
+
+#[tauri::command]
+fn list_borrow_transactions(
+  app: tauri::AppHandle,
+  status: Option<String>,
+  limit: Option<i64>,
+) -> Result<Vec<BorrowTransactionRow>, String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  let max_rows = limit.unwrap_or(500).clamp(1, 2000);
+  let status_filter = status.unwrap_or_else(|| "All".to_string());
+
+  let base_query = "
+    SELECT
+      t.id,
+      t.member_id,
+      m.full_name,
+      m.member_id,
+      t.book_id,
+      b.title,
+      t.borrow_date,
+      t.due_date,
+      t.return_date,
+      t.notes,
+      t.status,
+      t.fine,
+      t.created_at
+    FROM borrow_transactions t
+    INNER JOIN members m ON m.id = t.member_id
+    INNER JOIN books b ON b.id = t.book_id
+  ";
+
+  let query_with_filter = if status_filter.eq_ignore_ascii_case("all") {
+    format!("{base_query} ORDER BY t.id DESC LIMIT ?1")
+  } else {
+    format!("{base_query} WHERE t.status = ?1 ORDER BY t.id DESC LIMIT ?2")
+  };
+
+  let mut stmt = conn
+    .prepare(&query_with_filter)
+    .map_err(|e| format!("prepare list borrow transactions query failed: {e}"))?;
+
+  if status_filter.eq_ignore_ascii_case("all") {
+    let rows = stmt
+      .query_map(params![max_rows], |row| {
+        Ok(BorrowTransactionRow {
+          id: row.get(0)?,
+          member_id: row.get(1)?,
+          member_name: row.get(2)?,
+          member_code: row.get(3)?,
+          book_id: row.get(4)?,
+          book_title: row.get(5)?,
+          borrow_date: row.get(6)?,
+          due_date: row.get(7)?,
+          return_date: row.get(8)?,
+          notes: row.get(9)?,
+          status: row.get(10)?,
+          fine: row.get(11)?,
+          created_at: row.get(12)?,
+        })
+      })
+      .map_err(|e| format!("list borrow transactions failed: {e}"))?;
+
+    rows
+      .collect::<Result<Vec<_>, _>>()
+      .map_err(|e| format!("collect borrow transactions failed: {e}"))
+  } else {
+    let rows = stmt
+      .query_map(params![status_filter, max_rows], |row| {
+        Ok(BorrowTransactionRow {
+          id: row.get(0)?,
+          member_id: row.get(1)?,
+          member_name: row.get(2)?,
+          member_code: row.get(3)?,
+          book_id: row.get(4)?,
+          book_title: row.get(5)?,
+          borrow_date: row.get(6)?,
+          due_date: row.get(7)?,
+          return_date: row.get(8)?,
+          notes: row.get(9)?,
+          status: row.get(10)?,
+          fine: row.get(11)?,
+          created_at: row.get(12)?,
+        })
+      })
+      .map_err(|e| format!("list borrow transactions failed: {e}"))?;
+
+    rows
+      .collect::<Result<Vec<_>, _>>()
+      .map_err(|e| format!("collect borrow transactions failed: {e}"))
+  }
+}
+
+#[tauri::command]
 fn send_email_smtp(to: String, subject: String, body: String) -> Result<String, String> {
   let summary = format!(
     "SMTP stub queued. To: {to}, Subject: {subject}, Body chars: {}",
@@ -890,6 +1141,9 @@ pub fn run() {
       list_categories,
       update_category,
       delete_category,
+      create_borrow_transaction,
+      return_borrow_transaction,
+      list_borrow_transactions,
       login,
       logout,
       get_active_session,

@@ -1,9 +1,41 @@
-import { useState, useEffect, useRef } from 'react'
-import { ChevronDown, IdCard, Search, X, Check, AlertTriangle } from 'lucide-react'
+﻿import { useEffect, useMemo, useRef, useState } from 'react'
+import { AlertTriangle, Check, ChevronDown, Search, X } from 'lucide-react'
+import {
+  createBorrowTransaction,
+  listBooks,
+  listBorrowTransactions,
+  listMembers,
+  returnBorrowTransaction,
+  type Book,
+  type BorrowTransaction,
+  type Member,
+} from '../lib/tauriApi'
 
 type BorrowReturnPageProps = {
   isDarkMode: boolean
   onOpenTransactions: (tab: 'all' | 'borrowed' | 'returned' | 'overdue') => void
+}
+
+type MemberItem = {
+  id: number
+  name: string
+  memberId: string
+  type: string
+  borrowedCount: number
+  limit: string
+  avatar: string
+  profilePhotoData: string | null
+}
+
+type BookItem = {
+  id: number
+  title: string
+  author: string
+  isbn: string
+  copyId: string
+  availableCopies: number
+  icon: string
+  coverData: string | null
 }
 
 type BorrowedRow = {
@@ -16,6 +48,7 @@ type BorrowedRow = {
   dueDate: string
   status: 'Active' | 'Overdue'
   avatar: string
+  profilePhotoData: string | null
 }
 
 type ReturnedRow = {
@@ -28,21 +61,8 @@ type ReturnedRow = {
   fine: string
   fineType: 'paid' | 'due'
   avatar: string
+  profilePhotoData: string | null
 }
-
-const borrowedRows: BorrowedRow[] = [
-  { id: 1, member: 'Juan Dela Cruz', memberId: 'STU-2026-001', book: 'Atomic Habits', copyId: 'BK-2026-0001', borrowDate: 'May 1, 2026', dueDate: 'May 15, 2026', status: 'Active', avatar: '👨🏻' },
-  { id: 2, member: 'Maria Santos', memberId: 'STU-2026-002', book: 'The Psychology of Money', copyId: 'BK-2026-0003', borrowDate: 'May 2, 2026', dueDate: 'May 16, 2026', status: 'Active', avatar: '👩🏻' },
-  { id: 3, member: 'Ana Lim', memberId: 'STU-2026-004', book: 'Thinking, Fast and Slow', copyId: 'BK-2026-0005', borrowDate: 'May 3, 2026', dueDate: 'May 17, 2026', status: 'Overdue', avatar: '👩🏽' },
-  { id: 4, member: 'Mark Anthony', memberId: 'TCH-2026-001', book: 'Deep Work', copyId: 'BK-2026-0002', borrowDate: 'May 4, 2026', dueDate: 'May 18, 2026', status: 'Active', avatar: '👨🏾' },
-]
-
-const returnedRows: ReturnedRow[] = [
-  { id: 1, member: 'Liza Montero', memberId: 'STA-2026-002', book: 'Rich Dad Poor Dad', copyId: 'BK-2026-0008', returnedDate: 'May 6, 2026 10:30 AM', fine: '₱0.00', fineType: 'paid', avatar: '👩‍💼' },
-  { id: 2, member: 'Visitor - Alex Tan', memberId: 'VIS-2026-001', book: 'The Power of Habit', copyId: 'BK-2026-0009', returnedDate: 'May 6, 2026 09:15 AM', fine: '₱0.00', fineType: 'paid', avatar: '🧑🏻' },
-  { id: 3, member: 'Visitor - Joy Reyes', memberId: 'VIS-2026-002', book: 'How to Win Friends and Influence People', copyId: 'BK-2026-0010', returnedDate: 'May 5, 2026 04:45 PM', fine: '₱25.00', fineType: 'due', avatar: '🧑🏽' },
-  { id: 4, member: 'Rogelio Cruz', memberId: 'STA-2026-001', book: 'Start With Why', copyId: 'BK-2026-0011', returnedDate: 'May 5, 2026 02:20 PM', fine: '₱0.00', fineType: 'paid', avatar: '👨‍💼' },
-]
 
 function getStatusClass(status: BorrowedRow['status']) {
   if (status === 'Active') return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
@@ -55,73 +75,133 @@ function getFineClass(type: ReturnedRow['fineType']) {
     : 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
 }
 
-type MemberItem = {
-  name: string
-  memberId: string
-  type: string
-  phone: string
-  email: string
-  borrowedCount: number
-  limit: string
-  avatar: string
-}
-
-type BookItem = {
-  title: string
-  author: string
-  isbn: string
-  copyId: string
-  availableCopies: number
-  icon: string
-}
-
-const mockMembers: MemberItem[] = [
-  { name: 'Maria Santos', memberId: 'STU-2026-002', type: 'Student', phone: '0921 456 7890', email: 'maria.santos@email.com', borrowedCount: 1, limit: '4 / 5', avatar: '👩🏻' },
-  { name: 'Juan Dela Cruz', memberId: 'STU-2026-001', type: 'Student', phone: '0912 345 6789', email: 'juan.delacruz@email.com', borrowedCount: 2, limit: '3 / 5', avatar: '👨🏻' },
-  { name: 'Ana Lim', memberId: 'STU-2026-004', type: 'Student', phone: '0934 567 8901', email: 'ana.lim@email.com', borrowedCount: 3, limit: '2 / 5', avatar: '👩🏽' },
-  { name: 'Mark Anthony', memberId: 'TCH-2026-001', type: 'Teacher', phone: '0945 678 9012', email: 'mark.anthony@email.com', borrowedCount: 0, limit: '10 / 10', avatar: '👨🏾' },
-]
-
-const mockBooks: BookItem[] = [
-  { title: 'The Mindful Leader', author: 'Michael Bungay Stanier', isbn: '978-1524761540', copyId: 'BK-2026-0007', availableCopies: 3, icon: '📘' },
-  { title: 'Atomic Habits', author: 'James Clear', isbn: '978-0735211292', copyId: 'BK-2026-0001', availableCopies: 5, icon: '📙' },
-  { title: 'The Psychology of Money', author: 'Morgan Housel', isbn: '978-0857197689', copyId: 'BK-2026-0003', availableCopies: 2, icon: '📗' },
-  { title: 'Deep Work', author: 'Cal Newport', isbn: '978-1455586691', copyId: 'BK-2026-0002', availableCopies: 4, icon: '📕' },
-]
-
 export function BorrowReturnPage({ isDarkMode, onOpenTransactions }: BorrowReturnPageProps) {
   const [activeTab, setActiveTab] = useState<'borrow' | 'return'>('borrow')
-  const [borrowDate, setBorrowDate] = useState('2026-05-06')
-  const [dueDate, setDueDate] = useState('2026-05-20')
-  const [returnDate, setReturnDate] = useState('2026-05-06')
-  const [originalDueDate, setOriginalDueDate] = useState('2026-04-30')
-  const [bookCondition, setBookCondition] = useState<'Good' | 'Damaged' | 'Lost'>('Good')
+  const today = new Date().toISOString().slice(0, 10)
+  const plus14 = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+  const [borrowDate, setBorrowDate] = useState(today)
+  const [dueDate, setDueDate] = useState(plus14)
+  const [returnDate, setReturnDate] = useState(today)
+  const [notes, setNotes] = useState('')
+  const [showToast, setShowToast] = useState<string | null>(null)
 
-  const calculateOverdueDays = () => {
-    const ret = new Date(returnDate)
-    const due = new Date(originalDueDate)
-    const diffTime = ret.getTime() - due.getTime()
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    return diffDays > 0 ? diffDays : 0
-  }
-
-  const overdueDays = calculateOverdueDays()
-  const fineRate = 50
-  const totalFine = overdueDays * fineRate
+  const [members, setMembers] = useState<MemberItem[]>([])
+  const [books, setBooks] = useState<BookItem[]>([])
+  const [activeRows, setActiveRows] = useState<BorrowedRow[]>([])
+  const [returnedRows, setReturnedRows] = useState<ReturnedRow[]>([])
 
   const [selectedMember, setSelectedMember] = useState<MemberItem | null>(null)
   const [selectedBook, setSelectedBook] = useState<BookItem | null>(null)
 
   const [memberSearchQuery, setMemberSearchQuery] = useState('')
   const [showMemberDropdown, setShowMemberDropdown] = useState(false)
-
   const [bookSearchQuery, setBookSearchQuery] = useState('')
   const [showBookDropdown, setShowBookDropdown] = useState(false)
 
-  const [showToast, setShowToast] = useState<string | null>(null)
-
   const memberDropdownRef = useRef<HTMLDivElement>(null)
   const bookDropdownRef = useRef<HTMLDivElement>(null)
+
+  const avatarFromName = (name: string) => (name.trim().charAt(0).toUpperCase() || 'M')
+  const getMemberPhotoSrc = (photo: string | null) => {
+    if (!photo) return null
+    const normalized = photo.trim()
+    if (!normalized) return null
+    if (normalized.startsWith('data:image/') || normalized.startsWith('http') || normalized.startsWith('blob:')) {
+      return normalized
+    }
+    return null
+  }
+  const getBookCoverSrc = (cover: string | null) => {
+    if (!cover) return null
+    const normalized = cover.trim()
+    if (!normalized) return null
+    if (normalized.startsWith('data:image/') || normalized.startsWith('http') || normalized.startsWith('blob:')) {
+      return normalized
+    }
+    return null
+  }
+
+  const mapMembers = (rows: Member[]): MemberItem[] => rows.map((m) => ({
+    id: m.id,
+    name: m.fullName,
+    memberId: m.memberId,
+    type: m.memberType,
+    borrowedCount: m.borrowed,
+    limit: m.memberType.toLowerCase() === 'teacher' ? `${10 - m.borrowed} / 10` : `${5 - m.borrowed} / 5`,
+    avatar: avatarFromName(m.fullName),
+    profilePhotoData: m.profilePhotoData || null,
+  }))
+
+  const mapBooks = (rows: Book[]): BookItem[] => rows.filter((b) => b.available).map((b) => ({
+    id: b.id,
+    title: b.title,
+    author: b.author,
+    isbn: b.isbn || '-',
+    copyId: `BK-${String(b.id).padStart(6, '0')}`,
+    availableCopies: b.available ? 1 : 0,
+    icon: '📘',
+    coverData: b.coverData || null,
+  }))
+
+  const mapActiveRows = (rows: BorrowTransaction[], memberMap: Map<string, MemberItem>): BorrowedRow[] => rows.map((t) => {
+    const due = new Date(t.dueDate)
+    const now = new Date()
+    const status: 'Active' | 'Overdue' = due < now ? 'Overdue' : 'Active'
+    const matchedMember = memberMap.get(t.memberCode)
+    return {
+      id: t.id,
+      member: t.memberName,
+      memberId: t.memberCode,
+      book: t.bookTitle,
+      copyId: `BK-${String(t.bookId).padStart(6, '0')}`,
+      borrowDate: new Date(t.borrowDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      dueDate: new Date(t.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      status,
+      avatar: avatarFromName(t.memberName),
+      profilePhotoData: matchedMember?.profilePhotoData || null,
+    }
+  })
+
+  const mapReturnedRows = (rows: BorrowTransaction[], memberMap: Map<string, MemberItem>): ReturnedRow[] => rows.map((t) => {
+    const matchedMember = memberMap.get(t.memberCode)
+    return {
+      id: t.id,
+      member: t.memberName,
+      memberId: t.memberCode,
+      book: t.bookTitle,
+      copyId: `BK-${String(t.bookId).padStart(6, '0')}`,
+      returnedDate: t.returnDate
+        ? new Date(t.returnDate).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+        : '-',
+      fine: `PHP ${t.fine.toFixed(2)}`,
+      fineType: t.fine > 0 ? 'due' : 'paid',
+      avatar: avatarFromName(t.memberName),
+      profilePhotoData: matchedMember?.profilePhotoData || null,
+    }
+  })
+
+  const loadData = async () => {
+    try {
+      const [mRows, bRows, activeTx, returnedTx] = await Promise.all([
+        listMembers(1000),
+        listBooks(2000),
+        listBorrowTransactions('Active', 500),
+        listBorrowTransactions('Returned', 500),
+      ])
+      const mappedMembers = mapMembers(mRows)
+      const memberMap = new Map(mappedMembers.map((m) => [m.memberId, m]))
+      setMembers(mappedMembers)
+      setBooks(mapBooks(bRows))
+      setActiveRows(mapActiveRows(activeTx, memberMap))
+      setReturnedRows(mapReturnedRows(returnedTx, memberMap))
+    } catch {
+      setShowToast('Failed to load borrow/return data.')
+    }
+  }
+
+  useEffect(() => {
+    void loadData()
+  }, [])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -137,42 +217,65 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions }: BorrowRetur
   }, [])
 
   useEffect(() => {
-    if (showToast) {
-      const timer = setTimeout(() => setShowToast(null), 3000)
-      return () => clearTimeout(timer)
-    }
+    if (!showToast) return
+    const timer = setTimeout(() => setShowToast(null), 2800)
+    return () => clearTimeout(timer)
   }, [showToast])
 
-  const filteredMembersList = mockMembers.filter(m => 
-    m.name.toLowerCase().includes(memberSearchQuery.toLowerCase()) || 
-    m.memberId.toLowerCase().includes(memberSearchQuery.toLowerCase())
-  )
+  const filteredMembersList = useMemo(() => members.filter((m) =>
+    m.name.toLowerCase().includes(memberSearchQuery.toLowerCase()) ||
+    m.memberId.toLowerCase().includes(memberSearchQuery.toLowerCase()),
+  ), [members, memberSearchQuery])
 
-  const filteredBooksList = mockBooks.filter(b => 
-    b.title.toLowerCase().includes(bookSearchQuery.toLowerCase()) || 
-    b.isbn.includes(bookSearchQuery)
-  )
+  const returnModeBooks = useMemo(() => {
+    if (!selectedMember) return books
+    const activeForMember = activeRows.filter((r) => r.memberId === selectedMember.memberId)
+    const ids = new Set(activeForMember.map((r) => r.copyId))
+    return books.filter((b) => ids.has(b.copyId))
+  }, [books, activeRows, selectedMember])
 
-  const handleConfirmAction = () => {
-    if (!selectedMember) {
-      alert("Please select a member first.")
+  const filteredBooksList = useMemo(() => {
+    const source = activeTab === 'borrow' ? books : returnModeBooks
+    return source.filter((b) => b.title.toLowerCase().includes(bookSearchQuery.toLowerCase()) || b.isbn.includes(bookSearchQuery))
+  }, [books, returnModeBooks, activeTab, bookSearchQuery])
+
+  const handleConfirmAction = async () => {
+    if (!selectedMember || !selectedBook) {
+      setShowToast('Please select both member and book first.')
       return
     }
-    if (!selectedBook) {
-      alert("Please select a book first.")
-      return
-    }
-    if (activeTab === 'borrow') {
-      setShowToast(`Successfully borrowed "${selectedBook.title}" to ${selectedMember.name}!`)
-    } else {
-      if (totalFine > 0) {
-        setShowToast(`Successfully returned "${selectedBook.title}" from ${selectedMember.name} (Condition: ${bookCondition})! Fine of ₱${totalFine.toFixed(2)} charged.`)
+
+    try {
+      if (activeTab === 'borrow') {
+        await createBorrowTransaction({
+          memberId: selectedMember.id,
+          bookId: selectedBook.id,
+          borrowDate,
+          dueDate,
+          notes: notes.trim() || null,
+        })
+        setShowToast(`Successfully borrowed "${selectedBook.title}" to ${selectedMember.name}!`)
       } else {
-        setShowToast(`Successfully returned "${selectedBook.title}" from ${selectedMember.name} (Condition: ${bookCondition})!`)
+        const tx = (await listBorrowTransactions('Active', 500)).find(
+          (item) => item.memberId === selectedMember.id && item.bookId === selectedBook.id,
+        )
+        if (!tx) {
+          setShowToast('No active borrow transaction found for this member/book.')
+          return
+        }
+        await returnBorrowTransaction({ transactionId: tx.id, returnDate, fine: null })
+        setShowToast(`Successfully returned "${selectedBook.title}" from ${selectedMember.name}!`)
       }
+
+      setSelectedMember(null)
+      setSelectedBook(null)
+      setMemberSearchQuery('')
+      setBookSearchQuery('')
+      setNotes('')
+      await loadData()
+    } catch (error) {
+      setShowToast(error instanceof Error ? error.message : 'Transaction failed.')
     }
-    setSelectedMember(null)
-    setSelectedBook(null)
   }
 
   return (
@@ -198,351 +301,216 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions }: BorrowRetur
             <div className="mt-4 space-y-4">
               <div className="relative space-y-2" ref={memberDropdownRef}>
                 <p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>1. Select Member</p>
-                <label className={`group flex h-11 items-center rounded-xl border px-3 transition-all ${
-                  selectedMember 
-                    ? (isDarkMode ? 'border-emerald-500/60 bg-emerald-950/20' : 'border-emerald-500 bg-emerald-50/50')
-                    : (isDarkMode ? 'border-slate-700 focus-within:border-emerald-500 bg-[#0f1f49]/30' : 'border-slate-200 focus-within:border-emerald-500 bg-slate-55')
-                }`}>
-                  {selectedMember ? (
-                    <Check size={16} className="mr-2 text-emerald-500 animate-[scaleIn_0.2s_ease-out]" />
-                  ) : (
-                    <Search size={16} className={`mr-2 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
-                  )}
+                <label className={`group flex h-11 items-center rounded-xl border px-3 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]/30' : 'border-slate-200 bg-white'}`}>
+                  {selectedMember ? <Check size={16} className="mr-2 text-emerald-500" /> : <Search size={16} className={`mr-2 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />}
                   <input
                     value={selectedMember ? selectedMember.name : memberSearchQuery}
                     onChange={(e) => {
                       setMemberSearchQuery(e.target.value)
                       setShowMemberDropdown(true)
-                      if (selectedMember) {
-                        setSelectedMember(null)
-                      }
+                      if (selectedMember) setSelectedMember(null)
                     }}
                     onFocus={() => setShowMemberDropdown(true)}
                     placeholder="Search by name, member ID or scan card..."
-                    className={`w-full bg-transparent text-sm outline-none ${selectedMember ? 'font-semibold text-emerald-600 dark:text-emerald-400' : (isDarkMode ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400')}`}
+                    className={`w-full bg-transparent text-sm outline-none ${isDarkMode ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400'}`}
                   />
-                  {selectedMember && (
-                    <span className="mr-2 shrink-0 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 animate-[fadeIn_0.15s_ease-out]">
-                      Selected
-                    </span>
-                  )}
-                  <ChevronDown size={16} className={selectedMember ? 'text-emerald-500' : (isDarkMode ? 'text-slate-400' : 'text-slate-500')} />
+                  <ChevronDown size={16} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />
                 </label>
 
                 {showMemberDropdown && (
                   <div className={`absolute left-0 right-0 z-50 mt-1 max-h-60 overflow-y-auto rounded-xl border p-1.5 shadow-xl ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
-                    {filteredMembersList.length > 0 ? (
-                      filteredMembersList.map((m) => (
-                        <button
-                          key={m.memberId}
-                          type="button"
-                          onClick={() => {
-                            setSelectedMember(m)
-                            setShowMemberDropdown(false)
-                            setMemberSearchQuery('')
-                          }}
-                          className={`flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left text-xs font-semibold transition-colors ${isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50'}`}
-                        >
-                          <span>{m.avatar}</span>
-                          <div className="flex-1">
-                            <p className={isDarkMode ? 'text-slate-100' : 'text-slate-900'}>{m.name}</p>
-                            <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{m.memberId} • {m.type}</p>
-                          </div>
-                        </button>
-                      ))
-                    ) : (
-                      <p className={`p-3 text-center text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>No members found</p>
-                    )}
+                    {filteredMembersList.map((m) => (
+                      <button
+                        key={m.memberId}
+                        type="button"
+                        onClick={() => { setSelectedMember(m); setShowMemberDropdown(false); setMemberSearchQuery('') }}
+                        className={`flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left text-xs font-semibold ${isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50'}`}
+                      >
+                        <span className={`grid h-7 w-7 place-items-center overflow-hidden rounded-full ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                          {getMemberPhotoSrc(m.profilePhotoData) ? (
+                            <img src={getMemberPhotoSrc(m.profilePhotoData) as string} alt={`${m.name} avatar`} className="h-full w-full object-cover" />
+                          ) : (
+                            m.avatar
+                          )}
+                        </span>
+                        <div className="flex-1">
+                          <p className={isDarkMode ? 'text-slate-100' : 'text-slate-900'}>{m.name}</p>
+                          <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{m.memberId} • {m.type}</p>
+                        </div>
+                      </button>
+                    ))}
+                    {filteredMembersList.length === 0 ? <p className={`p-3 text-center text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>No members found</p> : null}
                   </div>
                 )}
 
-                {selectedMember && (
-                  <div className={`relative rounded-xl border p-3 animate-[fadeIn_0.15s_ease-out] ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-slate-50/40'}`}>
-                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                      <div className="flex min-w-0 items-center gap-3">
-                        <span className={`grid h-10 w-10 place-items-center rounded-full ${isDarkMode ? 'bg-slate-800' : 'bg-white'}`}>{selectedMember.avatar}</span>
-                        <div className="min-w-0">
-                          <p className={`truncate font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{selectedMember.name}</p>
-                          <p className={`truncate text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{selectedMember.memberId} • {selectedMember.type}</p>
+                {selectedMember ? (
+                  <div className={`rounded-xl border p-3 ${isDarkMode ? 'border-emerald-500/30 bg-emerald-500/10' : 'border-emerald-200 bg-emerald-50/40'}`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className={`grid h-10 w-10 place-items-center overflow-hidden rounded-full ${isDarkMode ? 'bg-slate-800' : 'bg-white'}`}>
+                          {getMemberPhotoSrc(selectedMember.profilePhotoData) ? (
+                            <img src={getMemberPhotoSrc(selectedMember.profilePhotoData) as string} alt={`${selectedMember.name} avatar`} className="h-full w-full object-cover" />
+                          ) : (
+                            selectedMember.avatar
+                          )}
+                        </span>
+                        <div>
+                          <p className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{selectedMember.name}</p>
+                          <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{selectedMember.memberId} • {selectedMember.type}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4 md:gap-6">
-                        <div className="text-xs md:text-center">
-                          <p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Borrowed Books</p>
-                          <p className={`text-base font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>{selectedMember.borrowedCount}</p>
-                        </div>
-                        <div className="text-xs md:text-center">
-                          <p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Available Limit</p>
-                          <p className={`text-base font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>{selectedMember.limit}</p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedMember(null)}
-                          className={`grid h-8 w-8 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-slate-200' : 'border-slate-200 text-slate-500 hover:bg-slate-100 hover:text-slate-700'}`}
-                        >
-                          <X size={14} />
-                        </button>
-                      </div>
+                      <button type="button" onClick={() => setSelectedMember(null)} className={`grid h-8 w-8 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-100'}`}>
+                        <X size={14} />
+                      </button>
                     </div>
                   </div>
-                )}
+                ) : null}
               </div>
 
               <div className="relative space-y-2" ref={bookDropdownRef}>
                 <p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>2. Select Book</p>
-                <label className={`group flex h-11 items-center rounded-xl border px-3 transition-all ${
-                  selectedBook 
-                    ? (isDarkMode ? 'border-emerald-500/60 bg-emerald-950/20' : 'border-emerald-500 bg-emerald-50/50')
-                    : (isDarkMode ? 'border-slate-700 focus-within:border-emerald-500 bg-[#0f1f49]/30' : 'border-slate-200 focus-within:border-emerald-500 bg-slate-55')
-                }`}>
-                  {selectedBook ? (
-                    <Check size={16} className="mr-2 text-emerald-500 animate-[scaleIn_0.2s_ease-out]" />
-                  ) : (
-                    <Search size={16} className={`mr-2 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
-                  )}
+                <label className={`group flex h-11 items-center rounded-xl border px-3 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]/30' : 'border-slate-200 bg-white'}`}>
+                  {selectedBook ? <Check size={16} className="mr-2 text-emerald-500" /> : <Search size={16} className={`mr-2 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />}
                   <input
                     value={selectedBook ? selectedBook.title : bookSearchQuery}
                     onChange={(e) => {
                       setBookSearchQuery(e.target.value)
                       setShowBookDropdown(true)
-                      if (selectedBook) {
-                        setSelectedBook(null)
-                      }
+                      if (selectedBook) setSelectedBook(null)
                     }}
                     onFocus={() => setShowBookDropdown(true)}
-                    placeholder="Search by title, ISBN or scan barcode..."
-                    className={`w-full bg-transparent text-sm outline-none ${selectedBook ? 'font-semibold text-emerald-600 dark:text-emerald-400' : (isDarkMode ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400')}`}
+                    placeholder={activeTab === 'borrow' ? 'Search by title, ISBN or scan barcode...' : 'Search borrowed book to return...'}
+                    className={`w-full bg-transparent text-sm outline-none ${isDarkMode ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400'}`}
                   />
-                  {selectedBook && (
-                    <span className="mr-2 shrink-0 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 animate-[fadeIn_0.15s_ease-out]">
-                      Selected
-                    </span>
-                  )}
-                  <ChevronDown size={16} className={selectedBook ? 'text-emerald-500' : (isDarkMode ? 'text-slate-400' : 'text-slate-500')} />
+                  <ChevronDown size={16} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />
                 </label>
 
                 {showBookDropdown && (
                   <div className={`absolute left-0 right-0 z-50 mt-1 max-h-60 overflow-y-auto rounded-xl border p-1.5 shadow-xl ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
-                    {filteredBooksList.length > 0 ? (
-                      filteredBooksList.map((b) => (
-                        <button
-                          key={b.copyId}
-                          type="button"
-                          onClick={() => {
-                            setSelectedBook(b)
-                            setShowBookDropdown(false)
-                            setBookSearchQuery('')
-                          }}
-                          className={`flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left text-xs font-semibold transition-colors ${isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-55'}`}
-                        >
-                          <span className="text-lg">{b.icon}</span>
-                          <div className="flex-1">
-                            <p className={isDarkMode ? 'text-slate-100' : 'text-slate-900'}>{b.title}</p>
-                            <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{b.author} • {b.isbn}</p>
-                          </div>
-                        </button>
-                      ))
-                    ) : (
-                      <p className={`p-3 text-center text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>No books found</p>
-                    )}
+                    {filteredBooksList.map((b) => (
+                      <button
+                        key={b.copyId}
+                        type="button"
+                        onClick={() => { setSelectedBook(b); setShowBookDropdown(false); setBookSearchQuery('') }}
+                        className={`flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left text-xs font-semibold ${isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50'}`}
+                      >
+                        <span className={`grid h-9 w-7 place-items-center overflow-hidden rounded ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                          {getBookCoverSrc(b.coverData) ? (
+                            <img src={getBookCoverSrc(b.coverData) as string} alt={`${b.title} cover`} className="h-full w-full object-cover" />
+                          ) : (
+                            <span className="text-xs">{b.icon}</span>
+                          )}
+                        </span>
+                        <div className="flex-1">
+                          <p className={isDarkMode ? 'text-slate-100' : 'text-slate-900'}>{b.title}</p>
+                          <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{b.author} • {b.isbn}</p>
+                        </div>
+                      </button>
+                    ))}
+                    {filteredBooksList.length === 0 ? <p className={`p-3 text-center text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>No books found</p> : null}
                   </div>
                 )}
 
-                {selectedBook && (
-                  <div className={`relative rounded-xl border p-3 animate-[fadeIn_0.15s_ease-out] ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-slate-50/40'}`}>
-                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                {selectedBook ? (
+                  <div className={`rounded-xl border p-3 ${isDarkMode ? 'border-emerald-500/30 bg-emerald-500/10' : 'border-emerald-200 bg-emerald-50/40'}`}>
+                    <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className={`grid h-16 w-11 place-items-center rounded ${isDarkMode ? 'bg-slate-800' : 'bg-white'}`}>{selectedBook.icon}</div>
+                        <span className={`grid h-12 w-9 place-items-center overflow-hidden rounded ${isDarkMode ? 'bg-slate-800' : 'bg-white'}`}>
+                          {getBookCoverSrc(selectedBook.coverData) ? (
+                            <img src={getBookCoverSrc(selectedBook.coverData) as string} alt={`${selectedBook.title} cover`} className="h-full w-full object-cover" />
+                          ) : (
+                            selectedBook.icon
+                          )}
+                        </span>
                         <div>
                           <p className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{selectedBook.title}</p>
                           <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Author: {selectedBook.author}</p>
-                          <p className={`mt-1 text-xs ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>ISBN: {selectedBook.isbn} • Copy ID: {selectedBook.copyId}</p>
+                          <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>ISBN: {selectedBook.isbn}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4 md:gap-6">
-                        <div className="text-right text-xs">
-                          <p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Available Copies</p>
-                          <p className={`text-xl font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>{selectedBook.availableCopies}</p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedBook(null)}
-                          className={`grid h-8 w-8 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-slate-200' : 'border-slate-200 text-slate-500 hover:bg-slate-100 hover:text-slate-700'}`}
-                        >
-                          <X size={14} />
-                        </button>
-                      </div>
+                      <button type="button" onClick={() => setSelectedBook(null)} className={`grid h-8 w-8 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-100'}`}>
+                        <X size={14} />
+                      </button>
                     </div>
                   </div>
-                )}
+                ) : null}
               </div>
 
               {activeTab === 'borrow' ? (
-                <>
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <div>
-                      <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>3. Borrow Date</p>
-                      <label className={`flex h-11 items-center rounded-xl border px-3 text-sm ${isDarkMode ? 'border-slate-700 text-slate-200' : 'border-slate-200 text-slate-700'}`}>
-                        <input
-                          type="date"
-                          value={borrowDate}
-                          onChange={(event) => setBorrowDate(event.target.value)}
-                          className={`date-input w-full bg-transparent outline-none ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}
-                        />
-                      </label>
-                    </div>
-                    <div>
-                      <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>4. Due Date</p>
-                      <label className={`flex h-11 items-center rounded-xl border px-3 text-sm ${isDarkMode ? 'border-slate-700 text-slate-200' : 'border-slate-200 text-slate-700'}`}>
-                        <input
-                          type="date"
-                          value={dueDate}
-                          onChange={(event) => setDueDate(event.target.value)}
-                          className={`date-input w-full bg-transparent outline-none ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}
-                        />
-                      </label>
-                      <p className="mt-1 text-xs font-semibold text-emerald-600">Borrowing period: 14 days</p>
-                    </div>
-                  </div>
-
+                <div className="grid gap-3 md:grid-cols-2">
                   <div>
-                    <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>5. Notes (Optional)</p>
-                    <textarea maxLength={200} placeholder="Add any notes here..." className={`min-h-20 w-full rounded-xl border px-3 py-2 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500' : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400'}`} />
-                    <p className={`mt-1 text-right text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>0 / 200</p>
+                    <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>3. Borrow Date</p>
+                    <input type="date" value={borrowDate} onChange={(e) => setBorrowDate(e.target.value)} className={`h-11 w-full rounded-xl border px-3 text-sm ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`} />
                   </div>
-                </>
+                  <div>
+                    <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>4. Due Date</p>
+                    <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className={`h-11 w-full rounded-xl border px-3 text-sm ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`} />
+                  </div>
+                </div>
               ) : (
-                <>
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <div>
-                      <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>3. Return Date</p>
-                      <label className={`flex h-11 items-center rounded-xl border px-3 text-sm ${isDarkMode ? 'border-slate-700 text-slate-200' : 'border-slate-200 text-slate-700'}`}>
-                        <input
-                          type="date"
-                          value={returnDate}
-                          onChange={(event) => setReturnDate(event.target.value)}
-                          className={`date-input w-full bg-transparent outline-none ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}
-                        />
-                      </label>
-                    </div>
-                    <div>
-                      <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>4. Original Due Date</p>
-                      <label className={`flex h-11 items-center rounded-xl border px-3 text-sm ${isDarkMode ? 'border-slate-700 text-slate-200' : 'border-slate-200 text-slate-700'}`}>
-                        <input
-                          type="date"
-                          value={originalDueDate}
-                          onChange={(event) => setOriginalDueDate(event.target.value)}
-                          className={`date-input w-full bg-transparent outline-none ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}
-                        />
-                      </label>
-                    </div>
-                  </div>
-
-                  <div>
-                    <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>5. Book Condition</p>
-                    <div className="flex gap-2">
-                      {(['Good', 'Damaged', 'Lost'] as const).map((cond) => (
-                        <button
-                          key={cond}
-                          type="button"
-                          onClick={() => setBookCondition(cond)}
-                          className={`flex-1 h-11 text-xs font-semibold rounded-xl border transition-all ${
-                            bookCondition === cond
-                              ? 'bg-emerald-600 border-emerald-600 text-white shadow-md shadow-emerald-600/10'
-                              : (isDarkMode ? 'border-slate-700 hover:bg-slate-800 bg-[#0f1f49]/20 text-slate-300' : 'border-slate-200 hover:bg-slate-50 bg-slate-55 text-slate-600')
-                          }`}
-                        >
-                          {cond === 'Good' ? 'Good 👍' : cond === 'Damaged' ? 'Damaged ⚠️' : 'Lost ❌'}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {selectedMember && selectedBook && overdueDays > 0 && (
-                    <div className="rounded-xl border border-rose-200 bg-rose-50/50 p-4 dark:border-rose-950 dark:bg-rose-950/20 animate-[fadeIn_0.15s_ease-out]">
-                      <div className="flex items-start gap-3">
-                        <AlertTriangle className="mt-0.5 text-rose-600 dark:text-rose-400 shrink-0" size={18} />
-                        <div className="flex-1">
-                          <h4 className="text-sm font-bold text-rose-800 dark:text-rose-300">Late Return Detected</h4>
-                          <p className="mt-1 text-xs text-rose-700 dark:text-rose-400 font-medium">
-                            This return is overdue by <span className="font-bold text-rose-950 dark:text-rose-200">{overdueDays} days</span> (Expected Due: {originalDueDate}).
-                          </p>
-                          <div className="mt-3 flex items-center justify-between border-t border-rose-200/50 pt-2 dark:border-rose-950/50">
-                            <span className="text-xs font-bold text-rose-700 dark:text-rose-400">Overdue Fine (₱{fineRate}/day):</span>
-                            <span className="text-base font-black text-rose-600 dark:text-rose-400">₱{totalFine.toFixed(2)}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  <div>
-                    <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>6. Notes (Optional)</p>
-                    <textarea maxLength={200} placeholder="Add any notes here..." className={`min-h-20 w-full rounded-xl border px-3 py-2 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500' : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400'}`} />
-                    <p className={`mt-1 text-right text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>0 / 200</p>
-                  </div>
-                </>
+                <div>
+                  <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>3. Return Date</p>
+                  <input type="date" value={returnDate} onChange={(e) => setReturnDate(e.target.value)} className={`h-11 w-full rounded-xl border px-3 text-sm ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`} />
+                </div>
               )}
 
-              <button 
-                type="button" 
-                onClick={handleConfirmAction} 
-                className={`inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold text-white transition-colors ${
-                  activeTab === 'return' && selectedMember && selectedBook && overdueDays > 0 
-                    ? 'bg-rose-600 hover:bg-rose-700' 
-                    : 'bg-emerald-600 hover:bg-emerald-700'
-                }`}
-              >
-                {activeTab === 'borrow' ? (
-                  <IdCard size={15} />
-                ) : overdueDays > 0 && selectedMember && selectedBook ? (
-                  <AlertTriangle size={15} />
-                ) : (
-                  <Check size={15} />
-                )}
-                {activeTab === 'borrow' 
-                  ? 'Confirm Borrow' 
-                  : overdueDays > 0 && selectedMember && selectedBook
-                    ? `Confirm Return & Charge Fine (₱${totalFine.toFixed(2)})`
-                    : 'Confirm Return'
-                }
+              <div>
+                <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Notes (Optional)</p>
+                <textarea value={notes} onChange={(e) => setNotes(e.target.value.slice(0, 200))} maxLength={200} placeholder="Add any notes here..." className={`min-h-20 w-full rounded-xl border px-3 py-2 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500' : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400'}`} />
+                <p className={`mt-1 text-right text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{notes.length} / 200</p>
+              </div>
+
+              <button type="button" onClick={handleConfirmAction} className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-700">
+                {activeTab === 'borrow' ? 'Confirm Borrow' : 'Confirm Return'}
               </button>
             </div>
           </article>
 
           <div className="space-y-4">
             <article className={`overflow-hidden rounded-xl border ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
-              <div className={`flex items-center justify-between border-b px-4 py-3 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+              <div className={`flex items-center justify-between border-b p-4 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
                 <div>
-                  <h3 className={`text-xl font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Current Borrowed Books (4)</h3>
+                  <h3 className={`text-xl font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Current Borrowed Books ({activeRows.length})</h3>
                   <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Books currently borrowed by members.</p>
                 </div>
-                <button type="button" onClick={() => onOpenTransactions('borrowed')} className="text-sm font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
+                <button type="button" onClick={() => onOpenTransactions('borrowed')} className="text-sm font-semibold text-emerald-700 hover:underline">View all →</button>
               </div>
               <div className="overflow-x-auto">
-                <table className="min-w-[760px] w-full text-left text-sm">
-                  <thead className={isDarkMode ? 'bg-[#0f1f49] text-slate-300' : 'bg-slate-50 text-slate-600'}>
+                <table className="w-full text-left text-sm">
+                  <thead className={isDarkMode ? 'bg-[#0f1f49]/50 text-slate-400' : 'bg-slate-50 text-slate-600'}>
                     <tr>
-                      <th className="px-4 py-3 font-semibold">Member</th>
-                      <th className="px-3 py-3 font-semibold">Book</th>
-                      <th className="px-3 py-3 font-semibold">Borrow Date</th>
-                      <th className="px-3 py-3 font-semibold">Due Date</th>
-                      <th className="px-3 py-3 font-semibold">Status</th>
+                      <th className="px-3 py-3 text-xs font-semibold uppercase">Member</th>
+                      <th className="px-3 py-3 text-xs font-semibold uppercase">Book</th>
+                      <th className="px-3 py-3 text-xs font-semibold uppercase">Borrow Date</th>
+                      <th className="px-3 py-3 text-xs font-semibold uppercase">Due Date</th>
+                      <th className="px-3 py-3 text-xs font-semibold uppercase">Status</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {borrowedRows.map((row) => (
-                      <tr key={row.id} className={`border-t ${isDarkMode ? 'border-slate-700 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <span className={`grid h-9 w-9 place-items-center rounded-full ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>{row.avatar}</span>
-                            <div><p className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{row.member}</p><p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{row.memberId}</p></div>
+                    {activeRows.map((row) => (
+                      <tr key={row.id} className={`border-t ${isDarkMode ? 'border-slate-700' : 'border-slate-100'}`}>
+                        <td className="px-3 py-3">
+                          <div className="flex items-center gap-2.5">
+                            <span className={`grid h-8 w-8 place-items-center overflow-hidden rounded-full ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                              {getMemberPhotoSrc(row.profilePhotoData) ? (
+                                <img src={getMemberPhotoSrc(row.profilePhotoData) as string} alt={`${row.member} avatar`} className="h-full w-full object-cover" />
+                              ) : (
+                                <span className="text-[11px] font-semibold">{row.avatar}</span>
+                              )}
+                            </span>
+                            <span>
+                              <p className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{row.member}</p>
+                              <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{row.memberId}</p>
+                            </span>
                           </div>
                         </td>
-                        <td className="px-3 py-3"><p className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{row.book}</p><p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Copy ID: {row.copyId}</p></td>
+                        <td className="px-3 py-3">
+                          <p className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{row.book}</p>
+                          <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Copy ID: {row.copyId}</p>
+                        </td>
                         <td className={`px-3 py-3 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{row.borrowDate}</td>
                         <td className={`px-3 py-3 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{row.dueDate}</td>
-                        <td className="px-3 py-3"><span className={`rounded-md px-2 py-1 text-xs font-semibold ${getStatusClass(row.status)}`}>{row.status}</span></td>
+                        <td className="px-3 py-3"><span className={`rounded-md px-2.5 py-1 text-xs font-semibold ${getStatusClass(row.status)}`}>{row.status}</span></td>
                       </tr>
                     ))}
                   </tbody>
@@ -551,35 +519,47 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions }: BorrowRetur
             </article>
 
             <article className={`overflow-hidden rounded-xl border ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
-              <div className={`flex items-center justify-between border-b px-4 py-3 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+              <div className={`flex items-center justify-between border-b p-4 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
                 <div>
-                  <h3 className={`text-xl font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Recent Returned (4)</h3>
+                  <h3 className={`text-xl font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Recent Returned ({returnedRows.length})</h3>
                   <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Recently returned books.</p>
                 </div>
-                <button type="button" onClick={() => onOpenTransactions('returned')} className="text-sm font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
+                <button type="button" onClick={() => onOpenTransactions('returned')} className="text-sm font-semibold text-emerald-700 hover:underline">View all →</button>
               </div>
               <div className="overflow-x-auto">
-                <table className="min-w-[760px] w-full text-left text-sm">
-                  <thead className={isDarkMode ? 'bg-[#0f1f49] text-slate-300' : 'bg-slate-50 text-slate-600'}>
+                <table className="w-full text-left text-sm">
+                  <thead className={isDarkMode ? 'bg-[#0f1f49]/50 text-slate-400' : 'bg-slate-50 text-slate-600'}>
                     <tr>
-                      <th className="px-4 py-3 font-semibold">Member</th>
-                      <th className="px-3 py-3 font-semibold">Book</th>
-                      <th className="px-3 py-3 font-semibold">Returned Date</th>
-                      <th className="px-3 py-3 font-semibold">Fine</th>
+                      <th className="px-3 py-3 text-xs font-semibold uppercase">Member</th>
+                      <th className="px-3 py-3 text-xs font-semibold uppercase">Book</th>
+                      <th className="px-3 py-3 text-xs font-semibold uppercase">Returned Date</th>
+                      <th className="px-3 py-3 text-xs font-semibold uppercase">Fine</th>
                     </tr>
                   </thead>
                   <tbody>
                     {returnedRows.map((row) => (
-                      <tr key={row.id} className={`border-t ${isDarkMode ? 'border-slate-700 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <span className={`grid h-9 w-9 place-items-center rounded-full ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>{row.avatar}</span>
-                            <div><p className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{row.member}</p><p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{row.memberId}</p></div>
+                      <tr key={row.id} className={`border-t ${isDarkMode ? 'border-slate-700' : 'border-slate-100'}`}>
+                        <td className="px-3 py-3">
+                          <div className="flex items-center gap-2.5">
+                            <span className={`grid h-8 w-8 place-items-center overflow-hidden rounded-full ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                              {getMemberPhotoSrc(row.profilePhotoData) ? (
+                                <img src={getMemberPhotoSrc(row.profilePhotoData) as string} alt={`${row.member} avatar`} className="h-full w-full object-cover" />
+                              ) : (
+                                <span className="text-[11px] font-semibold">{row.avatar}</span>
+                              )}
+                            </span>
+                            <span>
+                              <p className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{row.member}</p>
+                              <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{row.memberId}</p>
+                            </span>
                           </div>
                         </td>
-                        <td className="px-3 py-3"><p className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{row.book}</p><p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Copy ID: {row.copyId}</p></td>
+                        <td className="px-3 py-3">
+                          <p className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{row.book}</p>
+                          <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Copy ID: {row.copyId}</p>
+                        </td>
                         <td className={`px-3 py-3 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{row.returnedDate}</td>
-                        <td className="px-3 py-3"><span className={`rounded-md px-2 py-1 text-xs font-semibold ${getFineClass(row.fineType)}`}>{row.fine}</span></td>
+                        <td className="px-3 py-3"><span className={`rounded-md px-2.5 py-1 text-xs font-semibold ${getFineClass(row.fineType)}`}>{row.fine}</span></td>
                       </tr>
                     ))}
                   </tbody>
@@ -590,18 +570,18 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions }: BorrowRetur
         </div>
       </section>
 
-      {showToast && (
-        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl border px-5 py-4 shadow-xl transition-all duration-300 animate-[fadeIn_0.2s_ease-out] ${
-          isDarkMode 
-            ? 'border-slate-700 bg-slate-900 text-slate-100' 
-            : 'border-slate-200 bg-white text-slate-800'
-        }`}>
-          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">
-            <span className="text-sm font-bold">✓</span>
-          </div>
-          <p className="text-sm font-semibold">{showToast}</p>
+      {showToast ? (
+        <div className="fixed bottom-4 right-4 z-50 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-lg">
+          {showToast}
         </div>
-      )}
+      ) : null}
+
+      {activeTab === 'return' && !selectedMember ? (
+        <div className="fixed bottom-4 left-4 z-40 flex items-center gap-2 rounded-xl bg-amber-100 px-3 py-2 text-xs font-semibold text-amber-800">
+          <AlertTriangle size={14} />
+          Select a member first to return borrowed books.
+        </div>
+      ) : null}
     </div>
   )
 }

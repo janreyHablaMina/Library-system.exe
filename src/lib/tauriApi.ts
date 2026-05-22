@@ -122,6 +122,36 @@ export type UpdateCategoryPayload = {
   status: string
 }
 
+export type BorrowTransaction = {
+  id: number
+  memberId: number
+  memberName: string
+  memberCode: string
+  bookId: number
+  bookTitle: string
+  borrowDate: string
+  dueDate: string
+  returnDate: string | null
+  notes: string | null
+  status: string
+  fine: number
+  createdAt: string
+}
+
+export type CreateBorrowPayload = {
+  memberId: number
+  bookId: number
+  borrowDate: string
+  dueDate: string
+  notes?: string | null
+}
+
+export type ReturnBorrowPayload = {
+  transactionId: number
+  returnDate: string
+  fine?: number | null
+}
+
 export async function initDb(): Promise<string> {
   return invoke<string>('init_db')
 }
@@ -188,6 +218,18 @@ export async function updateCategory(payload: UpdateCategoryPayload): Promise<vo
 
 export async function deleteCategory(id: number): Promise<void> {
   return invoke<void>('delete_category', { id })
+}
+
+export async function createBorrowTransaction(payload: CreateBorrowPayload): Promise<number> {
+  return invoke<number>('create_borrow_transaction', { payload })
+}
+
+export async function returnBorrowTransaction(payload: ReturnBorrowPayload): Promise<void> {
+  return invoke<void>('return_borrow_transaction', { payload })
+}
+
+export async function listBorrowTransactions(status?: string, limit?: number): Promise<BorrowTransaction[]> {
+  return invoke<BorrowTransaction[]>('list_borrow_transactions', { status, limit })
 }
 
 export async function sendEmailSmtp(to: string, subject: string, body: string): Promise<string> {
