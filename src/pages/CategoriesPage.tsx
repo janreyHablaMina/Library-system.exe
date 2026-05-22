@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useMemo } from 'react'
 import type { FormEvent } from 'react'
 import { ChevronDown, Search, Plus, X, BookOpen, Layers, Monitor, GraduationCap, Globe, Palette, Briefcase, Atom, Library, Filter, Pencil, Trash2, MoreHorizontal, AlertTriangle } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+import { createCategory, deleteCategory, listBooks, listCategories, updateCategory, type Category as DbCategory } from '../lib/tauriApi'
 
 type CategoryRow = {
   id: number
@@ -52,23 +53,18 @@ const categoriesData: CategoryRow[] = [
 
 type CategoryActionsMenuProps = {
   category: CategoryRow
+  onViewDetails: (category: CategoryRow) => void
   onEdit: (category: CategoryRow) => void
   onDelete: (category: CategoryRow) => void
   isDarkMode: boolean
 }
 
-function CategoryActionsMenu({ category, onEdit, onDelete, isDarkMode }: CategoryActionsMenuProps) {
+function CategoryActionsMenu({ category, onViewDetails, onEdit, onDelete, isDarkMode }: CategoryActionsMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
-  const [openUpward, setOpenUpward] = useState(false)
 
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (!isOpen && menuRef.current) {
-      const rect = menuRef.current.getBoundingClientRect()
-      const spaceBelow = window.innerHeight - rect.bottom
-      setOpenUpward(spaceBelow < 180)
-    }
     setIsOpen(!isOpen)
   }
 
@@ -102,17 +98,24 @@ function CategoryActionsMenu({ category, onEdit, onDelete, isDarkMode }: Categor
 
       {isOpen && (
         <div
-          onClick={() => setIsOpen(false)}
-          className={`absolute right-0 z-50 w-36 animate-fadeIn rounded-xl border p-1.5 shadow-xl transition-all duration-150 ${
-            openUpward ? 'bottom-full mb-1' : 'top-full mt-1'
-          } ${
+          className={`absolute right-0 top-full z-50 mt-1.5 w-44 animate-fadeIn rounded-xl border p-1.5 shadow-xl transition-all duration-150 ${
             isDarkMode
               ? 'border-slate-700 bg-[#0f1f49] text-slate-200'
               : 'border-slate-200 bg-white text-slate-700'
           }`}
         >
           <button
-            onClick={() => onEdit(category)}
+            onClick={() => { setIsOpen(false); onViewDetails(category) }}
+            type="button"
+            className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors ${
+              isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50'
+            }`}
+          >
+            <BookOpen size={13} className="text-sky-500" />
+            View Details
+          </button>
+          <button
+            onClick={() => { setIsOpen(false); onEdit(category) }}
             type="button"
             className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors ${
               isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50'
@@ -121,8 +124,11 @@ function CategoryActionsMenu({ category, onEdit, onDelete, isDarkMode }: Categor
             <Pencil size={13} className="text-emerald-500" />
             Edit Info
           </button>
+
+          <div className={`my-1 border-t ${isDarkMode ? 'border-slate-700' : 'border-slate-100'}`} />
+
           <button
-            onClick={() => onDelete(category)}
+            onClick={() => { setIsOpen(false); onDelete(category) }}
             type="button"
             className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors ${
               isDarkMode ? 'hover:bg-slate-800/80 text-rose-400' : 'hover:bg-rose-50 text-rose-600'
@@ -146,6 +152,32 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
   const [showToast, setShowToast] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
+  const [booksCount, setBooksCount] = useState(0)
+
+  const toCategoryRow = (category: DbCategory): CategoryRow => {
+    const created = category.createdAt ? new Date(category.createdAt) : new Date()
+    return {
+      id: category.id,
+      name: category.name,
+      icon: BookOpen,
+      description: category.description || '',
+      books: 0,
+      status: (category.status === 'Inactive' ? 'Inactive' : 'Active') as 'Active' | 'Inactive',
+      createdOn: created.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      createdTime: created.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+      color: 'text-emerald-600',
+    }
+  }
+
+  const loadCategoriesFromDb = async () => {
+    try {
+      const [rows, books] = await Promise.all([listCategories(500), listBooks(2000)])
+      setCategoriesList(rows.map(toCategoryRow))
+      setBooksCount(books.length)
+    } catch {
+      // Keep local seeded list as fallback.
+    }
+  }
 
   useEffect(() => {
     if (showToast) {
@@ -153,6 +185,10 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
       return () => clearTimeout(timer)
     }
   }, [showToast])
+
+  useEffect(() => {
+    void loadCategoriesFromDb()
+  }, [])
 
   const filteredCategories = useMemo(() => {
     return categoriesList.filter(cat => {
@@ -182,41 +218,59 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
     setIsAddModalOpen(true)
   }
 
-  const handleSave = (e: FormEvent) => {
+  const handleSave = async (e: FormEvent) => {
     e.preventDefault()
-    if (categoryToEdit) {
-      setCategoriesList(prev => prev.map(c => c.id === categoryToEdit.id ? {
-        ...c,
-        name: categoryForm.name,
-        description: categoryForm.description,
-        status: categoryForm.status as any,
-      } : c))
-      setShowToast(`Successfully updated ${categoryForm.name}!`)
-    } else {
-      const newCategory: CategoryRow = {
-        id: Math.max(...categoriesList.map(c => c.id), 0) + 1,
-        name: categoryForm.name,
-        icon: BookOpen,
-        description: categoryForm.description,
-        books: 0,
-        status: categoryForm.status as any,
-        createdOn: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-        createdTime: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-        color: 'text-emerald-600',
+    try {
+      if (categoryToEdit) {
+        await updateCategory({
+          id: categoryToEdit.id,
+          name: categoryForm.name.trim(),
+          description: categoryForm.description.trim() || null,
+          status: categoryForm.status,
+        })
+        setShowToast(`Successfully updated ${categoryForm.name}!`)
+      } else {
+        await createCategory({
+          name: categoryForm.name.trim(),
+          description: categoryForm.description.trim() || null,
+          status: categoryForm.status,
+        })
+        setShowToast(`Successfully added ${categoryForm.name}!`)
       }
-      setCategoriesList(prev => [newCategory, ...prev])
-      setShowToast(`Successfully added ${categoryForm.name}!`)
+      await loadCategoriesFromDb()
+      closeAddModal()
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to save category.'
+      setShowToast(message)
     }
-    closeAddModal()
   }
 
-  const handleDeleteCategory = () => {
-    if (categoryToDelete) {
-      setCategoriesList(prev => prev.filter(c => c.id !== categoryToDelete.id))
+  const handleDeleteCategory = async () => {
+    if (!categoryToDelete) return
+    try {
+      await deleteCategory(categoryToDelete.id)
+      await loadCategoriesFromDb()
       setShowToast(`Successfully deleted ${categoryToDelete.name}!`)
       setCategoryToDelete(null)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to delete category.'
+      setShowToast(message)
     }
   }
+
+  const stats = useMemo(() => {
+    const totalCategories = categoriesList.length
+    const activeCategories = categoriesList.filter((c) => c.status === 'Active').length
+    const activePct = totalCategories > 0 ? ((activeCategories / totalCategories) * 100).toFixed(1) : '0.0'
+    const topCategory = categoriesList[0]?.name || 'N/A'
+    return [
+      { label: 'Total Categories', value: totalCategories.toLocaleString('en-US'), subValue: 'From database records', icon: Layers, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+      { label: 'Active Categories', value: activeCategories.toLocaleString('en-US'), subValue: `${activePct}% of total`, icon: BookOpen, color: 'text-blue-600', bg: 'bg-blue-50' },
+      { label: 'Books in Categories', value: booksCount.toLocaleString('en-US'), subValue: 'Total books', icon: Briefcase, color: 'text-amber-600', bg: 'bg-amber-50' },
+      { label: 'Most Popular', value: topCategory, subValue: 'Based on current list', icon: Palette, color: 'text-violet-600', bg: 'bg-violet-50' },
+      { label: 'New This Month', value: '0', subValue: 'New categories added', icon: Plus, color: 'text-rose-600', bg: 'bg-rose-50' },
+    ]
+  }, [categoriesList, booksCount])
 
   return (
     <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
@@ -283,7 +337,7 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="relative z-10 overflow-x-auto lg:overflow-visible">
             <table className="w-full text-left text-sm border-collapse">
               <thead className={isDarkMode ? 'bg-[#0f1f49]/50 text-slate-400' : 'bg-slate-50/50 text-slate-500'}>
                 <tr>
@@ -328,6 +382,7 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
                       <td className="px-6 py-4">
                         <CategoryActionsMenu
                           category={cat}
+                          onViewDetails={handleOpenEditModal}
                           onEdit={handleOpenEditModal}
                           onDelete={setCategoryToDelete}
                           isDarkMode={isDarkMode}
@@ -341,7 +396,7 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
           </div>
 
           <div className={`relative z-0 flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm rounded-b-xl ${isDarkMode ? 'border-slate-700 bg-[#0b1738] text-slate-300' : 'border-slate-200 bg-white text-slate-600'}`}>
-            <p>Showing 1 to 8 of 24 categories</p>
+            <p>Showing 1 to {filteredCategories.length} of {categoriesList.length} categories</p>
             <div className="flex items-center gap-2">
               <select className={`h-9 rounded-lg border px-3 text-sm ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
                 <option>10 per page</option>

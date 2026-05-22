@@ -206,6 +206,7 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
     await createBook({
       title: data.title.trim(),
       author: data.author.trim(),
+      category: data.category.trim() || null,
       isbn: data.isbn.trim() || null,
       coverData,
     })

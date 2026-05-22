@@ -10,6 +10,7 @@ struct Book {
   id: i64,
   title: String,
   author: String,
+  category: Option<String>,
   isbn: Option<String>,
   cover_data: Option<String>,
   available: bool,
@@ -21,6 +22,7 @@ struct Book {
 struct CreateBookPayload {
   title: String,
   author: String,
+  category: Option<String>,
   isbn: Option<String>,
   cover_data: Option<String>,
 }
@@ -31,6 +33,7 @@ struct UpdateBookPayload {
   id: i64,
   title: String,
   author: String,
+  category: Option<String>,
   isbn: Option<String>,
   cover_data: Option<String>,
   available: bool,
@@ -122,6 +125,33 @@ struct CreateAuthorPayload {
   biography: Option<String>,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct Category {
+  id: i64,
+  name: String,
+  description: Option<String>,
+  status: String,
+  created_at: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct CreateCategoryPayload {
+  name: String,
+  description: Option<String>,
+  status: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct UpdateCategoryPayload {
+  id: i64,
+  name: String,
+  description: Option<String>,
+  status: String,
+}
+
 fn open_db(path: &PathBuf) -> Result<Connection, String> {
   Connection::open(path).map_err(|e| format!("open db failed: {e}"))
 }
@@ -152,6 +182,7 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
         author TEXT NOT NULL,
+        category TEXT,
         isbn TEXT,
         cover_data TEXT,
         available INTEGER NOT NULL DEFAULT 1,
@@ -198,6 +229,13 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
         biography TEXT,
         created_at TEXT NOT NULL
       );
+      CREATE TABLE IF NOT EXISTS categories (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL UNIQUE,
+        description TEXT,
+        status TEXT NOT NULL DEFAULT 'Active',
+        created_at TEXT NOT NULL
+      );
       ",
     )
     .map_err(|e| format!("init schema failed: {e}"))?;
@@ -207,6 +245,12 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
     let msg = e.to_string();
     if !msg.contains("duplicate column name") {
       return Err(format!("books migration failed: {e}"));
+    }
+  }
+  if let Err(e) = conn.execute("ALTER TABLE books ADD COLUMN category TEXT", []) {
+    let msg = e.to_string();
+    if !msg.contains("duplicate column name") {
+      return Err(format!("books category migration failed: {e}"));
     }
   }
   if let Err(e) = conn.execute("ALTER TABLE members ADD COLUMN profile_photo_data TEXT", []) {
@@ -285,10 +329,11 @@ fn create_book(app: tauri::AppHandle, payload: CreateBookPayload) -> Result<i64,
   init_schema(&conn)?;
   conn
     .execute(
-      "INSERT INTO books (title, author, isbn, cover_data, available, created_at) VALUES (?1, ?2, ?3, ?4, 1, ?5)",
+      "INSERT INTO books (title, author, category, isbn, cover_data, available, created_at) VALUES (?1, ?2, ?3, ?4, ?5, 1, ?6)",
       params![
         payload.title,
         payload.author,
+        payload.category.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
         payload.isbn,
         payload.cover_data,
         Utc::now().to_rfc3339()
@@ -305,7 +350,7 @@ fn list_books(app: tauri::AppHandle, limit: Option<i64>) -> Result<Vec<Book>, St
   let max_rows = limit.unwrap_or(50).clamp(1, 500);
   let mut stmt = conn
     .prepare(
-      "SELECT id, title, author, isbn, cover_data, available, created_at
+      "SELECT id, title, author, category, isbn, cover_data, available, created_at
        FROM books
        ORDER BY id DESC
        LIMIT ?1",
@@ -317,10 +362,11 @@ fn list_books(app: tauri::AppHandle, limit: Option<i64>) -> Result<Vec<Book>, St
         id: row.get(0)?,
         title: row.get(1)?,
         author: row.get(2)?,
-        isbn: row.get(3)?,
-        cover_data: row.get(4)?,
-        available: row.get::<_, i64>(5)? == 1,
-        created_at: row.get(6)?,
+        category: row.get(3)?,
+        isbn: row.get(4)?,
+        cover_data: row.get(5)?,
+        available: row.get::<_, i64>(6)? == 1,
+        created_at: row.get(7)?,
       })
     })
     .map_err(|e| format!("list books failed: {e}"))?;
@@ -340,14 +386,16 @@ fn update_book(app: tauri::AppHandle, payload: UpdateBookPayload) -> Result<(), 
       UPDATE books
       SET title = ?1,
           author = ?2,
-          isbn = ?3,
-          cover_data = ?4,
-          available = ?5
-      WHERE id = ?6
+          category = ?3,
+          isbn = ?4,
+          cover_data = ?5,
+          available = ?6
+      WHERE id = ?7
       ",
       params![
         payload.title,
         payload.author,
+        payload.category.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
         payload.isbn,
         payload.cover_data,
         if payload.available { 1 } else { 0 },
@@ -561,6 +609,104 @@ fn delete_author(app: tauri::AppHandle, id: i64) -> Result<(), String> {
 }
 
 #[tauri::command]
+fn create_category(app: tauri::AppHandle, payload: CreateCategoryPayload) -> Result<i64, String> {
+  let name = payload.name.trim();
+  if name.is_empty() {
+    return Err("name is required".to_string());
+  }
+
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  conn
+    .execute(
+      "
+      INSERT INTO categories (name, description, status, created_at)
+      VALUES (?1, ?2, ?3, ?4)
+      ",
+      params![
+        name,
+        payload.description.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
+        payload.status.unwrap_or_else(|| "Active".to_string()),
+        Utc::now().to_rfc3339(),
+      ],
+    )
+    .map_err(|e| format!("create category failed: {e}"))?;
+  Ok(conn.last_insert_rowid())
+}
+
+#[tauri::command]
+fn list_categories(app: tauri::AppHandle, limit: Option<i64>) -> Result<Vec<Category>, String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  let max_rows = limit.unwrap_or(500).clamp(1, 1000);
+  let mut stmt = conn
+    .prepare(
+      "
+      SELECT id, name, description, status, created_at
+      FROM categories
+      ORDER BY id DESC
+      LIMIT ?1
+      ",
+    )
+    .map_err(|e| format!("prepare list categories query failed: {e}"))?;
+
+  let rows = stmt
+    .query_map(params![max_rows], |row| {
+      Ok(Category {
+        id: row.get(0)?,
+        name: row.get(1)?,
+        description: row.get(2)?,
+        status: row.get(3)?,
+        created_at: row.get(4)?,
+      })
+    })
+    .map_err(|e| format!("list categories failed: {e}"))?;
+
+  rows
+    .collect::<Result<Vec<_>, _>>()
+    .map_err(|e| format!("collect categories failed: {e}"))
+}
+
+#[tauri::command]
+fn update_category(app: tauri::AppHandle, payload: UpdateCategoryPayload) -> Result<(), String> {
+  let name = payload.name.trim();
+  if name.is_empty() {
+    return Err("name is required".to_string());
+  }
+
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  conn
+    .execute(
+      "
+      UPDATE categories
+      SET name = ?1,
+          description = ?2,
+          status = ?3
+      WHERE id = ?4
+      ",
+      params![
+        name,
+        payload.description.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
+        payload.status,
+        payload.id
+      ],
+    )
+    .map_err(|e| format!("update category failed: {e}"))?;
+  Ok(())
+}
+
+#[tauri::command]
+fn delete_category(app: tauri::AppHandle, id: i64) -> Result<(), String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  conn
+    .execute("DELETE FROM categories WHERE id = ?1", params![id])
+    .map_err(|e| format!("delete category failed: {e}"))?;
+  Ok(())
+}
+
+#[tauri::command]
 fn send_email_smtp(to: String, subject: String, body: String) -> Result<String, String> {
   let summary = format!(
     "SMTP stub queued. To: {to}, Subject: {subject}, Body chars: {}",
@@ -740,6 +886,10 @@ pub fn run() {
       create_author,
       list_authors,
       delete_author,
+      create_category,
+      list_categories,
+      update_category,
+      delete_category,
       login,
       logout,
       get_active_session,

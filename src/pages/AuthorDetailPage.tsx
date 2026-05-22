@@ -153,6 +153,7 @@ export function AuthorDetailPage({ isDarkMode, onBack, authorId }: Props) {
                 id: updatedBook.id,
                 title: updatedBook.title,
                 author: updatedBook.author,
+                category: updatedBook.category === 'Uncategorized' ? null : updatedBook.category,
                 isbn: updatedBook.isbn === '-' ? null : updatedBook.isbn,
                 coverData: updatedBook.cover.startsWith('data:') ? updatedBook.cover : null,
                 available: updatedBook.status === 'Available',

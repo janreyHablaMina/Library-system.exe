@@ -4,6 +4,7 @@ export type Book = {
   id: number
   title: string
   author: string
+  category: string | null
   isbn: string | null
   coverData: string | null
   available: boolean
@@ -13,6 +14,7 @@ export type Book = {
 export type CreateBookPayload = {
   title: string
   author: string
+  category?: string | null
   isbn?: string | null
   coverData?: string | null
 }
@@ -21,6 +23,7 @@ export type UpdateBookPayload = {
   id: number
   title: string
   author: string
+  category?: string | null
   isbn?: string | null
   coverData?: string | null
   available: boolean
@@ -98,6 +101,27 @@ export type CreateAuthorPayload = {
   biography?: string | null
 }
 
+export type Category = {
+  id: number
+  name: string
+  description: string | null
+  status: string
+  createdAt: string
+}
+
+export type CreateCategoryPayload = {
+  name: string
+  description?: string | null
+  status?: string | null
+}
+
+export type UpdateCategoryPayload = {
+  id: number
+  name: string
+  description?: string | null
+  status: string
+}
+
 export async function initDb(): Promise<string> {
   return invoke<string>('init_db')
 }
@@ -148,6 +172,22 @@ export async function listAuthors(limit?: number): Promise<Author[]> {
 
 export async function deleteAuthor(id: number): Promise<void> {
   return invoke<void>('delete_author', { id })
+}
+
+export async function createCategory(payload: CreateCategoryPayload): Promise<number> {
+  return invoke<number>('create_category', { payload })
+}
+
+export async function listCategories(limit?: number): Promise<Category[]> {
+  return invoke<Category[]>('list_categories', { limit })
+}
+
+export async function updateCategory(payload: UpdateCategoryPayload): Promise<void> {
+  return invoke<void>('update_category', { payload })
+}
+
+export async function deleteCategory(id: number): Promise<void> {
+  return invoke<void>('delete_category', { id })
 }
 
 export async function sendEmailSmtp(to: string, subject: string, body: string): Promise<string> {

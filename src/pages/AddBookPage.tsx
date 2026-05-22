@@ -12,10 +12,11 @@ import {
   Package,
   Save,
   StickyNote,
+  Tag,
   UserPlus,
   X,
 } from 'lucide-react'
-import { createAuthor, listAuthors, listBooks } from '../lib/tauriApi'
+import { createAuthor, createCategory, listAuthors, listBooks, listCategories } from '../lib/tauriApi'
 
 type AddBookPageProps = {
   isDarkMode: boolean
@@ -57,21 +58,15 @@ type AuthorOption = {
   booksPublished: number
   profilePhotoData: string | null
 }
+type CategoryOption = {
+  id: number
+  name: string
+  status: string
+}
 
 const DESCRIPTION_MAX = 1000
 const NOTES_MAX = 2000
 const MAX_COVER_SIZE_BYTES = 2 * 1024 * 1024
-
-const categories = [
-  'Social Sciences',
-  'History',
-  'Education',
-  'Law',
-  'Biography',
-  'Library Science',
-  'Technology',
-  'Fiction',
-]
 
 const initialForm: AddBookFormData = {
   title: '',
@@ -122,15 +117,24 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
   const [isSaving, setIsSaving] = useState(false)
   const [authors, setAuthors] = useState<AuthorOption[]>([])
   const [authorsLoading, setAuthorsLoading] = useState(false)
+  const [categories, setCategories] = useState<CategoryOption[]>([])
+  const [categoriesLoading, setCategoriesLoading] = useState(false)
   const [authorSearch, setAuthorSearch] = useState('')
   const [authorDropdownOpen, setAuthorDropdownOpen] = useState(false)
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false)
   const [isAddAuthorOpen, setIsAddAuthorOpen] = useState(false)
+  const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false)
   const [newAuthorName, setNewAuthorName] = useState('')
   const [newAuthorEmail, setNewAuthorEmail] = useState('')
+  const [newCategoryName, setNewCategoryName] = useState('')
+  const [newCategoryDescription, setNewCategoryDescription] = useState('')
   const [isCreatingAuthor, setIsCreatingAuthor] = useState(false)
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false)
   const [authorCreateError, setAuthorCreateError] = useState('')
+  const [categoryCreateError, setCategoryCreateError] = useState('')
   const coverInputRef = useRef<HTMLInputElement | null>(null)
   const authorDropdownRef = useRef<HTMLDivElement | null>(null)
+  const categoryDropdownRef = useRef<HTMLDivElement | null>(null)
 
   const coverPreviewUrl = useMemo(() => {
     if (!form.coverFile) return null
@@ -149,6 +153,9 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
     const handleOutside = (event: MouseEvent) => {
       if (authorDropdownRef.current && !authorDropdownRef.current.contains(event.target as Node)) {
         setAuthorDropdownOpen(false)
+      }
+      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(event.target as Node)) {
+        setCategoryDropdownOpen(false)
       }
     }
     document.addEventListener('mousedown', handleOutside)
@@ -181,6 +188,25 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
       }
     }
     void loadAuthors()
+  }, [])
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      setCategoriesLoading(true)
+      try {
+        const rows = await listCategories(1000)
+        setCategories(rows.filter((row) => row.status !== 'Inactive').map((row) => ({
+          id: row.id,
+          name: row.name,
+          status: row.status,
+        })))
+      } catch {
+        setCategories([])
+      } finally {
+        setCategoriesLoading(false)
+      }
+    }
+    void loadCategories()
   }, [])
 
   const cardClass = isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'
@@ -233,6 +259,7 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
     return authors.filter((a) => a.name.toLowerCase().includes(q))
   }, [authors, authorSearch])
   const displayedAuthors = useMemo(() => filteredAuthors.slice(0, 5), [filteredAuthors])
+  const displayedCategories = useMemo(() => categories.slice(0, 5), [categories])
 
   const handleCreateAuthor = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -250,7 +277,12 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
         status: 'Active',
       })
       const rows = await listAuthors(1000)
-      const options = rows.map((row) => ({ id: row.id, name: row.name }))
+      const options = rows.map((row) => ({
+        id: row.id,
+        name: row.name,
+        booksPublished: 0,
+        profilePhotoData: row.profilePhotoData || null,
+      }))
       setAuthors(options)
       setField('author', name)
       setIsAddAuthorOpen(false)
@@ -260,6 +292,38 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
       setAuthorCreateError(error instanceof Error ? error.message : 'Failed to create author.')
     } finally {
       setIsCreatingAuthor(false)
+    }
+  }
+
+  const handleCreateCategory = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const name = newCategoryName.trim()
+    if (!name) {
+      setCategoryCreateError('Category name is required.')
+      return
+    }
+    setIsCreatingCategory(true)
+    setCategoryCreateError('')
+    try {
+      await createCategory({
+        name,
+        description: newCategoryDescription.trim() || null,
+        status: 'Active',
+      })
+      const rows = await listCategories(1000)
+      const nextCategories = rows
+        .filter((row) => row.status !== 'Inactive')
+        .map((row) => ({ id: row.id, name: row.name, status: row.status }))
+      setCategories(nextCategories)
+      setField('category', name)
+      setIsAddCategoryOpen(false)
+      setCategoryDropdownOpen(false)
+      setNewCategoryName('')
+      setNewCategoryDescription('')
+    } catch (error) {
+      setCategoryCreateError(error instanceof Error ? error.message : 'Failed to create category.')
+    } finally {
+      setIsCreatingCategory(false)
     }
   }
 
@@ -415,20 +479,76 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
                 </div>
                 <div>
                   <label className={`text-sm font-semibold ${labelClass}`}>Category *</label>
-                  <div className="relative mt-1">
-                    <select
-                      value={form.category}
-                      onChange={(e) => setField('category', e.target.value)}
-                      className={`h-11 w-full appearance-none rounded-xl border px-4 pr-10 outline-none focus:border-emerald-500 ${inputClass}`}
+                  <div className="relative mt-1" ref={categoryDropdownRef}>
+                    <button
+                      type="button"
+                      onClick={() => setCategoryDropdownOpen((prev) => !prev)}
+                      className={`h-11 w-full rounded-xl border px-4 pr-10 text-left outline-none focus:border-emerald-500 ${inputClass}`}
                     >
-                      <option value="">Select category</option>
-                      {categories.map((category) => (
-                        <option key={category} value={category}>
-                          {category}
-                        </option>
-                      ))}
-                    </select>
+                      <span className="inline-flex items-center gap-2">
+                        <BookOpen size={15} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />
+                        <span className={form.category ? '' : (isDarkMode ? 'text-slate-500' : 'text-slate-400')}>
+                          {form.category || (categoriesLoading ? 'Loading categories...' : 'Select category')}
+                        </span>
+                      </span>
+                    </button>
                     <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+
+                    {categoryDropdownOpen ? (
+                      <div className={`absolute left-0 right-0 top-full z-30 mt-2 max-h-56 overflow-y-auto rounded-xl border p-2 shadow-xl ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                        <div className="mb-2 flex items-center justify-between px-1">
+                          <p className={`text-[11px] font-semibold ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                            Categories ({Math.min(categories.length, 5)} shown)
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => setCategoryDropdownOpen(false)}
+                            className={`grid h-6 w-6 place-items-center rounded-md ${isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-100'}`}
+                            aria-label="Close category list"
+                          >
+                            <X size={13} />
+                          </button>
+                        </div>
+                        {displayedCategories.length > 0 ? (
+                          displayedCategories.map((category) => (
+                            <button
+                              key={category.id}
+                              type="button"
+                              onClick={() => {
+                                setField('category', category.name)
+                                setCategoryDropdownOpen(false)
+                              }}
+                              className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm ${isDarkMode ? 'text-slate-200 hover:bg-slate-800' : 'text-slate-700 hover:bg-slate-50'}`}
+                            >
+                              <span className="inline-flex items-center gap-2 min-w-0">
+                                <BookOpen size={14} className={isDarkMode ? 'text-emerald-400' : 'text-emerald-600'} />
+                                <span className="truncate">{category.name}</span>
+                              </span>
+                              <span className={`ml-2 rounded-md px-2 py-0.5 text-[10px] font-semibold ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
+                                {category.status}
+                              </span>
+                            </button>
+                          ))
+                        ) : (
+                          <p className={`px-3 py-2 text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>No categories found</p>
+                        )}
+                        {categories.length > 5 ? (
+                          <p className={`px-3 pt-1 text-[11px] ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                            Showing first 5 categories.
+                          </p>
+                        ) : null}
+                        <div className={`mt-2 border-t pt-2 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                          <button
+                            type="button"
+                            onClick={() => setIsAddCategoryOpen(true)}
+                            className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-3 text-sm font-semibold text-white hover:bg-emerald-700"
+                          >
+                            <Tag size={14} />
+                            Add New Category
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                   <FieldError error={errors.category} />
                 </div>
@@ -780,6 +900,71 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
                 </button>
                 <button type="submit" disabled={isCreatingAuthor} className="h-10 rounded-xl bg-emerald-700 text-sm font-semibold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-70">
                   {isCreatingAuthor ? 'Saving...' : 'Save Author'}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      ) : null}
+
+      {isAddCategoryOpen ? (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
+          <section className={`w-full max-w-md rounded-2xl border p-5 shadow-2xl ${cardClass}`}>
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <h4 className={`text-lg font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Add New Category</h4>
+                <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                  Create a new category and select it for this book.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAddCategoryOpen(false)
+                  setCategoryCreateError('')
+                }}
+                className={`grid h-8 w-8 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-100'}`}
+              >
+                <X size={14} />
+              </button>
+            </div>
+            <form className="space-y-3" onSubmit={handleCreateCategory}>
+              <div>
+                <label className={`text-sm font-semibold ${labelClass}`}>Category Name *</label>
+                <input
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  className={`mt-1 h-10 w-full rounded-lg border px-3 outline-none focus:border-emerald-500 ${inputClass}`}
+                  placeholder="Enter category name"
+                />
+              </div>
+              <div>
+                <label className={`text-sm font-semibold ${labelClass}`}>Description</label>
+                <textarea
+                  value={newCategoryDescription}
+                  onChange={(e) => setNewCategoryDescription(e.target.value)}
+                  className={`mt-1 min-h-[90px] w-full rounded-lg border px-3 py-2 outline-none focus:border-emerald-500 ${inputClass}`}
+                  placeholder="Short description (optional)"
+                />
+              </div>
+              {categoryCreateError ? <p className="text-xs font-semibold text-rose-600">{categoryCreateError}</p> : null}
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAddCategoryOpen(false)
+                    setCategoryCreateError('')
+                  }}
+                  className={`h-10 rounded-lg border text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-100'}`}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isCreatingCategory}
+                  className="h-10 rounded-lg bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isCreatingCategory ? 'Saving...' : 'Save Category'}
                 </button>
               </div>
             </form>
