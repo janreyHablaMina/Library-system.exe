@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect, useMemo } from 'react'
-import type { FormEvent } from 'react'
+﻿import { useState, useRef, useEffect, useMemo } from 'react'
+import type { ChangeEvent, FormEvent } from 'react'
 import { ChevronDown, Download, Eye, Pencil, Plus, Search, Trash2, Users, X, BookOpen, Star, Calendar, Filter, ChevronLeft, ChevronRight, MoreHorizontal, AlertTriangle, Mail, Globe } from 'lucide-react'
+import { createAuthor, listAuthors, type Author as DbAuthor } from '../lib/tauriApi'
 
 type AuthorRow = {
   id: number
@@ -14,6 +15,7 @@ type AuthorRow = {
   addedOn: string
   addedTime: string
   avatar: string
+  profilePhotoData?: string | null
   biography?: string
 }
 
@@ -40,7 +42,7 @@ const initialFormState: AuthorFormState = {
 }
 
 const stats = [
-  { label: 'Total Authors', value: '156', subValue: '↑ 12 this month', icon: Users, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+  { label: 'Total Authors', value: '156', subValue: 'â†‘ 12 this month', icon: Users, color: 'text-emerald-600', bg: 'bg-emerald-50' },
   { label: 'Active Authors', value: '142', subValue: '90.9% of total', icon: Pencil, color: 'text-blue-600', bg: 'bg-blue-50' },
   { label: 'Books by Authors', value: '1,245', subValue: 'Total books written', icon: BookOpen, color: 'text-amber-600', bg: 'bg-amber-50' },
   { label: 'Top Nationality', value: 'American', subValue: '42 authors', icon: Star, color: 'text-violet-600', bg: 'bg-violet-50' },
@@ -48,14 +50,14 @@ const stats = [
 ]
 
 const authors: AuthorRow[] = [
-  { id: 1, name: 'J.K. Rowling', email: 'jk.rowling@example.com', nationality: 'British', flag: '🇬🇧', books: 12, dob: 'July 31, 1965', status: 'Active', addedOn: 'May 6, 2026', addedTime: '10:15 AM', avatar: '👩🏼' },
-  { id: 2, name: 'George R. R. Martin', email: 'grrmartin@example.com', nationality: 'American', flag: '🇺🇸', books: 8, dob: 'September 20, 1948', status: 'Active', addedOn: 'May 5, 2026', addedTime: '02:30 PM', avatar: '👨🏼' },
-  { id: 3, name: 'Agatha Christie', email: 'agatha.christie@example.com', nationality: 'British', flag: '🇬🇧', books: 66, dob: 'September 15, 1890', status: 'Active', addedOn: 'May 4, 2026', addedTime: '11:20 AM', avatar: '👩🏻' },
-  { id: 4, name: 'Stephen King', email: 'stephen.king@example.com', nationality: 'American', flag: '🇺🇸', books: 61, dob: 'September 21, 1947', status: 'Active', addedOn: 'May 3, 2026', addedTime: '09:45 AM', avatar: '👨🏻' },
-  { id: 5, name: 'Haruki Murakami', email: 'murakami@example.com', nationality: 'Japanese', flag: '🇯🇵', books: 14, dob: 'January 12, 1949', status: 'Active', addedOn: 'May 2, 2026', addedTime: '03:10 PM', avatar: '👨🏻' },
-  { id: 6, name: 'Dan Brown', email: 'dan.brown@example.com', nationality: 'American', flag: '🇺🇸', books: 6, dob: 'June 22, 1964', status: 'Inactive', addedOn: 'May 1, 2026', addedTime: '01:05 PM', avatar: '👨🏻' },
-  { id: 7, name: 'Jane Austen', email: 'jane.austen@example.com', nationality: 'British', flag: '🇬🇧', books: 6, dob: 'December 16, 1775', status: 'Active', addedOn: 'Apr 30, 2026', addedTime: '04:25 PM', avatar: '👩🏼' },
-  { id: 8, name: 'Paulo Coelho', email: 'paulo.coelho@example.com', nationality: 'Brazilian', flag: '🇧🇷', books: 11, dob: 'August 24, 1947', status: 'Active', addedOn: 'Apr 29, 2026', addedTime: '10:50 AM', avatar: '👨🏻' },
+  { id: 1, name: 'J.K. Rowling', email: 'jk.rowling@example.com', nationality: 'British', flag: 'ðŸ‡¬ðŸ‡§', books: 12, dob: 'July 31, 1965', status: 'Active', addedOn: 'May 6, 2026', addedTime: '10:15 AM', avatar: 'ðŸ‘©ðŸ¼' },
+  { id: 2, name: 'George R. R. Martin', email: 'grrmartin@example.com', nationality: 'American', flag: 'ðŸ‡ºðŸ‡¸', books: 8, dob: 'September 20, 1948', status: 'Active', addedOn: 'May 5, 2026', addedTime: '02:30 PM', avatar: 'ðŸ‘¨ðŸ¼' },
+  { id: 3, name: 'Agatha Christie', email: 'agatha.christie@example.com', nationality: 'British', flag: 'ðŸ‡¬ðŸ‡§', books: 66, dob: 'September 15, 1890', status: 'Active', addedOn: 'May 4, 2026', addedTime: '11:20 AM', avatar: 'ðŸ‘©ðŸ»' },
+  { id: 4, name: 'Stephen King', email: 'stephen.king@example.com', nationality: 'American', flag: 'ðŸ‡ºðŸ‡¸', books: 61, dob: 'September 21, 1947', status: 'Active', addedOn: 'May 3, 2026', addedTime: '09:45 AM', avatar: 'ðŸ‘¨ðŸ»' },
+  { id: 5, name: 'Haruki Murakami', email: 'murakami@example.com', nationality: 'Japanese', flag: 'ðŸ‡¯ðŸ‡µ', books: 14, dob: 'January 12, 1949', status: 'Active', addedOn: 'May 2, 2026', addedTime: '03:10 PM', avatar: 'ðŸ‘¨ðŸ»' },
+  { id: 6, name: 'Dan Brown', email: 'dan.brown@example.com', nationality: 'American', flag: 'ðŸ‡ºðŸ‡¸', books: 6, dob: 'June 22, 1964', status: 'Inactive', addedOn: 'May 1, 2026', addedTime: '01:05 PM', avatar: 'ðŸ‘¨ðŸ»' },
+  { id: 7, name: 'Jane Austen', email: 'jane.austen@example.com', nationality: 'British', flag: 'ðŸ‡¬ðŸ‡§', books: 6, dob: 'December 16, 1775', status: 'Active', addedOn: 'Apr 30, 2026', addedTime: '04:25 PM', avatar: 'ðŸ‘©ðŸ¼' },
+  { id: 8, name: 'Paulo Coelho', email: 'paulo.coelho@example.com', nationality: 'Brazilian', flag: 'ðŸ‡§ðŸ‡·', books: 11, dob: 'August 24, 1947', status: 'Active', addedOn: 'Apr 29, 2026', addedTime: '10:50 AM', avatar: 'ðŸ‘¨ðŸ»' },
 ]
 
 type AuthorActionsMenuProps = {
@@ -166,6 +168,30 @@ export function AuthorsPage({ isDarkMode }: AuthorsPageProps) {
   const [authorToDelete, setAuthorToDelete] = useState<AuthorRow | null>(null)
   const [authorsList, setAuthorsList] = useState<AuthorRow[]>(authors)
   const [showToast, setShowToast] = useState<string | null>(null)
+  const [authorPhotoPreview, setAuthorPhotoPreview] = useState<string | null>(null)
+  const [authorPhotoName, setAuthorPhotoName] = useState<string>('')
+  const authorPhotoInputRef = useRef<HTMLInputElement>(null)
+
+  const toAuthorRow = (author: DbAuthor): AuthorRow => {
+    const created = author.createdAt ? new Date(author.createdAt) : new Date()
+    return {
+      id: author.id,
+      name: author.name,
+      email: author.email || 'n/a',
+      nationality: author.nationality || 'Unknown',
+      flag: 'ðŸ³ï¸',
+      books: 0,
+      dob: author.dob
+        ? new Date(author.dob).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+        : '',
+      status: (author.status === 'Inactive' ? 'Inactive' : 'Active') as 'Active' | 'Inactive',
+      addedOn: created.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      addedTime: created.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+      avatar: author.name.charAt(0).toUpperCase() || 'A',
+      profilePhotoData: author.profilePhotoData || null,
+      biography: author.biography || '',
+    }
+  }
 
   // Filter States
   const [searchTerm, setSearchTerm] = useState('')
@@ -181,6 +207,20 @@ export function AuthorsPage({ isDarkMode }: AuthorsPageProps) {
     }
   }, [showToast])
 
+  useEffect(() => {
+    const loadAuthors = async () => {
+      try {
+        const rows = await listAuthors(500)
+        if (rows.length > 0) {
+          setAuthorsList(rows.map(toAuthorRow))
+        }
+      } catch {
+        // Keep local seed list if DB is unavailable.
+      }
+    }
+    void loadAuthors()
+  }, [])
+
   const handleFormChange = (field: keyof AuthorFormState, value: string) => {
     setAuthorForm((prev) => ({ ...prev, [field]: value }))
   }
@@ -189,6 +229,9 @@ export function AuthorsPage({ isDarkMode }: AuthorsPageProps) {
     setIsAddModalOpen(false)
     setAuthorToEdit(null)
     setAuthorForm(initialFormState)
+    setAuthorPhotoPreview(null)
+    setAuthorPhotoName('')
+    if (authorPhotoInputRef.current) authorPhotoInputRef.current.value = ''
   }
 
   const handleOpenEditModal = (author: AuthorRow) => {
@@ -201,10 +244,41 @@ export function AuthorsPage({ isDarkMode }: AuthorsPageProps) {
       status: author.status,
       biography: author.biography || '',
     })
+    setAuthorPhotoPreview(author.profilePhotoData || null)
+    setAuthorPhotoName(author.profilePhotoData ? 'Current photo' : '')
+    if (authorPhotoInputRef.current) authorPhotoInputRef.current.value = ''
     setIsAddModalOpen(true)
   }
 
-  const handleSave = (e: FormEvent) => {
+  
+  const handleAuthorPhotoChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    const acceptedTypes = ['image/jpeg', 'image/png']
+    if (!acceptedTypes.includes(file.type)) {
+      setShowToast('Only JPG and PNG files are allowed.')
+      event.target.value = ''
+      return
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setShowToast('Photo must be 2MB or smaller.')
+      event.target.value = ''
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = () => {
+      const dataUrl = typeof reader.result === 'string' ? reader.result : null
+      setAuthorPhotoPreview(dataUrl)
+      setAuthorPhotoName(file.name)
+    }
+    reader.onerror = () => {
+      setShowToast('Failed to read photo file.')
+      event.target.value = ''
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleSave = async (e: FormEvent) => {
     e.preventDefault()
     if (authorToEdit) {
       setAuthorsList(prev => prev.map(a => a.id === authorToEdit.id ? {
@@ -215,29 +289,33 @@ export function AuthorsPage({ isDarkMode }: AuthorsPageProps) {
         dob: authorForm.dob ? new Date(authorForm.dob).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '',
         status: authorForm.status as any,
         biography: authorForm.biography,
+        profilePhotoData: authorPhotoPreview || a.profilePhotoData || null,
       } : a))
       setShowToast(`Successfully updated ${authorForm.name}'s profile!`)
     } else {
-      const newAuthor: AuthorRow = {
-        id: Math.max(...authorsList.map(a => a.id), 0) + 1,
-        name: authorForm.name,
-        email: authorForm.email,
-        nationality: authorForm.nationality,
-        dob: authorForm.dob ? new Date(authorForm.dob).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '',
-        status: authorForm.status as any,
-        biography: authorForm.biography,
-        flag: '🏳️',
-        books: 0,
-        addedOn: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-        addedTime: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-        avatar: authorForm.name.charAt(0).toUpperCase(),
+      try {
+        await createAuthor({
+          name: authorForm.name.trim(),
+          email: authorForm.email.trim() || null,
+          nationality: authorForm.nationality.trim() || null,
+          dob: authorForm.dob || null,
+          profilePhotoData: authorPhotoPreview || null,
+          status: authorForm.status || 'Active',
+          biography: authorForm.biography.trim() || null,
+        })
+        const rows = await listAuthors(500)
+        if (rows.length > 0) {
+          setAuthorsList(rows.map(toAuthorRow))
+        }
+        setShowToast(`Successfully added ${authorForm.name} as a new author!`)
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to add author.'
+        setShowToast(message)
+        return
       }
-      setAuthorsList(prev => [newAuthor, ...prev])
-      setShowToast(`Successfully added ${authorForm.name} as a new author!`)
     }
     closeAddModal()
   }
-
   const handleDeleteConfirm = () => {
     if (authorToDelete) {
       setAuthorsList(prev => prev.filter(a => a.id !== authorToDelete.id))
@@ -369,7 +447,7 @@ export function AuthorsPage({ isDarkMode }: AuthorsPageProps) {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className={`relative z-10 overflow-x-auto lg:overflow-visible ${isDarkMode ? 'bg-[#0b1738]' : 'bg-white'}`}>
             <table className="w-full text-left text-sm border-collapse">
               <thead className={isDarkMode ? 'bg-[#0f1f49] text-slate-300' : 'bg-slate-50 text-slate-600'}>
                 <tr>
@@ -387,7 +465,13 @@ export function AuthorsPage({ isDarkMode }: AuthorsPageProps) {
                   <tr key={author.id} className={`border-t transition-colors duration-150 ${isDarkMode ? 'border-slate-700 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <span className={`grid h-10 w-10 place-items-center rounded-full text-lg border ${isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-100'}`}>{author.avatar}</span>
+                        <span className={`grid h-10 w-10 place-items-center overflow-hidden rounded-full text-lg border ${isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-100'}`}>
+                          {author.profilePhotoData ? (
+                            <img src={author.profilePhotoData} alt={`${author.name} photo`} className="h-full w-full object-cover" />
+                          ) : (
+                            author.avatar
+                          )}
+                        </span>
                         <div>
                           <p className={`font-semibold text-sm ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{author.name}</p>
                           <p className={`text-[11px] font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{author.email}</p>
@@ -511,12 +595,29 @@ export function AuthorsPage({ isDarkMode }: AuthorsPageProps) {
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Author Photo</label>
+                  <input
+                    ref={authorPhotoInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png"
+                    className="hidden"
+                    onChange={handleAuthorPhotoChange}
+                  />
                   <div className="flex items-center gap-3">
-                    <div className={`grid h-10 w-10 place-items-center rounded-full ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
-                      <Users size={16} />
+                    <div className={`grid h-10 w-10 place-items-center overflow-hidden rounded-full ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
+                      {authorPhotoPreview ? (
+                        <img src={authorPhotoPreview} alt="Author preview" className="h-full w-full object-cover" />
+                      ) : (
+                        <Users size={16} />
+                      )}
                     </div>
-                    <button type="button" className={`h-10 rounded-lg border px-4 text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>Upload Photo</button>
-                    <span className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>JPG, PNG (Max 2MB)</span>
+                    <button
+                      type="button"
+                      onClick={() => authorPhotoInputRef.current?.click()}
+                      className={`h-10 rounded-lg border px-4 text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}
+                    >
+                      Upload Photo
+                    </button>
+                    <span className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>{authorPhotoName || 'JPG, PNG (Max 2MB)'}</span>
                   </div>
                 </div>
                 <div>
@@ -587,7 +688,7 @@ export function AuthorsPage({ isDarkMode }: AuthorsPageProps) {
             : 'border-slate-200 bg-white text-slate-800'
         }`}>
           <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">
-            <span className="text-sm font-bold">✓</span>
+            <span className="text-sm font-bold">âœ“</span>
           </div>
           <p className="text-sm font-semibold">{showToast}</p>
         </div>
@@ -595,3 +696,6 @@ export function AuthorsPage({ isDarkMode }: AuthorsPageProps) {
     </div>
   )
 }
+
+
+

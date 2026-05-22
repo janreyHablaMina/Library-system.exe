@@ -96,6 +96,32 @@ struct UpdateMemberPayload {
   status: String,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct Author {
+  id: i64,
+  name: String,
+  email: Option<String>,
+  nationality: Option<String>,
+  dob: Option<String>,
+  profile_photo_data: Option<String>,
+  status: String,
+  biography: Option<String>,
+  created_at: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct CreateAuthorPayload {
+  name: String,
+  email: Option<String>,
+  nationality: Option<String>,
+  dob: Option<String>,
+  profile_photo_data: Option<String>,
+  status: Option<String>,
+  biography: Option<String>,
+}
+
 fn open_db(path: &PathBuf) -> Result<Connection, String> {
   Connection::open(path).map_err(|e| format!("open db failed: {e}"))
 }
@@ -161,6 +187,17 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
         borrowed INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL
       );
+      CREATE TABLE IF NOT EXISTS authors (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        email TEXT,
+        nationality TEXT,
+        dob TEXT,
+        profile_photo_data TEXT,
+        status TEXT NOT NULL DEFAULT 'Active',
+        biography TEXT,
+        created_at TEXT NOT NULL
+      );
       ",
     )
     .map_err(|e| format!("init schema failed: {e}"))?;
@@ -176,6 +213,12 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
     let msg = e.to_string();
     if !msg.contains("duplicate column name") {
       return Err(format!("members migration failed: {e}"));
+    }
+  }
+  if let Err(e) = conn.execute("ALTER TABLE authors ADD COLUMN profile_photo_data TEXT", []) {
+    let msg = e.to_string();
+    if !msg.contains("duplicate column name") {
+      return Err(format!("authors migration failed: {e}"));
     }
   }
 
@@ -441,6 +484,73 @@ fn update_member(app: tauri::AppHandle, payload: UpdateMemberPayload) -> Result<
 }
 
 #[tauri::command]
+fn create_author(app: tauri::AppHandle, payload: CreateAuthorPayload) -> Result<i64, String> {
+  let name = payload.name.trim();
+  if name.is_empty() {
+    return Err("name is required".to_string());
+  }
+
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  conn
+    .execute(
+      "
+      INSERT INTO authors (name, email, nationality, dob, profile_photo_data, status, biography, created_at)
+      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
+      ",
+      params![
+        name,
+        payload.email.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
+        payload.nationality.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
+        payload.dob.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
+        payload.profile_photo_data,
+        payload.status.unwrap_or_else(|| "Active".to_string()),
+        payload.biography.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
+        Utc::now().to_rfc3339(),
+      ],
+    )
+    .map_err(|e| format!("create author failed: {e}"))?;
+  Ok(conn.last_insert_rowid())
+}
+
+#[tauri::command]
+fn list_authors(app: tauri::AppHandle, limit: Option<i64>) -> Result<Vec<Author>, String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  let max_rows = limit.unwrap_or(500).clamp(1, 1000);
+  let mut stmt = conn
+    .prepare(
+      "
+      SELECT id, name, email, nationality, dob, profile_photo_data, status, biography, created_at
+      FROM authors
+      ORDER BY id DESC
+      LIMIT ?1
+      ",
+    )
+    .map_err(|e| format!("prepare list authors query failed: {e}"))?;
+
+  let rows = stmt
+    .query_map(params![max_rows], |row| {
+      Ok(Author {
+        id: row.get(0)?,
+        name: row.get(1)?,
+        email: row.get(2)?,
+        nationality: row.get(3)?,
+        dob: row.get(4)?,
+        profile_photo_data: row.get(5)?,
+        status: row.get(6)?,
+        biography: row.get(7)?,
+        created_at: row.get(8)?,
+      })
+    })
+    .map_err(|e| format!("list authors failed: {e}"))?;
+
+  rows
+    .collect::<Result<Vec<_>, _>>()
+    .map_err(|e| format!("collect authors failed: {e}"))
+}
+
+#[tauri::command]
 fn send_email_smtp(to: String, subject: String, body: String) -> Result<String, String> {
   let summary = format!(
     "SMTP stub queued. To: {to}, Subject: {subject}, Body chars: {}",
@@ -617,6 +727,8 @@ pub fn run() {
       create_member,
       list_members,
       update_member,
+      create_author,
+      list_authors,
       login,
       logout,
       get_active_session,

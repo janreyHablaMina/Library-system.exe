@@ -76,6 +76,28 @@ export type UpdateMemberPayload = {
   status: string
 }
 
+export type Author = {
+  id: number
+  name: string
+  email: string | null
+  nationality: string | null
+  dob: string | null
+  profilePhotoData: string | null
+  status: string
+  biography: string | null
+  createdAt: string
+}
+
+export type CreateAuthorPayload = {
+  name: string
+  email?: string | null
+  nationality?: string | null
+  dob?: string | null
+  profilePhotoData?: string | null
+  status?: string | null
+  biography?: string | null
+}
+
 export async function initDb(): Promise<string> {
   return invoke<string>('init_db')
 }
@@ -114,6 +136,14 @@ export async function listMembers(limit?: number): Promise<Member[]> {
 
 export async function updateMember(payload: UpdateMemberPayload): Promise<void> {
   return invoke<void>('update_member', { payload })
+}
+
+export async function createAuthor(payload: CreateAuthorPayload): Promise<number> {
+  return invoke<number>('create_author', { payload })
+}
+
+export async function listAuthors(limit?: number): Promise<Author[]> {
+  return invoke<Author[]>('list_authors', { limit })
 }
 
 export async function sendEmailSmtp(to: string, subject: string, body: string): Promise<string> {
