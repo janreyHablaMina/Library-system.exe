@@ -202,6 +202,57 @@ export type UpdateReservationPayload = {
   notifySms: boolean
 }
 
+export type Staff = {
+  id: number
+  staffCode: string
+  fullName: string
+  email: string
+  role: string
+  branch: string
+  status: string
+  phone: string | null
+  emergencyContact: string | null
+  employeeType: string | null
+  startDate: string | null
+  username: string | null
+  tempPassword: string | null
+  requirePasswordReset: boolean
+  createdAt: string
+}
+
+export type CreateStaffPayload = {
+  staffCode?: string | null
+  fullName: string
+  email: string
+  role: string
+  branch: string
+  status: string
+  phone?: string | null
+  emergencyContact?: string | null
+  employeeType?: string | null
+  startDate?: string | null
+  username?: string | null
+  tempPassword?: string | null
+  requirePasswordReset?: boolean
+}
+
+export type UpdateStaffPayload = {
+  id: number
+  staffCode?: string | null
+  fullName: string
+  email: string
+  role: string
+  branch: string
+  status: string
+  phone?: string | null
+  emergencyContact?: string | null
+  employeeType?: string | null
+  startDate?: string | null
+  username?: string | null
+  tempPassword?: string | null
+  requirePasswordReset: boolean
+}
+
 export async function initDb(): Promise<string> {
   return invoke<string>('init_db')
 }
@@ -300,6 +351,22 @@ export async function updateReservation(payload: UpdateReservationPayload): Prom
 
 export async function deleteReservation(id: number): Promise<void> {
   return invoke<void>('delete_reservation', { id })
+}
+
+export async function createStaff(payload: CreateStaffPayload): Promise<number> {
+  return invoke<number>('create_staff', { payload })
+}
+
+export async function listStaff(limit?: number): Promise<Staff[]> {
+  return invoke<Staff[]>('list_staff', { limit })
+}
+
+export async function updateStaff(payload: UpdateStaffPayload): Promise<void> {
+  return invoke<void>('update_staff', { payload })
+}
+
+export async function deleteStaff(id: number): Promise<void> {
+  return invoke<void>('delete_staff', { id })
 }
 
 export async function sendEmailSmtp(to: string, subject: string, body: string): Promise<string> {

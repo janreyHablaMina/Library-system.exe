@@ -246,6 +246,63 @@ struct UpdateReservationPayload {
   notify_sms: bool,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct StaffRow {
+  id: i64,
+  staff_code: String,
+  full_name: String,
+  email: String,
+  role: String,
+  branch: String,
+  status: String,
+  phone: Option<String>,
+  emergency_contact: Option<String>,
+  employee_type: Option<String>,
+  start_date: Option<String>,
+  username: Option<String>,
+  temp_password: Option<String>,
+  require_password_reset: bool,
+  created_at: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct CreateStaffPayload {
+  staff_code: Option<String>,
+  full_name: String,
+  email: String,
+  role: String,
+  branch: String,
+  status: String,
+  phone: Option<String>,
+  emergency_contact: Option<String>,
+  employee_type: Option<String>,
+  start_date: Option<String>,
+  username: Option<String>,
+  temp_password: Option<String>,
+  require_password_reset: Option<bool>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct UpdateStaffPayload {
+  id: i64,
+  staff_code: Option<String>,
+  full_name: String,
+  email: String,
+  role: String,
+  branch: String,
+  status: String,
+  phone: Option<String>,
+  emergency_contact: Option<String>,
+  employee_type: Option<String>,
+  start_date: Option<String>,
+  username: Option<String>,
+  temp_password: Option<String>,
+  require_password_reset: bool,
+}
+
 fn open_db(path: &PathBuf) -> Result<Connection, String> {
   Connection::open(path).map_err(|e| format!("open db failed: {e}"))
 }
@@ -359,6 +416,23 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
         created_at TEXT NOT NULL,
         FOREIGN KEY(member_id) REFERENCES members(id) ON DELETE CASCADE,
         FOREIGN KEY(book_id) REFERENCES books(id) ON DELETE CASCADE
+      );
+      CREATE TABLE IF NOT EXISTS staff_members (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        staff_code TEXT NOT NULL UNIQUE,
+        full_name TEXT NOT NULL,
+        email TEXT NOT NULL UNIQUE,
+        role TEXT NOT NULL,
+        branch TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'Active',
+        phone TEXT,
+        emergency_contact TEXT,
+        employee_type TEXT,
+        start_date TEXT,
+        username TEXT,
+        temp_password TEXT,
+        require_password_reset INTEGER NOT NULL DEFAULT 1,
+        created_at TEXT NOT NULL
       );
       ",
     )
@@ -1270,6 +1344,177 @@ fn delete_reservation(app: tauri::AppHandle, id: i64) -> Result<(), String> {
 }
 
 #[tauri::command]
+fn create_staff(app: tauri::AppHandle, payload: CreateStaffPayload) -> Result<i64, String> {
+  let full_name = payload.full_name.trim();
+  let email = payload.email.trim();
+  let role = payload.role.trim();
+  let branch = payload.branch.trim();
+  let status = payload.status.trim();
+  if full_name.is_empty() || email.is_empty() || role.is_empty() || branch.is_empty() || status.is_empty() {
+    return Err("fullName, email, role, branch and status are required".to_string());
+  }
+
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+
+  let staff_code = payload
+    .staff_code
+    .map(|v| v.trim().to_string())
+    .filter(|v| !v.is_empty())
+    .unwrap_or_else(|| format!("ST-{}", Utc::now().timestamp_millis()));
+
+  conn
+    .execute(
+      "
+      INSERT INTO staff_members (
+        staff_code, full_name, email, role, branch, status, phone, emergency_contact,
+        employee_type, start_date, username, temp_password, require_password_reset, created_at
+      )
+      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)
+      ",
+      params![
+        staff_code,
+        full_name,
+        email,
+        role,
+        branch,
+        status,
+        payload.phone.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
+        payload.emergency_contact.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
+        payload.employee_type.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
+        payload.start_date.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
+        payload.username.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
+        payload.temp_password.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
+        if payload.require_password_reset.unwrap_or(true) { 1 } else { 0 },
+        Utc::now().to_rfc3339(),
+      ],
+    )
+    .map_err(|e| format!("create staff failed: {e}"))?;
+
+  let new_id = conn.last_insert_rowid();
+  let normalized_code = format!("ST-{new_id:03}");
+  conn
+    .execute(
+      "UPDATE staff_members SET staff_code = ?1 WHERE id = ?2",
+      params![normalized_code, new_id],
+    )
+    .map_err(|e| format!("normalize staff code failed: {e}"))?;
+
+  Ok(new_id)
+}
+
+#[tauri::command]
+fn list_staff(app: tauri::AppHandle, limit: Option<i64>) -> Result<Vec<StaffRow>, String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  let max_rows = limit.unwrap_or(500).clamp(1, 2000);
+  let mut stmt = conn
+    .prepare(
+      "
+      SELECT id, staff_code, full_name, email, role, branch, status, phone, emergency_contact,
+             employee_type, start_date, username, temp_password, require_password_reset, created_at
+      FROM staff_members
+      ORDER BY id DESC
+      LIMIT ?1
+      ",
+    )
+    .map_err(|e| format!("prepare list staff query failed: {e}"))?;
+
+  let rows = stmt
+    .query_map(params![max_rows], |row| {
+      Ok(StaffRow {
+        id: row.get(0)?,
+        staff_code: row.get(1)?,
+        full_name: row.get(2)?,
+        email: row.get(3)?,
+        role: row.get(4)?,
+        branch: row.get(5)?,
+        status: row.get(6)?,
+        phone: row.get(7)?,
+        emergency_contact: row.get(8)?,
+        employee_type: row.get(9)?,
+        start_date: row.get(10)?,
+        username: row.get(11)?,
+        temp_password: row.get(12)?,
+        require_password_reset: row.get::<_, i64>(13)? == 1,
+        created_at: row.get(14)?,
+      })
+    })
+    .map_err(|e| format!("list staff failed: {e}"))?;
+
+  rows
+    .collect::<Result<Vec<_>, _>>()
+    .map_err(|e| format!("collect staff failed: {e}"))
+}
+
+#[tauri::command]
+fn update_staff(app: tauri::AppHandle, payload: UpdateStaffPayload) -> Result<(), String> {
+  let full_name = payload.full_name.trim();
+  let email = payload.email.trim();
+  let role = payload.role.trim();
+  let branch = payload.branch.trim();
+  let status = payload.status.trim();
+  if full_name.is_empty() || email.is_empty() || role.is_empty() || branch.is_empty() || status.is_empty() {
+    return Err("fullName, email, role, branch and status are required".to_string());
+  }
+
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  conn
+    .execute(
+      "
+      UPDATE staff_members
+      SET staff_code = ?1,
+          full_name = ?2,
+          email = ?3,
+          role = ?4,
+          branch = ?5,
+          status = ?6,
+          phone = ?7,
+          emergency_contact = ?8,
+          employee_type = ?9,
+          start_date = ?10,
+          username = ?11,
+          temp_password = ?12,
+          require_password_reset = ?13
+      WHERE id = ?14
+      ",
+      params![
+        payload
+          .staff_code
+          .map(|v| v.trim().to_string())
+          .filter(|v| !v.is_empty())
+          .unwrap_or_else(|| format!("ST-{:03}", payload.id)),
+        full_name,
+        email,
+        role,
+        branch,
+        status,
+        payload.phone.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
+        payload.emergency_contact.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
+        payload.employee_type.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
+        payload.start_date.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
+        payload.username.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
+        payload.temp_password.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
+        if payload.require_password_reset { 1 } else { 0 },
+        payload.id
+      ],
+    )
+    .map_err(|e| format!("update staff failed: {e}"))?;
+  Ok(())
+}
+
+#[tauri::command]
+fn delete_staff(app: tauri::AppHandle, id: i64) -> Result<(), String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  conn
+    .execute("DELETE FROM staff_members WHERE id = ?1", params![id])
+    .map_err(|e| format!("delete staff failed: {e}"))?;
+  Ok(())
+}
+
+#[tauri::command]
 fn send_email_smtp(to: String, subject: String, body: String) -> Result<String, String> {
   let summary = format!(
     "SMTP stub queued. To: {to}, Subject: {subject}, Body chars: {}",
@@ -1461,6 +1706,10 @@ pub fn run() {
       update_reservation_status,
       update_reservation,
       delete_reservation,
+      create_staff,
+      list_staff,
+      update_staff,
+      delete_staff,
       login,
       logout,
       get_active_session,

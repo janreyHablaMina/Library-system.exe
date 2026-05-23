@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect } from 'react'
 import { Users, UserCheck, UserX, ShieldCheck, Calendar, Search, ChevronDown, Filter, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, X, MoreHorizontal } from 'lucide-react'
+import { createStaff, deleteStaff, listStaff, updateStaff } from '../lib/tauriApi'
 
 type StaffRole = 'Administrator' | 'Librarian' | 'Assistant Librarian' | 'Library Clerk'
 type StaffStatus = 'Active' | 'Inactive'
 
 type StaffMember = {
+  dbId: number
   id: string
   name: string
   email: string
@@ -14,6 +16,13 @@ type StaffMember = {
   joinedOn: string
   joinedTime: string
   avatar: string
+  phone?: string
+  emergencyContact?: string
+  employeeType?: string
+  startDate?: string
+  username?: string
+  tempPassword?: string
+  requirePasswordReset?: boolean
 }
 
 type StaffPageProps = {
@@ -32,17 +41,6 @@ const stats = [
   { label: 'Inactive Staff', value: '2', subValue: '11.1% of total', icon: UserX, color: 'text-amber-600', bg: 'bg-amber-50' },
   { label: 'Administrators', value: '5', subValue: '27.8% of total', icon: ShieldCheck, color: 'text-violet-600', bg: 'bg-violet-50' },
   { label: 'New This Month', value: '1', subValue: 'New staff added', icon: Calendar, color: 'text-rose-600', bg: 'bg-rose-50' },
-]
-
-const staffData: StaffMember[] = [
-  { id: 'ST-001', name: 'James Anderson', email: 'james.anderson@infolib.com', role: 'Administrator', branch: 'Central Library', status: 'Active', joinedOn: 'May 10, 2026', joinedTime: '09:15 AM', avatar: '👨🏻' },
-  { id: 'ST-002', name: 'Maria Santos', email: 'maria.santos@infolib.com', role: 'Librarian', branch: 'North Branch', status: 'Active', joinedOn: 'May 8, 2026', joinedTime: '02:30 PM', avatar: '👩🏽' },
-  { id: 'ST-003', name: 'Juan Dela Cruz', email: 'juan.delacruz@infolib.com', role: 'Assistant Librarian', branch: 'Central Library', status: 'Active', joinedOn: 'May 7, 2026', joinedTime: '11:20 AM', avatar: '👨🏼' },
-  { id: 'ST-004', name: 'Ana Lim', email: 'ana.lim@infolib.com', role: 'Librarian', branch: 'West Branch', status: 'Active', joinedOn: 'May 6, 2026', joinedTime: '10:45 AM', avatar: '👩🏻' },
-  { id: 'ST-005', name: 'Pedro Reyes', email: 'pedro.reyes@infolib.com', role: 'Assistant Librarian', branch: 'South Branch', status: 'Active', joinedOn: 'May 5, 2026', joinedTime: '03:05 PM', avatar: '👨🏼' },
-  { id: 'ST-006', name: 'Sarah Wilson', email: 'sarah.wilson@infolib.com', role: 'Library Clerk', branch: 'Central Library', status: 'Inactive', joinedOn: 'Apr 28, 2026', joinedTime: '09:10 AM', avatar: '👩🏼' },
-  { id: 'ST-007', name: 'Carlo Garcia', email: 'carlo.garcia@infolib.com', role: 'Library Clerk', branch: 'North Branch', status: 'Active', joinedOn: 'Apr 25, 2026', joinedTime: '01:45 PM', avatar: '👨🏻' },
-  { id: 'ST-008', name: 'Alicia H.', email: 'alicia.h@infolib.com', role: 'Assistant Librarian', branch: 'West Branch', status: 'Active', joinedOn: 'Apr 20, 2026', joinedTime: '11:30 AM', avatar: '👩🏻' },
 ]
 
 function StaffActionsMenu({ isDarkMode, onEdit, onDelete }: StaffActionsMenuProps) {
@@ -125,10 +123,12 @@ function StaffActionsMenu({ isDarkMode, onEdit, onDelete }: StaffActionsMenuProp
 }
 
 export function StaffPage({ isDarkMode }: StaffPageProps) {
-  const [staffMembers, setStaffMembers] = useState<StaffMember[]>(staffData)
+  const [staffMembers, setStaffMembers] = useState<StaffMember[]>([])
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null)
   const [staffToDelete, setStaffToDelete] = useState<StaffMember | null>(null)
+  const [staffError, setStaffError] = useState<string | null>(null)
+  const [isSavingStaff, setIsSavingStaff] = useState(false)
   const [staffSearch, setStaffSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState<'All Roles' | StaffRole>('All Roles')
   const [statusFilter, setStatusFilter] = useState<'All Status' | StaffStatus>('All Status')
@@ -159,9 +159,115 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
     return matchesSearch && matchesRole && matchesStatus && matchesBranch
   })
 
+  const avatarFromName = (name: string) => {
+    const parts = name.trim().split(/\s+/).filter(Boolean)
+    return parts.slice(0, 2).map((part) => part[0]?.toUpperCase() ?? '').join('') || 'ST'
+  }
+
+  const refreshStaff = async () => {
+    const rows = await listStaff(1000)
+    setStaffMembers(
+      rows.map((staff) => {
+        const joined = new Date(staff.createdAt)
+        return {
+          dbId: staff.id,
+          id: staff.staffCode,
+          name: staff.fullName,
+          email: staff.email,
+          role: (staff.role as StaffRole) || 'Librarian',
+          branch: staff.branch,
+          status: (staff.status as StaffStatus) || 'Active',
+          joinedOn: joined.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+          joinedTime: joined.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+          avatar: avatarFromName(staff.fullName),
+          phone: staff.phone ?? '',
+          emergencyContact: staff.emergencyContact ?? '',
+          employeeType: staff.employeeType ?? 'Full-time',
+          startDate: staff.startDate ?? '',
+          username: staff.username ?? '',
+          tempPassword: staff.tempPassword ?? '',
+          requirePasswordReset: staff.requirePasswordReset,
+        }
+      }),
+    )
+  }
+
+  useEffect(() => {
+    refreshStaff().catch((error) => {
+      console.error('Failed to load staff:', error)
+      setStaffError('Failed to load staff records.')
+    })
+  }, [])
+
+  const handleStaffSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const form = new FormData(event.currentTarget)
+    const fullName = String(form.get('fullName') || '').trim()
+    const email = String(form.get('email') || '').trim()
+    const role = String(form.get('role') || 'Librarian')
+    const branch = String(form.get('branch') || 'Central Library')
+    const status = String(form.get('status') || 'Active')
+    if (!fullName || !email) {
+      setStaffError('Full name and email are required.')
+      return
+    }
+
+    const payloadBase = {
+      staffCode: String(form.get('staffCode') || '').trim() || null,
+      fullName,
+      email,
+      role,
+      branch,
+      status,
+      phone: String(form.get('phone') || '').trim() || null,
+      emergencyContact: String(form.get('emergencyContact') || '').trim() || null,
+      employeeType: String(form.get('employeeType') || '').trim() || null,
+      startDate: String(form.get('startDate') || '').trim() || null,
+      username: String(form.get('username') || '').trim() || null,
+      tempPassword: String(form.get('tempPassword') || '').trim() || null,
+      requirePasswordReset: form.get('requirePasswordReset') === 'on',
+    }
+
+    try {
+      setStaffError(null)
+      setIsSavingStaff(true)
+      if (editingStaff) {
+        await updateStaff({ id: editingStaff.dbId, ...payloadBase, requirePasswordReset: payloadBase.requirePasswordReset })
+      } else {
+        await createStaff(payloadBase)
+      }
+      await refreshStaff()
+      setIsAddModalOpen(false)
+      setEditingStaff(null)
+    } catch (error) {
+      console.error('Failed to save staff:', error)
+      setStaffError('Failed to save staff member. Please try again.')
+    } finally {
+      setIsSavingStaff(false)
+    }
+  }
+
+  const handleDeleteStaff = async () => {
+    if (!staffToDelete) return
+    try {
+      setStaffError(null)
+      await deleteStaff(staffToDelete.dbId)
+      await refreshStaff()
+      setStaffToDelete(null)
+    } catch (error) {
+      console.error('Failed to delete staff:', error)
+      setStaffError('Failed to delete staff member. Please try again.')
+    }
+  }
+
   return (
     <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
       <section className="p-5">
+        {staffError ? (
+          <div className={`mb-4 rounded-xl border px-4 py-2 text-xs font-semibold ${isDarkMode ? 'border-rose-500/30 bg-rose-500/10 text-rose-300' : 'border-rose-200 bg-rose-50 text-rose-600'}`}>
+            {staffError}
+          </div>
+        ) : null}
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h2 className={`text-4xl font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Staff</h2>
@@ -393,7 +499,7 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
               </button>
             </div>
 
-            <form className="flex min-h-0 flex-1 flex-col">
+            <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleStaffSubmit}>
               <div className="min-h-0 flex-1 overflow-y-auto px-8 py-7">
                 <div className="space-y-7">
                 <div>
@@ -401,23 +507,23 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
                 <div className="grid gap-6 md:grid-cols-2">
                   <div className="space-y-2">
                     <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Full Name <span className="text-rose-500">*</span></label>
-                    <input defaultValue={editingStaff?.name ?? ''} placeholder="e.g. James Anderson" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} required />
+                    <input name="fullName" defaultValue={editingStaff?.name ?? ''} placeholder="e.g. James Anderson" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} required />
                   </div>
                   <div className="space-y-2">
                     <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Email Address <span className="text-rose-500">*</span></label>
-                    <input defaultValue={editingStaff?.email ?? ''} placeholder="email@infolib.com" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} required />
+                    <input name="email" defaultValue={editingStaff?.email ?? ''} placeholder="email@infolib.com" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} required />
                   </div>
                   <div className="space-y-2">
                     <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Staff ID</label>
-                    <input defaultValue={editingStaff?.id ?? ''} placeholder="Auto-generate (e.g. ST-009)" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} />
+                    <input name="staffCode" defaultValue={editingStaff?.id ?? ''} placeholder="Auto-generate (e.g. ST-009)" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} />
                   </div>
                   <div className="space-y-2">
                     <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Phone Number</label>
-                    <input type="tel" placeholder="0917 123 4567" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} />
+                    <input name="phone" type="tel" defaultValue={editingStaff?.phone ?? ''} placeholder="0917 123 4567" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} />
                   </div>
                   <div className="space-y-2 md:col-span-2">
                     <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Emergency Contact (Optional)</label>
-                    <input placeholder="Name and phone number" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} />
+                    <input name="emergencyContact" defaultValue={editingStaff?.emergencyContact ?? ''} placeholder="Name and phone number" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} />
                   </div>
                 </div>
               </div>
@@ -428,7 +534,7 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
                   <div className="space-y-2">
                     <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>System Role</label>
                     <div className="relative">
-                      <select defaultValue={editingStaff?.role ?? 'Librarian'} className={`h-12 w-full appearance-none rounded-xl border pl-4 pr-10 text-sm font-bold outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`}>
+                      <select name="role" defaultValue={editingStaff?.role ?? 'Librarian'} className={`h-12 w-full appearance-none rounded-xl border pl-4 pr-10 text-sm font-bold outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`}>
                         <option>Librarian</option>
                         <option>Administrator</option>
                         <option>Assistant Librarian</option>
@@ -440,7 +546,7 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
                   <div className="space-y-2">
                     <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Assigned Branch</label>
                     <div className="relative">
-                      <select defaultValue={editingStaff?.branch ?? 'Central Library'} className={`h-12 w-full appearance-none rounded-xl border pl-4 pr-10 text-sm font-bold outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`}>
+                      <select name="branch" defaultValue={editingStaff?.branch ?? 'Central Library'} className={`h-12 w-full appearance-none rounded-xl border pl-4 pr-10 text-sm font-bold outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`}>
                         <option>Central Library</option>
                         <option>North Branch</option>
                         <option>West Branch</option>
@@ -452,7 +558,7 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
                   <div className="space-y-2">
                     <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Status</label>
                     <div className="relative">
-                      <select defaultValue={editingStaff?.status ?? 'Active'} className={`h-12 w-full appearance-none rounded-xl border pl-4 pr-10 text-sm font-bold outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`}>
+                      <select name="status" defaultValue={editingStaff?.status ?? 'Active'} className={`h-12 w-full appearance-none rounded-xl border pl-4 pr-10 text-sm font-bold outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`}>
                         <option>Active</option>
                         <option>Inactive</option>
                       </select>
@@ -462,7 +568,7 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
                   <div className="space-y-2">
                     <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Employee Type</label>
                     <div className="relative">
-                      <select className={`h-12 w-full appearance-none rounded-xl border pl-4 pr-10 text-sm font-bold outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`}>
+                      <select name="employeeType" defaultValue={editingStaff?.employeeType ?? 'Full-time'} className={`h-12 w-full appearance-none rounded-xl border pl-4 pr-10 text-sm font-bold outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`}>
                         <option>Full-time</option>
                         <option>Part-time</option>
                         <option>Contract</option>
@@ -472,7 +578,7 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
                   </div>
                   <div className="space-y-2 md:col-span-2">
                     <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Start Date</label>
-                    <input type="date" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} />
+                    <input name="startDate" type="date" defaultValue={editingStaff?.startDate ?? ''} className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} />
                   </div>
                 </div>
               </div>
@@ -482,11 +588,11 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
                 <div className="grid gap-6 md:grid-cols-2">
                   <div className="space-y-2">
                     <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Username</label>
-                    <input placeholder="j.anderson" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} />
+                    <input name="username" defaultValue={editingStaff?.username ?? ''} placeholder="j.anderson" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} />
                   </div>
                   <div className="space-y-2">
                     <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Temporary Password</label>
-                    <input type="password" placeholder="Enter temporary password" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} />
+                    <input name="tempPassword" type="password" defaultValue={editingStaff?.tempPassword ?? ''} placeholder="Enter temporary password" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} />
                   </div>
                   <div className="space-y-2 md:col-span-2">
                     <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Confirm Password</label>
@@ -494,7 +600,7 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
                   </div>
                 </div>
                 <label className={`mt-4 inline-flex items-center gap-2 text-sm font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                  <input type="checkbox" defaultChecked className="h-4 w-4 rounded border-slate-300 text-emerald-600" />
+                  <input name="requirePasswordReset" type="checkbox" defaultChecked={editingStaff?.requirePasswordReset ?? true} className="h-4 w-4 rounded border-slate-300 text-emerald-600" />
                   Require password reset on first login
                 </label>
               </div>
@@ -504,14 +610,11 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
               <div className={`flex gap-4 border-t px-8 py-5 ${isDarkMode ? 'border-slate-800 bg-[#0b1738]' : 'border-slate-100 bg-slate-50/60'}`}>
                 <button type="button" onClick={() => { setIsAddModalOpen(false); setEditingStaff(null) }} className={`h-12 flex-1 rounded-xl border font-bold transition-all ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>Cancel</button>
                 <button
-                  type="button"
-                  onClick={() => {
-                    setIsAddModalOpen(false)
-                    setEditingStaff(null)
-                  }}
+                  type="submit"
+                  disabled={isSavingStaff}
                   className="h-12 flex-1 rounded-xl bg-emerald-600 font-bold text-white shadow-lg shadow-emerald-600/30 hover:bg-emerald-700 transition-all"
                 >
-                  {editingStaff ? 'Save Changes' : 'Add Staff Member'}
+                  {isSavingStaff ? 'Saving...' : editingStaff ? 'Save Changes' : 'Add Staff Member'}
                 </button>
               </div>
             </form>
@@ -524,7 +627,7 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
           <section className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl ${isDarkMode ? 'border-slate-800 bg-[#0a1633]' : 'border-slate-200 bg-white'}`}>
             <h4 className={`text-xl font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Delete Staff Member</h4>
             <p className={`mt-2 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-              Are you sure you want to remove <span className={isDarkMode ? 'text-slate-200 font-bold' : 'text-slate-900 font-bold'}>{staffToDelete.name}</span>? This is a UI-only action for now.
+              Are you sure you want to remove <span className={isDarkMode ? 'text-slate-200 font-bold' : 'text-slate-900 font-bold'}>{staffToDelete.name}</span>? This action cannot be undone.
             </p>
             <div className="mt-6 flex gap-3">
               <button
@@ -536,10 +639,7 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  setStaffMembers((prev) => prev.filter((item) => item.id !== staffToDelete.id))
-                  setStaffToDelete(null)
-                }}
+                onClick={handleDeleteStaff}
                 className="h-11 flex-1 rounded-xl bg-rose-600 font-bold text-white shadow-lg shadow-rose-600/30 hover:bg-rose-700 transition-all"
               >
                 Delete
@@ -551,3 +651,4 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
     </div>
   )
 }
+
