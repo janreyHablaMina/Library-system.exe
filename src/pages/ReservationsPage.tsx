@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Calendar, Clock3, CheckCircle2, XCircle, MapPin, Eye, Trash2, Download, Plus, Search, ChevronDown, Filter, ChevronLeft, ChevronRight, MoreHorizontal, BookOpen, UserRound, ArrowLeft, Info, X, Check, Mail, Smartphone, Printer, Pencil } from 'lucide-react'
+import { createReservation, listBooks, listMembers, listReservations, updateReservationStatus } from '../lib/tauriApi'
 
 type ReservationStatus = 'Pending' | 'Ready for Pickup' | 'Completed' | 'Cancelled'
 
@@ -47,6 +48,7 @@ const reservationsData: ReservationRow[] = [
 ]
 
 type MemberItem = {
+  id: number
   name: string
   memberId: string
   type: string
@@ -59,6 +61,7 @@ type MemberItem = {
 }
 
 type BookItem = {
+  id: number
   title: string
   author: string
   isbn: string
@@ -70,14 +73,14 @@ type BookItem = {
 }
 
 const mockMembers: MemberItem[] = [
-  { name: 'Maria Santos', memberId: 'MS-00125', type: 'Student', phone: '0917 123 4567', email: 'maria.santos@email.com', borrowedCount: 2, limit: '3 / 5', avatar: '👩🏽', outstandingFines: '₱0.00' },
-  { name: 'Juan Dela Cruz', memberId: 'JD-00098', type: 'Student', phone: '0912 345 6789', email: 'juan.delacruz@email.com', borrowedCount: 2, limit: '3 / 5', avatar: '👨🏻', outstandingFines: '₱0.00' },
-  { name: 'Ana Lim', memberId: 'AL-00076', type: 'Student', phone: '0934 567 8901', email: 'ana.lim@email.com', borrowedCount: 3, limit: '2 / 5', avatar: '👩🏻', outstandingFines: '₱0.00' },
-  { name: 'Carlo Garcia', memberId: 'CG-00063', type: 'Student', phone: '0945 678 9012', email: 'carlo.garcia@email.com', borrowedCount: 1, limit: '4 / 5', avatar: '👨🏻', outstandingFines: '₱120.00' },
+  { id: 1, name: 'Maria Santos', memberId: 'MS-00125', type: 'Student', phone: '0917 123 4567', email: 'maria.santos@email.com', borrowedCount: 2, limit: '3 / 5', avatar: 'MS', outstandingFines: '$0.00' },
+  { id: 2, name: 'Juan Dela Cruz', memberId: 'JD-00098', type: 'Student', phone: '0912 345 6789', email: 'juan.delacruz@email.com', borrowedCount: 2, limit: '3 / 5', avatar: 'JD', outstandingFines: '$0.00' },
+  { id: 3, name: 'Ana Lim', memberId: 'AL-00076', type: 'Student', phone: '0934 567 8901', email: 'ana.lim@email.com', borrowedCount: 3, limit: '2 / 5', avatar: 'AL', outstandingFines: '$0.00' },
+  { id: 4, name: 'Carlo Garcia', memberId: 'CG-00063', type: 'Student', phone: '0945 678 9012', email: 'carlo.garcia@email.com', borrowedCount: 1, limit: '4 / 5', avatar: 'CG', outstandingFines: '$120.00' },
 ]
-
 const mockBooks: BookItem[] = [
   { 
+    id: 1,
     title: 'The Alchemist', 
     author: 'Paulo Coelho', 
     isbn: '978-0061122415', 
@@ -88,6 +91,7 @@ const mockBooks: BookItem[] = [
     copyId: 'BK-2026-0007'
   },
   { 
+    id: 2,
     title: 'Atomic Habits', 
     author: 'James Clear', 
     isbn: '978-0735211292', 
@@ -98,6 +102,7 @@ const mockBooks: BookItem[] = [
     copyId: 'BK-2026-0001'
   },
   { 
+    id: 3,
     title: 'Thinking, Fast and Slow', 
     author: 'Daniel Kahneman', 
     isbn: '978-0374275631', 
@@ -108,6 +113,7 @@ const mockBooks: BookItem[] = [
     copyId: 'BK-2026-0005'
   },
   { 
+    id: 4,
     title: 'Deep Work', 
     author: 'Cal Newport', 
     isbn: '978-1455586691', 
@@ -599,6 +605,11 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
   // Custom checked states for checkboxes
   const [notifyEmail, setNotifyEmail] = useState(true)
   const [notifySMS, setNotifySMS] = useState(true)
+  const [isSavingReservation, setIsSavingReservation] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
+  const [books, setBooks] = useState<BookItem[]>([])
+  const [members, setMembers] = useState<MemberItem[]>([])
+  const [reservations, setReservations] = useState<ReservationRow[]>([])
 
   const [selectedBook, setSelectedBook] = useState<BookItem | null>(null)
   const [selectedMember, setSelectedMember] = useState<MemberItem | null>(null)
@@ -625,16 +636,109 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  useEffect(() => {
+    const formatDate = (value: string) => {
+      const date = new Date(value)
+      if (Number.isNaN(date.getTime())) {
+        return 'N/A'
+      }
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    }
+    const formatTime = (value: string) => {
+      const date = new Date(value)
+      if (Number.isNaN(date.getTime())) {
+        return '--'
+      }
+      return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+    }
+    const statusFromDb = (status: string): ReservationStatus => {
+      if (status === 'Ready for Pickup' || status === 'Completed' || status === 'Cancelled') {
+        return status
+      }
+      return 'Pending'
+    }
+    const avatarFromName = (name: string) => {
+      const parts = name.trim().split(/\s+/).filter(Boolean)
+      const initials = parts.slice(0, 2).map((part) => part[0]?.toUpperCase() ?? '').join('')
+      return initials || 'M'
+    }
+
+    const loadData = async () => {
+      try {
+        const [bookRows, memberRows, reservationRows] = await Promise.all([
+          listBooks(1000),
+          listMembers(1000),
+          listReservations('All', 1000),
+        ])
+
+        setBooks(
+          bookRows.map((book) => ({
+            id: book.id,
+            title: book.title,
+            author: book.author,
+            isbn: book.isbn ?? `N/A-${book.id}`,
+            availableCopies: book.available ? 1 : 0,
+            category: book.category ?? 'General',
+            publisher: 'N/A',
+            coverUrl: book.coverData ?? 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=150&auto=format&fit=crop&q=80',
+            copyId: `BK-${String(book.id).padStart(6, '0')}`,
+          })),
+        )
+
+        setMembers(
+          memberRows.map((member) => ({
+            id: member.id,
+            name: member.fullName,
+            memberId: member.memberId,
+            type: member.memberType,
+            phone: member.contactNumber ?? 'N/A',
+            email: member.email ?? 'N/A',
+            borrowedCount: member.borrowed,
+            limit: `${Math.max(0, 5 - member.borrowed)} / 5`,
+            avatar: avatarFromName(member.fullName),
+            outstandingFines: '$0.00',
+          })),
+        )
+
+        setReservations(
+          reservationRows.map((reservation) => ({
+            id: `RES-${String(reservation.id).padStart(5, '0')}`,
+            book: {
+              title: reservation.bookTitle,
+              author: reservation.bookAuthor,
+              cover: '📘',
+            },
+            member: {
+              name: reservation.memberName,
+              id: reservation.memberCode,
+              avatar: avatarFromName(reservation.memberName),
+            },
+            pickupBranch: reservation.branch,
+            reservedOn: formatDate(reservation.reservationDate),
+            reservedTime: formatTime(reservation.reservationDate),
+            status: statusFromDb(reservation.status),
+            expiresOn: formatDate(reservation.expiresOn),
+            expiresTime: formatTime(reservation.expiresOn),
+          })),
+        )
+      } catch (error) {
+        console.error('Failed to load reservation page data:', error)
+      }
+    }
+
+    loadData()
+  }, [])
+
   // Derived state to keep compatibility with existing card conditional renders:
   const isBookSelected = !!selectedBook
   const isMemberSelected = !!selectedMember
 
-  const filteredMembersList = mockMembers.filter(m => 
+  const filteredMembersList = members.filter(m => 
     m.name.toLowerCase().includes(memberSearchQuery.toLowerCase()) || 
     m.memberId.toLowerCase().includes(memberSearchQuery.toLowerCase())
   )
 
-  const filteredBooksList = mockBooks.filter(b => 
+  const filteredBooksList = books.filter(b => 
     b.title.toLowerCase().includes(bookSearchQuery.toLowerCase()) || 
     b.isbn.includes(bookSearchQuery)
   )
@@ -670,7 +774,7 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
     }
   }
 
-  const filteredReservations = reservationsData.filter((reservation) => {
+  const filteredReservations = reservations.filter((reservation) => {
     const normalizedSearch = reservationSearch.trim().toLowerCase()
     const matchesSearch =
       normalizedSearch.length === 0 ||
@@ -685,6 +789,73 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
 
     return matchesSearch && matchesStatus && matchesBranch
   })
+
+  const refreshReservations = async () => {
+    const rows = await listReservations('All', 1000)
+    const toDate = (value: string) => new Date(value)
+    const toStatus = (status: string): ReservationStatus =>
+      status === 'Ready for Pickup' || status === 'Completed' || status === 'Cancelled' ? status : 'Pending'
+    setReservations(
+      rows.map((item) => ({
+        id: `RES-${String(item.id).padStart(5, '0')}`,
+        book: { title: item.bookTitle, author: item.bookAuthor, cover: '📘' },
+        member: {
+          name: item.memberName,
+          id: item.memberCode,
+          avatar: item.memberName
+            .trim()
+            .split(/\s+/)
+            .slice(0, 2)
+            .map((part) => part[0]?.toUpperCase() ?? '')
+            .join('') || 'M',
+        },
+        pickupBranch: item.branch,
+        reservedOn: toDate(item.reservationDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        reservedTime: toDate(item.reservationDate).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+        status: toStatus(item.status),
+        expiresOn: toDate(item.expiresOn).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        expiresTime: toDate(item.expiresOn).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+      })),
+    )
+  }
+
+  const handleCreateReservation = async () => {
+    if (!selectedBook || !selectedMember) {
+      setFormError('Please select both a book and a member before creating a reservation.')
+      return
+    }
+    if (!reservationDate || !expiresOn) {
+      setFormError('Reservation date and expiration date are required.')
+      return
+    }
+
+    try {
+      setFormError(null)
+      setIsSavingReservation(true)
+      await createReservation({
+        memberId: selectedMember.id,
+        bookId: selectedBook.id,
+        reservationDate: new Date(`${reservationDate}T10:30:00`).toISOString(),
+        expiresOn: new Date(`${expiresOn}T10:30:00`).toISOString(),
+        branch: branchFilter === 'All Branches' ? 'Central Library' : branchFilter,
+        priority,
+        notes,
+        notifyEmail,
+        notifySMS,
+      })
+      await refreshReservations()
+      setIsAddModalOpen(false)
+      setSelectedBook(null)
+      setSelectedMember(null)
+      setNotes('')
+      setPriority('Normal')
+    } catch (error) {
+      console.error('Failed to create reservation:', error)
+      setFormError(typeof error === 'string' ? error : 'Failed to create reservation. Please try again.')
+    } finally {
+      setIsSavingReservation(false)
+    }
+  }
 
   return (
     <div className={`min-h-0 flex-1 overflow-auto ${isAddModalOpen || activeViewReservationId ? 'px-4 pt-4 pb-0' : 'p-4'} ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
@@ -706,7 +877,7 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
                 <Download size={16} />
                 Export
               </button>
-              <button type="button" onClick={() => { setIsAddModalOpen(true); setSelectedBook(null); setSelectedMember(null); }} className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white hover:bg-emerald-700 transition-all shadow-sm">
+              <button type="button" onClick={() => { setIsAddModalOpen(true); setSelectedBook(null); setSelectedMember(null); setFormError(null); }} className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white hover:bg-emerald-700 transition-all shadow-sm">
                 <Plus size={18} />
                 New Reservation
               </button>
@@ -855,8 +1026,18 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
                         <ReservationActionsMenu
                           isDarkMode={isDarkMode}
                           onViewDetails={() => setActiveViewReservationId(res.id)}
-                          onComplete={() => {}}
-                          onCancel={() => {}}
+                          onComplete={async () => {
+                            const numericId = Number.parseInt(res.id.replace('RES-', ''), 10)
+                            if (Number.isNaN(numericId)) return
+                            await updateReservationStatus({ id: numericId, status: 'Completed' })
+                            await refreshReservations()
+                          }}
+                          onCancel={async () => {
+                            const numericId = Number.parseInt(res.id.replace('RES-', ''), 10)
+                            if (Number.isNaN(numericId)) return
+                            await updateReservationStatus({ id: numericId, status: 'Cancelled' })
+                            await refreshReservations()
+                          }}
                         />
                       </td>
                     </tr>
@@ -873,7 +1054,7 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
             </div>
 
             <div className={`flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm rounded-b-xl ${isDarkMode ? 'border-slate-700 bg-[#0b1738] text-slate-300' : 'border-slate-200 bg-white text-slate-600'}`}>
-              <p>Showing {filteredReservations.length} of {reservationsData.length} reservations</p>
+              <p>Showing {filteredReservations.length} of {reservations.length} reservations</p>
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1.5">
                   <button type="button" className={`grid h-8 w-8 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 text-slate-400 hover:bg-slate-800' : 'border-slate-200 text-slate-400 hover:bg-white'}`}>
@@ -1272,6 +1453,9 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
 
                   {/* Actions buttons inside the card container at the bottom */}
                   <div className={`mt-6 pt-5 border-t flex justify-end gap-3 ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
+                    {formError ? (
+                      <p className="mr-auto self-center text-xs font-semibold text-rose-500">{formError}</p>
+                    ) : null}
                     <button
                       type="button"
                       onClick={() => setIsAddModalOpen(false)}
@@ -1281,11 +1465,12 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
                     </button>
                     <button 
                       type="button" 
-                      onClick={() => setIsAddModalOpen(false)} 
-                      className="inline-flex h-10 items-center gap-2 rounded-xl bg-emerald-700 px-6 text-xs font-bold text-white hover:bg-emerald-800 transition-colors shadow-sm"
+                      onClick={handleCreateReservation}
+                      disabled={isSavingReservation}
+                      className="inline-flex h-10 items-center gap-2 rounded-xl bg-emerald-700 px-6 text-xs font-bold text-white hover:bg-emerald-800 transition-colors shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       <Calendar size={14} />
-                      Create Reservation
+                      {isSavingReservation ? 'Saving...' : 'Create Reservation'}
                     </button>
                   </div>
 
@@ -1517,3 +1702,4 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
     </div>
   )
 }
+

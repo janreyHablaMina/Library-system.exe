@@ -188,6 +188,48 @@ struct ReturnBorrowPayload {
   fine: Option<f64>,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ReservationRow {
+  id: i64,
+  member_id: i64,
+  member_name: String,
+  member_code: String,
+  book_id: i64,
+  book_title: String,
+  book_author: String,
+  reservation_date: String,
+  expires_on: String,
+  status: String,
+  branch: String,
+  priority: String,
+  notes: Option<String>,
+  notify_email: bool,
+  notify_sms: bool,
+  created_at: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct CreateReservationPayload {
+  member_id: i64,
+  book_id: i64,
+  reservation_date: String,
+  expires_on: String,
+  branch: Option<String>,
+  priority: Option<String>,
+  notes: Option<String>,
+  notify_email: Option<bool>,
+  notify_sms: Option<bool>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct UpdateReservationStatusPayload {
+  id: i64,
+  status: String,
+}
+
 fn open_db(path: &PathBuf) -> Result<Connection, String> {
   Connection::open(path).map_err(|e| format!("open db failed: {e}"))
 }
@@ -282,6 +324,22 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
         notes TEXT,
         status TEXT NOT NULL DEFAULT 'Active',
         fine REAL NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY(member_id) REFERENCES members(id) ON DELETE CASCADE,
+        FOREIGN KEY(book_id) REFERENCES books(id) ON DELETE CASCADE
+      );
+      CREATE TABLE IF NOT EXISTS reservations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        member_id INTEGER NOT NULL,
+        book_id INTEGER NOT NULL,
+        reservation_date TEXT NOT NULL,
+        expires_on TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'Pending',
+        branch TEXT NOT NULL DEFAULT 'Central Library',
+        priority TEXT NOT NULL DEFAULT 'Normal',
+        notes TEXT,
+        notify_email INTEGER NOT NULL DEFAULT 1,
+        notify_sms INTEGER NOT NULL DEFAULT 1,
         created_at TEXT NOT NULL,
         FOREIGN KEY(member_id) REFERENCES members(id) ON DELETE CASCADE,
         FOREIGN KEY(book_id) REFERENCES books(id) ON DELETE CASCADE
@@ -958,6 +1016,173 @@ fn list_borrow_transactions(
 }
 
 #[tauri::command]
+fn create_reservation(app: tauri::AppHandle, payload: CreateReservationPayload) -> Result<i64, String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+
+  let member_exists = conn
+    .query_row(
+      "SELECT COUNT(1) FROM members WHERE id = ?1",
+      params![payload.member_id],
+      |row| row.get::<_, i64>(0),
+    )
+    .map_err(|e| format!("validate member failed: {e}"))?;
+  if member_exists == 0 {
+    return Err("Selected member does not exist.".to_string());
+  }
+
+  let book_exists = conn
+    .query_row(
+      "SELECT COUNT(1) FROM books WHERE id = ?1",
+      params![payload.book_id],
+      |row| row.get::<_, i64>(0),
+    )
+    .map_err(|e| format!("validate book failed: {e}"))?;
+  if book_exists == 0 {
+    return Err("Selected book does not exist.".to_string());
+  }
+
+  conn
+    .execute(
+      "
+      INSERT INTO reservations (
+        member_id,
+        book_id,
+        reservation_date,
+        expires_on,
+        status,
+        branch,
+        priority,
+        notes,
+        notify_email,
+        notify_sms,
+        created_at
+      )
+      VALUES (?1, ?2, ?3, ?4, 'Pending', ?5, ?6, ?7, ?8, ?9, ?10)
+      ",
+      params![
+        payload.member_id,
+        payload.book_id,
+        payload.reservation_date,
+        payload.expires_on,
+        payload
+          .branch
+          .map(|v| v.trim().to_string())
+          .filter(|v| !v.is_empty())
+          .unwrap_or_else(|| "Central Library".to_string()),
+        payload
+          .priority
+          .map(|v| v.trim().to_string())
+          .filter(|v| !v.is_empty())
+          .unwrap_or_else(|| "Normal".to_string()),
+        payload.notes.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
+        if payload.notify_email.unwrap_or(true) { 1 } else { 0 },
+        if payload.notify_sms.unwrap_or(true) { 1 } else { 0 },
+        Utc::now().to_rfc3339()
+      ],
+    )
+    .map_err(|e| format!("create reservation failed: {e}"))?;
+
+  Ok(conn.last_insert_rowid())
+}
+
+#[tauri::command]
+fn list_reservations(app: tauri::AppHandle, status: Option<String>, limit: Option<i64>) -> Result<Vec<ReservationRow>, String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  let max_rows = limit.unwrap_or(500).clamp(1, 2000);
+  let status_filter = status.unwrap_or_else(|| "All".to_string());
+
+  let base_query = "
+    SELECT
+      r.id,
+      r.member_id,
+      m.full_name,
+      m.member_id,
+      r.book_id,
+      b.title,
+      b.author,
+      r.reservation_date,
+      r.expires_on,
+      r.status,
+      r.branch,
+      r.priority,
+      r.notes,
+      r.notify_email,
+      r.notify_sms,
+      r.created_at
+    FROM reservations r
+    INNER JOIN members m ON m.id = r.member_id
+    INNER JOIN books b ON b.id = r.book_id
+  ";
+
+  let query = if status_filter.eq_ignore_ascii_case("all") {
+    format!("{base_query} ORDER BY r.id DESC LIMIT ?1")
+  } else {
+    format!("{base_query} WHERE r.status = ?1 ORDER BY r.id DESC LIMIT ?2")
+  };
+
+  let mut stmt = conn
+    .prepare(&query)
+    .map_err(|e| format!("prepare list reservations query failed: {e}"))?;
+
+  let map_row = |row: &rusqlite::Row<'_>| -> rusqlite::Result<ReservationRow> {
+    Ok(ReservationRow {
+      id: row.get(0)?,
+      member_id: row.get(1)?,
+      member_name: row.get(2)?,
+      member_code: row.get(3)?,
+      book_id: row.get(4)?,
+      book_title: row.get(5)?,
+      book_author: row.get(6)?,
+      reservation_date: row.get(7)?,
+      expires_on: row.get(8)?,
+      status: row.get(9)?,
+      branch: row.get(10)?,
+      priority: row.get(11)?,
+      notes: row.get(12)?,
+      notify_email: row.get::<_, i64>(13)? == 1,
+      notify_sms: row.get::<_, i64>(14)? == 1,
+      created_at: row.get(15)?,
+    })
+  };
+
+  if status_filter.eq_ignore_ascii_case("all") {
+    let rows = stmt
+      .query_map(params![max_rows], map_row)
+      .map_err(|e| format!("list reservations failed: {e}"))?;
+    rows
+      .collect::<Result<Vec<_>, _>>()
+      .map_err(|e| format!("collect reservations failed: {e}"))
+  } else {
+    let rows = stmt
+      .query_map(params![status_filter, max_rows], map_row)
+      .map_err(|e| format!("list reservations failed: {e}"))?;
+    rows
+      .collect::<Result<Vec<_>, _>>()
+      .map_err(|e| format!("collect reservations failed: {e}"))
+  }
+}
+
+#[tauri::command]
+fn update_reservation_status(app: tauri::AppHandle, payload: UpdateReservationStatusPayload) -> Result<(), String> {
+  let status = payload.status.trim();
+  if status.is_empty() {
+    return Err("status is required".to_string());
+  }
+
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  conn
+    .execute(
+      "UPDATE reservations SET status = ?1 WHERE id = ?2",
+      params![status, payload.id],
+    )
+    .map_err(|e| format!("update reservation status failed: {e}"))?;
+  Ok(())
+}
+
+#[tauri::command]
 fn send_email_smtp(to: String, subject: String, body: String) -> Result<String, String> {
   let summary = format!(
     "SMTP stub queued. To: {to}, Subject: {subject}, Body chars: {}",
@@ -1144,6 +1369,9 @@ pub fn run() {
       create_borrow_transaction,
       return_borrow_transaction,
       list_borrow_transactions,
+      create_reservation,
+      list_reservations,
+      update_reservation_status,
       login,
       logout,
       get_active_session,

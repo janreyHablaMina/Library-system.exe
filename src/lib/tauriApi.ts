@@ -152,6 +152,42 @@ export type ReturnBorrowPayload = {
   fine?: number | null
 }
 
+export type Reservation = {
+  id: number
+  memberId: number
+  memberName: string
+  memberCode: string
+  bookId: number
+  bookTitle: string
+  bookAuthor: string
+  reservationDate: string
+  expiresOn: string
+  status: string
+  branch: string
+  priority: string
+  notes: string | null
+  notifyEmail: boolean
+  notifySMS: boolean
+  createdAt: string
+}
+
+export type CreateReservationPayload = {
+  memberId: number
+  bookId: number
+  reservationDate: string
+  expiresOn: string
+  branch?: string | null
+  priority?: string | null
+  notes?: string | null
+  notifyEmail?: boolean
+  notifySMS?: boolean
+}
+
+export type UpdateReservationStatusPayload = {
+  id: number
+  status: string
+}
+
 export async function initDb(): Promise<string> {
   return invoke<string>('init_db')
 }
@@ -230,6 +266,18 @@ export async function returnBorrowTransaction(payload: ReturnBorrowPayload): Pro
 
 export async function listBorrowTransactions(status?: string, limit?: number): Promise<BorrowTransaction[]> {
   return invoke<BorrowTransaction[]>('list_borrow_transactions', { status, limit })
+}
+
+export async function createReservation(payload: CreateReservationPayload): Promise<number> {
+  return invoke<number>('create_reservation', { payload })
+}
+
+export async function listReservations(status?: string, limit?: number): Promise<Reservation[]> {
+  return invoke<Reservation[]>('list_reservations', { status, limit })
+}
+
+export async function updateReservationStatus(payload: UpdateReservationStatusPayload): Promise<void> {
+  return invoke<void>('update_reservation_status', { payload })
 }
 
 export async function sendEmailSmtp(to: string, subject: string, body: string): Promise<string> {
