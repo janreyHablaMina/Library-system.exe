@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Calendar, Clock3, CheckCircle2, XCircle, MapPin, Eye, Trash2, Download, Plus, Search, ChevronDown, Filter, ChevronLeft, ChevronRight, MoreHorizontal, BookOpen, UserRound, ArrowLeft, Info, X, Check, Mail, Smartphone, Printer, Pencil, AlertTriangle } from 'lucide-react'
-import { createReservation, deleteReservation, listBooks, listMembers, listReservations, updateReservationStatus } from '../lib/tauriApi'
+import { createReservation, deleteReservation, listBooks, listMembers, listReservations, updateReservation, updateReservationStatus } from '../lib/tauriApi'
 
 type ReservationStatus = 'Pending' | 'Ready for Pickup' | 'Completed' | 'Cancelled'
 
@@ -8,6 +8,13 @@ type ReservationRow = {
   id: string
   bookId?: number
   memberId?: number
+  reservationDateRaw?: string
+  expiresOnRaw?: string
+  statusRaw?: string
+  priority?: string
+  notes?: string | null
+  notifyEmail?: boolean
+  notifySms?: boolean
   book: {
     title: string
     author: string
@@ -133,12 +140,13 @@ const mockBooks: BookItem[] = [
 type ReservationActionsMenuProps = {
   isDarkMode: boolean
   onViewDetails: () => void
+  onEdit: () => void
   onComplete: () => void
   onCancel: () => void
   onDelete: () => void
 }
 
-function ReservationActionsMenu({ isDarkMode, onViewDetails, onComplete, onCancel, onDelete }: ReservationActionsMenuProps) {
+function ReservationActionsMenu({ isDarkMode, onViewDetails, onEdit, onComplete, onCancel, onDelete }: ReservationActionsMenuProps) {
   const [open, setOpen] = useState(false)
   const [openUpward, setOpenUpward] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -232,6 +240,15 @@ function ReservationActionsMenu({ isDarkMode, onViewDetails, onComplete, onCance
           >
             <CheckCircle2 size={15} className="shrink-0 text-emerald-500" />
             Mark as Completed
+          </button>
+          <button
+            type="button"
+            className={`${itemBase} ${itemNormal}`}
+            role="menuitem"
+            onClick={(e) => { e.stopPropagation(); setOpen(false); onEdit(); }}
+          >
+            <Pencil size={15} className="shrink-0 text-indigo-500" />
+            Edit Reservation
           </button>
           
           <button
@@ -624,6 +641,7 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
   const [formError, setFormError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [reservationToDelete, setReservationToDelete] = useState<ReservationRow | null>(null)
+  const [editingReservation, setEditingReservation] = useState<ReservationRow | null>(null)
   const [books, setBooks] = useState<BookItem[]>([])
   const [members, setMembers] = useState<MemberItem[]>([])
   const [reservations, setReservations] = useState<ReservationRow[]>([])
@@ -725,6 +743,13 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
             id: `RES-${String(reservation.id).padStart(5, '0')}`,
             bookId: reservation.bookId,
             memberId: reservation.memberId,
+            reservationDateRaw: reservation.reservationDate,
+            expiresOnRaw: reservation.expiresOn,
+            statusRaw: reservation.status,
+            priority: reservation.priority,
+            notes: reservation.notes ?? '',
+            notifyEmail: reservation.notifyEmail,
+            notifySms: reservation.notifySms,
             book: {
               title: reservation.bookTitle,
               author: reservation.bookAuthor,
@@ -831,6 +856,13 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
         id: `RES-${String(item.id).padStart(5, '0')}`,
         bookId: item.bookId,
         memberId: item.memberId,
+        reservationDateRaw: item.reservationDate,
+        expiresOnRaw: item.expiresOn,
+        statusRaw: item.status,
+        priority: item.priority,
+        notes: item.notes ?? '',
+        notifyEmail: item.notifyEmail,
+        notifySms: item.notifySms,
         book: {
           title: item.bookTitle,
           author: item.bookAuthor,
@@ -877,26 +909,52 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
     try {
       setFormError(null)
       setIsSavingReservation(true)
-      await createReservation({
-        memberId: selectedMember.id,
-        bookId: selectedBook.id,
-        reservationDate: new Date(`${reservationDate}T10:30:00`).toISOString(),
-        expiresOn: new Date(`${expiresOn}T10:30:00`).toISOString(),
-        branch: branchFilter === 'All Branches' ? 'Central Library' : branchFilter,
-        priority,
-        notes,
-        notifyEmail,
-        notifySMS,
-      })
+      if (editingReservation) {
+        const numericId = Number.parseInt(editingReservation.id.replace('RES-', ''), 10)
+        if (Number.isNaN(numericId)) {
+          throw new Error('Invalid reservation id')
+        }
+        if (!selectedMember || !selectedBook) {
+          throw new Error('Please select both a member and a book before saving.')
+        }
+        await updateReservation({
+          id: numericId,
+          memberId: selectedMember.id,
+          bookId: selectedBook.id,
+          reservationDate: new Date(`${reservationDate}T10:30:00`).toISOString(),
+          expiresOn: new Date(`${expiresOn}T10:30:00`).toISOString(),
+          status: editingReservation.statusRaw || editingReservation.status,
+          branch: editingReservation.pickupBranch || 'Central Library',
+          priority,
+          notes,
+          notifyEmail,
+          notifySms: notifySMS,
+        })
+      } else {
+        await createReservation({
+          memberId: selectedMember.id,
+          bookId: selectedBook.id,
+          reservationDate: new Date(`${reservationDate}T10:30:00`).toISOString(),
+          expiresOn: new Date(`${expiresOn}T10:30:00`).toISOString(),
+          branch: branchFilter === 'All Branches' ? 'Central Library' : branchFilter,
+          priority,
+          notes,
+          notifyEmail,
+          notifySms: notifySMS,
+        })
+      }
       await refreshReservations()
       setIsAddModalOpen(false)
+      setEditingReservation(null)
       setSelectedBook(null)
       setSelectedMember(null)
       setNotes('')
       setPriority('Normal')
+      setNotifyEmail(true)
+      setNotifySMS(true)
     } catch (error) {
-      console.error('Failed to create reservation:', error)
-      setFormError(typeof error === 'string' ? error : 'Failed to create reservation. Please try again.')
+      console.error('Failed to save reservation:', error)
+      setFormError(typeof error === 'string' ? error : 'Failed to save reservation. Please try again.')
     } finally {
       setIsSavingReservation(false)
     }
@@ -927,6 +985,31 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
       console.error(`Failed to delete reservation ${reservationId}:`, error)
       setActionError('Failed to delete reservation. Please try again.')
     }
+  }
+
+  const openEditReservation = (reservation: ReservationRow) => {
+    const toInputDate = (value?: string) => {
+      const parsed = value ? new Date(value) : null
+      if (!parsed || Number.isNaN(parsed.getTime())) {
+        return new Date().toISOString().slice(0, 10)
+      }
+      return parsed.toISOString().slice(0, 10)
+    }
+    setEditingReservation(reservation)
+    setReservationDate(toInputDate(reservation.reservationDateRaw))
+    setExpiresOn(toInputDate(reservation.expiresOnRaw))
+    setPriority(reservation.priority || 'Normal')
+    setNotes(reservation.notes || '')
+    setNotifyEmail(reservation.notifyEmail ?? true)
+    setNotifySMS(reservation.notifySms ?? true)
+    const matchedBook = books.find((book) => book.id === reservation.bookId) || null
+    const matchedMember = members.find((member) => member.id === reservation.memberId) || null
+    setSelectedBook(matchedBook)
+    setSelectedMember(matchedMember)
+    setBookSearchQuery('')
+    setMemberSearchQuery('')
+    setFormError(null)
+    setIsAddModalOpen(true)
   }
 
   return (
@@ -984,7 +1067,7 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
                 <Download size={16} />
                 Export
               </button>
-              <button type="button" onClick={() => { setIsAddModalOpen(true); setSelectedBook(null); setSelectedMember(null); setFormError(null); }} className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white hover:bg-emerald-700 transition-all shadow-sm">
+              <button type="button" onClick={() => { setIsAddModalOpen(true); setEditingReservation(null); setSelectedBook(null); setSelectedMember(null); setReservationDate('2026-05-21'); setExpiresOn('2026-05-28'); setNotes(''); setPriority('Normal'); setNotifyEmail(true); setNotifySMS(true); setFormError(null); }} className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white hover:bg-emerald-700 transition-all shadow-sm">
                 <Plus size={18} />
                 New Reservation
               </button>
@@ -1150,6 +1233,7 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
                         <ReservationActionsMenu
                           isDarkMode={isDarkMode}
                           onViewDetails={() => setActiveViewReservationId(res.id)}
+                          onEdit={() => openEditReservation(res)}
                           onComplete={() => updateReservationActionStatus(res.id, 'Completed')}
                           onCancel={() => updateReservationActionStatus(res.id, 'Cancelled')}
                           onDelete={() => setReservationToDelete(res)}
@@ -1201,7 +1285,7 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
           <div className="mb-6 flex items-center gap-3">
             <button
               type="button"
-              onClick={() => setIsAddModalOpen(false)}
+              onClick={() => { setIsAddModalOpen(false); setEditingReservation(null) }}
               className={`grid h-10 w-10 place-items-center rounded-xl border transition-all ${
                 isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-50'
               }`}
@@ -1209,8 +1293,8 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
               <ArrowLeft size={18} />
             </button>
             <div>
-              <h2 className={`text-xl font-bold tracking-tight ${isDarkMode ? 'text-slate-100' : 'text-[#0a1b4f]'}`}>Add New Reservation</h2>
-              <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'} mt-0.5`}>Create a reservation for a book</p>
+              <h2 className={`text-xl font-bold tracking-tight ${isDarkMode ? 'text-slate-100' : 'text-[#0a1b4f]'}`}>{editingReservation ? 'Edit Reservation' : 'Add New Reservation'}</h2>
+              <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'} mt-0.5`}>{editingReservation ? `Update reservation ${editingReservation.id}` : 'Create a reservation for a book'}</p>
             </div>
           </div>
 
@@ -1585,7 +1669,7 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
                     ) : null}
                     <button
                       type="button"
-                      onClick={() => setIsAddModalOpen(false)}
+                      onClick={() => { setIsAddModalOpen(false); setEditingReservation(null) }}
                       className={`h-10 rounded-xl border px-6 text-xs font-bold transition-all ${isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}
                     >
                       Cancel
@@ -1597,7 +1681,7 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
                       className="inline-flex h-10 items-center gap-2 rounded-xl bg-emerald-700 px-6 text-xs font-bold text-white hover:bg-emerald-800 transition-colors shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       <Calendar size={14} />
-                      {isSavingReservation ? 'Saving...' : 'Create Reservation'}
+                      {isSavingReservation ? 'Saving...' : editingReservation ? 'Save Changes' : 'Create Reservation'}
                     </button>
                   </div>
 
@@ -1833,4 +1917,5 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
     </div>
   )
 }
+
 

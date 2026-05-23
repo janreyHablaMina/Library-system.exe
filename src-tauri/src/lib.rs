@@ -230,6 +230,22 @@ struct UpdateReservationStatusPayload {
   status: String,
 }
 
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct UpdateReservationPayload {
+  id: i64,
+  member_id: i64,
+  book_id: i64,
+  reservation_date: String,
+  expires_on: String,
+  status: String,
+  branch: String,
+  priority: String,
+  notes: Option<String>,
+  notify_email: bool,
+  notify_sms: bool,
+}
+
 fn open_db(path: &PathBuf) -> Result<Connection, String> {
   Connection::open(path).map_err(|e| format!("open db failed: {e}"))
 }
@@ -1183,6 +1199,67 @@ fn update_reservation_status(app: tauri::AppHandle, payload: UpdateReservationSt
 }
 
 #[tauri::command]
+fn update_reservation(app: tauri::AppHandle, payload: UpdateReservationPayload) -> Result<(), String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+
+  let member_exists = conn
+    .query_row(
+      "SELECT COUNT(1) FROM members WHERE id = ?1",
+      params![payload.member_id],
+      |row| row.get::<_, i64>(0),
+    )
+    .map_err(|e| format!("validate member failed: {e}"))?;
+  if member_exists == 0 {
+    return Err("Selected member does not exist.".to_string());
+  }
+
+  let book_exists = conn
+    .query_row(
+      "SELECT COUNT(1) FROM books WHERE id = ?1",
+      params![payload.book_id],
+      |row| row.get::<_, i64>(0),
+    )
+    .map_err(|e| format!("validate book failed: {e}"))?;
+  if book_exists == 0 {
+    return Err("Selected book does not exist.".to_string());
+  }
+
+  conn
+    .execute(
+      "
+      UPDATE reservations
+      SET member_id = ?1,
+          book_id = ?2,
+          reservation_date = ?3,
+          expires_on = ?4,
+          status = ?5,
+          branch = ?6,
+          priority = ?7,
+          notes = ?8,
+          notify_email = ?9,
+          notify_sms = ?10
+      WHERE id = ?11
+      ",
+      params![
+        payload.member_id,
+        payload.book_id,
+        payload.reservation_date,
+        payload.expires_on,
+        payload.status.trim(),
+        payload.branch.trim(),
+        payload.priority.trim(),
+        payload.notes.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
+        if payload.notify_email { 1 } else { 0 },
+        if payload.notify_sms { 1 } else { 0 },
+        payload.id,
+      ],
+    )
+    .map_err(|e| format!("update reservation failed: {e}"))?;
+  Ok(())
+}
+
+#[tauri::command]
 fn delete_reservation(app: tauri::AppHandle, id: i64) -> Result<(), String> {
   let conn = open_db(&database_path(&app)?)?;
   init_schema(&conn)?;
@@ -1382,6 +1459,7 @@ pub fn run() {
       create_reservation,
       list_reservations,
       update_reservation_status,
+      update_reservation,
       delete_reservation,
       login,
       logout,

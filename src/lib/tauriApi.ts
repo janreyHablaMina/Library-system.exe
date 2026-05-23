@@ -167,7 +167,7 @@ export type Reservation = {
   priority: string
   notes: string | null
   notifyEmail: boolean
-  notifySMS: boolean
+  notifySms: boolean
   createdAt: string
 }
 
@@ -180,12 +180,26 @@ export type CreateReservationPayload = {
   priority?: string | null
   notes?: string | null
   notifyEmail?: boolean
-  notifySMS?: boolean
+  notifySms?: boolean
 }
 
 export type UpdateReservationStatusPayload = {
   id: number
   status: string
+}
+
+export type UpdateReservationPayload = {
+  id: number
+  memberId: number
+  bookId: number
+  reservationDate: string
+  expiresOn: string
+  status: string
+  branch: string
+  priority: string
+  notes?: string | null
+  notifyEmail: boolean
+  notifySms: boolean
 }
 
 export async function initDb(): Promise<string> {
@@ -278,6 +292,10 @@ export async function listReservations(status?: string, limit?: number): Promise
 
 export async function updateReservationStatus(payload: UpdateReservationStatusPayload): Promise<void> {
   return invoke<void>('update_reservation_status', { payload })
+}
+
+export async function updateReservation(payload: UpdateReservationPayload): Promise<void> {
+  return invoke<void>('update_reservation', { payload })
 }
 
 export async function deleteReservation(id: number): Promise<void> {
