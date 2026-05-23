@@ -1,20 +1,24 @@
 import { useState, useRef, useEffect } from 'react'
-import { Calendar, Clock3, CheckCircle2, XCircle, MapPin, Eye, Trash2, Download, Plus, Search, ChevronDown, Filter, ChevronLeft, ChevronRight, MoreHorizontal, BookOpen, UserRound, ArrowLeft, Info, X, Check, Mail, Smartphone, Printer, Pencil } from 'lucide-react'
-import { createReservation, listBooks, listMembers, listReservations, updateReservationStatus } from '../lib/tauriApi'
+import { Calendar, Clock3, CheckCircle2, XCircle, MapPin, Eye, Trash2, Download, Plus, Search, ChevronDown, Filter, ChevronLeft, ChevronRight, MoreHorizontal, BookOpen, UserRound, ArrowLeft, Info, X, Check, Mail, Smartphone, Printer, Pencil, AlertTriangle } from 'lucide-react'
+import { createReservation, deleteReservation, listBooks, listMembers, listReservations, updateReservationStatus } from '../lib/tauriApi'
 
 type ReservationStatus = 'Pending' | 'Ready for Pickup' | 'Completed' | 'Cancelled'
 
 type ReservationRow = {
   id: string
+  bookId?: number
+  memberId?: number
   book: {
     title: string
     author: string
     cover: string
+    coverUrl?: string | null
   }
   member: {
     name: string
     id: string
     avatar: string
+    profilePhotoData?: string | null
   }
   pickupBranch: string
   reservedOn: string
@@ -57,6 +61,7 @@ type MemberItem = {
   borrowedCount: number
   limit: string
   avatar: string
+  profilePhotoData?: string | null
   outstandingFines: string
 }
 
@@ -73,10 +78,10 @@ type BookItem = {
 }
 
 const mockMembers: MemberItem[] = [
-  { id: 1, name: 'Maria Santos', memberId: 'MS-00125', type: 'Student', phone: '0917 123 4567', email: 'maria.santos@email.com', borrowedCount: 2, limit: '3 / 5', avatar: 'MS', outstandingFines: '$0.00' },
-  { id: 2, name: 'Juan Dela Cruz', memberId: 'JD-00098', type: 'Student', phone: '0912 345 6789', email: 'juan.delacruz@email.com', borrowedCount: 2, limit: '3 / 5', avatar: 'JD', outstandingFines: '$0.00' },
-  { id: 3, name: 'Ana Lim', memberId: 'AL-00076', type: 'Student', phone: '0934 567 8901', email: 'ana.lim@email.com', borrowedCount: 3, limit: '2 / 5', avatar: 'AL', outstandingFines: '$0.00' },
-  { id: 4, name: 'Carlo Garcia', memberId: 'CG-00063', type: 'Student', phone: '0945 678 9012', email: 'carlo.garcia@email.com', borrowedCount: 1, limit: '4 / 5', avatar: 'CG', outstandingFines: '$120.00' },
+  { id: 1, name: 'Maria Santos', memberId: 'MS-00125', type: 'Student', phone: '0917 123 4567', email: 'maria.santos@email.com', borrowedCount: 2, limit: '3 / 5', avatar: 'MS', profilePhotoData: null, outstandingFines: '$0.00' },
+  { id: 2, name: 'Juan Dela Cruz', memberId: 'JD-00098', type: 'Student', phone: '0912 345 6789', email: 'juan.delacruz@email.com', borrowedCount: 2, limit: '3 / 5', avatar: 'JD', profilePhotoData: null, outstandingFines: '$0.00' },
+  { id: 3, name: 'Ana Lim', memberId: 'AL-00076', type: 'Student', phone: '0934 567 8901', email: 'ana.lim@email.com', borrowedCount: 3, limit: '2 / 5', avatar: 'AL', profilePhotoData: null, outstandingFines: '$0.00' },
+  { id: 4, name: 'Carlo Garcia', memberId: 'CG-00063', type: 'Student', phone: '0945 678 9012', email: 'carlo.garcia@email.com', borrowedCount: 1, limit: '4 / 5', avatar: 'CG', profilePhotoData: null, outstandingFines: '$120.00' },
 ]
 const mockBooks: BookItem[] = [
   { 
@@ -130,9 +135,10 @@ type ReservationActionsMenuProps = {
   onViewDetails: () => void
   onComplete: () => void
   onCancel: () => void
+  onDelete: () => void
 }
 
-function ReservationActionsMenu({ isDarkMode, onViewDetails, onComplete, onCancel }: ReservationActionsMenuProps) {
+function ReservationActionsMenu({ isDarkMode, onViewDetails, onComplete, onCancel, onDelete }: ReservationActionsMenuProps) {
   const [open, setOpen] = useState(false)
   const [openUpward, setOpenUpward] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -236,6 +242,15 @@ function ReservationActionsMenu({ isDarkMode, onViewDetails, onComplete, onCance
           >
             <Trash2 size={15} className="shrink-0 text-rose-500" />
             Cancel Reservation
+          </button>
+          <button
+            type="button"
+            className={`${itemBase} ${itemDanger}`}
+            role="menuitem"
+            onClick={(e) => { e.stopPropagation(); setOpen(false); onDelete(); }}
+          >
+            <Trash2 size={15} className="shrink-0 text-rose-500" />
+            Delete Reservation
           </button>
         </div>
       )}
@@ -607,6 +622,8 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
   const [notifySMS, setNotifySMS] = useState(true)
   const [isSavingReservation, setIsSavingReservation] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
+  const [reservationToDelete, setReservationToDelete] = useState<ReservationRow | null>(null)
   const [books, setBooks] = useState<BookItem[]>([])
   const [members, setMembers] = useState<MemberItem[]>([])
   const [reservations, setReservations] = useState<ReservationRow[]>([])
@@ -696,22 +713,29 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
             borrowedCount: member.borrowed,
             limit: `${Math.max(0, 5 - member.borrowed)} / 5`,
             avatar: avatarFromName(member.fullName),
+            profilePhotoData: member.profilePhotoData || null,
             outstandingFines: '$0.00',
           })),
         )
 
-        setReservations(
-          reservationRows.map((reservation) => ({
+        const mappedReservations = reservationRows.map((reservation) => {
+          const matchedBook = bookRows.find((book) => book.id === reservation.bookId)
+          const matchedMember = memberRows.find((member) => member.id === reservation.memberId)
+          return {
             id: `RES-${String(reservation.id).padStart(5, '0')}`,
+            bookId: reservation.bookId,
+            memberId: reservation.memberId,
             book: {
               title: reservation.bookTitle,
               author: reservation.bookAuthor,
               cover: '📘',
+              coverUrl: matchedBook?.coverData ?? null,
             },
             member: {
               name: reservation.memberName,
               id: reservation.memberCode,
               avatar: avatarFromName(reservation.memberName),
+              profilePhotoData: matchedMember?.profilePhotoData ?? null,
             },
             pickupBranch: reservation.branch,
             reservedOn: formatDate(reservation.reservationDate),
@@ -719,8 +743,9 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
             status: statusFromDb(reservation.status),
             expiresOn: formatDate(reservation.expiresOn),
             expiresTime: formatTime(reservation.expiresOn),
-          })),
-        )
+          } as ReservationRow
+        })
+        setReservations(mappedReservations)
       } catch (error) {
         console.error('Failed to load reservation page data:', error)
       }
@@ -790,24 +815,39 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
     return matchesSearch && matchesStatus && matchesBranch
   })
 
-  const refreshReservations = async () => {
-    const rows = await listReservations('All', 1000)
+  const mapReservationsToRows = (
+    rows: Awaited<ReturnType<typeof listReservations>>,
+    loadedBooks: BookItem[],
+    loadedMembers: MemberItem[],
+  ): ReservationRow[] => {
     const toDate = (value: string) => new Date(value)
     const toStatus = (status: string): ReservationStatus =>
       status === 'Ready for Pickup' || status === 'Completed' || status === 'Cancelled' ? status : 'Pending'
-    setReservations(
-      rows.map((item) => ({
+
+    return rows.map((item) => {
+      const matchedBook = loadedBooks.find((book) => book.id === item.bookId)
+      const matchedMember = loadedMembers.find((member) => member.id === item.memberId)
+      return {
         id: `RES-${String(item.id).padStart(5, '0')}`,
-        book: { title: item.bookTitle, author: item.bookAuthor, cover: '📘' },
+        bookId: item.bookId,
+        memberId: item.memberId,
+        book: {
+          title: item.bookTitle,
+          author: item.bookAuthor,
+          cover: '📘',
+          coverUrl: matchedBook?.coverUrl ?? null,
+        },
         member: {
           name: item.memberName,
           id: item.memberCode,
-          avatar: item.memberName
-            .trim()
-            .split(/\s+/)
-            .slice(0, 2)
-            .map((part) => part[0]?.toUpperCase() ?? '')
-            .join('') || 'M',
+          avatar:
+            item.memberName
+              .trim()
+              .split(/\s+/)
+              .slice(0, 2)
+              .map((part) => part[0]?.toUpperCase() ?? '')
+              .join('') || 'M',
+          profilePhotoData: matchedMember?.profilePhotoData ?? null,
         },
         pickupBranch: item.branch,
         reservedOn: toDate(item.reservationDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
@@ -815,8 +855,13 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
         status: toStatus(item.status),
         expiresOn: toDate(item.expiresOn).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
         expiresTime: toDate(item.expiresOn).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
-      })),
-    )
+      }
+    })
+  }
+
+  const refreshReservations = async () => {
+    const rows = await listReservations('All', 1000)
+    setReservations(mapReservationsToRows(rows, books, members))
   }
 
   const handleCreateReservation = async () => {
@@ -857,8 +902,70 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
     }
   }
 
+  const updateReservationActionStatus = async (reservationId: string, nextStatus: ReservationStatus) => {
+    const numericId = Number.parseInt(reservationId.replace('RES-', ''), 10)
+    if (Number.isNaN(numericId)) return
+    try {
+      setActionError(null)
+      await updateReservationStatus({ id: numericId, status: nextStatus })
+      await refreshReservations()
+    } catch (error) {
+      console.error(`Failed to update reservation ${reservationId}:`, error)
+      setActionError('Failed to update reservation status. Please try again.')
+    }
+  }
+
+  const deleteReservationAction = async (reservationId: string) => {
+    const numericId = Number.parseInt(reservationId.replace('RES-', ''), 10)
+    if (Number.isNaN(numericId)) return
+    try {
+      setActionError(null)
+      await deleteReservation(numericId)
+      await refreshReservations()
+      setReservationToDelete(null)
+    } catch (error) {
+      console.error(`Failed to delete reservation ${reservationId}:`, error)
+      setActionError('Failed to delete reservation. Please try again.')
+    }
+  }
+
   return (
     <div className={`min-h-0 flex-1 overflow-auto ${isAddModalOpen || activeViewReservationId ? 'px-4 pt-4 pb-0' : 'p-4'} ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
+      {reservationToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
+          <div className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-rose-500/10 text-rose-500">
+                <AlertTriangle size={24} />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold leading-6">Delete Reservation</h3>
+                <p className={`mt-2 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                  Are you sure you want to delete <span className="font-semibold text-rose-500">"{reservationToDelete.id}"</span>? This action cannot be undone.
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setReservationToDelete(null)}
+                className={`rounded-xl border px-4 py-2 text-sm font-semibold ${
+                  isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => deleteReservationAction(reservationToDelete.id)}
+                className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700"
+              >
+                Yes, Delete Reservation
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {activeViewReservationId ? (
         <ReservationDetailsViewNew 
           reservationId={activeViewReservationId} 
@@ -969,6 +1076,11 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
                 </button>
               </div>
             </div>
+            {actionError ? (
+              <div className={`border-b px-4 py-2 text-xs font-semibold ${isDarkMode ? 'border-slate-700 bg-rose-500/10 text-rose-300' : 'border-slate-200 bg-rose-50 text-rose-600'}`}>
+                {actionError}
+              </div>
+            ) : null}
 
             <div className="overflow-x-auto lg:overflow-visible relative z-10">
               <table className="w-full text-left text-sm border-collapse">
@@ -992,7 +1104,13 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <span className={`grid h-10 w-7 place-items-center rounded bg-slate-100 text-base dark:bg-slate-800`}>{res.book.cover}</span>
+                          <span className={`grid h-12 w-9 place-items-center overflow-hidden rounded border bg-slate-100 text-base dark:border-slate-700 dark:bg-slate-800`}>
+                            {res.book.coverUrl ? (
+                              <img src={res.book.coverUrl} alt={`${res.book.title} cover`} className="h-full w-full object-cover" />
+                            ) : (
+                              res.book.cover
+                            )}
+                          </span>
                           <div>
                             <p className={`font-semibold text-sm ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{res.book.title}</p>
                             <p className={`text-[11px] font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{res.book.author}</p>
@@ -1001,7 +1119,13 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <span className="text-lg">{res.member.avatar}</span>
+                          <span className={`grid h-9 w-9 place-items-center overflow-hidden rounded-full text-xs font-bold ${isDarkMode ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-700'}`}>
+                            {res.member.profilePhotoData ? (
+                              <img src={res.member.profilePhotoData} alt={`${res.member.name} profile`} className="h-full w-full object-cover" />
+                            ) : (
+                              res.member.avatar
+                            )}
+                          </span>
                           <div>
                             <p className={`font-semibold text-sm ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{res.member.name}</p>
                             <p className={`text-[11px] font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{res.member.id}</p>
@@ -1026,18 +1150,9 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
                         <ReservationActionsMenu
                           isDarkMode={isDarkMode}
                           onViewDetails={() => setActiveViewReservationId(res.id)}
-                          onComplete={async () => {
-                            const numericId = Number.parseInt(res.id.replace('RES-', ''), 10)
-                            if (Number.isNaN(numericId)) return
-                            await updateReservationStatus({ id: numericId, status: 'Completed' })
-                            await refreshReservations()
-                          }}
-                          onCancel={async () => {
-                            const numericId = Number.parseInt(res.id.replace('RES-', ''), 10)
-                            if (Number.isNaN(numericId)) return
-                            await updateReservationStatus({ id: numericId, status: 'Cancelled' })
-                            await refreshReservations()
-                          }}
+                          onComplete={() => updateReservationActionStatus(res.id, 'Completed')}
+                          onCancel={() => updateReservationActionStatus(res.id, 'Cancelled')}
+                          onDelete={() => setReservationToDelete(res)}
                         />
                       </td>
                     </tr>
@@ -1253,7 +1368,13 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
                               }}
                               className={`flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left text-xs font-semibold transition-colors ${isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50'}`}
                             >
-                              <span className="text-base">{m.avatar}</span>
+                              <span className={`grid h-8 w-8 place-items-center overflow-hidden rounded-full text-[11px] font-bold ${isDarkMode ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-700'}`}>
+                                {m.profilePhotoData ? (
+                                  <img src={m.profilePhotoData} alt={`${m.name} profile`} className="h-full w-full object-cover" />
+                                ) : (
+                                  m.avatar
+                                )}
+                              </span>
                               <div className="flex-1">
                                 <p className={isDarkMode ? 'text-slate-100' : 'text-slate-900'}>{m.name}</p>
                                 <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{m.memberId} • {m.type}</p>
@@ -1270,7 +1391,13 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
                       <div className={`relative rounded-xl border p-3 animate-[fadeIn_0.15s_ease-out] ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-slate-50/40'}`}>
                         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                           <div className="flex min-w-0 items-center gap-3">
-                            <span className={`grid h-10 w-10 place-items-center rounded-full text-base ${isDarkMode ? 'bg-slate-800' : 'bg-white border'}`}>{selectedMember.avatar}</span>
+                            <span className={`grid h-10 w-10 place-items-center overflow-hidden rounded-full text-base ${isDarkMode ? 'bg-slate-800' : 'bg-white border'}`}>
+                              {selectedMember.profilePhotoData ? (
+                                <img src={selectedMember.profilePhotoData} alt={`${selectedMember.name} profile`} className="h-full w-full object-cover" />
+                              ) : (
+                                selectedMember.avatar
+                              )}
+                            </span>
                             <div className="min-w-0">
                               <p className={`truncate font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{selectedMember.name}</p>
                               <p className={`truncate text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{selectedMember.memberId} • {selectedMember.type}</p>
@@ -1569,12 +1696,16 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
                       <div className="p-4 grid grid-cols-10 gap-4">
                         <div className="col-span-3 flex flex-col items-center justify-center shrink-0">
                           <div className="relative group w-full aspect-square max-w-[100px] flex items-center justify-center">
-                            <span className={`grid w-full h-full place-items-center rounded-full text-3xl border transition-all ${
+                            <span className={`grid w-full h-full place-items-center overflow-hidden rounded-full text-3xl border transition-all ${
                               isDarkMode 
                                 ? 'bg-slate-900/80 border-slate-700/60 text-slate-100' 
                                 : 'bg-slate-50 border-slate-200/80 text-slate-800'
                             }`}>
-                              {selectedMember?.avatar}
+                              {selectedMember?.profilePhotoData ? (
+                                <img src={selectedMember.profilePhotoData} alt={`${selectedMember.name} profile`} className="h-full w-full object-cover" />
+                              ) : (
+                                selectedMember?.avatar
+                              )}
                             </span>
                             <span className={`absolute -bottom-1.5 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold border whitespace-nowrap ${
                               isDarkMode 

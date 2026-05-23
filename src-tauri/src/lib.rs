@@ -1183,6 +1183,16 @@ fn update_reservation_status(app: tauri::AppHandle, payload: UpdateReservationSt
 }
 
 #[tauri::command]
+fn delete_reservation(app: tauri::AppHandle, id: i64) -> Result<(), String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  conn
+    .execute("DELETE FROM reservations WHERE id = ?1", params![id])
+    .map_err(|e| format!("delete reservation failed: {e}"))?;
+  Ok(())
+}
+
+#[tauri::command]
 fn send_email_smtp(to: String, subject: String, body: String) -> Result<String, String> {
   let summary = format!(
     "SMTP stub queued. To: {to}, Subject: {subject}, Body chars: {}",
@@ -1372,6 +1382,7 @@ pub fn run() {
       create_reservation,
       list_reservations,
       update_reservation_status,
+      delete_reservation,
       login,
       logout,
       get_active_session,

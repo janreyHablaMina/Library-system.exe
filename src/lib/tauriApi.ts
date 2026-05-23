@@ -280,6 +280,10 @@ export async function updateReservationStatus(payload: UpdateReservationStatusPa
   return invoke<void>('update_reservation_status', { payload })
 }
 
+export async function deleteReservation(id: number): Promise<void> {
+  return invoke<void>('delete_reservation', { id })
+}
+
 export async function sendEmailSmtp(to: string, subject: string, body: string): Promise<string> {
   return invoke<string>('send_email_smtp', { to, subject, body })
 }
