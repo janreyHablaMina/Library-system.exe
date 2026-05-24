@@ -56,6 +56,17 @@ struct SessionUser {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+struct NotificationRow {
+  id: i64,
+  notification_type: String,
+  title: String,
+  message: String,
+  is_read: bool,
+  created_at: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct Member {
   id: i64,
   full_name: String,
@@ -438,6 +449,15 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
         profile_photo_data TEXT,
         created_at TEXT NOT NULL
       );
+      CREATE TABLE IF NOT EXISTS notifications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        notification_type TEXT NOT NULL,
+        title TEXT NOT NULL,
+        message TEXT NOT NULL,
+        is_read INTEGER NOT NULL DEFAULT 0,
+        unique_key TEXT UNIQUE,
+        created_at TEXT NOT NULL
+      );
       ",
     )
     .map_err(|e| format!("init schema failed: {e}"))?;
@@ -473,6 +493,12 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
       return Err(format!("staff migration failed: {e}"));
     }
   }
+  if let Err(e) = conn.execute("ALTER TABLE notifications ADD COLUMN unique_key TEXT", []) {
+    let msg = e.to_string();
+    if !msg.contains("duplicate column name") {
+      return Err(format!("notifications migration failed: {e}"));
+    }
+  }
 
   conn
     .execute(
@@ -485,6 +511,22 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
     )
     .map_err(|e| format!("seed admin user failed: {e}"))?;
 
+  Ok(())
+}
+
+fn upsert_notification(conn: &Connection, ntype: &str, title: &str, message: &str, unique_key: &str) -> Result<(), String> {
+  conn
+    .execute(
+      "
+      INSERT INTO notifications (notification_type, title, message, is_read, unique_key, created_at)
+      VALUES (?1, ?2, ?3, 0, ?4, ?5)
+      ON CONFLICT(unique_key) DO UPDATE SET
+        title = excluded.title,
+        message = excluded.message
+      ",
+      params![ntype, title, message, unique_key, Utc::now().to_rfc3339()],
+    )
+    .map_err(|e| format!("upsert notification failed: {e}"))?;
   Ok(())
 }
 
@@ -1643,6 +1685,136 @@ fn get_active_session(app: tauri::AppHandle) -> Result<Option<SessionUser>, Stri
 }
 
 #[tauri::command]
+fn sync_notifications(app: tauri::AppHandle) -> Result<(), String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+
+  let now = Utc::now().to_rfc3339();
+
+  let overdue_count: i64 = conn
+    .query_row(
+      "
+      SELECT COUNT(*)
+      FROM borrow_transactions
+      WHERE return_date IS NULL
+        AND due_date < ?1
+      ",
+      params![now],
+      |row| row.get(0),
+    )
+    .map_err(|e| format!("count overdue transactions failed: {e}"))?;
+
+  if overdue_count > 0 {
+    upsert_notification(
+      &conn,
+      "overdue",
+      "Overdue Books Alert",
+      &format!("{overdue_count} borrowed book(s) are overdue."),
+      "system:overdue:current",
+    )?;
+  }
+
+  let due_today_count: i64 = conn
+    .query_row(
+      "
+      SELECT COUNT(*)
+      FROM reservations
+      WHERE status IN ('Pending', 'Approved')
+        AND substr(expires_on, 1, 10) = substr(?1, 1, 10)
+      ",
+      params![now],
+      |row| row.get(0),
+    )
+    .map_err(|e| format!("count due-today reservations failed: {e}"))?;
+
+  if due_today_count > 0 {
+    upsert_notification(
+      &conn,
+      "reservation",
+      "Reservations Expiring Today",
+      &format!("{due_today_count} reservation(s) expire today."),
+      "system:reservations:today",
+    )?;
+  }
+
+  let new_members_today: i64 = conn
+    .query_row(
+      "
+      SELECT COUNT(*)
+      FROM members
+      WHERE substr(created_at, 1, 10) = substr(?1, 1, 10)
+      ",
+      params![now],
+      |row| row.get(0),
+    )
+    .map_err(|e| format!("count new members today failed: {e}"))?;
+
+  if new_members_today > 0 {
+    upsert_notification(
+      &conn,
+      "member",
+      "New Members Registered",
+      &format!("{new_members_today} new member(s) registered today."),
+      "system:members:today",
+    )?;
+  }
+
+  Ok(())
+}
+
+#[tauri::command]
+fn list_notifications(app: tauri::AppHandle, limit: Option<i64>) -> Result<Vec<NotificationRow>, String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  let max_rows = limit.unwrap_or(20).clamp(1, 200);
+  let mut stmt = conn
+    .prepare(
+      "
+      SELECT id, notification_type, title, message, is_read, created_at
+      FROM notifications
+      ORDER BY datetime(created_at) DESC, id DESC
+      LIMIT ?1
+      ",
+    )
+    .map_err(|e| format!("prepare list notifications query failed: {e}"))?;
+
+  let rows = stmt
+    .query_map(params![max_rows], |row| {
+      Ok(NotificationRow {
+        id: row.get(0)?,
+        notification_type: row.get(1)?,
+        title: row.get(2)?,
+        message: row.get(3)?,
+        is_read: row.get::<_, i64>(4)? == 1,
+        created_at: row.get(5)?,
+      })
+    })
+    .map_err(|e| format!("list notifications failed: {e}"))?;
+
+  rows.collect::<Result<Vec<_>, _>>().map_err(|e| format!("collect notifications failed: {e}"))
+}
+
+#[tauri::command]
+fn mark_notification_as_read(app: tauri::AppHandle, id: i64) -> Result<(), String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  conn
+    .execute("UPDATE notifications SET is_read = 1 WHERE id = ?1", params![id])
+    .map_err(|e| format!("mark notification as read failed: {e}"))?;
+  Ok(())
+}
+
+#[tauri::command]
+fn mark_all_notifications_read(app: tauri::AppHandle) -> Result<(), String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  conn
+    .execute("UPDATE notifications SET is_read = 1 WHERE is_read = 0", [])
+    .map_err(|e| format!("mark all notifications read failed: {e}"))?;
+  Ok(())
+}
+
+#[tauri::command]
 fn expand_main_window(app: tauri::AppHandle) -> Result<(), String> {
   let window = app
     .get_webview_window("main")
@@ -1732,6 +1904,11 @@ pub fn run() {
       send_email_smtp,
       send_sms_gateway,
       export_report
+      ,
+      sync_notifications,
+      list_notifications,
+      mark_notification_as_read,
+      mark_all_notifications_read
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

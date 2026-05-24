@@ -40,6 +40,15 @@ export type SessionUser = {
   loginAt: string
 }
 
+export type NotificationItem = {
+  id: number
+  notificationType: string
+  title: string
+  message: string
+  isRead: boolean
+  createdAt: string
+}
+
 export type Member = {
   id: number
   fullName: string
@@ -402,4 +411,20 @@ export async function expandMainWindow(): Promise<void> {
 
 export async function restoreLoginWindow(): Promise<void> {
   return invoke<void>('restore_login_window')
+}
+
+export async function syncNotifications(): Promise<void> {
+  return invoke<void>('sync_notifications')
+}
+
+export async function listNotifications(limit?: number): Promise<NotificationItem[]> {
+  return invoke<NotificationItem[]>('list_notifications', { limit })
+}
+
+export async function markNotificationAsRead(id: number): Promise<void> {
+  return invoke<void>('mark_notification_as_read', { id })
+}
+
+export async function markAllNotificationsRead(): Promise<void> {
+  return invoke<void>('mark_all_notifications_read')
 }

@@ -20,7 +20,7 @@ import { AuthorDetailPage } from './pages/AuthorDetailPage'
 import { CategoriesPage } from './pages/CategoriesPage'
 import { ReservationsPage } from './pages/ReservationsPage'
 import { StaffPage } from './pages/StaffPage'
-import { createBook, expandMainWindow, getActiveSession, login as loginWithDb, logout as logoutFromDb, restoreLoginWindow } from './lib/tauriApi'
+import { createBook, expandMainWindow, getActiveSession, listNotifications, login as loginWithDb, logout as logoutFromDb, markAllNotificationsRead, markNotificationAsRead, restoreLoginWindow, syncNotifications, type NotificationItem } from './lib/tauriApi'
 
 
 type LoginFormState = {
@@ -138,7 +138,10 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
   const [isAuthorDetailOpen, setIsAuthorDetailOpen] = useState(false)
   const [selectedAuthorId, setSelectedAuthorId] = useState<number | null>(null)
   const [transactionActiveTab, setTransactionActiveTab] = useState<'all' | 'borrowed' | 'returned' | 'overdue'>('all')
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
+  const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const profileMenuRef = useRef<HTMLDivElement | null>(null)
+  const notificationsRef = useRef<HTMLDivElement | null>(null)
   const openTransactionsPage = (tab: 'all' | 'borrowed' | 'returned' | 'overdue' = 'all') => {
     setTransactionActiveTab(tab)
     setActivePage('Transactions')
@@ -149,11 +152,15 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
       if (!profileMenuRef.current?.contains(event.target as Node)) {
         setIsProfileOpen(false)
       }
+      if (!notificationsRef.current?.contains(event.target as Node)) {
+        setIsNotificationsOpen(false)
+      }
     }
 
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setIsProfileOpen(false)
+        setIsNotificationsOpen(false)
       }
     }
 
@@ -180,6 +187,64 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
       setSelectedAuthorId(null)
     }
   }, [activePage])
+
+  useEffect(() => {
+    const loadNotifications = async () => {
+      try {
+        await syncNotifications()
+        const rows = await listNotifications(12)
+        setNotifications(rows)
+      } catch (error) {
+        console.error('Failed to load notifications:', error)
+      }
+    }
+    void loadNotifications()
+  }, [])
+
+  const unreadNotifications = notifications.filter((item) => !item.isRead).length
+
+  const formatNotificationTime = (isoDate: string) => {
+    const dt = new Date(isoDate)
+    if (Number.isNaN(dt.getTime())) return ''
+    const diffMs = Date.now() - dt.getTime()
+    const minute = 60 * 1000
+    const hour = 60 * minute
+    const day = 24 * hour
+    if (diffMs < hour) return `${Math.max(1, Math.floor(diffMs / minute))}m ago`
+    if (diffMs < day) return `${Math.floor(diffMs / hour)}h ago`
+    return `${Math.floor(diffMs / day)}d ago`
+  }
+
+  const handleOpenNotifications = async () => {
+    setIsNotificationsOpen((v) => !v)
+    try {
+      await syncNotifications()
+      const rows = await listNotifications(12)
+      setNotifications(rows)
+    } catch (error) {
+      console.error('Failed to refresh notifications:', error)
+    }
+  }
+
+  const handleReadNotification = async (id: number) => {
+    try {
+      await markNotificationAsRead(id)
+      const rows = await listNotifications(12)
+      setNotifications(rows)
+    } catch (error) {
+      console.error('Failed to mark notification as read:', error)
+    }
+  }
+
+  const handleReadAllNotifications = async () => {
+    try {
+      await markAllNotificationsRead()
+      const rows = await listNotifications(12)
+      setNotifications(rows)
+    } catch (error) {
+      console.error('Failed to mark all notifications as read:', error)
+    }
+  }
 
   const handleConfirmLogout = async () => {
     setIsLoggingOut(true)
@@ -446,10 +511,40 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
                     <Mail size={18} strokeWidth={1.9} />
                     <span aria-hidden="true" className="absolute -right-0.5 -top-0.5 grid h-4 w-4 place-items-center rounded-full bg-red-500 text-[10px] font-bold text-white">5</span>
                   </button>
-                  <button type="button" className={`relative rounded-lg p-2 ${dashboardTheme.iconBtn}`} aria-label="Open notifications">
-                    <Bell size={18} strokeWidth={1.9} />
-                    <span aria-hidden="true" className="absolute -right-0.5 -top-0.5 grid h-4 w-4 place-items-center rounded-full bg-red-500 text-[10px] font-bold text-white">2</span>
-                  </button>
+                  <div ref={notificationsRef} className="relative">
+                    <button type="button" onClick={() => void handleOpenNotifications()} className={`relative rounded-lg p-2 ${dashboardTheme.iconBtn}`} aria-label="Open notifications">
+                      <Bell size={18} strokeWidth={1.9} />
+                      {unreadNotifications > 0 ? (
+                        <span aria-hidden="true" className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                          {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                        </span>
+                      ) : null}
+                    </button>
+                    {isNotificationsOpen ? (
+                      <div className={`absolute right-0 top-11 z-30 w-80 rounded-xl border p-2 shadow-xl ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                        <div className="mb-2 flex items-center justify-between px-2 py-1">
+                          <p className={`text-sm font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Notifications</p>
+                          <button type="button" onClick={() => void handleReadAllNotifications()} className="text-[11px] font-semibold text-emerald-600 hover:underline">Mark all read</button>
+                        </div>
+                        <div className="max-h-80 overflow-auto">
+                          {notifications.length === 0 ? (
+                            <p className={`px-2 py-6 text-center text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>No notifications yet.</p>
+                          ) : notifications.map((item) => (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => void handleReadNotification(item.id)}
+                              className={`mb-1 w-full rounded-lg px-2 py-2 text-left transition ${item.isRead ? (isDarkMode ? 'bg-transparent hover:bg-slate-800/60' : 'bg-transparent hover:bg-slate-50') : (isDarkMode ? 'bg-emerald-500/10 hover:bg-emerald-500/15' : 'bg-emerald-50 hover:bg-emerald-100')}`}
+                            >
+                              <p className={`text-xs font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{item.title}</p>
+                              <p className={`mt-0.5 text-[11px] ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{item.message}</p>
+                              <p className={`mt-1 text-[10px] ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{formatNotificationTime(item.createdAt)}</p>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
                 <div ref={profileMenuRef} className={`relative hidden items-center gap-3 border-l pl-4 md:flex ${dashboardTheme.profileBorder}`}>
                   <div className="grid h-11 w-11 place-items-center rounded-full bg-gradient-to-br from-blue-100 to-violet-200 text-xl">👨🏻</div>

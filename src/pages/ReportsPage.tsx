@@ -113,9 +113,19 @@ export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMember
     const categoryData = topCatRaw.map(([name, value], i) => ({ name, value, color: pieColors[i % pieColors.length] }))
     if (otherCats > 0) categoryData.push({ name: 'Others', value: otherCats, color: pieColors[5] })
 
-    const memberStats = new Map<string, { name: string; id: string; borrowed: number; returned: number; overdue: number }>()
+    const memberPhotoByCode = new Map(
+      members.map((m) => [m.memberId, m.profilePhotoData || null] as const),
+    )
+    const memberStats = new Map<string, { name: string; id: string; borrowed: number; returned: number; overdue: number; profilePhotoData: string | null }>()
     transactions.forEach((tx) => {
-      const current = memberStats.get(tx.memberCode) || { name: tx.memberName, id: tx.memberCode, borrowed: 0, returned: 0, overdue: 0 }
+      const current = memberStats.get(tx.memberCode) || {
+        name: tx.memberName,
+        id: tx.memberCode,
+        borrowed: 0,
+        returned: 0,
+        overdue: 0,
+        profilePhotoData: memberPhotoByCode.get(tx.memberCode) || null,
+      }
       current.borrowed += 1
       if (tx.returnDate || tx.status.toLowerCase() === 'returned') current.returned += 1
       const due = new Date(tx.dueDate).getTime()
@@ -362,7 +372,13 @@ export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMember
                       <tr key={row.id} className={`border-t transition-colors ${isDarkMode ? 'border-slate-700 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}>
                         <td className="px-6 py-4">
                            <div className="flex items-center gap-3">
-                              <span className={`grid h-11 w-11 place-items-center rounded-full text-sm font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>{row.name.slice(0, 1).toUpperCase()}</span>
+                              <span className={`grid h-11 w-11 place-items-center overflow-hidden rounded-full text-sm font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                                {row.profilePhotoData ? (
+                                  <img src={row.profilePhotoData} alt={`${row.name} profile`} className="h-full w-full object-cover" />
+                                ) : (
+                                  row.name.slice(0, 1).toUpperCase()
+                                )}
+                              </span>
                               <div>
                                 <p className="text-sm font-medium">{row.name}</p>
                                 <p className={`text-xs ${labelClass}`}>{row.memberCode}</p>
