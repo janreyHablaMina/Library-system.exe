@@ -217,6 +217,7 @@ export type Staff = {
   username: string | null
   tempPassword: string | null
   requirePasswordReset: boolean
+  profilePhotoData: string | null
   createdAt: string
 }
 
@@ -234,6 +235,7 @@ export type CreateStaffPayload = {
   username?: string | null
   tempPassword?: string | null
   requirePasswordReset?: boolean
+  profilePhotoData?: string | null
 }
 
 export type UpdateStaffPayload = {
@@ -251,6 +253,7 @@ export type UpdateStaffPayload = {
   username?: string | null
   tempPassword?: string | null
   requirePasswordReset: boolean
+  profilePhotoData?: string | null
 }
 
 export async function initDb(): Promise<string> {

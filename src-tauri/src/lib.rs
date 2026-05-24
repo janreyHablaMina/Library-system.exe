@@ -263,6 +263,7 @@ struct StaffRow {
   username: Option<String>,
   temp_password: Option<String>,
   require_password_reset: bool,
+  profile_photo_data: Option<String>,
   created_at: String,
 }
 
@@ -282,6 +283,7 @@ struct CreateStaffPayload {
   username: Option<String>,
   temp_password: Option<String>,
   require_password_reset: Option<bool>,
+  profile_photo_data: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -301,6 +303,7 @@ struct UpdateStaffPayload {
   username: Option<String>,
   temp_password: Option<String>,
   require_password_reset: bool,
+  profile_photo_data: Option<String>,
 }
 
 fn open_db(path: &PathBuf) -> Result<Connection, String> {
@@ -432,6 +435,7 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
         username TEXT,
         temp_password TEXT,
         require_password_reset INTEGER NOT NULL DEFAULT 1,
+        profile_photo_data TEXT,
         created_at TEXT NOT NULL
       );
       ",
@@ -461,6 +465,12 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
     let msg = e.to_string();
     if !msg.contains("duplicate column name") {
       return Err(format!("authors migration failed: {e}"));
+    }
+  }
+  if let Err(e) = conn.execute("ALTER TABLE staff_members ADD COLUMN profile_photo_data TEXT", []) {
+    let msg = e.to_string();
+    if !msg.contains("duplicate column name") {
+      return Err(format!("staff migration failed: {e}"));
     }
   }
 
@@ -1368,9 +1378,9 @@ fn create_staff(app: tauri::AppHandle, payload: CreateStaffPayload) -> Result<i6
       "
       INSERT INTO staff_members (
         staff_code, full_name, email, role, branch, status, phone, emergency_contact,
-        employee_type, start_date, username, temp_password, require_password_reset, created_at
+        employee_type, start_date, username, temp_password, require_password_reset, profile_photo_data, created_at
       )
-      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)
+      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)
       ",
       params![
         staff_code,
@@ -1386,6 +1396,7 @@ fn create_staff(app: tauri::AppHandle, payload: CreateStaffPayload) -> Result<i6
         payload.username.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
         payload.temp_password.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
         if payload.require_password_reset.unwrap_or(true) { 1 } else { 0 },
+        payload.profile_photo_data,
         Utc::now().to_rfc3339(),
       ],
     )
@@ -1412,7 +1423,7 @@ fn list_staff(app: tauri::AppHandle, limit: Option<i64>) -> Result<Vec<StaffRow>
     .prepare(
       "
       SELECT id, staff_code, full_name, email, role, branch, status, phone, emergency_contact,
-             employee_type, start_date, username, temp_password, require_password_reset, created_at
+             employee_type, start_date, username, temp_password, require_password_reset, profile_photo_data, created_at
       FROM staff_members
       ORDER BY id DESC
       LIMIT ?1
@@ -1437,7 +1448,8 @@ fn list_staff(app: tauri::AppHandle, limit: Option<i64>) -> Result<Vec<StaffRow>
         username: row.get(11)?,
         temp_password: row.get(12)?,
         require_password_reset: row.get::<_, i64>(13)? == 1,
-        created_at: row.get(14)?,
+        profile_photo_data: row.get(14)?,
+        created_at: row.get(15)?,
       })
     })
     .map_err(|e| format!("list staff failed: {e}"))?;
@@ -1476,8 +1488,9 @@ fn update_staff(app: tauri::AppHandle, payload: UpdateStaffPayload) -> Result<()
           start_date = ?10,
           username = ?11,
           temp_password = ?12,
-          require_password_reset = ?13
-      WHERE id = ?14
+          require_password_reset = ?13,
+          profile_photo_data = ?14
+      WHERE id = ?15
       ",
       params![
         payload
@@ -1497,6 +1510,7 @@ fn update_staff(app: tauri::AppHandle, payload: UpdateStaffPayload) -> Result<()
         payload.username.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
         payload.temp_password.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
         if payload.require_password_reset { 1 } else { 0 },
+        payload.profile_photo_data,
         payload.id
       ],
     )

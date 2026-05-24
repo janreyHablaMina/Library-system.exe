@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, type ChangeEvent } from 'react'
 import { Users, UserCheck, UserX, ShieldCheck, Calendar, Search, ChevronDown, Filter, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, X, MoreHorizontal } from 'lucide-react'
 import { createStaff, deleteStaff, listStaff, updateStaff } from '../lib/tauriApi'
 
@@ -23,6 +23,7 @@ type StaffMember = {
   username?: string
   tempPassword?: string
   requirePasswordReset?: boolean
+  profilePhotoData?: string | null
 }
 
 type StaffPageProps = {
@@ -133,6 +134,7 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
   const [roleFilter, setRoleFilter] = useState<'All Roles' | StaffRole>('All Roles')
   const [statusFilter, setStatusFilter] = useState<'All Status' | StaffStatus>('All Status')
   const [branchFilter, setBranchFilter] = useState<'All Branches' | string>('All Branches')
+  const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(null)
 
   const getRoleStyle = (role: StaffRole) => {
     switch (role) {
@@ -187,9 +189,38 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
           username: staff.username ?? '',
           tempPassword: staff.tempPassword ?? '',
           requirePasswordReset: staff.requirePasswordReset,
+          profilePhotoData: staff.profilePhotoData ?? null,
         }
       }),
     )
+  }
+
+  const handleProfilePhotoChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    const acceptedTypes = ['image/jpeg', 'image/png']
+    if (!acceptedTypes.includes(file.type)) {
+      setStaffError('Only JPG and PNG files are allowed.')
+      event.target.value = ''
+      return
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setStaffError('Photo must be 2MB or smaller.')
+      event.target.value = ''
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      const dataUrl = typeof reader.result === 'string' ? reader.result : null
+      setProfilePhotoPreview(dataUrl)
+    }
+    reader.onerror = () => {
+      setStaffError('Failed to read photo file.')
+      event.target.value = ''
+    }
+    reader.readAsDataURL(file)
   }
 
   useEffect(() => {
@@ -226,6 +257,7 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
       username: String(form.get('username') || '').trim() || null,
       tempPassword: String(form.get('tempPassword') || '').trim() || null,
       requirePasswordReset: form.get('requirePasswordReset') === 'on',
+      profilePhotoData: profilePhotoPreview || editingStaff?.profilePhotoData || null,
     }
 
     try {
@@ -239,6 +271,7 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
       await refreshStaff()
       setIsAddModalOpen(false)
       setEditingStaff(null)
+      setProfilePhotoPreview(null)
     } catch (error) {
       console.error('Failed to save staff:', error)
       setStaffError('Failed to save staff member. Please try again.')
@@ -259,6 +292,12 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
       setStaffError('Failed to delete staff member. Please try again.')
     }
   }
+
+  useEffect(() => {
+    if (isAddModalOpen) {
+      setProfilePhotoPreview(editingStaff?.profilePhotoData ?? null)
+    }
+  }, [isAddModalOpen, editingStaff])
 
   return (
     <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
@@ -406,7 +445,18 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
                   <tr key={staff.id} className={`border-t transition-colors duration-150 ${isDarkMode ? 'border-slate-800 hover:bg-slate-800/30' : 'border-slate-100 hover:bg-slate-50'}`}>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <span className={`grid h-10 w-10 place-items-center rounded-full text-lg border ${isDarkMode ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-100'}`}>{staff.avatar}</span>
+                        <span className={`grid h-10 w-10 place-items-center overflow-hidden rounded-full text-xs font-bold border ${isDarkMode ? 'border-slate-700 bg-slate-800/50 text-slate-300' : 'border-slate-200 bg-slate-100 text-slate-600'}`}>
+                          {staff.profilePhotoData ? (
+                            <img
+                              src={staff.profilePhotoData}
+                              alt={`${staff.name} avatar`}
+                              className="h-full w-full object-cover"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <span className="grid h-full w-full place-items-center">{avatarFromName(staff.name)}</span>
+                          )}
+                        </span>
                         <p className={`font-semibold text-sm ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{staff.name}</p>
                       </div>
                     </td>
@@ -520,6 +570,19 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
                   <div className="space-y-2">
                     <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Phone Number</label>
                     <input name="phone" type="tel" defaultValue={editingStaff?.phone ?? ''} placeholder="0917 123 4567" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Profile Photo</label>
+                    <div className="flex items-center gap-3">
+                      <span className={`grid h-12 w-12 place-items-center overflow-hidden rounded-full border text-xs font-bold ${isDarkMode ? 'border-slate-700 bg-slate-800/50 text-slate-300' : 'border-slate-200 bg-slate-100 text-slate-600'}`}>
+                        {profilePhotoPreview ? (
+                          <img src={profilePhotoPreview} alt="Profile preview" className="h-full w-full object-cover" />
+                        ) : (
+                          avatarFromName(editingStaff?.name || 'Staff')
+                        )}
+                      </span>
+                      <input type="file" accept="image/png,image/jpeg" onChange={handleProfilePhotoChange} className={`block w-full text-sm ${isDarkMode ? 'text-slate-300 file:bg-slate-800 file:text-slate-200 file:border-slate-700' : 'text-slate-700 file:bg-slate-100 file:text-slate-700 file:border-slate-200'} file:mr-4 file:rounded-lg file:border file:px-3 file:py-2`} />
+                    </div>
                   </div>
                   <div className="space-y-2 md:col-span-2">
                     <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Emergency Contact (Optional)</label>

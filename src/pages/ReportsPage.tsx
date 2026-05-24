@@ -24,34 +24,9 @@ import {
   Pie,
   Cell
 } from 'recharts'
-
-const activityData = [
-  { name: 'Apr 6', borrowed: 20, returned: 12 },
-  { name: 'Apr 11', borrowed: 45, returned: 28 },
-  { name: 'Apr 16', borrowed: 32, returned: 20 },
-  { name: 'Apr 21', borrowed: 42, returned: 35 },
-  { name: 'Apr 26', borrowed: 30, returned: 25 },
-  { name: 'May 1', borrowed: 48, returned: 32 },
-  { name: 'May 6', borrowed: 35, returned: 28 },
-]
-
-const bookData = [
-  { name: 'Atomic Habits', value: 25, color: '#4f46e5' },
-  { name: 'The Psychology of Money', value: 20, color: '#3b82f6' },
-  { name: 'Rich Dad Poor Dad', value: 18, color: '#f59e0b' },
-  { name: 'The Power of Habit', value: 15, color: '#10b981' },
-  { name: 'Deep Work', value: 12, color: '#ef4444' },
-  { name: 'Others', value: 66, color: '#e2e8f0' },
-]
-
-const categoryData = [
-  { name: 'Self-Help', value: 45, color: '#4f46e5' },
-  { name: 'Business', value: 32, color: '#ec4899' },
-  { name: 'Fiction', value: 28, color: '#f59e0b' },
-  { name: 'Technology', value: 18, color: '#8b5cf6' },
-  { name: 'Education', value: 12, color: '#ef4444' },
-  { name: 'Others', value: 13, color: '#e2e8f0' },
-]
+import { useEffect, useMemo, useState } from 'react'
+import { listBooks, listBorrowTransactions, listMembers, type Book, type BorrowTransaction, type Member } from '../lib/tauriApi'
+const pieColors = ['#4f46e5', '#3b82f6', '#f59e0b', '#10b981', '#ef4444', '#e2e8f0']
 
 type ReportsPageProps = {
   isDarkMode: boolean
@@ -62,6 +37,112 @@ type ReportsPageProps = {
 export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMembers }: ReportsPageProps) {
   const cardClass = isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'
   const labelClass = isDarkMode ? 'text-slate-400' : 'text-slate-500'
+  const [books, setBooks] = useState<Book[]>([])
+  const [members, setMembers] = useState<Member[]>([])
+  const [transactions, setTransactions] = useState<BorrowTransaction[]>([])
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [bookRows, memberRows, txRows] = await Promise.all([
+          listBooks(2000),
+          listMembers(2000),
+          listBorrowTransactions(undefined, 5000),
+        ])
+        setBooks(bookRows)
+        setMembers(memberRows)
+        setTransactions(txRows)
+      } catch (error) {
+        console.error('Failed to load reports data:', error)
+      }
+    }
+    void load()
+  }, [])
+
+  const computed = useMemo(() => {
+    const now = Date.now()
+    const oneDayMs = 24 * 60 * 60 * 1000
+    const borrowedTotal = transactions.length
+    const returnedTotal = transactions.filter((tx) => tx.returnDate || tx.status.toLowerCase() === 'returned').length
+    const overdueTx = transactions.filter((tx) => {
+      if (tx.returnDate || tx.status.toLowerCase() === 'returned') return false
+      const due = new Date(tx.dueDate).getTime()
+      return !Number.isNaN(due) && due < now
+    })
+    const overdueTotal = overdueTx.length
+    const fines = transactions.reduce((sum, tx) => sum + (Number.isFinite(tx.fine) ? tx.fine : 0), 0)
+    const activeMembers = members.filter((m) => (m.status || '').toLowerCase() === 'active').length
+
+    const dayBuckets = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(now - (6 - i) * oneDayMs)
+      const key = d.toISOString().slice(0, 10)
+      const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      return { key, name: label, borrowed: 0, returned: 0 }
+    })
+    const bucketByDay = new Map(dayBuckets.map((d) => [d.key, d]))
+    transactions.forEach((tx) => {
+      const borrowKey = toDateKey(tx.borrowDate)
+      if (!borrowKey) return
+      const borrowBucket = bucketByDay.get(borrowKey)
+      if (borrowBucket) borrowBucket.borrowed += 1
+      if (tx.returnDate) {
+        const returnKey = toDateKey(tx.returnDate)
+        if (!returnKey) return
+        const returnBucket = bucketByDay.get(returnKey)
+        if (returnBucket) returnBucket.returned += 1
+      }
+    })
+
+    const byBook = new Map<string, number>()
+    transactions.forEach((tx) => byBook.set(tx.bookTitle, (byBook.get(tx.bookTitle) || 0) + 1))
+    const topBookEntries = [...byBook.entries()].sort((a, b) => b[1] - a[1])
+    const topBooksRaw = topBookEntries.slice(0, 5)
+    const otherBooks = topBookEntries.slice(5).reduce((sum, [, v]) => sum + v, 0)
+    const bookData = topBooksRaw.map(([name, value], i) => ({ name, value, color: pieColors[i % pieColors.length] }))
+    if (otherBooks > 0) bookData.push({ name: 'Others', value: otherBooks, color: pieColors[5] })
+
+    const byCategory = new Map<string, number>()
+    const categoryByBookId = new Map(books.map((b) => [b.id, b.category || 'Uncategorized']))
+    transactions.forEach((tx) => {
+      const cat = categoryByBookId.get(tx.bookId) || 'Uncategorized'
+      byCategory.set(cat, (byCategory.get(cat) || 0) + 1)
+    })
+    const topCategoryEntries = [...byCategory.entries()].sort((a, b) => b[1] - a[1])
+    const topCatRaw = topCategoryEntries.slice(0, 5)
+    const otherCats = topCategoryEntries.slice(5).reduce((sum, [, v]) => sum + v, 0)
+    const categoryData = topCatRaw.map(([name, value], i) => ({ name, value, color: pieColors[i % pieColors.length] }))
+    if (otherCats > 0) categoryData.push({ name: 'Others', value: otherCats, color: pieColors[5] })
+
+    const memberStats = new Map<string, { name: string; id: string; borrowed: number; returned: number; overdue: number }>()
+    transactions.forEach((tx) => {
+      const current = memberStats.get(tx.memberCode) || { name: tx.memberName, id: tx.memberCode, borrowed: 0, returned: 0, overdue: 0 }
+      current.borrowed += 1
+      if (tx.returnDate || tx.status.toLowerCase() === 'returned') current.returned += 1
+      const due = new Date(tx.dueDate).getTime()
+      if (!tx.returnDate && !Number.isNaN(due) && due < now) current.overdue += 1
+      memberStats.set(tx.memberCode, current)
+    })
+    const topMembers = [...memberStats.values()].sort((a, b) => b.borrowed - a.borrowed).slice(0, 5)
+
+    const overdueRows = overdueTx
+      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+      .slice(0, 5)
+      .map((tx) => {
+        const dueTs = new Date(tx.dueDate).getTime()
+        const daysOverdue = Math.max(1, Math.floor((now - dueTs) / oneDayMs))
+        return {
+          id: tx.id,
+          name: tx.memberName,
+          memberCode: tx.memberCode,
+          book: tx.bookTitle,
+          due: new Date(tx.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+          days: `${daysOverdue} day${daysOverdue > 1 ? 's' : ''}`,
+          fine: tx.fine,
+        }
+      })
+
+    return { borrowedTotal, returnedTotal, overdueTotal, fines, activeMembers, activityData: dayBuckets, bookData, categoryData, topMembers, overdueRows }
+  }, [books, members, transactions])
 
   return (
     <div className={`min-h-0 flex-1 overflow-auto p-6 ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
@@ -81,7 +162,7 @@ export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMember
           <div className="flex items-center gap-3">
             <div className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold ${cardClass}`}>
               <Calendar size={18} className="opacity-40" />
-              <span>Apr 6, 2026 - May 6, 2026</span>
+              <span>Last 7 Days</span>
             </div>
             <button className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-bold transition-all hover:bg-slate-50 dark:hover:bg-slate-800 ${cardClass}`}>
               <Download size={15} />
@@ -103,7 +184,7 @@ export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMember
               </div>
               <div className="space-y-0.5">
                 <p className={`text-[11px] font-bold tracking-tight uppercase ${labelClass}`}>Total Borrowed</p>
-                <h4 className="text-xl font-bold leading-tight tracking-tight">156</h4>
+                <h4 className="text-xl font-bold leading-tight tracking-tight">{computed.borrowedTotal}</h4>
                 <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-500">
                   <ArrowUpRight size={12} />
                   <span>12.5%</span>
@@ -117,7 +198,7 @@ export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMember
               </div>
               <div className="space-y-0.5">
                 <p className={`text-[11px] font-bold tracking-tight uppercase ${labelClass}`}>Active Members</p>
-                <h4 className="text-xl font-bold leading-tight tracking-tight">124</h4>
+                <h4 className="text-xl font-bold leading-tight tracking-tight">{computed.activeMembers}</h4>
                 <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-500">
                   <ArrowUpRight size={12} />
                   <span>8.3%</span>
@@ -131,7 +212,7 @@ export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMember
               </div>
               <div className="space-y-0.5">
                 <p className={`text-[11px] font-bold tracking-tight uppercase ${labelClass}`}>Overdue Books</p>
-                <h4 className="text-xl font-bold leading-tight tracking-tight">18</h4>
+                <h4 className="text-xl font-bold leading-tight tracking-tight">{computed.overdueTotal}</h4>
                 <div className="flex items-center gap-1 text-[10px] font-bold text-rose-500">
                   <ArrowDownRight size={12} />
                   <span>5.6%</span>
@@ -145,7 +226,7 @@ export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMember
               </div>
               <div className="space-y-0.5">
                 <p className={`text-[11px] font-bold tracking-tight uppercase ${labelClass}`}>Returned Books</p>
-                <h4 className="text-xl font-bold leading-tight tracking-tight">98</h4>
+                <h4 className="text-xl font-bold leading-tight tracking-tight">{computed.returnedTotal}</h4>
                 <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-500">
                   <ArrowUpRight size={12} />
                   <span>15.2%</span>
@@ -159,7 +240,7 @@ export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMember
               </div>
               <div className="space-y-0.5">
                 <p className={`text-[11px] font-bold tracking-tight uppercase ${labelClass}`}>Fines Collected</p>
-                <h4 className="text-xl font-bold leading-tight tracking-tight">PHP 325.00</h4>
+                <h4 className="text-xl font-bold leading-tight tracking-tight">PHP {computed.fines.toFixed(2)}</h4>
                 <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-500">
                   <ArrowUpRight size={12} />
                   <span>10.8%</span>
@@ -191,7 +272,7 @@ export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMember
             </div>
             <div className="h-[240px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={activityData}>
+                <AreaChart data={computed.activityData}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? '#1e293b' : '#f1f5f9'} />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: isDarkMode ? '#64748b' : '#94a3b8' }} />
                   <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: isDarkMode ? '#64748b' : '#94a3b8' }} />
@@ -208,18 +289,18 @@ export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMember
             <div className="h-[150px] w-full mb-6">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={bookData} innerRadius={45} outerRadius={65} paddingAngle={4} dataKey="value" stroke="none">
-                    {bookData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+                  <Pie data={computed.bookData} innerRadius={45} outerRadius={65} paddingAngle={4} dataKey="value" stroke="none">
+                    {computed.bookData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
                   </Pie>
                 </PieChart>
               </ResponsiveContainer>
             </div>
             <div className="space-y-2 w-full">
-              {bookData.slice(0, 4).map((item) => (
+              {computed.bookData.slice(0, 4).map((item) => (
                 <div key={item.name} className="flex items-center gap-2 text-[10px]">
                    <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
                    <span className={`font-bold truncate flex-1 ${labelClass}`}>{item.name}</span>
-                   <span className="font-bold">{(item.value / 156 * 100).toFixed(0)}%</span>
+                   <span className="font-bold">{computed.borrowedTotal ? ((item.value / computed.borrowedTotal) * 100).toFixed(0) : '0'}%</span>
                 </div>
               ))}
             </div>
@@ -230,18 +311,18 @@ export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMember
             <div className="h-[150px] w-full mb-6">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={categoryData} innerRadius={45} outerRadius={65} paddingAngle={4} dataKey="value" stroke="none">
-                    {categoryData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+                  <Pie data={computed.categoryData} innerRadius={45} outerRadius={65} paddingAngle={4} dataKey="value" stroke="none">
+                    {computed.categoryData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
                   </Pie>
                 </PieChart>
               </ResponsiveContainer>
             </div>
             <div className="space-y-2 w-full">
-              {categoryData.slice(0, 4).map((item) => (
+              {computed.categoryData.slice(0, 4).map((item) => (
                 <div key={item.name} className="flex items-center gap-2 text-[10px]">
                    <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
                    <span className={`font-bold truncate flex-1 ${labelClass}`}>{item.name}</span>
-                   <span className="font-bold">{(item.value / 148 * 100).toFixed(0)}%</span>
+                   <span className="font-bold">{computed.borrowedTotal ? ((item.value / computed.borrowedTotal) * 100).toFixed(0) : '0'}%</span>
                 </div>
               ))}
             </div>
@@ -277,26 +358,19 @@ export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMember
                     </tr>
                   </thead>
                   <tbody className="">
-                    {[
-                      { name: 'Ana Lim', id: 'STU-2026-004', book: 'Thinking, Fast and Slow', author: 'Daniel Kahneman', due: 'May 17, 2026', days: '3 days', fine: 'PHP 15.00', avatar: '\u{1F469}\u{1F3FD}' },
-                      { name: 'Michael Johnson', id: 'MEM-2026-015', book: 'The Intelligent Investor', author: 'Benjamin Graham', due: 'May 15, 2026', days: '5 days', fine: 'PHP 25.00', avatar: '\u{1F468}\u{1F3FB}' },
-                      { name: 'Peter Parker', id: 'MEM-2026-011', book: 'Start With Why', author: 'Simon Sinek', due: 'May 12, 2026', days: '8 days', fine: 'PHP 40.00', avatar: '\u{1F468}\u{1F3FD}' },
-                      { name: 'Sophia Reyes', id: 'STU-2026-007', book: 'Atomic Habits', author: 'James Clear', due: 'May 10, 2026', days: '10 days', fine: 'PHP 50.00', avatar: '\u{1F469}\u{1F3FB}' },
-                      { name: 'Mark Anthony', id: 'TCH-2026-001', book: 'Deep Work', author: 'Cal Newport', due: 'May 8, 2026', days: '12 days', fine: 'PHP 60.00', avatar: '\u{1F468}\u{1F3FE}' },
-                    ].map((row) => (
+                    {computed.overdueRows.map((row) => (
                       <tr key={row.id} className={`border-t transition-colors ${isDarkMode ? 'border-slate-700 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}>
                         <td className="px-6 py-4">
                            <div className="flex items-center gap-3">
-                              <span className={`grid h-11 w-11 place-items-center rounded-full text-lg ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>{row.avatar}</span>
+                              <span className={`grid h-11 w-11 place-items-center rounded-full text-sm font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>{row.name.slice(0, 1).toUpperCase()}</span>
                               <div>
                                 <p className="text-sm font-medium">{row.name}</p>
-                                <p className={`text-xs ${labelClass}`}>{row.id}</p>
+                                <p className={`text-xs ${labelClass}`}>{row.memberCode}</p>
                               </div>
                            </div>
                         </td>
                         <td className="px-6 py-4">
                            <p className="text-sm font-medium">{row.book}</p>
-                           <p className={`text-xs ${labelClass}`}>{row.author}</p>
                         </td>
                         <td className="px-6 py-4">
                            <p className="text-sm font-semibold">{row.due}</p>
@@ -306,14 +380,14 @@ export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMember
                              {row.days}
                            </span>
                         </td>
-                        <td className="px-6 py-4 text-right font-bold text-rose-500 text-sm">{row.fine}</td>
+                        <td className="px-6 py-4 text-right font-bold text-rose-500 text-sm">PHP {row.fine.toFixed(2)}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
               <div className={`p-4 flex justify-between items-center text-[11px] font-bold border-t ${isDarkMode ? 'border-slate-700' : 'border-slate-200'} ${labelClass}`}>
-                 <span>Showing 1 to 5 of 18</span>
+                 <span>Showing 1 to {computed.overdueRows.length} of {computed.overdueTotal}</span>
               </div>
            </div>
 
@@ -342,33 +416,27 @@ export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMember
                     </tr>
                   </thead>
                   <tbody className="">
-                    {[
-                      { name: 'Juan Dela Cruz', id: 'STU-2026-001', b: 12, r: 11, o: 1, avatar: '\u{1F468}\u{1F3FB}' },
-                      { name: 'Maria Santos', id: 'STU-2026-002', b: 9, r: 9, o: 0, avatar: '\u{1F469}\u{1F3FB}' },
-                      { name: 'Liza Montero', id: 'STA-2026-002', b: 8, r: 7, o: 1, avatar: '\u{1F469}\u{200D}\u{1F4BC}' },
-                      { name: 'Alex Tan', id: 'VIS-2026-001', b: 7, r: 7, o: 0, avatar: '\u{1F9D1}\u{1F3FB}' },
-                      { name: 'Ana Lim', id: 'STU-2026-004', b: 6, r: 5, o: 1, avatar: '\u{1F469}\u{1F3FD}' },
-                    ].map((row) => (
+                    {computed.topMembers.map((row) => (
                       <tr key={row.id} className={`border-t transition-colors ${isDarkMode ? 'border-slate-700 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}>
                         <td className="px-6 py-4">
                            <div className="flex items-center gap-3">
-                              <span className={`grid h-11 w-11 place-items-center rounded-full text-lg ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>{row.avatar}</span>
+                              <span className={`grid h-11 w-11 place-items-center rounded-full text-sm font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>{row.name.slice(0, 1).toUpperCase()}</span>
                               <div>
                                 <p className="text-sm font-medium">{row.name}</p>
                                 <p className={`text-[10px] ${labelClass}`}>{row.id}</p>
                               </div>
                            </div>
                         </td>
-                        <td className="px-6 py-4 text-center font-bold text-indigo-600 text-sm">{row.b}</td>
-                        <td className="px-6 py-4 text-center font-bold text-emerald-600 text-sm">{row.r}</td>
-                        <td className="px-6 py-4 text-center font-bold text-rose-600 text-sm">{row.o}</td>
+                        <td className="px-6 py-4 text-center font-bold text-indigo-600 text-sm">{row.borrowed}</td>
+                        <td className="px-6 py-4 text-center font-bold text-emerald-600 text-sm">{row.returned}</td>
+                        <td className="px-6 py-4 text-center font-bold text-rose-600 text-sm">{row.overdue}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
               <div className={`p-4 flex justify-between items-center text-[11px] font-bold border-t ${isDarkMode ? 'border-slate-700' : 'border-slate-200'} ${labelClass}`}>
-                 <span>Showing 1 to 5 of 124</span>
+                 <span>Showing 1 to {computed.topMembers.length} of {computed.activeMembers}</span>
               </div>
            </div>
         </div>
@@ -376,3 +444,8 @@ export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMember
     </div>
   )
 }
+    const toDateKey = (value: string) => {
+      const parsed = new Date(value)
+      if (Number.isNaN(parsed.getTime())) return null
+      return parsed.toISOString().slice(0, 10)
+    }
