@@ -1043,6 +1043,13 @@ const unreadNotifications = notifications.filter((item) => !item.isRead).length
                 <div className="space-y-0">
                   {quickReportItems.map((item) => {
                     const ItemIcon = item.icon
+                    const meta = item.label === 'Books by Category'
+                      ? `${borrowedCategories.length} active categories`
+                      : item.label === 'Top Borrowed Books'
+                        ? `${recentBorrowedItems.length} recent borrows`
+                        : item.label === 'Overdue Books Report'
+                          ? `${overdueReturnItems.length} overdue items`
+                          : `${notifications.length} latest activities`
 
                     return (
                       <button
@@ -1061,7 +1068,10 @@ const unreadNotifications = notifications.filter((item) => !item.isRead).length
                           <span className="grid h-7 w-7 place-items-center rounded-full bg-emerald-50 text-emerald-700">
                             <ItemIcon size={13} />
                           </span>
-                          {item.label}
+                          <span className="flex flex-col items-start">
+                            <span>{item.label}</span>
+                            <span className="text-[11px] font-medium text-slate-500">{meta}</span>
+                          </span>
                         </span>
                         <span className="text-slate-500">›</span>
                       </button>
