@@ -79,6 +79,13 @@ type BorrowedCategoryItem = {
   count: number
   percent: number
 }
+type LowStockItem = {
+  key: string
+  title: string
+  available: number
+  total: number
+  level: 'Low' | 'Out'
+}
 type QuickReportItem = {
   label: string
   icon: LucideIcon
@@ -124,6 +131,7 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
   const [recentBorrowedItems, setRecentBorrowedItems] = useState<RecentBorrowedItem[]>([])
   const [overdueReturnItems, setOverdueReturnItems] = useState<OverdueReturnItem[]>([])
   const [borrowedCategories, setBorrowedCategories] = useState<BorrowedCategoryItem[]>([])
+  const [lowStockItems, setLowStockItems] = useState<LowStockItem[]>([])
   const profileMenuRef = useRef<HTMLDivElement | null>(null)
   const notificationsRef = useRef<HTMLDivElement | null>(null)
   const openTransactionsPage = (tab: 'all' | 'borrowed' | 'returned' | 'overdue' = 'all') => {
@@ -257,6 +265,31 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
               count,
               percent: total > 0 ? (count / total) * 100 : 0,
             }))
+        )
+        const byTitle = new Map<string, { title: string; available: number; total: number }>()
+        for (const book of books) {
+          const key = `${book.title.trim().toLowerCase()}|${book.author.trim().toLowerCase()}`
+          const row = byTitle.get(key) ?? { title: book.title, available: 0, total: 0 }
+          row.total += 1
+          if (book.available) row.available += 1
+          byTitle.set(key, row)
+        }
+        setLowStockItems(
+          Array.from(byTitle.entries())
+            .map(([key, row]) => ({
+              key,
+              title: row.title,
+              available: row.available,
+              total: row.total,
+              level: row.available === 0 ? 'Out' : 'Low',
+            }))
+            .filter((row) => row.available <= 1)
+            .sort((a, b) => {
+              if (a.level !== b.level) return a.level === 'Out' ? -1 : 1
+              if (a.available !== b.available) return a.available - b.available
+              return b.total - a.total
+            })
+            .slice(0, 4)
         )
       } catch (error) {
         console.error('Failed to load dashboard stats:', error)
@@ -989,34 +1022,18 @@ const unreadNotifications = notifications.filter((item) => !item.isRead).length
                   <button type="button" onClick={() => setActivePage('Books')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
                 </div>
                 <div className="space-y-0 text-xs">
-                  <div className="flex items-start justify-between gap-3 border-b border-slate-100 rounded-md px-1 py-2 transition-colors duration-150 hover:bg-slate-50">
-                    <div className="min-w-0">
-                      <p className="flex items-center gap-2 text-sm font-semibold text-slate-800"><span className="h-2.5 w-2.5 rounded-full bg-amber-500" />The life-style of the Badjaos</p>
-                      <p className="pl-4 text-xs text-slate-500">Available: 1 / Total: 2</p>
+                  {lowStockItems.map((item, idx) => (
+                    <div key={item.key} className={`flex items-start justify-between gap-3 rounded-md px-1 py-2 transition-colors duration-150 hover:bg-slate-50 ${idx < lowStockItems.length - 1 ? 'border-b border-slate-100' : ''}`}>
+                      <div className="min-w-0">
+                        <p className="flex items-center gap-2 text-sm font-semibold text-slate-800"><span className={`h-2.5 w-2.5 rounded-full ${item.level === 'Out' ? 'bg-rose-500' : 'bg-amber-500'}`} />{item.title}</p>
+                        <p className="pl-4 text-xs text-slate-500">Available: {item.available} / Total: {item.total}</p>
+                      </div>
+                      <span className={`rounded-md px-2.5 py-1 text-xs font-semibold ${item.level === 'Out' ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'}`}>{item.level}</span>
                     </div>
-                    <span className="rounded-md bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-600">Low</span>
-                  </div>
-                  <div className="flex items-start justify-between gap-3 border-b border-slate-100 rounded-md px-1 py-2 transition-colors duration-150 hover:bg-slate-50">
-                    <div className="min-w-0">
-                      <p className="flex items-center gap-2 text-sm font-semibold text-slate-800"><span className="h-2.5 w-2.5 rounded-full bg-amber-500" />Badjaw</p>
-                      <p className="pl-4 text-xs text-slate-500">Available: 1 / Total: 2</p>
-                    </div>
-                    <span className="rounded-md bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-600">Low</span>
-                  </div>
-                  <div className="flex items-start justify-between gap-3 border-b border-slate-100 rounded-md px-1 py-2 transition-colors duration-150 hover:bg-slate-50">
-                    <div className="min-w-0">
-                      <p className="flex items-center gap-2 text-sm font-semibold text-slate-800"><span className="h-2.5 w-2.5 rounded-full bg-rose-500" />Sulu studies 1</p>
-                      <p className="pl-4 text-xs text-slate-500">Available: 0 / Total: 1</p>
-                    </div>
-                    <span className="rounded-md bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-600">Out</span>
-                  </div>
-                  <div className="flex items-start justify-between gap-3 rounded-md px-1 py-2 transition-colors duration-150 hover:bg-slate-50">
-                    <div className="min-w-0">
-                      <p className="flex items-center gap-2 text-sm font-semibold text-slate-800"><span className="h-2.5 w-2.5 rounded-full bg-amber-500" />The food and culture of the Tausug</p>
-                      <p className="pl-4 text-xs text-slate-500">Available: 1 / Total: 2</p>
-                    </div>
-                    <span className="rounded-md bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-600">Low</span>
-                  </div>
+                  ))}
+                  {lowStockItems.length === 0 ? (
+                    <p className="px-1 py-2 text-sm text-slate-500">No low stock or missing copies.</p>
+                  ) : null}
                 </div>
               </article>
               <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
