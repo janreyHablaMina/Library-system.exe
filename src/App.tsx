@@ -68,6 +68,12 @@ type RecentBorrowedItem = {
   memberName: string
   borrowDateLabel: string
 }
+type OverdueReturnItem = {
+  id: number
+  bookTitle: string
+  memberName: string
+  overdueLabel: string
+}
 type QuickReportItem = {
   label: string
   icon: LucideIcon
@@ -111,6 +117,7 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
     totalAuthors: 0,
   })
   const [recentBorrowedItems, setRecentBorrowedItems] = useState<RecentBorrowedItem[]>([])
+  const [overdueReturnItems, setOverdueReturnItems] = useState<OverdueReturnItem[]>([])
   const profileMenuRef = useRef<HTMLDivElement | null>(null)
   const notificationsRef = useRef<HTMLDivElement | null>(null)
   const openTransactionsPage = (tab: 'all' | 'borrowed' | 'returned' | 'overdue' = 'all') => {
@@ -205,6 +212,24 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
                 ? '-'
                 : new Date(tx.borrowDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
             }))
+        )
+        setOverdueReturnItems(
+          transactions
+            .filter((tx) => tx.status === 'Overdue')
+            .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+            .slice(0, 4)
+            .map((tx) => {
+              const due = new Date(tx.dueDate)
+              const days = Number.isNaN(due.getTime())
+                ? 0
+                : Math.max(0, Math.floor((Date.now() - due.getTime()) / (1000 * 60 * 60 * 24)))
+              return {
+                id: tx.id,
+                bookTitle: tx.bookTitle,
+                memberName: tx.memberName,
+                overdueLabel: `${days} day${days === 1 ? '' : 's'}`,
+              }
+            })
         )
       } catch (error) {
         console.error('Failed to load dashboard stats:', error)
@@ -839,26 +864,21 @@ const unreadNotifications = notifications.filter((item) => !item.isRead).length
                   <button type="button" onClick={() => openTransactionsPage('overdue')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
                 </div>
                 <div>
-                  <div className="grid grid-cols-1 gap-2 border-b border-slate-100 px-4 py-3 transition-colors duration-150 hover:bg-slate-50 md:grid-cols-[1.8fr_1fr_auto] md:items-center">
-                    <div><p className="text-sm leading-snug font-semibold text-slate-900">How to read a newspaper</p><p className="text-xs text-slate-500">Dale, Edgar</p></div>
-                    <p className="text-sm font-semibold text-slate-700">Maria Santos</p>
-                    <span className="w-fit rounded-md bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-600">5 days</span>
-                  </div>
-                  <div className="grid grid-cols-1 gap-2 border-b border-slate-100 px-4 py-3 transition-colors duration-150 hover:bg-slate-50 md:grid-cols-[1.8fr_1fr_auto] md:items-center">
-                    <div><p className="text-sm leading-snug font-semibold text-slate-900">Peryodismo sa Pilipino</p><p className="text-xs text-slate-500">Landicho, Domingo G.</p></div>
-                    <p className="text-sm font-semibold text-slate-700">Juan Dela Cruz</p>
-                    <span className="w-fit rounded-md bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-600">3 days</span>
-                  </div>
-                  <div className="grid grid-cols-1 gap-2 border-b border-slate-100 px-4 py-3 transition-colors duration-150 hover:bg-slate-50 md:grid-cols-[1.8fr_1fr_auto] md:items-center">
-                    <div><p className="text-sm leading-snug font-semibold text-slate-900">Ulat ng unang pambansang kumperensya sa sikolohiyang Pilipino</p><p className="text-xs text-slate-500">Pambansang Samahan sa Sikolohiyang Pilipino</p></div>
-                    <p className="text-sm font-semibold text-slate-700">Pedro Reyes</p>
-                    <span className="w-fit rounded-md bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-600">2 days</span>
-                  </div>
-                  <div className="grid grid-cols-1 gap-2 px-4 py-3 transition-colors duration-150 hover:bg-slate-50 md:grid-cols-[1.8fr_1fr_auto] md:items-center">
-                    <div><p className="text-sm leading-snug font-semibold text-slate-900">Sociology in the Philippine setting</p><p className="text-xs text-slate-500">Hunt, Chester L.</p></div>
-                    <p className="text-sm font-semibold text-slate-700">Ana Lim</p>
-                    <span className="w-fit rounded-md bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-600">1 day</span>
-                  </div>
+                  {overdueReturnItems.map((item, idx) => (
+                    <div
+                      key={item.id}
+                      className={`grid grid-cols-1 gap-2 px-4 py-3 transition-colors duration-150 hover:bg-slate-50 md:grid-cols-[1.8fr_1fr_auto] md:items-center ${
+                        idx < overdueReturnItems.length - 1 ? 'border-b border-slate-100' : ''
+                      }`}
+                    >
+                      <div><p className="text-sm leading-snug font-semibold text-slate-900">{item.bookTitle}</p><p className="text-xs text-slate-500">Overdue transaction</p></div>
+                      <p className="text-sm font-semibold text-slate-700">{item.memberName}</p>
+                      <span className="w-fit rounded-md bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-600">{item.overdueLabel}</span>
+                    </div>
+                  ))}
+                  {overdueReturnItems.length === 0 ? (
+                    <p className="px-4 py-3 text-sm text-slate-500">No overdue returns.</p>
+                  ) : null}
                 </div>
               </article>
 
