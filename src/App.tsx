@@ -86,6 +86,12 @@ type LowStockItem = {
   total: number
   level: 'Low' | 'Out'
 }
+type UpcomingDueItem = {
+  id: number
+  bookTitle: string
+  memberName: string
+  dueDateLabel: string
+}
 type QuickReportItem = {
   label: string
   icon: LucideIcon
@@ -132,6 +138,7 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
   const [overdueReturnItems, setOverdueReturnItems] = useState<OverdueReturnItem[]>([])
   const [borrowedCategories, setBorrowedCategories] = useState<BorrowedCategoryItem[]>([])
   const [lowStockItems, setLowStockItems] = useState<LowStockItem[]>([])
+  const [upcomingDueItems, setUpcomingDueItems] = useState<UpcomingDueItem[]>([])
   const profileMenuRef = useRef<HTMLDivElement | null>(null)
   const notificationsRef = useRef<HTMLDivElement | null>(null)
   const openTransactionsPage = (tab: 'all' | 'borrowed' | 'returned' | 'overdue' = 'all') => {
@@ -290,6 +297,20 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
               return b.total - a.total
             })
             .slice(0, 4)
+        )
+        setUpcomingDueItems(
+          transactions
+            .filter((tx) => tx.status === 'Borrowed')
+            .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+            .slice(0, 3)
+            .map((tx) => ({
+              id: tx.id,
+              bookTitle: tx.bookTitle,
+              memberName: tx.memberName,
+              dueDateLabel: Number.isNaN(new Date(tx.dueDate).getTime())
+                ? '-'
+                : new Date(tx.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+            }))
         )
       } catch (error) {
         console.error('Failed to load dashboard stats:', error)
@@ -1085,27 +1106,18 @@ const unreadNotifications = notifications.filter((item) => !item.isRead).length
                   <button type="button" onClick={() => openTransactionsPage('overdue')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
                 </div>
                 <div className="space-y-0">
-                  <div className="flex items-start justify-between gap-3 border-b border-slate-100 rounded-md px-2 py-2 transition-colors duration-150 hover:bg-slate-50">
-                    <div>
-                      <p className="text-sm font-semibold text-slate-800">Sosyolohiya sa Filipino</p>
-                      <p className="text-xs font-medium text-slate-500">Maria Santos</p>
+                  {upcomingDueItems.map((item, idx) => (
+                    <div key={item.id} className={`flex items-start justify-between gap-3 rounded-md px-2 py-2 transition-colors duration-150 hover:bg-slate-50 ${idx < upcomingDueItems.length - 1 ? 'border-b border-slate-100' : ''}`}>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-800">{item.bookTitle}</p>
+                        <p className="text-xs font-medium text-slate-500">{item.memberName}</p>
+                      </div>
+                      <span className="rounded-md bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-600">{item.dueDateLabel}</span>
                     </div>
-                    <span className="rounded-md bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-600">May 11, 2026</span>
-                  </div>
-                  <div className="flex items-start justify-between gap-3 border-b border-slate-100 rounded-md px-2 py-2 transition-colors duration-150 hover:bg-slate-50">
-                    <div>
-                      <p className="text-sm font-semibold text-slate-800">Filipino values today</p>
-                      <p className="text-xs font-medium text-slate-500">Juan Dela Cruz</p>
-                    </div>
-                    <span className="rounded-md bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-600">May 10, 2026</span>
-                  </div>
-                  <div className="flex items-start justify-between gap-3 rounded-md px-2 py-2 transition-colors duration-150 hover:bg-slate-50">
-                    <div>
-                      <p className="text-sm font-semibold text-slate-800">Understanding Philippine...</p>
-                      <p className="text-xs font-medium text-slate-500">Pedro Reyes</p>
-                    </div>
-                    <span className="rounded-md bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-600">May 9, 2026</span>
-                  </div>
+                  ))}
+                  {upcomingDueItems.length === 0 ? (
+                    <p className="px-2 py-2 text-sm text-slate-500">No upcoming due dates.</p>
+                  ) : null}
                 </div>
               </article>
             </section>
