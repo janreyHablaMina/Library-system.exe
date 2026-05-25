@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 import { ChevronDown, Download, Eye, Pencil, Plus, Search, Trash2, Users, X, BookOpen, Star, Calendar, Filter, ChevronLeft, ChevronRight, MoreHorizontal, AlertTriangle, Mail, Globe } from 'lucide-react'
 import { createAuthor, deleteAuthor, listAuthors, listBooks, type Author as DbAuthor, type Book } from '../lib/tauriApi'
@@ -40,17 +40,6 @@ const initialFormState: AuthorFormState = {
   status: 'Active',
   biography: '',
 }
-
-const authors: AuthorRow[] = [
-  { id: 1, name: 'J.K. Rowling', email: 'jk.rowling@example.com', nationality: 'British', books: 12, dob: 'July 31, 1965', status: 'Active', addedOn: 'May 6, 2026', addedTime: '10:15 AM', avatar: 'ðŸ‘©ðŸ¼' },
-  { id: 2, name: 'George R. R. Martin', email: 'grrmartin@example.com', nationality: 'American', books: 8, dob: 'September 20, 1948', status: 'Active', addedOn: 'May 5, 2026', addedTime: '02:30 PM', avatar: 'ðŸ‘¨ðŸ¼' },
-  { id: 3, name: 'Agatha Christie', email: 'agatha.christie@example.com', nationality: 'British', books: 66, dob: 'September 15, 1890', status: 'Active', addedOn: 'May 4, 2026', addedTime: '11:20 AM', avatar: 'ðŸ‘©ðŸ»' },
-  { id: 4, name: 'Stephen King', email: 'stephen.king@example.com', nationality: 'American', books: 61, dob: 'September 21, 1947', status: 'Active', addedOn: 'May 3, 2026', addedTime: '09:45 AM', avatar: 'ðŸ‘¨ðŸ»' },
-  { id: 5, name: 'Haruki Murakami', email: 'murakami@example.com', nationality: 'Japanese', books: 14, dob: 'January 12, 1949', status: 'Active', addedOn: 'May 2, 2026', addedTime: '03:10 PM', avatar: 'ðŸ‘¨ðŸ»' },
-  { id: 6, name: 'Dan Brown', email: 'dan.brown@example.com', nationality: 'American', books: 6, dob: 'June 22, 1964', status: 'Inactive', addedOn: 'May 1, 2026', addedTime: '01:05 PM', avatar: 'ðŸ‘¨ðŸ»' },
-  { id: 7, name: 'Jane Austen', email: 'jane.austen@example.com', nationality: 'British', books: 6, dob: 'December 16, 1775', status: 'Active', addedOn: 'Apr 30, 2026', addedTime: '04:25 PM', avatar: 'ðŸ‘©ðŸ¼' },
-  { id: 8, name: 'Paulo Coelho', email: 'paulo.coelho@example.com', nationality: 'Brazilian', books: 11, dob: 'August 24, 1947', status: 'Active', addedOn: 'Apr 29, 2026', addedTime: '10:50 AM', avatar: 'ðŸ‘¨ðŸ»' },
-]
 
 type AuthorActionsMenuProps = {
   isDarkMode: boolean
@@ -158,7 +147,7 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
   const [authorForm, setAuthorForm] = useState<AuthorFormState>(initialFormState)
   const [authorToEdit, setAuthorToEdit] = useState<AuthorRow | null>(null)
   const [authorToDelete, setAuthorToDelete] = useState<AuthorRow | null>(null)
-  const [authorsList, setAuthorsList] = useState<AuthorRow[]>(authors)
+  const [authorsList, setAuthorsList] = useState<AuthorRow[]>([])
   const [allBooksCount, setAllBooksCount] = useState(0)
   const [showToast, setShowToast] = useState<string | null>(null)
   const [authorPhotoPreview, setAuthorPhotoPreview] = useState<string | null>(null)
@@ -236,11 +225,10 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
         const [rows, books] = await Promise.all([listAuthors(500), listBooks(2000)])
         const booksCountByAuthorId = getBookCountsByAuthorId(rows, books)
         setAllBooksCount(books.length)
-        if (rows.length > 0) {
-          setAuthorsList(rows.map((row) => toAuthorRow(row, booksCountByAuthorId)))
-        }
+        setAuthorsList(rows.map((row) => toAuthorRow(row, booksCountByAuthorId)))
       } catch {
-        // Keep local seed list if DB is unavailable.
+        setAuthorsList([])
+        setAllBooksCount(0)
       }
     }
     void loadAuthors()
@@ -331,9 +319,7 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
         const [rows, books] = await Promise.all([listAuthors(500), listBooks(2000)])
         const booksCountByAuthorId = getBookCountsByAuthorId(rows, books)
         setAllBooksCount(books.length)
-        if (rows.length > 0) {
-          setAuthorsList(rows.map((row) => toAuthorRow(row, booksCountByAuthorId)))
-        }
+        setAuthorsList(rows.map((row) => toAuthorRow(row, booksCountByAuthorId)))
         setShowToast(`Successfully added ${authorForm.name} as a new author!`)
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to add author.'
@@ -751,7 +737,7 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
             : 'border-slate-200 bg-white text-slate-800'
         }`}>
           <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">
-            <span className="text-sm font-bold">âœ“</span>
+            <span className="text-sm font-bold">✓</span>
           </div>
           <p className="text-sm font-semibold">{showToast}</p>
         </div>
@@ -759,6 +745,8 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
     </div>
   )
 }
+
+
 
 
 

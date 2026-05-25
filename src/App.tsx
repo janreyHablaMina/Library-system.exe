@@ -20,7 +20,7 @@ import { AuthorDetailPage } from './pages/AuthorDetailPage'
 import { CategoriesPage } from './pages/CategoriesPage'
 import { ReservationsPage } from './pages/ReservationsPage'
 import { StaffPage } from './pages/StaffPage'
-import { createBook, expandMainWindow, getActiveSession, listNotifications, login as loginWithDb, logout as logoutFromDb, markAllNotificationsRead, markNotificationAsRead, restoreLoginWindow, syncNotifications, type NotificationItem } from './lib/tauriApi'
+import { createBook, expandMainWindow, getActiveSession, listAuthors, listBooks, listBorrowTransactions, listMembers, listNotifications, login as loginWithDb, logout as logoutFromDb, markAllNotificationsRead, markNotificationAsRead, restoreLoginWindow, syncNotifications, type NotificationItem } from './lib/tauriApi'
 
 
 type LoginFormState = {
@@ -54,58 +54,20 @@ type ActivePage = (typeof navItems)[number]['id'] | 'All Transactions'
 
 
 
-type ActivityItem = {
-  title: string
-  detail: string
-  date: string
-  time: string
-  icon: string
-  iconClass: string
+type DashboardStats = {
+  totalBooks: number
+  availableBooks: number
+  borrowedBooks: number
+  overdueBooks: number
+  totalMembers: number
+  totalAuthors: number
 }
-
-const todayActivityItems: ActivityItem[] = [
-  {
-    title: 'New book added',
-    detail: '"Philippine Constitution"',
-    date: 'May 6, 2026',
-    time: '1:02 PM',
-    icon: '📖',
-    iconClass: 'bg-emerald-50 text-emerald-700',
-  },
-  {
-    title: 'Book borrowed',
-    detail: 'by Maria Santos',
-    date: 'May 6, 2026',
-    time: '12:45 PM',
-    icon: '↩',
-    iconClass: 'bg-amber-50 text-amber-600',
-  },
-  {
-    title: 'Book returned',
-    detail: 'by Juan Dela Cruz',
-    date: 'May 6, 2026',
-    time: '11:30 AM',
-    icon: '⟳',
-    iconClass: 'bg-emerald-50 text-emerald-700',
-  },
-  {
-    title: 'New member added',
-    detail: 'Pedro Reyes',
-    date: 'May 6, 2026',
-    time: '10:15 AM',
-    icon: '👤',
-    iconClass: 'bg-emerald-50 text-emerald-700',
-  },
-  {
-    title: 'Book borrowed',
-    detail: 'by Ana Lim',
-    date: 'May 6, 2026',
-    time: '9:05 AM',
-    icon: '↩',
-    iconClass: 'bg-amber-50 text-amber-600',
-  },
-]
-
+type RecentBorrowedItem = {
+  id: number
+  bookTitle: string
+  memberName: string
+  borrowDateLabel: string
+}
 type QuickReportItem = {
   label: string
   icon: LucideIcon
@@ -140,6 +102,15 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
   const [transactionActiveTab, setTransactionActiveTab] = useState<'all' | 'borrowed' | 'returned' | 'overdue'>('all')
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
+    totalBooks: 0,
+    availableBooks: 0,
+    borrowedBooks: 0,
+    overdueBooks: 0,
+    totalMembers: 0,
+    totalAuthors: 0,
+  })
+  const [recentBorrowedItems, setRecentBorrowedItems] = useState<RecentBorrowedItem[]>([])
   const profileMenuRef = useRef<HTMLDivElement | null>(null)
   const notificationsRef = useRef<HTMLDivElement | null>(null)
   const openTransactionsPage = (tab: 'all' | 'borrowed' | 'returned' | 'overdue' = 'all') => {
@@ -201,7 +172,48 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
     void loadNotifications()
   }, [])
 
-  const unreadNotifications = notifications.filter((item) => !item.isRead).length
+    useEffect(() => {
+    if (activePage !== 'Dashboard') return
+
+    const loadDashboardStats = async () => {
+      try {
+        const [books, members, authors, transactions] = await Promise.all([
+          listBooks(5000),
+          listMembers(5000),
+          listAuthors(5000),
+          listBorrowTransactions(undefined, 5000),
+        ])
+
+        setDashboardStats({
+          totalBooks: books.length,
+          availableBooks: books.filter((book) => book.available).length,
+          borrowedBooks: transactions.filter((tx) => tx.status === 'Borrowed').length,
+          overdueBooks: transactions.filter((tx) => tx.status === 'Overdue').length,
+          totalMembers: members.length,
+          totalAuthors: authors.length,
+        })
+        setRecentBorrowedItems(
+          transactions
+            .filter((tx) => tx.status === 'Borrowed')
+            .sort((a, b) => new Date(b.borrowDate).getTime() - new Date(a.borrowDate).getTime())
+            .slice(0, 5)
+            .map((tx) => ({
+              id: tx.id,
+              bookTitle: tx.bookTitle,
+              memberName: tx.memberName,
+              borrowDateLabel: Number.isNaN(new Date(tx.borrowDate).getTime())
+                ? '-'
+                : new Date(tx.borrowDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+            }))
+        )
+      } catch (error) {
+        console.error('Failed to load dashboard stats:', error)
+      }
+    }
+
+    void loadDashboardStats()
+  }, [activePage, booksRefreshKey])
+const unreadNotifications = notifications.filter((item) => !item.isRead).length
 
   const formatNotificationTime = (isoDate: string) => {
     const dt = new Date(isoDate)
@@ -548,11 +560,10 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
                 </div>
                 <div ref={profileMenuRef} className={`relative hidden items-center gap-3 border-l pl-4 md:flex ${dashboardTheme.profileBorder}`}>
                   <div className="grid h-11 w-11 place-items-center rounded-full bg-gradient-to-br from-blue-100 to-violet-200 text-xl">👨🏻</div>
-                  <div>
-                    <p className={`text-sm font-bold ${dashboardTheme.profileName}`}>Admin User</p>
+                                  <div>
+                    <p className={`text-sm font-semibold ${dashboardTheme.profileName}`}>Admin User</p>
                     <p className={`text-xs ${dashboardTheme.profileRole}`}>Librarian</p>
-                  </div>
-                  <button
+                  </div><button
                     type="button"
                     onClick={() => setIsProfileOpen((value) => !value)}
                     className={`grid h-8 w-8 place-items-center rounded-lg ${dashboardTheme.iconBtn}`}
@@ -727,7 +738,7 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
                   <div className="rounded-lg bg-emerald-50 p-2"><BookOpen size={18} className="text-emerald-600" /></div>
                   <p className="text-sm font-semibold text-slate-600">Total Books</p>
                 </div>
-                <p className="text-3xl font-extrabold text-slate-900">6,619</p>
+                <p className="text-3xl font-extrabold text-slate-900">{dashboardStats.totalBooks.toLocaleString('en-US')}</p>
                 <p className="mt-1 text-sm font-semibold text-emerald-600">↑ 12 this month</p>
                 <svg viewBox="0 0 100 16" aria-hidden="true" className="mt-3 -mx-4 h-5 w-[calc(100%+2rem)]">
                   <path d="M0 10 L12 11 L22 8 L32 9 L42 7 L52 10 L62 8 L72 9 L82 6 L100 5" fill="none" stroke="#2563eb" strokeOpacity="0.22" strokeWidth="4.2" strokeLinecap="round" />
@@ -739,7 +750,7 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
                   <div className="rounded-lg bg-emerald-50 p-2"><Bookmark size={18} className="text-emerald-600" /></div>
                   <p className="text-sm font-semibold text-slate-600">Available Books</p>
                 </div>
-                <p className="text-3xl font-extrabold text-slate-900">5,547</p>
+                <p className="text-3xl font-extrabold text-slate-900">{dashboardStats.availableBooks.toLocaleString('en-US')}</p>
                 <p className="mt-1 text-sm font-semibold text-emerald-600">↑ 18 this month</p>
                 <svg viewBox="0 0 100 16" aria-hidden="true" className="mt-3 -mx-4 h-5 w-[calc(100%+2rem)]">
                   <path d="M0 9 L12 8 L22 10 L32 7 L42 9 L52 6 L62 8 L72 5 L82 7 L100 4" fill="none" stroke="#22c55e" strokeOpacity="0.22" strokeWidth="4.2" strokeLinecap="round" />
@@ -751,7 +762,7 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
                   <div className="rounded-lg bg-amber-50 p-2"><Undo2 size={18} className="text-amber-500" /></div>
                   <p className="text-sm font-semibold text-slate-600">Borrowed Books</p>
                 </div>
-                <p className="text-3xl font-extrabold text-slate-900">320</p>
+                <p className="text-3xl font-extrabold text-slate-900">{dashboardStats.borrowedBooks.toLocaleString('en-US')}</p>
                 <p className="mt-1 text-sm font-semibold text-amber-500">+ 8 this month</p>
                 <svg viewBox="0 0 100 16" aria-hidden="true" className="mt-3 -mx-4 h-5 w-[calc(100%+2rem)]">
                   <path d="M0 10 L12 9 L22 11 L32 8 L42 10 L52 7 L62 9 L72 8 L82 6 L100 7" fill="none" stroke="#f59e0b" strokeOpacity="0.22" strokeWidth="4.2" strokeLinecap="round" />
@@ -763,7 +774,7 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
                   <div className="rounded-lg bg-rose-50 p-2"><Clock3 size={18} className="text-rose-500" /></div>
                   <p className="text-sm font-semibold text-slate-600">Overdue Books</p>
                 </div>
-                <p className="text-3xl font-extrabold text-slate-900">45</p>
+                <p className="text-3xl font-extrabold text-slate-900">{dashboardStats.overdueBooks.toLocaleString('en-US')}</p>
                 <p className="mt-1 text-sm font-semibold text-rose-500">+ 5 from yesterday</p>
                 <svg viewBox="0 0 100 16" aria-hidden="true" className="mt-3 -mx-4 h-5 w-[calc(100%+2rem)]">
                   <path d="M0 11 L12 8 L22 10 L32 6 L42 9 L52 7 L62 10 L72 6 L82 8 L100 7" fill="none" stroke="#ef4444" strokeOpacity="0.22" strokeWidth="4.2" strokeLinecap="round" />
@@ -775,7 +786,7 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
                   <div className="rounded-lg bg-emerald-50 p-2"><Users size={18} className="text-emerald-600" /></div>
                   <p className="text-sm font-semibold text-slate-600">Total Members</p>
                 </div>
-                <p className="text-3xl font-extrabold text-slate-900">1,245</p>
+                <p className="text-3xl font-extrabold text-slate-900">{dashboardStats.totalMembers.toLocaleString('en-US')}</p>
                 <p className="mt-1 text-sm font-semibold text-emerald-600">↑ 25 this month</p>
                 <svg viewBox="0 0 100 16" aria-hidden="true" className="mt-3 -mx-4 h-5 w-[calc(100%+2rem)]">
                   <path d="M0 10 L12 7 L22 9 L32 6 L42 8 L52 7 L62 9 L72 6 L82 8 L100 5" fill="none" stroke="#8b5cf6" strokeOpacity="0.22" strokeWidth="4.2" strokeLinecap="round" />
@@ -785,9 +796,9 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
               <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-2 flex items-center gap-3">
                   <div className="rounded-lg bg-emerald-50 p-2"><BookPlus size={18} className="text-emerald-600" /></div>
-                  <p className="text-sm font-semibold text-slate-600">New Books</p>
+                  <p className="text-sm font-semibold text-slate-600">Total Authors</p>
                 </div>
-                <p className="text-3xl font-extrabold text-slate-900">12</p>
+                <p className="text-3xl font-extrabold text-slate-900">{dashboardStats.totalAuthors.toLocaleString('en-US')}</p>
                 <p className="mt-1 text-sm font-semibold text-emerald-600">↑ 12 this month</p>
                 <svg viewBox="0 0 100 16" aria-hidden="true" className="mt-3 -mx-4 h-5 w-[calc(100%+2rem)]">
                   <path d="M0 11 L12 9 L22 10 L32 8 L42 9 L52 7 L62 8 L72 6 L82 7 L100 5" fill="none" stroke="#14b8a6" strokeOpacity="0.22" strokeWidth="4.2" strokeLinecap="round" />
@@ -803,36 +814,22 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
                   <button type="button" onClick={() => openTransactionsPage('borrowed')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
                 </div>
                 <div>
-                  <div className="grid grid-cols-1 gap-2 border-b border-slate-100 px-4 py-2.5 transition-colors duration-150 hover:bg-slate-50 md:grid-cols-[40px_1.8fr_1fr_auto] md:items-center">
-                    <div className="grid h-11 w-8 place-items-center rounded-md border border-slate-200 bg-slate-50 text-base">📘</div>
-                    <div><p className="text-sm leading-snug font-semibold text-slate-900">Sosyolohiya sa Filipino</p><p className="text-xs text-slate-500">Kahayon, Alicia H.</p></div>
-                    <div><p className="text-[11px] font-semibold text-slate-500">Borrowed by</p><p className="text-sm font-semibold text-slate-700">Maria Santos</p></div>
-                    <span className="w-fit rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">May 6, 2026</span>
-                  </div>
-                  <div className="grid grid-cols-1 gap-2 border-b border-slate-100 px-4 py-2.5 transition-colors duration-150 hover:bg-slate-50 md:grid-cols-[40px_1.8fr_1fr_auto] md:items-center">
-                    <div className="grid h-11 w-8 place-items-center rounded-md border border-slate-200 bg-slate-50 text-base">📕</div>
-                    <div><p className="text-sm leading-snug font-semibold text-slate-900">Understanding Philippine social realities through the Filipino family</p><p className="text-xs text-slate-500">Ramirez, Mina M.</p></div>
-                    <div><p className="text-[11px] font-semibold text-slate-500">Borrowed by</p><p className="text-sm font-semibold text-slate-700">Juan Dela Cruz</p></div>
-                    <span className="w-fit rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">May 5, 2026</span>
-                  </div>
-                  <div className="grid grid-cols-1 gap-2 border-b border-slate-100 px-4 py-2.5 transition-colors duration-150 hover:bg-slate-50 md:grid-cols-[40px_1.8fr_1fr_auto] md:items-center">
-                    <div className="grid h-11 w-8 place-items-center rounded-md border border-slate-200 bg-slate-50 text-base">📗</div>
-                    <div><p className="text-sm leading-snug font-semibold text-slate-900">The conjugal dictatorship of Ferdinand and Imelda Marcos I</p><p className="text-xs text-slate-500">Mijares, Primitivo</p></div>
-                    <div><p className="text-[11px] font-semibold text-slate-500">Borrowed by</p><p className="text-sm font-semibold text-slate-700">Pedro Reyes</p></div>
-                    <span className="w-fit rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">May 4, 2026</span>
-                  </div>
-                  <div className="grid grid-cols-1 gap-2 border-b border-slate-100 px-4 py-2.5 transition-colors duration-150 hover:bg-slate-50 md:grid-cols-[40px_1.8fr_1fr_auto] md:items-center">
-                    <div className="grid h-11 w-8 place-items-center rounded-md border border-slate-200 bg-slate-50 text-base">📙</div>
-                    <div><p className="text-sm leading-snug font-semibold text-slate-900">Filipino values today</p><p className="text-xs text-slate-500">Timberza, Florentino T.</p></div>
-                    <div><p className="text-[11px] font-semibold text-slate-500">Borrowed by</p><p className="text-sm font-semibold text-slate-700">Ana Lim</p></div>
-                    <span className="w-fit rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">May 3, 2026</span>
-                  </div>
-                  <div className="grid grid-cols-1 gap-2 px-4 py-2.5 transition-colors duration-150 hover:bg-slate-50 md:grid-cols-[40px_1.8fr_1fr_auto] md:items-center">
-                    <div className="grid h-11 w-8 place-items-center rounded-md border border-slate-200 bg-slate-50 text-base">📓</div>
-                    <div><p className="text-sm leading-snug font-semibold text-slate-900">The fateful years</p><p className="text-xs text-slate-500">Agoncillo, Teodoro A.</p></div>
-                    <div><p className="text-[11px] font-semibold text-slate-500">Borrowed by</p><p className="text-sm font-semibold text-slate-700">Carlo Garcia</p></div>
-                    <span className="w-fit rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">May 2, 2026</span>
-                  </div>
+                  {recentBorrowedItems.map((item, idx) => (
+                    <div
+                      key={item.id}
+                      className={`grid grid-cols-1 gap-2 px-4 py-2.5 transition-colors duration-150 hover:bg-slate-50 md:grid-cols-[40px_1.8fr_1fr_auto] md:items-center ${
+                        idx < recentBorrowedItems.length - 1 ? 'border-b border-slate-100' : ''
+                      }`}
+                    >
+                      <div className="grid h-11 w-8 place-items-center rounded-md border border-slate-200 bg-slate-50 text-base">B</div>
+                      <div><p className="text-sm leading-snug font-semibold text-slate-900">{item.bookTitle}</p><p className="text-xs text-slate-500">Borrow transaction</p></div>
+                      <div><p className="text-[11px] font-semibold text-slate-500">Borrowed by</p><p className="text-sm font-semibold text-slate-700">{item.memberName}</p></div>
+                      <span className="w-fit rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">{item.borrowDateLabel}</span>
+                    </div>
+                  ))}
+                  {recentBorrowedItems.length === 0 ? (
+                    <p className="px-4 py-3 text-sm text-slate-500">No borrowed books yet.</p>
+                  ) : null}
                 </div>
               </article>
 
@@ -871,21 +868,29 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
                   <button type="button" onClick={() => setActivePage('Reports')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
                 </div>
                 <div className="space-y-0">
-                  {todayActivityItems.map((item, idx) => (
-                    <div
-                      key={`${item.title}-${item.time}`}
-                      className={`-mx-4 grid grid-cols-[44px_1fr_auto] items-start gap-2 px-4 py-2.5 transition-colors duration-150 hover:bg-slate-50 ${
-                        idx < todayActivityItems.length - 1 ? 'border-b border-slate-100' : ''
-                      }`}
-                    >
-                      <div className={`grid h-10 w-10 place-items-center rounded-full text-xl ${item.iconClass}`}>{item.icon}</div>
-                      <div>
-                        <p className="text-sm font-semibold text-slate-900">{item.title}</p>
-                        <p className="text-xs font-medium text-slate-500">{item.detail}</p>
+                  {notifications.slice(0, 6).map((item, idx) => {
+                    const dt = new Date(item.createdAt)
+                    const dateText = Number.isNaN(dt.getTime()) ? '-' : dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                    const timeText = Number.isNaN(dt.getTime()) ? '-' : dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+                    return (
+                      <div
+                        key={item.id}
+                        className={`-mx-4 grid grid-cols-[44px_1fr_auto] items-start gap-2 px-4 py-2.5 transition-colors duration-150 hover:bg-slate-50 ${
+                          idx < Math.min(6, notifications.length) - 1 ? 'border-b border-slate-100' : ''
+                        }`}
+                      >
+                        <div className="grid h-10 w-10 place-items-center rounded-full bg-emerald-50 text-sm font-bold text-emerald-700">N</div>
+                        <div>
+                          <p className="text-sm font-semibold text-slate-900">{item.title}</p>
+                          <p className="text-xs font-medium text-slate-500">{item.message}</p>
+                        </div>
+                        <p className="pt-1 text-right text-xs font-semibold text-slate-500">{dateText}<br />{timeText}</p>
                       </div>
-                      <p className="pt-1 text-right text-xs font-semibold text-slate-500">{item.date}<br />{item.time}</p>
-                    </div>
-                  ))}
+                    )
+                  })}
+                  {notifications.length === 0 ? (
+                    <p className="px-1 py-2 text-sm text-slate-500">No activity yet.</p>
+                  ) : null}
                 </div>
               </article>
             </section>
@@ -1245,6 +1250,14 @@ function App() {
 }
 
 export default App
+
+
+
+
+
+
+
+
 
 
 

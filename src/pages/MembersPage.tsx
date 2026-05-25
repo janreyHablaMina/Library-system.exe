@@ -50,19 +50,6 @@ const initialFormState: MemberFormState = {
 
 
 
-const members: MemberRow[] = [
-  { id: 1, name: 'Juan Dela Cruz', email: 'juan.delacruz@email.com', memberId: 'STU-2026-001', type: 'Student', department: 'BS Computer Science', yearOrRole: '3rd Year', contact: '0917 123 4567', borrowed: 2, status: 'Active', avatar: 'ðŸ‘¨ðŸ»' },
-  { id: 2, name: 'Maria Santos', email: 'maria.santos@email.com', memberId: 'STU-2026-002', type: 'Student', department: 'BS Education', yearOrRole: '2nd Year', contact: '0921 456 7890', borrowed: 1, status: 'Active', avatar: 'ðŸ‘©ðŸ»' },
-  { id: 3, name: 'Pedro Reyes', email: 'pedro.reyes@email.com', memberId: 'STU-2026-003', type: 'Student', department: 'BS Information Tech', yearOrRole: '4th Year', contact: '0999 555 1212', borrowed: 0, status: 'Active', avatar: 'ðŸ‘¨ðŸ½' },
-  { id: 4, name: 'Ana Lim', email: 'ana.lim@email.com', memberId: 'STU-2026-004', type: 'Student', department: 'BS Psychology', yearOrRole: '1st Year', contact: '0916 888 3434', borrowed: 3, status: 'Overdue', avatar: 'ðŸ‘©ðŸ½' },
-  { id: 5, name: 'Mark Anthony Villanueva', email: 'mark.villanueva@school.edu', memberId: 'TCH-2026-001', type: 'Teacher', department: 'Mathematics', yearOrRole: 'Department', contact: '0918 222 3344', borrowed: 1, status: 'Active', avatar: 'ðŸ‘¨ðŸ¾' },
-  { id: 6, name: 'Grace Mendoza', email: 'grace.mendoza@school.edu', memberId: 'TCH-2026-002', type: 'Teacher', department: 'English', yearOrRole: 'Department', contact: '0927 333 4455', borrowed: 0, status: 'Active', avatar: 'ðŸ‘©ðŸ¾' },
-  { id: 7, name: 'Rogelio Cruz', email: 'rogelio.cruz@school.edu', memberId: 'STA-2026-001', type: 'Staff', department: 'Library Staff', yearOrRole: 'Support', contact: '0915 777 8899', borrowed: 0, status: 'Active', avatar: 'ðŸ‘¨â€ðŸ’¼' },
-  { id: 8, name: 'Liza Montero', email: 'liza.montero@school.edu', memberId: 'STA-2026-002', type: 'Staff', department: 'Administrative', yearOrRole: 'Department', contact: '0933 444 5566', borrowed: 0, status: 'Active', avatar: 'ðŸ‘©â€ðŸ’¼' },
-  { id: 9, name: 'Visitor - Alex Tan', email: 'alextan@gmail.com', memberId: 'VIS-2026-001', type: 'Visitor', department: 'Visitor', yearOrRole: 'Guest', contact: '0906 123 7890', borrowed: 0, status: 'Inactive', avatar: 'ðŸ§‘ðŸ»' },
-  { id: 10, name: 'Visitor - Joy Reyes', email: 'joy.reyes@gmail.com', memberId: 'VIS-2026-002', type: 'Visitor', department: 'Visitor', yearOrRole: 'Guest', contact: '0912 654 0987', borrowed: 0, status: 'Inactive', avatar: 'ðŸ§‘ðŸ½' },
-]
-
 function getTypeClass(type: MemberType) {
   if (type === 'Student') return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
   if (type === 'Teacher') return 'bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300'
@@ -226,7 +213,7 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail }: MembersPageProps
   }, [showToast])
 
   // Dynamic States
-  const [memberList, setMemberList] = useState<MemberRow[]>(members)
+  const [memberList, setMemberList] = useState<MemberRow[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('All')
   const [selectedDept, setSelectedDept] = useState('All')
@@ -267,11 +254,9 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail }: MembersPageProps
     const loadMembers = async () => {
       try {
         const rows = await listMembers(500)
-        if (rows.length > 0) {
-          setMemberList(rows.map(toMemberRow))
-        }
+        setMemberList(rows.map(toMemberRow))
       } catch {
-        // Keep local mock list if DB is unavailable.
+        setMemberList([])
       }
     }
     void loadMembers()
@@ -406,9 +391,7 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail }: MembersPageProps
           status: memberForm.status || 'Active',
         })
         const rows = await listMembers(500)
-        if (rows.length > 0) {
-          setMemberList(rows.map(toMemberRow))
-        }
+        setMemberList(rows.map(toMemberRow))
         setShowToast(`Successfully added "${memberForm.fullName}"`)
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to add member.'
@@ -856,4 +839,5 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail }: MembersPageProps
     </div>
   )
 }
+
 
