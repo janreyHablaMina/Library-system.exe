@@ -74,6 +74,11 @@ type OverdueReturnItem = {
   memberName: string
   overdueLabel: string
 }
+type BorrowedCategoryItem = {
+  category: string
+  count: number
+  percent: number
+}
 type QuickReportItem = {
   label: string
   icon: LucideIcon
@@ -118,6 +123,7 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
   })
   const [recentBorrowedItems, setRecentBorrowedItems] = useState<RecentBorrowedItem[]>([])
   const [overdueReturnItems, setOverdueReturnItems] = useState<OverdueReturnItem[]>([])
+  const [borrowedCategories, setBorrowedCategories] = useState<BorrowedCategoryItem[]>([])
   const profileMenuRef = useRef<HTMLDivElement | null>(null)
   const notificationsRef = useRef<HTMLDivElement | null>(null)
   const openTransactionsPage = (tab: 'all' | 'borrowed' | 'returned' | 'overdue' = 'all') => {
@@ -230,6 +236,27 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
                 overdueLabel: `${days} day${days === 1 ? '' : 's'}`,
               }
             })
+        )
+        const categoryByBookId = new Map<number, string>()
+        for (const book of books) {
+          categoryByBookId.set(book.id, book.category?.trim() || 'Uncategorized')
+        }
+        const borrowedTx = transactions.filter((tx) => tx.status === 'Borrowed' || tx.status === 'Returned' || tx.status === 'Overdue')
+        const counts = new Map<string, number>()
+        for (const tx of borrowedTx) {
+          const category = categoryByBookId.get(tx.bookId) || 'Uncategorized'
+          counts.set(category, (counts.get(category) || 0) + 1)
+        }
+        const total = borrowedTx.length
+        setBorrowedCategories(
+          Array.from(counts.entries())
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5)
+            .map(([category, count]) => ({
+              category,
+              count,
+              percent: total > 0 ? (count / total) * 100 : 0,
+            }))
         )
       } catch (error) {
         console.error('Failed to load dashboard stats:', error)
@@ -922,18 +949,38 @@ const unreadNotifications = notifications.filter((item) => !item.isRead).length
                   <button type="button" onClick={() => setActivePage('Reports')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
                 </div>
                 <div className="flex min-h-[220px] items-center">
-                  <div className="grid w-full gap-4 md:grid-cols-[190px_1fr] md:items-center md:justify-center">
-                  <div className="mx-auto h-36 w-36 rounded-full bg-[conic-gradient(#10b981_0_35%,#34d399_35%_63%,#6ee7b7_63%_80%,#059669_80%_92%,#d1d5db_92%_100%)] p-7">
-                    <div className="h-full w-full rounded-full bg-white" />
-                  </div>
-                    <div className="mx-auto w-full max-w-[220px] space-y-2.5 text-xs text-slate-600">
-                    <p className="flex items-center justify-between gap-2"><span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />Sociology</span><span className="font-semibold text-slate-700">35% (452)</span></p>
-                    <p className="flex items-center justify-between gap-2"><span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />History</span><span className="font-semibold text-slate-700">28% (361)</span></p>
-                    <p className="flex items-center justify-between gap-2"><span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-emerald-300" />Education</span><span className="font-semibold text-slate-700">17% (219)</span></p>
-                    <p className="flex items-center justify-between gap-2"><span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-emerald-700/70" />Language</span><span className="font-semibold text-slate-700">12% (154)</span></p>
-                    <p className="flex items-center justify-between gap-2"><span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-slate-300" />Others</span><span className="font-semibold text-slate-700">8% (102)</span></p>
-                  </div>
-                </div>
+                  {(() => {
+                    const colors = ['#10b981', '#34d399', '#6ee7b7', '#059669', '#d1d5db']
+                    const total = borrowedCategories.reduce((sum, item) => sum + item.count, 0)
+                    let current = 0
+                    const source = borrowedCategories.length > 0 ? borrowedCategories : [{ category: 'No data', count: 1, percent: 100 }]
+                    const stops = source.map((item, idx) => {
+                      const pct = total > 0 ? (item.count / total) * 100 : item.percent
+                      const start = current
+                      const end = current + pct
+                      current = end
+                      return `${colors[idx % colors.length]} ${start.toFixed(1)}% ${end.toFixed(1)}%`
+                    })
+                    const bg = `conic-gradient(${stops.join(', ')})`
+                    return (
+                      <div className="grid w-full gap-4 md:grid-cols-[190px_1fr] md:items-center md:justify-center">
+                        <div className="mx-auto h-36 w-36 rounded-full p-7" style={{ background: bg }}>
+                          <div className="h-full w-full rounded-full bg-white" />
+                        </div>
+                        <div className="mx-auto w-full max-w-[220px] space-y-2.5 text-xs text-slate-600">
+                          {borrowedCategories.length > 0 ? borrowedCategories.map((item, idx) => (
+                            <p key={item.category} className="flex items-center justify-between gap-2">
+                              <span className="flex items-center gap-2">
+                                <span className="h-2.5 w-2.5 rounded-full" style={{ background: colors[idx % colors.length] }} />
+                                {item.category}
+                              </span>
+                              <span className="font-semibold text-slate-700">{item.percent.toFixed(1)}% ({item.count})</span>
+                            </p>
+                          )) : <p className="text-slate-500">No borrow data yet.</p>}
+                        </div>
+                      </div>
+                    )
+                  })()}
                 </div>
               </article>
               <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
