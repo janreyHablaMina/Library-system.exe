@@ -204,6 +204,7 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
   const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(null)
   const [profilePhotoName, setProfilePhotoName] = useState<string>('')
   const photoInputRef = useRef<HTMLInputElement>(null)
+  const lastAddModalTriggerRef = useRef<number | undefined>(openAddModalTrigger)
 
   // Auto-dismiss toast
   useEffect(() => {
@@ -265,6 +266,8 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
 
   useEffect(() => {
     if (!openAddModalTrigger) return
+    if (lastAddModalTriggerRef.current === openAddModalTrigger) return
+    lastAddModalTriggerRef.current = openAddModalTrigger
     setMemberToEdit(null)
     setMemberForm(initialFormState)
     setProfilePhotoPreview(null)

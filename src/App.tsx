@@ -212,18 +212,23 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
           listAuthors(5000),
           listBorrowTransactions(undefined, 5000),
         ])
+        const now = Date.now()
+        const activeBorrowTx = transactions.filter((tx) => tx.status === 'Active' || tx.status === 'Borrowed')
+        const overdueActiveTx = activeBorrowTx.filter((tx) => {
+          const due = new Date(tx.dueDate).getTime()
+          return !Number.isNaN(due) && due < now
+        })
 
         setDashboardStats({
           totalBooks: books.length,
           availableBooks: books.filter((book) => book.available).length,
-          borrowedBooks: transactions.filter((tx) => tx.status === 'Borrowed').length,
-          overdueBooks: transactions.filter((tx) => tx.status === 'Overdue').length,
+          borrowedBooks: activeBorrowTx.length,
+          overdueBooks: overdueActiveTx.length,
           totalMembers: members.length,
           totalAuthors: authors.length,
         })
         setRecentBorrowedItems(
-          transactions
-            .filter((tx) => tx.status === 'Borrowed')
+          activeBorrowTx
             .sort((a, b) => new Date(b.borrowDate).getTime() - new Date(a.borrowDate).getTime())
             .slice(0, 5)
             .map((tx) => ({
@@ -236,8 +241,7 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
             }))
         )
         setOverdueReturnItems(
-          transactions
-            .filter((tx) => tx.status === 'Overdue')
+          overdueActiveTx
             .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
             .slice(0, 4)
             .map((tx) => {
@@ -257,7 +261,7 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
         for (const book of books) {
           categoryByBookId.set(book.id, book.category?.trim() || 'Uncategorized')
         }
-        const borrowedTx = transactions.filter((tx) => tx.status === 'Borrowed' || tx.status === 'Returned' || tx.status === 'Overdue')
+        const borrowedTx = transactions.filter((tx) => tx.status === 'Active' || tx.status === 'Borrowed' || tx.status === 'Returned' || tx.status === 'Overdue')
         const counts = new Map<string, number>()
         for (const tx of borrowedTx) {
           const category = categoryByBookId.get(tx.bookId) || 'Uncategorized'
@@ -300,8 +304,7 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
             .slice(0, 4)
         )
         setUpcomingDueItems(
-          transactions
-            .filter((tx) => tx.status === 'Borrowed')
+          activeBorrowTx
             .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
             .slice(0, 3)
             .map((tx) => ({
