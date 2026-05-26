@@ -67,6 +67,14 @@ struct NotificationRow {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+struct SettingActivityRow {
+  key: String,
+  value: String,
+  updated_at: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct Member {
   id: i64,
   full_name: String,
@@ -571,6 +579,37 @@ fn get_setting(app: tauri::AppHandle, key: String) -> Result<Option<String>, Str
   } else {
     Ok(None)
   }
+}
+
+#[tauri::command]
+fn list_settings_activity(app: tauri::AppHandle, limit: Option<i64>) -> Result<Vec<SettingActivityRow>, String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  let max_rows = limit.unwrap_or(12).clamp(1, 100);
+  let mut stmt = conn
+    .prepare(
+      "
+      SELECT key, value, updated_at
+      FROM settings
+      ORDER BY datetime(updated_at) DESC, updated_at DESC
+      LIMIT ?1
+      ",
+    )
+    .map_err(|e| format!("prepare settings activity query failed: {e}"))?;
+
+  let rows = stmt
+    .query_map(params![max_rows], |row| {
+      Ok(SettingActivityRow {
+        key: row.get(0)?,
+        value: row.get(1)?,
+        updated_at: row.get(2)?,
+      })
+    })
+    .map_err(|e| format!("list settings activity failed: {e}"))?;
+
+  rows
+    .collect::<Result<Vec<_>, _>>()
+    .map_err(|e| format!("collect settings activity failed: {e}"))
 }
 
 #[tauri::command]
@@ -1870,6 +1909,7 @@ pub fn run() {
       init_db,
       set_setting,
       get_setting,
+      list_settings_activity,
       create_book,
       list_books,
       update_book,

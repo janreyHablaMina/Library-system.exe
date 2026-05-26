@@ -277,6 +277,16 @@ export async function getSetting(key: string): Promise<string | null> {
   return invoke<string | null>('get_setting', { key })
 }
 
+export type SettingActivityRow = {
+  key: string
+  value: string
+  updatedAt: string
+}
+
+export async function listSettingsActivity(limit?: number): Promise<SettingActivityRow[]> {
+  return invoke<SettingActivityRow[]>('list_settings_activity', { limit })
+}
+
 export async function createBook(payload: CreateBookPayload): Promise<number> {
   return invoke<number>('create_book', { payload })
 }

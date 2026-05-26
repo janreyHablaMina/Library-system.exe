@@ -49,6 +49,7 @@ import {
   UserX,
   Smartphone,
 } from 'lucide-react'
+import { listSettingsActivity, type SettingActivityRow } from '../lib/tauriApi'
 
 type SettingsPageProps = {
   isDarkMode: boolean
@@ -159,6 +160,7 @@ function UserRowActionsMenu({
 export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPageProps) {
   const activeMenu = activeTab
   const [notifications, setNotifications] = useState(true)
+  const [settingsActivity, setSettingsActivity] = useState<SettingActivityRow[]>([])
 
   const [showCurrentPass, setShowCurrentPass] = useState(false)
   const [showNewPass, setShowNewPass] = useState(false)
@@ -250,6 +252,23 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
     setIsUserModalOpen(false)
     setEditingUser(null)
   }
+
+  useEffect(() => {
+    let cancelled = false
+    const loadSettingsActivity = async () => {
+      try {
+        const rows = await listSettingsActivity(10)
+        if (!cancelled) setSettingsActivity(rows)
+      } catch (error) {
+        console.error('Failed to load settings activity:', error)
+        if (!cancelled) setSettingsActivity([])
+      }
+    }
+    loadSettingsActivity()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
 
   const renderUsersAndRoles = () => (
@@ -818,56 +837,69 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
   )
 
   const renderSettingsOverview = () => {
-    const recentActivity = [
-      {
-        id: 1,
-        title: 'General settings updated',
-        detail: 'Loan period, Fine per day changed',
-        module: 'General',
-        updatedBy: 'Admin User',
-        date: 'May 15, 2026',
-        time: '10:30 AM',
+    const formatActivityTime = (rawDate: string) => {
+      const parsed = new Date(rawDate)
+      if (Number.isNaN(parsed.getTime())) return { date: 'Unknown date', time: '--:--' }
+      return {
+        date: parsed.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }),
+        time: parsed.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }),
+      }
+    }
+
+    const mapModule = (key: string) => {
+      if (key.startsWith('general.')) return 'General'
+      if (key.startsWith('library.')) return 'Library Profile'
+      if (key.startsWith('security.')) return 'Account Security'
+      if (key.startsWith('users.')) return 'Users & Roles'
+      return 'General'
+    }
+
+    const activityMeta = (module: string) => {
+      if (module === 'Users & Roles') {
+        return {
+          icon: UsersRound,
+          color: 'text-violet-600 bg-violet-50 dark:bg-violet-500/10 dark:text-violet-400',
+          badge: 'bg-violet-50 text-violet-700 dark:bg-violet-500/15 dark:text-violet-400',
+        }
+      }
+      if (module === 'Account Security') {
+        return {
+          icon: ShieldCheck,
+          color: 'text-blue-600 bg-blue-50 dark:bg-blue-500/10 dark:text-blue-400',
+          badge: 'bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400',
+        }
+      }
+      if (module === 'Library Profile') {
+        return {
+          icon: Library,
+          color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400',
+          badge: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400',
+        }
+      }
+      return {
         icon: Settings2,
         color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400',
-        badge: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400'
-      },
-      {
-        id: 2,
-        title: 'New user added: Ana Lim',
-        detail: 'Assigned as Student Librarian',
-        module: 'Users & Roles',
-        updatedBy: 'Admin User',
-        date: 'May 14, 2026',
-        time: '04:22 PM',
-        icon: UsersRound,
-        color: 'text-violet-600 bg-violet-50 dark:bg-violet-500/10 dark:text-violet-400',
-        badge: 'bg-violet-50 text-violet-700 dark:bg-violet-500/15 dark:text-violet-400'
-      },
-      {
-        id: 3,
-        title: 'Password changed',
-        detail: 'Admin password was updated',
-        module: 'Account Security',
-        updatedBy: 'Admin User',
-        date: 'May 13, 2026',
-        time: '09:15 AM',
-        icon: ShieldCheck,
-        color: 'text-blue-600 bg-blue-50 dark:bg-blue-500/10 dark:text-blue-400',
-        badge: 'bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400'
-      },
-      {
-        id: 4,
-        title: 'Library information updated',
-        detail: 'Library address and contact information changed',
-        module: 'Library Profile',
-        updatedBy: 'Admin User',
-        date: 'May 12, 2026',
-        time: '02:45 PM',
-        icon: Library,
-        color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400',
-        badge: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400'
+        badge: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400',
       }
-    ]
+    }
+
+    const recentActivity = settingsActivity.map((item, index) => {
+      const module = mapModule(item.key)
+      const meta = activityMeta(module)
+      const when = formatActivityTime(item.updatedAt)
+      return {
+        id: `${item.key}-${index}`,
+        title: `${item.key.replaceAll('.', ' ')} updated`,
+        detail: item.value.length > 80 ? `${item.value.slice(0, 80)}...` : item.value,
+        module,
+        updatedBy: 'Admin User',
+        date: when.date,
+        time: when.time,
+        icon: meta.icon,
+        color: meta.color,
+        badge: meta.badge,
+      }
+    })
 
     return (
       <div className="space-y-12">
@@ -949,7 +981,13 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                 </tr>
               </thead>
               <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800/30' : 'divide-slate-100/50'}`}>
-                {recentActivity.map((item) => (
+                {recentActivity.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className={`px-6 py-8 text-center text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                      No settings activity yet.
+                    </td>
+                  </tr>
+                ) : recentActivity.map((item) => (
                   <tr key={item.id} className={`transition-colors duration-150 ${isDarkMode ? 'hover:bg-[#12244f]' : 'hover:bg-slate-50'}`}>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
