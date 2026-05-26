@@ -24,6 +24,7 @@ type MemberRow = {
 type MembersPageProps = {
   isDarkMode: boolean
   onOpenMemberDetail: (id: number) => void
+  openAddModalTrigger?: number
 }
 
 type MemberFormState = {
@@ -193,7 +194,7 @@ function MemberActionsMenu({ isDarkMode, onViewDetails, onEdit, onDelete }: Memb
   )
 }
 
-export function MembersPage({ isDarkMode, onOpenMemberDetail }: MembersPageProps) {
+export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigger }: MembersPageProps) {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [memberForm, setMemberForm] = useState<MemberFormState>(initialFormState)
@@ -261,6 +262,16 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail }: MembersPageProps
     }
     void loadMembers()
   }, [])
+
+  useEffect(() => {
+    if (!openAddModalTrigger) return
+    setMemberToEdit(null)
+    setMemberForm(initialFormState)
+    setProfilePhotoPreview(null)
+    setProfilePhotoName('')
+    if (photoInputRef.current) photoInputRef.current.value = ''
+    setIsAddModalOpen(true)
+  }, [openAddModalTrigger])
 
   // Filter members dynamically
   const filteredMembers = memberList.filter((member) => {

@@ -121,6 +121,7 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null)
   const [isMemberDetailOpen, setIsMemberDetailOpen] = useState(false)
   const [selectedMemberId, setSelectedMemberId] = useState<number | null>(null)
+  const [memberAddModalTrigger, setMemberAddModalTrigger] = useState(0)
   const [isAuthorDetailOpen, setIsAuthorDetailOpen] = useState(false)
   const [selectedAuthorId, setSelectedAuthorId] = useState<number | null>(null)
   const [transactionActiveTab, setTransactionActiveTab] = useState<'all' | 'borrowed' | 'returned' | 'overdue'>('all')
@@ -741,6 +742,7 @@ const unreadNotifications = notifications.filter((item) => !item.isRead).length
             ) : (
               <MembersPage
                 isDarkMode={isDarkMode}
+                openAddModalTrigger={memberAddModalTrigger}
                 onOpenMemberDetail={(memberId) => {
                   setSelectedMemberId(memberId)
                   setIsMemberDetailOpen(true)
@@ -818,19 +820,47 @@ const unreadNotifications = notifications.filter((item) => !item.isRead).length
                   <p className={`mt-1 text-sm ${dashboardTheme.greetingSub}`}>Here&apos;s what&apos;s happening in your library today.</p>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                  <button type="button" className={`flex min-w-[160px] items-center gap-3 rounded-xl border px-5 py-3 text-sm font-medium ${dashboardTheme.quickAction}`}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActivePage('Books')
+                      setIsAddBookOpen(true)
+                    }}
+                    className={`flex min-w-[160px] items-center gap-3 rounded-xl border px-5 py-3 text-sm font-medium ${dashboardTheme.quickAction}`}
+                  >
                     <BookPlus size={18} className="text-emerald-600" />
                     Add Book
                   </button>
-                  <button type="button" className={`flex min-w-[160px] items-center gap-3 rounded-xl border px-5 py-3 text-sm font-medium ${dashboardTheme.quickAction}`}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTransactionActiveTab('all')
+                      setActivePage('Transactions')
+                    }}
+                    className={`flex min-w-[160px] items-center gap-3 rounded-xl border px-5 py-3 text-sm font-medium ${dashboardTheme.quickAction}`}
+                  >
                     <ArrowRight size={18} className="text-emerald-600" />
                     Borrow Book
                   </button>
-                  <button type="button" className={`flex min-w-[160px] items-center gap-3 rounded-xl border px-5 py-3 text-sm font-medium ${dashboardTheme.quickAction}`}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTransactionActiveTab('all')
+                      setActivePage('Transactions')
+                    }}
+                    className={`flex min-w-[160px] items-center gap-3 rounded-xl border px-5 py-3 text-sm font-medium ${dashboardTheme.quickAction}`}
+                  >
                     <Undo2 size={18} className="text-amber-500" />
                     Return Book
                   </button>
-                  <button type="button" className={`flex min-w-[160px] items-center gap-3 rounded-xl border px-5 py-3 text-sm font-medium ${dashboardTheme.quickAction}`}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActivePage('Members')
+                      setMemberAddModalTrigger((value) => value + 1)
+                    }}
+                    className={`flex min-w-[160px] items-center gap-3 rounded-xl border px-5 py-3 text-sm font-medium ${dashboardTheme.quickAction}`}
+                  >
                     <UserPlus size={18} className="text-emerald-600" />
                     Add Member
                   </button>
