@@ -1712,6 +1712,72 @@ fn return_borrow_transaction(app: tauri::AppHandle, payload: ReturnBorrowPayload
 }
 
 #[tauri::command]
+fn list_book_borrow_transactions(
+  app: tauri::AppHandle,
+  book_id: i64,
+) -> Result<Vec<BorrowTransactionRow>, String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+
+  let query = "
+    SELECT
+      t.id,
+      t.member_id,
+      m.full_name,
+      m.member_id,
+      m.profile_photo_data,
+      t.book_id,
+      b.title,
+      b.cover_data,
+      t.borrow_date,
+      t.due_date,
+      t.return_date,
+      t.notes,
+      t.status,
+      t.fine,
+      t.created_at
+    FROM borrow_transactions t
+    INNER JOIN members m ON m.id = t.member_id
+    INNER JOIN books b ON b.id = t.book_id
+    WHERE t.book_id = ?1
+    ORDER BY t.id DESC
+  ";
+
+  let mut stmt = conn
+    .prepare(query)
+    .map_err(|e| format!("prepare list book borrow transactions failed: {e}"))?;
+
+  let rows = stmt
+    .query_map(params![book_id], |row| {
+      Ok(BorrowTransactionRow {
+        id: row.get(0)?,
+        member_id: row.get(1)?,
+        member_name: row.get(2)?,
+        member_code: row.get(3)?,
+        member_profile_photo_data: row.get(4)?,
+        book_id: row.get(5)?,
+        book_title: row.get(6)?,
+        book_cover_data: row.get(7)?,
+        borrow_date: row.get(8)?,
+        due_date: row.get(9)?,
+        return_date: row.get(10)?,
+        notes: row.get(11)?,
+        status: row.get(12)?,
+        fine: row.get(13)?,
+        created_at: row.get(14)?,
+      })
+    })
+    .map_err(|e| format!("query_map failed: {e}"))?;
+
+  let mut transactions = Vec::new();
+  for row_result in rows {
+    transactions.push(row_result.map_err(|e| format!("row error: {e}"))?);
+  }
+
+  Ok(transactions)
+}
+
+#[tauri::command]
 fn list_borrow_transactions(
   app: tauri::AppHandle,
   status: Option<String>,
@@ -2786,6 +2852,7 @@ pub fn run() {
       create_borrow_transaction,
       return_borrow_transaction,
       list_borrow_transactions,
+      list_book_borrow_transactions,
       create_reservation,
       list_reservations,
       update_reservation_status,

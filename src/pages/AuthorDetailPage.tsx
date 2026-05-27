@@ -335,12 +335,18 @@ export function AuthorDetailPage({ isDarkMode, onBack, authorId }: Props) {
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          <span className={`rounded-md px-2 py-1 text-xs font-semibold ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-700'}`}>Uncategorized</span>
+                          <span className={`text-sm ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Uncategorized</span>
                         </td>
                         <td className={`px-4 py-3 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{new Date(book.createdAt).getFullYear()}</td>
                         <td className="px-4 py-3">
-                          <span className={`rounded-md px-2 py-1 text-xs font-semibold ${book.available > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
-                            {book.available > 0 ? 'Available' : 'Unavailable'}
+                          <span className={`rounded-md px-2 py-1 text-xs font-semibold ${
+                            book.isArchived 
+                              ? (isDarkMode ? 'bg-slate-500/30 text-slate-100 border border-slate-500/30' : 'bg-slate-200 text-slate-800 border border-slate-300')
+                              : book.available > 0
+                              ? (isDarkMode ? 'bg-emerald-500/25 text-emerald-100 border border-emerald-500/30' : 'bg-emerald-100 text-emerald-800 border border-emerald-200')
+                              : (isDarkMode ? 'bg-rose-500/25 text-rose-100 border border-rose-500/30' : 'bg-rose-100 text-rose-800 border border-rose-200')
+                          }`}>
+                            {book.isArchived ? 'Archived' : book.available > 0 ? 'Available' : 'Unavailable'}
                           </span>
                         </td>
                         <td className={`px-4 py-3 font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>{book.available} / {book.totalCopies}</td>

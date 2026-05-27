@@ -48,32 +48,25 @@ const initialBooks: BookRow[] = [
   { id: 12, cover: '📕', title: 'Web Development with React and Node', isbn: '978-1-80181-234-5', author: 'Freeman, Adam', category: 'Technology', callNumber: '005.276 FRE', year: 2022, status: 'Available', available: '3 / 3' },
 ]
 
-function getStatusClass(status: BookStatus) {
-  if (status === 'Available') return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
-  if (status === 'Borrowed') return 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
-  if (status === 'Archived') return 'bg-slate-100 text-slate-700 dark:bg-slate-500/15 dark:text-slate-300'
-  return 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
-}
-
-function getCategoryClass(category: string) {
-  switch (category) {
-    case 'Social Sciences':
-      return 'bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300'
-    case 'History':
-      return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
-    case 'Education':
-      return 'bg-violet-50 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300'
-    case 'Law':
-      return 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
-    case 'Biography':
-      return 'bg-pink-50 text-pink-700 dark:bg-pink-500/15 dark:text-pink-300'
-    case 'Fiction':
-      return 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
-    case 'Technology':
-      return 'bg-cyan-50 text-cyan-700 dark:bg-cyan-500/15 dark:text-cyan-300'
-    default:
-      return 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+function getStatusClass(status: BookStatus, isDarkMode: boolean) {
+  if (status === 'Available') {
+    return isDarkMode
+      ? 'bg-emerald-500/25 text-emerald-100 border border-emerald-500/30'
+      : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
   }
+  if (status === 'Borrowed') {
+    return isDarkMode
+      ? 'bg-amber-500/25 text-amber-100 border border-amber-500/30'
+      : 'bg-amber-100 text-amber-800 border border-amber-200'
+  }
+  if (status === 'Archived') {
+    return isDarkMode
+      ? 'bg-slate-500/30 text-slate-100 border border-slate-500/30'
+      : 'bg-slate-200 text-slate-800 border border-slate-300'
+  }
+  return isDarkMode
+    ? 'bg-rose-500/25 text-rose-100 border border-rose-500/30'
+    : 'bg-rose-100 text-rose-800 border border-rose-200'
 }
 
 // ─── Book Actions Dropdown Menu ───────────────────────────────────────────────
@@ -608,10 +601,10 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
                       </td>
                       <td className={`px-3 py-3 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{book.author}</td>
                       <td className="px-3 py-3">
-                        <span className={`rounded-md px-2 py-1 text-xs font-semibold ${getCategoryClass(book.category)}`}>{book.category}</span>
+                        <span className={`text-sm ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{book.category}</span>
                       </td>
                       <td className="px-3 py-3">
-                        <span className={`rounded-md px-2 py-1 text-xs font-semibold ${getStatusClass(book.status)}`}>{book.status}</span>
+                        <span className={`rounded-md px-2 py-1 text-xs font-semibold ${getStatusClass(book.status, isDarkMode)}`}>{book.status}</span>
                       </td>
                       <td className={`px-3 py-3 font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{book.available}</td>
                       <td className="px-3 py-3 text-right">
@@ -657,7 +650,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
                       )}
                     </span>
                     <div className="flex flex-col items-end gap-2">
-                      <span className={`rounded-md px-2.5 py-1 text-xs font-semibold ${getStatusClass(book.status)}`}>{book.status}</span>
+                      <span className={`rounded-md px-2.5 py-1 text-xs font-semibold ${getStatusClass(book.status, isDarkMode)}`}>{book.status}</span>
                       <p className={`text-xs font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{book.available} copies</p>
                     </div>
                   </div>
@@ -670,7 +663,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
 
                   <div className="mt-auto pt-3">
                     <div className="flex items-center justify-between">
-                      <span className={`rounded-md px-2 py-1 text-xs font-semibold ${getCategoryClass(book.category)}`}>{book.category}</span>
+                      <span className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>{book.category}</span>
                       <BookActionsMenu isDarkMode={isDarkMode} onViewDetails={() => onOpenBookDetail(book)} onEdit={() => setBookToEdit(book)} onDelete={() => setBookToDelete(book)} onArchive={async () => {
                         try {
                           await updateBook({

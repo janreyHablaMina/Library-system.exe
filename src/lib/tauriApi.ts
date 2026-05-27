@@ -435,6 +435,10 @@ export async function listBorrowTransactions(status?: string, limit?: number): P
   return invoke<BorrowTransaction[]>('list_borrow_transactions', { status, limit })
 }
 
+export async function listBookBorrowTransactions(bookId: number): Promise<BorrowTransaction[]> {
+  return invoke<BorrowTransaction[]>('list_book_borrow_transactions', { bookId })
+}
+
 export async function createReservation(payload: CreateReservationPayload): Promise<number> {
   return invoke<number>('create_reservation', { payload })
 }
