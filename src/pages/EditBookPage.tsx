@@ -120,7 +120,9 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
   const [physicalDescription, setPhysicalDescription] = useState('xiv, 312 pages : illustrations ; 23 cm')
 
   // Inventory
-  const [numberOfCopies, setNumberOfCopies] = useState(book.available.split(' / ')[0] || '5')
+  const parts = book.available.split(' / ')
+  const [availableCopies, setAvailableCopies] = useState(parts[0] || '1')
+  const [numberOfCopies, setNumberOfCopies] = useState(parts[1] || '1')
   const [shelfCallNumber, setShelfCallNumber] = useState(book.callNumber)
   const [year, setYear] = useState(book.year)
 
@@ -161,7 +163,7 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
       cover: coverPreviewUrl || '📙', // Revert to emoji or custom color spine if no cover is set
       callNumber: catalogCallNumber,
       year: Number(year) || book.year,
-      available: `${numberOfCopies} / ${book.available.split(' / ')[1] || '7'}`
+      available: `${availableCopies} / ${numberOfCopies}`
     })
   }
 
@@ -480,13 +482,24 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
                       <label className={labelClass}>Number of Copies *</label>
                       <span className="text-slate-400 dark:text-slate-500 font-semibold normal-case">Available / Total</span>
                     </div>
-                    <input
-                      type="number"
-                      required
-                      value={numberOfCopies}
-                      onChange={(e) => setNumberOfCopies(e.target.value)}
-                      className={`mt-1.5 h-11 w-full rounded-xl border px-4 outline-none ${inputClass}`}
-                    />
+                    <div className="grid grid-cols-2 gap-4 mt-1.5">
+                      <input
+                        type="number"
+                        min="0"
+                        value={availableCopies}
+                        onChange={(e) => setAvailableCopies(e.target.value)}
+                        className={`h-12 w-full rounded-xl border px-4 text-sm outline-none focus:border-emerald-500 ${inputClass}`}
+                        placeholder="E.g., 5"
+                      />
+                      <input
+                        type="number"
+                        min="1"
+                        value={numberOfCopies}
+                        onChange={(e) => setNumberOfCopies(e.target.value)}
+                        className={`h-12 w-full rounded-xl border px-4 text-sm outline-none focus:border-emerald-500 ${inputClass}`}
+                        placeholder="E.g., 7"
+                      />
+                    </div>
                   </div>
 
                   <div className="grid gap-4 md:grid-cols-2">

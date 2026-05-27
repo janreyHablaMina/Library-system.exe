@@ -204,7 +204,7 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
   const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(null)
   const [profilePhotoName, setProfilePhotoName] = useState<string>('')
   const photoInputRef = useRef<HTMLInputElement>(null)
-  const lastAddModalTriggerRef = useRef<number | undefined>(openAddModalTrigger)
+  const lastAddModalTriggerRef = useRef<number>(0)
 
   // Auto-dismiss toast
   useEffect(() => {

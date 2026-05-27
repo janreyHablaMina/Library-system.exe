@@ -14,7 +14,9 @@ struct Book {
   category: Option<String>,
   isbn: Option<String>,
   cover_data: Option<String>,
-  available: bool,
+  available: i64,
+  total_copies: i64,
+  is_archived: bool,
   created_at: String,
 }
 
@@ -26,6 +28,7 @@ struct CreateBookPayload {
   category: Option<String>,
   isbn: Option<String>,
   cover_data: Option<String>,
+  total_copies: Option<i64>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -37,7 +40,9 @@ struct UpdateBookPayload {
   category: Option<String>,
   isbn: Option<String>,
   cover_data: Option<String>,
-  available: bool,
+  available: i64,
+  total_copies: i64,
+  is_archived: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -437,6 +442,8 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
         isbn TEXT,
         cover_data TEXT,
         available INTEGER NOT NULL DEFAULT 1,
+        total_copies INTEGER NOT NULL DEFAULT 1,
+        is_archived INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL
       );
       CREATE TABLE IF NOT EXISTS users (
@@ -572,6 +579,18 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
     let msg = e.to_string();
     if !msg.contains("duplicate column name") {
       return Err(format!("books category migration failed: {e}"));
+    }
+  }
+  if let Err(e) = conn.execute("ALTER TABLE books ADD COLUMN total_copies INTEGER NOT NULL DEFAULT 1", []) {
+    let msg = e.to_string();
+    if !msg.contains("duplicate column name") {
+      return Err(format!("books total_copies migration failed: {e}"));
+    }
+  }
+  if let Err(e) = conn.execute("ALTER TABLE books ADD COLUMN is_archived INTEGER NOT NULL DEFAULT 0", []) {
+    let msg = e.to_string();
+    if !msg.contains("duplicate column name") {
+      return Err(format!("books is_archived migration failed: {e}"));
     }
   }
   if let Err(e) = conn.execute("ALTER TABLE members ADD COLUMN profile_photo_data TEXT", []) {
@@ -1036,13 +1055,15 @@ fn create_book(app: tauri::AppHandle, payload: CreateBookPayload) -> Result<i64,
   init_schema(&conn)?;
   conn
     .execute(
-      "INSERT INTO books (title, author, category, isbn, cover_data, available, created_at) VALUES (?1, ?2, ?3, ?4, ?5, 1, ?6)",
+      "INSERT INTO books (title, author, category, isbn, cover_data, available, total_copies, is_archived, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 0, ?8)",
       params![
         payload.title,
         payload.author,
         payload.category.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
         payload.isbn,
         payload.cover_data,
+        payload.total_copies.unwrap_or(1),
+        payload.total_copies.unwrap_or(1),
         Utc::now().to_rfc3339()
       ],
     )
@@ -1059,7 +1080,7 @@ fn list_books(app: tauri::AppHandle, limit: Option<i64>) -> Result<Vec<Book>, St
   let max_rows = limit.unwrap_or(50).clamp(1, 500);
   let mut stmt = conn
     .prepare(
-      "SELECT id, title, author, category, isbn, cover_data, available, created_at
+      "SELECT id, title, author, category, isbn, cover_data, available, total_copies, is_archived, created_at
        FROM books
        ORDER BY id DESC
        LIMIT ?1",
@@ -1074,8 +1095,10 @@ fn list_books(app: tauri::AppHandle, limit: Option<i64>) -> Result<Vec<Book>, St
         category: row.get(3)?,
         isbn: row.get(4)?,
         cover_data: row.get(5)?,
-        available: row.get::<_, i64>(6)? == 1,
-        created_at: row.get(7)?,
+        available: row.get(6)?,
+        total_copies: row.get(7)?,
+        is_archived: row.get::<_, i64>(8)? == 1,
+        created_at: row.get(9)?,
       })
     })
     .map_err(|e| format!("list books failed: {e}"))?;
@@ -1093,7 +1116,7 @@ fn search_books(app: tauri::AppHandle, query: String, limit: Option<i64>) -> Res
   let like_pattern = format!("%{}%", query.trim());
   let mut stmt = conn
     .prepare(
-      "SELECT id, title, author, category, isbn, cover_data, available, created_at
+      "SELECT id, title, author, category, isbn, cover_data, available, total_copies, is_archived, created_at
        FROM books
        WHERE title LIKE ?1 OR author LIKE ?1
        ORDER BY id DESC
@@ -1109,8 +1132,10 @@ fn search_books(app: tauri::AppHandle, query: String, limit: Option<i64>) -> Res
         category: row.get(3)?,
         isbn: row.get(4)?,
         cover_data: row.get(5)?,
-        available: row.get::<_, i64>(6)? == 1,
-        created_at: row.get(7)?,
+        available: row.get(6)?,
+        total_copies: row.get(7)?,
+        is_archived: row.get::<_, i64>(8)? == 1,
+        created_at: row.get(9)?,
       })
     })
     .map_err(|e| format!("search books failed: {e}"))?;
@@ -1133,8 +1158,10 @@ fn update_book(app: tauri::AppHandle, payload: UpdateBookPayload) -> Result<(), 
           category = ?3,
           isbn = ?4,
           cover_data = ?5,
-          available = ?6
-      WHERE id = ?7
+          available = ?6,
+          total_copies = ?7,
+          is_archived = ?8
+      WHERE id = ?9
       ",
       params![
         payload.title,
@@ -1142,7 +1169,9 @@ fn update_book(app: tauri::AppHandle, payload: UpdateBookPayload) -> Result<(), 
         payload.category.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
         payload.isbn,
         payload.cover_data,
-        if payload.available { 1 } else { 0 },
+        payload.available,
+        payload.total_copies,
+        if payload.is_archived { 1 } else { 0 },
         payload.id
       ],
     )
@@ -1549,7 +1578,7 @@ fn create_borrow_transaction(app: tauri::AppHandle, payload: CreateBorrowPayload
     )
     .map_err(|e| format!("fetch book availability failed: {e}"))?;
 
-  if available != 1 {
+  if available < 1 {
     return Err("Book is not available for borrowing.".to_string());
   }
 
@@ -1574,7 +1603,7 @@ fn create_borrow_transaction(app: tauri::AppHandle, payload: CreateBorrowPayload
 
   tx
     .execute(
-      "UPDATE books SET available = 0 WHERE id = ?1",
+      "UPDATE books SET available = available - 1 WHERE id = ?1",
       params![payload.book_id],
     )
     .map_err(|e| format!("update book availability failed: {e}"))?;
@@ -1646,7 +1675,7 @@ fn return_borrow_transaction(app: tauri::AppHandle, payload: ReturnBorrowPayload
     .map_err(|e| format!("update borrow transaction failed: {e}"))?;
 
   tx
-    .execute("UPDATE books SET available = 1 WHERE id = ?1", params![book_id])
+    .execute("UPDATE books SET available = available + 1 WHERE id = ?1", params![book_id])
     .map_err(|e| format!("mark book available failed: {e}"))?;
 
   tx

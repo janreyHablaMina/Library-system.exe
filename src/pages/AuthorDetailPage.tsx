@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { AlertTriangle, ArrowLeft, BookMarked, BookOpen, Calendar, Clock, Copy, Eye, Feather, Globe, Mail, MoreHorizontal, Pencil, Quote, RefreshCw, Trash2, UserCheck } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, BookMarked, BookOpen, Calendar, Clock, Copy, Eye, Feather, Globe, Mail, MoreHorizontal, Pencil, Quote, RefreshCw, Trash2, UserCheck, Archive } from 'lucide-react'
 import { deleteBook, listAuthors, listBooks, updateBook, type Author as DbAuthor, type Book } from '../lib/tauriApi'
 import bookCover from '../assets/login.avif'
 import { EditBookPage } from './EditBookPage'
@@ -110,8 +110,9 @@ export function AuthorDetailPage({ isDarkMode, onBack, authorId }: Props) {
     category: 'Uncategorized',
     callNumber: '-',
     year: new Date(book.createdAt).getFullYear() || new Date().getFullYear(),
-    status: book.available ? 'Available' : 'Borrowed',
-    available: book.available ? '1 / 1' : '0 / 1',
+    status: book.isArchived ? 'Archived' : (book.available > 0 ? 'Available' : 'Borrowed'),
+    available: `${book.available} / ${book.totalCopies}`,
+    isArchived: book.isArchived,
   })
 
   const refreshWorks = async () => {
@@ -156,7 +157,8 @@ export function AuthorDetailPage({ isDarkMode, onBack, authorId }: Props) {
                 category: updatedBook.category === 'Uncategorized' ? null : updatedBook.category,
                 isbn: updatedBook.isbn === '-' ? null : updatedBook.isbn,
                 coverData: updatedBook.cover.startsWith('data:') ? updatedBook.cover : null,
-                available: updatedBook.status === 'Available',
+                available: Number(updatedBook.available.split(' / ')[0] || '0'),
+                totalCopies: Number(updatedBook.available.split(' / ')[1] || '1'),
               })
               await refreshWorks()
               setShowToast(`Successfully updated "${updatedBook.title}"`)
@@ -337,11 +339,11 @@ export function AuthorDetailPage({ isDarkMode, onBack, authorId }: Props) {
                         </td>
                         <td className={`px-4 py-3 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{new Date(book.createdAt).getFullYear()}</td>
                         <td className="px-4 py-3">
-                          <span className={`rounded-md px-2 py-1 text-xs font-semibold ${book.available ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
-                            {book.available ? 'Available' : 'Unavailable'}
+                          <span className={`rounded-md px-2 py-1 text-xs font-semibold ${book.available > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                            {book.available > 0 ? 'Available' : 'Unavailable'}
                           </span>
                         </td>
-                        <td className={`px-4 py-3 font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>{book.available ? '1 / 1' : '0 / 1'}</td>
+                        <td className={`px-4 py-3 font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>{book.available} / {book.totalCopies}</td>
                         <td className="px-4 py-3 text-right">
                           <BookActionsMenu
                             isDarkMode={isDarkMode}
@@ -353,6 +355,25 @@ export function AuthorDetailPage({ isDarkMode, onBack, authorId }: Props) {
                             }}
                             onDelete={() => {
                               setBookToDelete(toBookRow(book))
+                            }}
+                            onArchive={async () => {
+                              try {
+                                await updateBook({
+                                  id: book.id,
+                                  title: book.title,
+                                  author: book.author,
+                                  category: book.category === 'Uncategorized' ? null : book.category,
+                                  isbn: book.isbn === '-' ? null : book.isbn,
+                                  coverData: book.coverData,
+                                  available: book.available,
+                                  totalCopies: book.totalCopies,
+                                  isArchived: true,
+                                })
+                                await refreshWorks()
+                                setShowToast(`Successfully archived "${book.title}"`)
+                              } catch (error) {
+                                console.error('Failed to archive book:', error)
+                              }
                             }}
                           />
                         </td>
@@ -403,6 +424,7 @@ type BookRow = {
   year: number
   status: BookStatus
   available: string
+  isArchived?: boolean
 }
 
 type BookActionsMenuProps = {
@@ -410,9 +432,10 @@ type BookActionsMenuProps = {
   onViewDetails: () => void
   onEdit: () => void
   onDelete: () => void
+  onArchive: () => void
 }
 
-function BookActionsMenu({ isDarkMode, onViewDetails, onEdit, onDelete }: BookActionsMenuProps) {
+function BookActionsMenu({ isDarkMode, onViewDetails, onEdit, onDelete, onArchive }: BookActionsMenuProps) {
   const [open, setOpen] = useState(false)
   const [openUpward, setOpenUpward] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -506,6 +529,10 @@ function BookActionsMenu({ isDarkMode, onViewDetails, onEdit, onDelete }: BookAc
 
           <div className={`my-1.5 border-t ${divider}`} />
 
+          <button type="button" className={`${itemBase} ${itemNormal}`} role="menuitem" onClick={() => { setOpen(false); onArchive() }}>
+            <Archive size={15} className="shrink-0 text-amber-500" />
+            Archive Book
+          </button>
           <button type="button" className={`${itemBase} ${itemDanger}`} role="menuitem" onClick={() => { setOpen(false); onDelete() }}>
             <Trash2 size={15} className="shrink-0" />
             Delete Book

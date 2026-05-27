@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   BookOpen, Bookmark, ChevronDown, Clock3, Download, Filter, Grid2x2,
   List, MoreHorizontal, RotateCcw, Search, Upload,
-  Eye, Pencil, BookMarked, PlusCircle, RefreshCw, Trash2, AlertTriangle, X
+  Eye, Pencil, BookMarked, PlusCircle, RefreshCw, Trash2, AlertTriangle, X, Archive
 } from 'lucide-react'
 import { EditBookPage } from './EditBookPage'
 import { deleteBook, listBooks, updateBook } from '../lib/tauriApi'
@@ -20,6 +20,7 @@ type BookRow = {
   year: number
   status: BookStatus
   available: string
+  isArchived?: boolean
 }
 
 export type BookDetailData = BookRow
@@ -81,9 +82,10 @@ type BookActionsMenuProps = {
   onViewDetails: () => void
   onEdit: () => void
   onDelete: () => void
+  onArchive: () => void
 }
 
-function BookActionsMenu({ isDarkMode, onViewDetails, onEdit, onDelete }: BookActionsMenuProps) {
+function BookActionsMenu({ isDarkMode, onViewDetails, onEdit, onDelete, onArchive }: BookActionsMenuProps) {
   const [open, setOpen] = useState(false)
   const [openUpward, setOpenUpward] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -197,6 +199,15 @@ function BookActionsMenu({ isDarkMode, onViewDetails, onEdit, onDelete }: BookAc
           {/* Group 3 — Danger */}
           <button
             type="button"
+            className={`${itemBase} ${itemNormal}`}
+            role="menuitem"
+            onClick={() => { setOpen(false); onArchive(); }}
+          >
+            <Archive size={15} className="shrink-0 text-amber-500" />
+            Archive Book
+          </button>
+          <button
+            type="button"
             className={`${itemBase} ${itemDanger}`}
             role="menuitem"
             onClick={() => { setOpen(false); onDelete(); }}
@@ -234,8 +245,9 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
           category: row.category ?? 'Uncategorized',
           callNumber: '-',
           year: new Date(row.createdAt).getFullYear() || new Date().getFullYear(),
-          status: row.available ? 'Available' : 'Borrowed',
-          available: row.available ? '1 / 1' : '0 / 1',
+          status: row.isArchived ? 'Archived' : (row.available > 0 ? 'Available' : 'Borrowed'),
+          available: `${row.available} / ${row.totalCopies}`,
+          isArchived: row.isArchived,
         }))
         setBookList(mapped.length > 0 ? mapped : [])
       } catch (error) {
@@ -250,14 +262,25 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [selectedAuthor, setSelectedAuthor] = useState('All')
-  const [selectedStatus, setSelectedStatus] = useState('All')
-  const [selectedYear, setSelectedYear] = useState('All')
+
+  // Dynamically compute unique categories and authors
+  const uniqueCategories = useMemo(() => {
+    return Array.from(new Set(bookList.map(b => b.category))).filter(Boolean).sort()
+  }, [bookList])
+
+  const uniqueAuthors = useMemo(() => {
+    return Array.from(new Set(bookList.map(b => b.author))).filter(Boolean).sort()
+  }, [bookList])
   const [activeStatTab, setActiveStatTab] = useState<'All Books' | 'Available' | 'Borrowed' | 'Overdue' | 'Archived'>('All Books')
 
-  // Dynamically pull all unique authors from your book list
-  const uniqueAuthors = useMemo(() => {
-    return Array.from(new Set(bookList.map(b => b.author))).sort()
-  }, [bookList])
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, selectedCategory, selectedAuthor, activeStatTab])
+
 
   // Filter dynamic helper
   const filteredBooks = bookList.filter((book) => {
@@ -266,21 +289,15 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
     if (activeStatTab === 'Borrowed' && book.status !== 'Borrowed') return false
     if (activeStatTab === 'Overdue' && book.status !== 'Overdue') return false
     if (activeStatTab === 'Archived' && book.status !== 'Archived') return false
-    if (activeStatTab === 'All Books' && book.status === 'Archived' && selectedStatus !== 'Archived') {
+    if (activeStatTab === 'All Books' && book.status === 'Archived') {
       return false
     }
-
-    // 2. Status Dropdown
-    if (selectedStatus !== 'All' && book.status !== selectedStatus) return false
 
     // 3. Category Dropdown
     if (selectedCategory !== 'All' && book.category !== selectedCategory) return false
 
     // 4. Author Dropdown
     if (selectedAuthor !== 'All' && book.author !== selectedAuthor) return false
-
-    // 5. Year Dropdown
-    if (selectedYear !== 'All' && String(book.year) !== selectedYear) return false
 
     // 6. Search input
     if (searchTerm.trim() !== '') {
@@ -295,13 +312,14 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
     return true
   })
 
+  const totalPages = Math.ceil(filteredBooks.length / itemsPerPage)
+  const paginatedBooks = filteredBooks.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+
   // Reset Filters
   const handleResetFilters = () => {
     setSearchTerm('')
     setSelectedCategory('All')
     setSelectedAuthor('All')
-    setSelectedStatus('All')
-    setSelectedYear('All')
     setActiveStatTab('All Books')
   }
 
@@ -353,7 +371,9 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
                 category: normalizedBook.category === 'Uncategorized' ? null : normalizedBook.category,
                 isbn: normalizedBook.isbn === '-' ? null : normalizedBook.isbn,
                 coverData: normalizedBook.cover.startsWith('data:') ? normalizedBook.cover : null,
-                available: normalizedBook.status === 'Available',
+                available: Number(normalizedBook.available.split(' / ')[0] || '0'),
+                totalCopies: Number(normalizedBook.available.split(' / ')[1] || '1'),
+                isArchived: normalizedBook.status === 'Archived',
               })
             } catch (error) {
               console.error('Failed to update book:', error)
@@ -499,12 +519,12 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
               <select 
                 value={selectedCategory} 
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className={`h-11 appearance-none rounded-xl border py-2 pl-3 pr-9 text-sm outline-none min-w-[150px] ${
+                className={`h-11 appearance-none rounded-xl border py-2 pl-3 pr-9 text-sm outline-none min-w-[150px] max-w-[200px] truncate ${
                   isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'
                 }`}
               >
                 <option value="All">Category: All</option>
-                {['Social Sciences', 'History', 'Education', 'Law', 'Biography', 'Library Science', 'Fiction', 'Technology'].map(cat => (
+                {uniqueCategories.map(cat => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
               </select>
@@ -527,42 +547,6 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
               </select>
               <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
             </div>
-
-            {/* Status Select */}
-            <div className="relative">
-              <select 
-                value={selectedStatus} 
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                className={`h-11 appearance-none rounded-xl border py-2 pl-3 pr-9 text-sm outline-none min-w-[140px] ${
-                  isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'
-                }`}
-              >
-                <option value="All">Status: All</option>
-                {['Available', 'Borrowed', 'Overdue', 'Archived'].map(st => (
-                  <option key={st} value={st}>{st}</option>
-                ))}
-              </select>
-              <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
-            </div>
-
-
-            {/* Year Select */}
-            <div className="relative">
-              <select 
-                value={selectedYear} 
-                onChange={(e) => setSelectedYear(e.target.value)}
-                className={`h-11 appearance-none rounded-xl border py-2 pl-3 pr-9 text-sm outline-none min-w-[120px] ${
-                  isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'
-                }`}
-              >
-                <option value="All">Year: All</option>
-                {['2022', '2021', '2020', '2019', '2018', '2017', '2016', '2015'].map(yr => (
-                  <option key={yr} value={yr}>{yr}</option>
-                ))}
-              </select>
-              <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
-            </div>
-
             <button 
               type="button" 
               onClick={handleResetFilters}
@@ -598,15 +582,13 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
                     <th className="px-3 py-3 font-semibold">Book</th>
                     <th className="px-3 py-3 font-semibold">Author</th>
                     <th className="px-3 py-3 font-semibold">Category</th>
-                    <th className="px-3 py-3 font-semibold">Call Number</th>
-                    <th className="px-3 py-3 font-semibold">Year</th>
                     <th className="px-3 py-3 font-semibold">Status</th>
                     <th className="px-3 py-3 font-semibold">Available Copies</th>
                     <th className="px-3 py-3 font-semibold text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredBooks.map((book) => (
+                  {paginatedBooks.map((book) => (
                     <tr key={book.id} className={`border-t transition-colors duration-150 ${isDarkMode ? 'border-slate-700 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}>
                       <td className="px-4 py-3 align-top"><input type="checkbox" /></td>
                       <td className="px-3 py-3">
@@ -628,14 +610,30 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
                       <td className="px-3 py-3">
                         <span className={`rounded-md px-2 py-1 text-xs font-semibold ${getCategoryClass(book.category)}`}>{book.category}</span>
                       </td>
-                      <td className={`px-3 py-3 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>{book.callNumber}</td>
-                      <td className={`px-3 py-3 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>{book.year}</td>
                       <td className="px-3 py-3">
                         <span className={`rounded-md px-2 py-1 text-xs font-semibold ${getStatusClass(book.status)}`}>{book.status}</span>
                       </td>
                       <td className={`px-3 py-3 font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{book.available}</td>
                       <td className="px-3 py-3 text-right">
-                        <BookActionsMenu isDarkMode={isDarkMode} onViewDetails={() => onOpenBookDetail(book)} onEdit={() => setBookToEdit(book)} onDelete={() => setBookToDelete(book)} />
+                        <BookActionsMenu isDarkMode={isDarkMode} onViewDetails={() => onOpenBookDetail(book)} onEdit={() => setBookToEdit(book)} onDelete={() => setBookToDelete(book)} onArchive={async () => {
+                          try {
+                            await updateBook({
+                              id: book.id,
+                              title: book.title,
+                              author: book.author,
+                              category: book.category === 'Uncategorized' ? null : book.category,
+                              isbn: book.isbn === '-' ? null : book.isbn,
+                              coverData: book.cover.startsWith('data:') ? book.cover : null,
+                              available: Number(book.available.split(' / ')[0] || '0'),
+                              totalCopies: Number(book.available.split(' / ')[1] || '1'),
+                              isArchived: true,
+                            })
+                            setBookList(prev => prev.map(b => b.id === book.id ? { ...b, status: 'Archived', isArchived: true } : b))
+                            setShowToast(`Successfully archived "${book.title}"`)
+                          } catch (error) {
+                            console.error('Failed to archive book:', error)
+                          }
+                        }} />
                       </td>
                     </tr>
                   ))}
@@ -644,7 +642,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
             </div>
           ) : (
             <div className={`grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-6 ${isDarkMode ? 'bg-[#0b1738]' : 'bg-white'}`}>
-              {filteredBooks.map((book) => (
+              {paginatedBooks.map((book) => (
                 <article key={book.id} className={`flex h-full flex-col rounded-xl border p-3 ${
                   isDarkMode
                     ? 'border-slate-700 bg-[#0b1738]'
@@ -673,7 +671,25 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
                   <div className="mt-auto pt-3">
                     <div className="flex items-center justify-between">
                       <span className={`rounded-md px-2 py-1 text-xs font-semibold ${getCategoryClass(book.category)}`}>{book.category}</span>
-                      <BookActionsMenu isDarkMode={isDarkMode} onViewDetails={() => onOpenBookDetail(book)} onEdit={() => setBookToEdit(book)} onDelete={() => setBookToDelete(book)} />
+                      <BookActionsMenu isDarkMode={isDarkMode} onViewDetails={() => onOpenBookDetail(book)} onEdit={() => setBookToEdit(book)} onDelete={() => setBookToDelete(book)} onArchive={async () => {
+                        try {
+                          await updateBook({
+                            id: book.id,
+                            title: book.title,
+                            author: book.author,
+                            category: book.category === 'Uncategorized' ? null : book.category,
+                            isbn: book.isbn === '-' ? null : book.isbn,
+                            coverData: book.cover.startsWith('data:') ? book.cover : null,
+                            available: Number(book.available.split(' / ')[0] || '0'),
+                            totalCopies: Number(book.available.split(' / ')[1] || '1'),
+                            isArchived: true,
+                          })
+                          setBookList(prev => prev.map(b => b.id === book.id ? { ...b, status: 'Archived', isArchived: true } : b))
+                          setShowToast(`Successfully archived "${book.title}"`)
+                        } catch (error) {
+                          console.error('Failed to archive book:', error)
+                        }
+                      }} />
                     </div>
                   </div>
                 </article>
@@ -682,16 +698,36 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
           )}
 
           <div className={`flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm rounded-b-xl ${isDarkMode ? 'border-slate-700 text-slate-300' : 'border-slate-200 text-slate-600'}`}>
-            <p>Showing 1 to {filteredBooks.length} of {filteredBooks.length} books</p>
+            <p>Showing {filteredBooks.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to {Math.min(currentPage * itemsPerPage, filteredBooks.length)} of {filteredBooks.length} books</p>
             <div className="flex items-center gap-2">
-              <select className={`h-9 rounded-lg border px-3 text-sm ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
-                <option>10 per page</option>
-              </select>
-              <button type="button" className={`grid h-9 w-9 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}>{'<'}</button>
-              <button type="button" className="grid h-9 w-9 place-items-center rounded-lg bg-emerald-50 font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">1</button>
-              <button type="button" className={`grid h-9 w-9 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}>2</button>
-              <button type="button" className={`grid h-9 w-9 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}>3</button>
-              <button type="button" className={`grid h-9 w-9 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}>{'>'}</button>
+              <button 
+                type="button" 
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className={`grid h-9 w-9 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 hover:bg-slate-800 disabled:opacity-50' : 'border-slate-200 hover:bg-slate-50 disabled:opacity-50'}`}
+              >{'<'}</button>
+              
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <button 
+                    key={page}
+                    type="button" 
+                    onClick={() => setCurrentPage(page)}
+                    className={page === currentPage 
+                      ? "grid h-9 w-9 place-items-center rounded-lg bg-emerald-50 font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" 
+                      : `grid h-9 w-9 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+
+              <button 
+                type="button" 
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages || totalPages === 0}
+                className={`grid h-9 w-9 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 hover:bg-slate-800 disabled:opacity-50' : 'border-slate-200 hover:bg-slate-50 disabled:opacity-50'}`}
+              >{'>'}</button>
             </div>
           </div>
         </div>

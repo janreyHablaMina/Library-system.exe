@@ -7,7 +7,9 @@ export type Book = {
   category: string | null
   isbn: string | null
   coverData: string | null
-  available: boolean
+  available: number
+  totalCopies: number
+  isArchived: boolean
   createdAt: string
 }
 
@@ -17,6 +19,7 @@ export type CreateBookPayload = {
   category?: string | null
   isbn?: string | null
   coverData?: string | null
+  totalCopies?: number
 }
 
 export type UpdateBookPayload = {
@@ -26,7 +29,9 @@ export type UpdateBookPayload = {
   category?: string | null
   isbn?: string | null
   coverData?: string | null
-  available: boolean
+  available: number
+  totalCopies: number
+  isArchived: boolean
 }
 
 export type LoginPayload = {

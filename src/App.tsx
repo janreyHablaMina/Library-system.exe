@@ -231,7 +231,7 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
   }
   const openTransactionsPage = (tab: 'all' | 'borrowed' | 'returned' | 'overdue' = 'all') => {
     setTransactionActiveTab(tab)
-    setActivePage('Transactions')
+    setActivePage('All Transactions')
   }
 
   useEffect(() => {
@@ -554,6 +554,7 @@ const greetingName = formatDisplayName(activeUsername)
       category: data.category.trim() || null,
       isbn: data.isbn.trim() || null,
       coverData,
+      totalCopies: data.numberOfCopies,
     })
     setBooksRefreshKey((value) => value + 1)
     setBooksToastMessage(`Successfully added "${data.title.trim()}"`)
@@ -1221,7 +1222,9 @@ const greetingName = formatDisplayName(activeUsername)
               </div>
             </section>
 
-            <section className="grid gap-3 px-5 pb-3 sm:grid-cols-2 xl:grid-cols-6 2xl:grid-cols-9">
+            <section className="px-5 pb-2">
+              <h3 className={`text-sm font-bold uppercase tracking-wider ${dashboardTheme.cardTitle} mb-3`}>Library Overview</h3>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
               <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-2 flex items-center gap-3">
                   <div className="rounded-lg bg-emerald-50 p-2"><BookOpen size={18} className="text-emerald-600" /></div>
@@ -1294,30 +1297,37 @@ const greetingName = formatDisplayName(activeUsername)
                   <path d="M0 11 L12 9 L22 10 L32 8 L42 9 L52 7 L62 8 L72 6 L82 7 L100 5" fill="none" stroke="#14b8a6" strokeWidth="1.8" strokeLinecap="round" />
                 </svg>
               </article>
-              <button type="button" onClick={() => { setActivePage('Settings'); setActiveSettingsTab('Email Logs') }} className={`rounded-xl border p-4 text-left shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
-                <div className="mb-2 flex items-center gap-3">
-                  <div className="rounded-lg bg-sky-50 p-2"><Mail size={18} className="text-sky-600" /></div>
-                  <p className="text-sm font-semibold text-slate-600">Emails Sent Today</p>
-                </div>
-                <p className="text-3xl font-extrabold text-slate-900">{dashboardStats.emailsSentToday.toLocaleString('en-US')}</p>
-                <p className="mt-1 text-sm font-semibold text-sky-600">View email logs</p>
-              </button>
-              <button type="button" onClick={() => { setActivePage('Settings'); setActiveSettingsTab('Email Logs') }} className={`rounded-xl border p-4 text-left shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
-                <div className="mb-2 flex items-center gap-3">
-                  <div className="rounded-lg bg-rose-50 p-2"><AlertTriangle size={18} className="text-rose-500" /></div>
-                  <p className="text-sm font-semibold text-slate-600">Failed Emails</p>
-                </div>
-                <p className="text-3xl font-extrabold text-slate-900">{dashboardStats.failedEmails.toLocaleString('en-US')}</p>
-                <p className="mt-1 text-sm font-semibold text-rose-500">Needs attention</p>
-              </button>
-              <button type="button" onClick={() => { setActivePage('Settings'); setActiveSettingsTab('Email Logs') }} className={`rounded-xl border p-4 text-left shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
-                <div className="mb-2 flex items-center gap-3">
-                  <div className="rounded-lg bg-amber-50 p-2"><Clock3 size={18} className="text-amber-500" /></div>
-                  <p className="text-sm font-semibold text-slate-600">Pending Emails</p>
-                </div>
-                <p className="text-3xl font-extrabold text-slate-900">{dashboardStats.pendingEmails.toLocaleString('en-US')}</p>
-                <p className="mt-1 text-sm font-semibold text-amber-500">Queued reminders</p>
-              </button>
+              </div>
+            </section>
+
+            <section className="px-5 pb-3 mt-2">
+              <h3 className={`text-sm font-bold uppercase tracking-wider ${dashboardTheme.cardTitle} mb-3`}>Email Activity</h3>
+              <div className="grid gap-3 sm:grid-cols-1 md:grid-cols-3">
+                <button type="button" onClick={() => { setActivePage('Settings'); setActiveSettingsTab('Email Logs') }} className={`rounded-xl border p-4 text-left shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+                  <div className="mb-2 flex items-center gap-3">
+                    <div className="rounded-lg bg-sky-50 p-2"><Mail size={18} className="text-sky-600" /></div>
+                    <p className="text-sm font-semibold text-slate-600">Emails Sent Today</p>
+                  </div>
+                  <p className="text-3xl font-extrabold text-slate-900">{dashboardStats.emailsSentToday.toLocaleString('en-US')}</p>
+                  <p className="mt-1 text-sm font-semibold text-sky-600">View email logs</p>
+                </button>
+                <button type="button" onClick={() => { setActivePage('Settings'); setActiveSettingsTab('Email Logs') }} className={`rounded-xl border p-4 text-left shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+                  <div className="mb-2 flex items-center gap-3">
+                    <div className="rounded-lg bg-rose-50 p-2"><AlertTriangle size={18} className="text-rose-500" /></div>
+                    <p className="text-sm font-semibold text-slate-600">Failed Emails</p>
+                  </div>
+                  <p className="text-3xl font-extrabold text-slate-900">{dashboardStats.failedEmails.toLocaleString('en-US')}</p>
+                  <p className="mt-1 text-sm font-semibold text-rose-500">Needs attention</p>
+                </button>
+                <button type="button" onClick={() => { setActivePage('Settings'); setActiveSettingsTab('Email Logs') }} className={`rounded-xl border p-4 text-left shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+                  <div className="mb-2 flex items-center gap-3">
+                    <div className="rounded-lg bg-amber-50 p-2"><Clock3 size={18} className="text-amber-500" /></div>
+                    <p className="text-sm font-semibold text-slate-600">Pending Emails</p>
+                  </div>
+                  <p className="text-3xl font-extrabold text-slate-900">{dashboardStats.pendingEmails.toLocaleString('en-US')}</p>
+                  <p className="mt-1 text-sm font-semibold text-amber-500">Queued reminders</p>
+                </button>
+              </div>
             </section>
 
             <section className="grid gap-3 px-5 pb-4 xl:grid-cols-[40fr_35fr_25fr]">
