@@ -2,7 +2,7 @@ use chrono::Utc;
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 use std::{fs, path::PathBuf};
-use tauri::Manager;
+use tauri::{Emitter, Manager};
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -52,6 +52,60 @@ struct SessionUser {
   username: String,
   role: String,
   login_at: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct LoginTrailRow {
+  username: String,
+  role: String,
+  login_at: String,
+  logout_at: Option<String>,
+  is_active: bool,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ChangePasswordPayload {
+  current_password: String,
+  new_password: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SystemUserRow {
+  id: i64,
+  username: String,
+  full_name: String,
+  email: String,
+  profile_photo_data: Option<String>,
+  role: String,
+  is_active: bool,
+  created_at: String,
+  last_login_at: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct CreateSystemUserPayload {
+  username: String,
+  full_name: String,
+  email: String,
+  profile_photo_data: Option<String>,
+  password: String,
+  role: String,
+  is_active: bool,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct UpdateSystemUserPayload {
+  id: i64,
+  full_name: String,
+  email: String,
+  profile_photo_data: Option<String>,
+  role: String,
+  is_active: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -178,8 +232,10 @@ struct BorrowTransactionRow {
   member_id: i64,
   member_name: String,
   member_code: String,
+  member_profile_photo_data: Option<String>,
   book_id: i64,
   book_title: String,
+  book_cover_data: Option<String>,
   borrow_date: String,
   due_date: String,
   return_date: Option<String>,
@@ -507,6 +563,24 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
       return Err(format!("notifications migration failed: {e}"));
     }
   }
+  if let Err(e) = conn.execute("ALTER TABLE users ADD COLUMN full_name TEXT NOT NULL DEFAULT ''", []) {
+    let msg = e.to_string();
+    if !msg.contains("duplicate column name") {
+      return Err(format!("users full_name migration failed: {e}"));
+    }
+  }
+  if let Err(e) = conn.execute("ALTER TABLE users ADD COLUMN email TEXT NOT NULL DEFAULT ''", []) {
+    let msg = e.to_string();
+    if !msg.contains("duplicate column name") {
+      return Err(format!("users email migration failed: {e}"));
+    }
+  }
+  if let Err(e) = conn.execute("ALTER TABLE users ADD COLUMN profile_photo_data TEXT", []) {
+    let msg = e.to_string();
+    if !msg.contains("duplicate column name") {
+      return Err(format!("users profile photo migration failed: {e}"));
+    }
+  }
 
   conn
     .execute(
@@ -518,6 +592,12 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
       params!["admin", "admin", Utc::now().to_rfc3339()],
     )
     .map_err(|e| format!("seed admin user failed: {e}"))?;
+  conn
+    .execute(
+      "UPDATE users SET full_name = CASE WHEN TRIM(full_name) = '' THEN username ELSE full_name END, email = CASE WHEN TRIM(email) = '' THEN username || '@local.library' ELSE email END",
+      [],
+    )
+    .map_err(|e| format!("backfill users profile fields failed: {e}"))?;
 
   Ok(())
 }
@@ -530,7 +610,15 @@ fn upsert_notification(conn: &Connection, ntype: &str, title: &str, message: &st
       VALUES (?1, ?2, ?3, 0, ?4, ?5)
       ON CONFLICT(unique_key) DO UPDATE SET
         title = excluded.title,
-        message = excluded.message
+        message = excluded.message,
+        is_read = CASE
+          WHEN notifications.title <> excluded.title OR notifications.message <> excluded.message THEN 0
+          ELSE notifications.is_read
+        END,
+        created_at = CASE
+          WHEN notifications.title <> excluded.title OR notifications.message <> excluded.message THEN excluded.created_at
+          ELSE notifications.created_at
+        END
       ",
       params![ntype, title, message, unique_key, Utc::now().to_rfc3339()],
     )
@@ -582,6 +670,155 @@ fn get_setting(app: tauri::AppHandle, key: String) -> Result<Option<String>, Str
 }
 
 #[tauri::command]
+fn list_system_users(app: tauri::AppHandle, limit: Option<i64>) -> Result<Vec<SystemUserRow>, String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  let max_rows = limit.unwrap_or(200).clamp(1, 1000);
+  let mut stmt = conn
+    .prepare(
+      "
+      SELECT
+        u.id,
+        u.username,
+        u.full_name,
+        u.email,
+        u.profile_photo_data,
+        u.role,
+        u.is_active,
+        u.created_at,
+        (
+          SELECT s.login_at
+          FROM sessions s
+          WHERE s.username = u.username
+          ORDER BY s.id DESC
+          LIMIT 1
+        ) AS last_login_at
+      FROM users u
+      ORDER BY u.id DESC
+      LIMIT ?1
+      ",
+    )
+    .map_err(|e| format!("prepare list system users query failed: {e}"))?;
+
+  let rows = stmt
+    .query_map(params![max_rows], |row| {
+      Ok(SystemUserRow {
+        id: row.get(0)?,
+        username: row.get(1)?,
+        full_name: row.get(2)?,
+        email: row.get(3)?,
+        profile_photo_data: row.get(4)?,
+        role: row.get(5)?,
+        is_active: row.get::<_, i64>(6)? == 1,
+        created_at: row.get(7)?,
+        last_login_at: row.get(8)?,
+      })
+    })
+    .map_err(|e| format!("list system users failed: {e}"))?;
+
+  rows
+    .collect::<Result<Vec<_>, _>>()
+    .map_err(|e| format!("collect system users failed: {e}"))
+}
+
+#[tauri::command]
+fn create_system_user(app: tauri::AppHandle, payload: CreateSystemUserPayload) -> Result<i64, String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  let username = payload.username.trim();
+  let full_name = payload.full_name.trim();
+  let email = payload.email.trim();
+  let password = payload.password.trim();
+  let role = payload.role.trim();
+  if username.is_empty() || full_name.is_empty() || email.is_empty() || password.is_empty() || role.is_empty() {
+    return Err("username, fullName, email, password and role are required".to_string());
+  }
+  if password.len() < 8 {
+    return Err("password must be at least 8 characters".to_string());
+  }
+
+  conn
+    .execute(
+      "
+      INSERT INTO users (username, password, role, is_active, created_at, full_name, email, profile_photo_data)
+      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
+      ",
+      params![
+        username,
+        password,
+        role,
+        if payload.is_active { 1 } else { 0 },
+        Utc::now().to_rfc3339(),
+        full_name,
+        email,
+        payload.profile_photo_data
+      ],
+    )
+    .map_err(|e| format!("create system user failed: {e}"))?;
+  let id = conn.last_insert_rowid();
+  emit_notifications_refresh(&app);
+  Ok(id)
+}
+
+#[tauri::command]
+fn update_system_user(app: tauri::AppHandle, payload: UpdateSystemUserPayload) -> Result<(), String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  let full_name = payload.full_name.trim();
+  let email = payload.email.trim();
+  let role = payload.role.trim();
+  if full_name.is_empty() || email.is_empty() || role.is_empty() {
+    return Err("fullName, email and role are required".to_string());
+  }
+  conn
+    .execute(
+      "
+      UPDATE users
+      SET full_name = ?1, email = ?2, profile_photo_data = ?3, role = ?4, is_active = ?5
+      WHERE id = ?6
+      ",
+      params![
+        full_name,
+        email,
+        payload.profile_photo_data,
+        role,
+        if payload.is_active { 1 } else { 0 },
+        payload.id
+      ],
+    )
+    .map_err(|e| format!("update system user failed: {e}"))?;
+  Ok(())
+}
+
+fn emit_notifications_refresh(app: &tauri::AppHandle) {
+  let _ = app.emit("notifications:refresh", ());
+}
+
+#[tauri::command]
+fn delete_system_user(app: tauri::AppHandle, id: i64) -> Result<(), String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  conn
+    .execute("DELETE FROM users WHERE id = ?1", params![id])
+    .map_err(|e| format!("delete system user failed: {e}"))?;
+  Ok(())
+}
+
+#[tauri::command]
+fn reset_system_user_password(app: tauri::AppHandle, id: i64, new_password: String) -> Result<(), String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  let password = new_password.trim();
+  if password.len() < 8 {
+    return Err("new password must be at least 8 characters".to_string());
+  }
+  conn
+    .execute("UPDATE users SET password = ?1 WHERE id = ?2", params![password, id])
+    .map_err(|e| format!("reset system user password failed: {e}"))?;
+  Ok(())
+}
+
+#[tauri::command]
 fn list_settings_activity(app: tauri::AppHandle, limit: Option<i64>) -> Result<Vec<SettingActivityRow>, String> {
   let conn = open_db(&database_path(&app)?)?;
   init_schema(&conn)?;
@@ -629,7 +866,9 @@ fn create_book(app: tauri::AppHandle, payload: CreateBookPayload) -> Result<i64,
       ],
     )
     .map_err(|e| format!("create book failed: {e}"))?;
-  Ok(conn.last_insert_rowid())
+  let id = conn.last_insert_rowid();
+  emit_notifications_refresh(&app);
+  Ok(id)
 }
 
 #[tauri::command]
@@ -1051,7 +1290,28 @@ fn create_borrow_transaction(app: tauri::AppHandle, payload: CreateBorrowPayload
 
   tx.commit()
     .map_err(|e| format!("commit borrow transaction failed: {e}"))?;
-
+  let member_name = conn
+    .query_row(
+      "SELECT full_name FROM members WHERE id = ?1",
+      params![payload.member_id],
+      |row| row.get::<_, String>(0),
+    )
+    .unwrap_or_else(|_| "A member".to_string());
+  let book_title = conn
+    .query_row(
+      "SELECT title FROM books WHERE id = ?1",
+      params![payload.book_id],
+      |row| row.get::<_, String>(0),
+    )
+    .unwrap_or_else(|_| "a book".to_string());
+  upsert_notification(
+    &conn,
+    "borrow",
+    "Book Borrowed",
+    &format!("{member_name} borrowed \"{book_title}\"."),
+    &format!("tx:borrow:{borrow_id}"),
+  )?;
+  emit_notifications_refresh(&app);
   Ok(borrow_id)
 }
 
@@ -1100,7 +1360,27 @@ fn return_borrow_transaction(app: tauri::AppHandle, payload: ReturnBorrowPayload
 
   tx.commit()
     .map_err(|e| format!("commit return transaction failed: {e}"))?;
-
+  let (member_name, book_title): (String, String) = conn
+    .query_row(
+      "
+      SELECT m.full_name, b.title
+      FROM borrow_transactions t
+      INNER JOIN members m ON m.id = t.member_id
+      INNER JOIN books b ON b.id = t.book_id
+      WHERE t.id = ?1
+      ",
+      params![payload.transaction_id],
+      |row| Ok((row.get(0)?, row.get(1)?)),
+    )
+    .unwrap_or_else(|_| ("A member".to_string(), "a book".to_string()));
+  upsert_notification(
+    &conn,
+    "return",
+    "Book Returned",
+    &format!("{member_name} returned \"{book_title}\"."),
+    &format!("tx:return:{}", payload.transaction_id),
+  )?;
+  emit_notifications_refresh(&app);
   Ok(())
 }
 
@@ -1121,8 +1401,10 @@ fn list_borrow_transactions(
       t.member_id,
       m.full_name,
       m.member_id,
+      m.profile_photo_data,
       t.book_id,
       b.title,
+      b.cover_data,
       t.borrow_date,
       t.due_date,
       t.return_date,
@@ -1153,15 +1435,17 @@ fn list_borrow_transactions(
           member_id: row.get(1)?,
           member_name: row.get(2)?,
           member_code: row.get(3)?,
-          book_id: row.get(4)?,
-          book_title: row.get(5)?,
-          borrow_date: row.get(6)?,
-          due_date: row.get(7)?,
-          return_date: row.get(8)?,
-          notes: row.get(9)?,
-          status: row.get(10)?,
-          fine: row.get(11)?,
-          created_at: row.get(12)?,
+          member_profile_photo_data: row.get(4)?,
+          book_id: row.get(5)?,
+          book_title: row.get(6)?,
+          book_cover_data: row.get(7)?,
+          borrow_date: row.get(8)?,
+          due_date: row.get(9)?,
+          return_date: row.get(10)?,
+          notes: row.get(11)?,
+          status: row.get(12)?,
+          fine: row.get(13)?,
+          created_at: row.get(14)?,
         })
       })
       .map_err(|e| format!("list borrow transactions failed: {e}"))?;
@@ -1177,15 +1461,17 @@ fn list_borrow_transactions(
           member_id: row.get(1)?,
           member_name: row.get(2)?,
           member_code: row.get(3)?,
-          book_id: row.get(4)?,
-          book_title: row.get(5)?,
-          borrow_date: row.get(6)?,
-          due_date: row.get(7)?,
-          return_date: row.get(8)?,
-          notes: row.get(9)?,
-          status: row.get(10)?,
-          fine: row.get(11)?,
-          created_at: row.get(12)?,
+          member_profile_photo_data: row.get(4)?,
+          book_id: row.get(5)?,
+          book_title: row.get(6)?,
+          book_cover_data: row.get(7)?,
+          borrow_date: row.get(8)?,
+          due_date: row.get(9)?,
+          return_date: row.get(10)?,
+          notes: row.get(11)?,
+          status: row.get(12)?,
+          fine: row.get(13)?,
+          created_at: row.get(14)?,
         })
       })
       .map_err(|e| format!("list borrow transactions failed: {e}"))?;
@@ -1360,6 +1646,7 @@ fn update_reservation_status(app: tauri::AppHandle, payload: UpdateReservationSt
       params![status, payload.id],
     )
     .map_err(|e| format!("update reservation status failed: {e}"))?;
+  emit_notifications_refresh(&app);
   Ok(())
 }
 
@@ -1421,6 +1708,7 @@ fn update_reservation(app: tauri::AppHandle, payload: UpdateReservationPayload) 
       ],
     )
     .map_err(|e| format!("update reservation failed: {e}"))?;
+  emit_notifications_refresh(&app);
   Ok(())
 }
 
@@ -1431,6 +1719,7 @@ fn delete_reservation(app: tauri::AppHandle, id: i64) -> Result<(), String> {
   conn
     .execute("DELETE FROM reservations WHERE id = ?1", params![id])
     .map_err(|e| format!("delete reservation failed: {e}"))?;
+  emit_notifications_refresh(&app);
   Ok(())
 }
 
@@ -1724,6 +2013,96 @@ fn get_active_session(app: tauri::AppHandle) -> Result<Option<SessionUser>, Stri
 }
 
 #[tauri::command]
+fn list_login_trail(app: tauri::AppHandle, limit: Option<i64>) -> Result<Vec<LoginTrailRow>, String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  let max_rows = limit.unwrap_or(20).clamp(1, 200);
+  let mut stmt = conn
+    .prepare(
+      "
+      SELECT username, role, login_at, logout_at, is_active
+      FROM sessions
+      ORDER BY id DESC
+      LIMIT ?1
+      ",
+    )
+    .map_err(|e| format!("prepare login trail query failed: {e}"))?;
+
+  let rows = stmt
+    .query_map(params![max_rows], |row| {
+      Ok(LoginTrailRow {
+        username: row.get(0)?,
+        role: row.get(1)?,
+        login_at: row.get(2)?,
+        logout_at: row.get(3)?,
+        is_active: row.get::<_, i64>(4)? == 1,
+      })
+    })
+    .map_err(|e| format!("list login trail failed: {e}"))?;
+
+  rows
+    .collect::<Result<Vec<_>, _>>()
+    .map_err(|e| format!("collect login trail failed: {e}"))
+}
+
+#[tauri::command]
+fn change_password(app: tauri::AppHandle, payload: ChangePasswordPayload) -> Result<(), String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+
+  let current_password = payload.current_password.trim();
+  let new_password = payload.new_password.trim();
+  if current_password.is_empty() || new_password.is_empty() {
+    return Err("Current and new password are required.".to_string());
+  }
+  if new_password.len() < 8 {
+    return Err("New password must be at least 8 characters.".to_string());
+  }
+
+  let active_user = conn
+    .query_row(
+      "SELECT username FROM sessions WHERE is_active = 1 ORDER BY id DESC LIMIT 1",
+      [],
+      |row| row.get::<_, String>(0),
+    )
+    .map_err(|_| "No active session found.".to_string())?;
+
+  let updated = conn
+    .execute(
+      "
+      UPDATE users
+      SET password = ?1
+      WHERE username = ?2
+        AND password = ?3
+        AND is_active = 1
+      ",
+      params![new_password, active_user, current_password],
+    )
+    .map_err(|e| format!("change password failed: {e}"))?;
+
+  if updated == 0 {
+    return Err("Current password is incorrect.".to_string());
+  }
+
+  conn
+    .execute(
+      "
+      INSERT INTO settings (key, value, updated_at)
+      VALUES (?1, ?2, ?3)
+      ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
+      ",
+      params![
+        "security.password_last_changed",
+        Utc::now().to_rfc3339(),
+        Utc::now().to_rfc3339()
+      ],
+    )
+    .map_err(|e| format!("log password activity failed: {e}"))?;
+
+  Ok(())
+}
+
+#[tauri::command]
 fn sync_notifications(app: tauri::AppHandle) -> Result<(), String> {
   let conn = open_db(&database_path(&app)?)?;
   init_schema(&conn)?;
@@ -1909,6 +2288,11 @@ pub fn run() {
       init_db,
       set_setting,
       get_setting,
+      list_system_users,
+      create_system_user,
+      update_system_user,
+      delete_system_user,
+      reset_system_user_password,
       list_settings_activity,
       create_book,
       list_books,
@@ -1939,6 +2323,8 @@ pub fn run() {
       login,
       logout,
       get_active_session,
+      list_login_trail,
+      change_password,
       expand_main_window,
       restore_login_window,
       send_email_smtp,

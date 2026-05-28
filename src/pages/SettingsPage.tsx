@@ -49,7 +49,21 @@ import {
   UserX,
   Smartphone,
 } from 'lucide-react'
-import { listSettingsActivity, type SettingActivityRow } from '../lib/tauriApi'
+import {
+  changePassword,
+  createSystemUser,
+  deleteSystemUser,
+  getSetting,
+  listLoginTrail,
+  listSettingsActivity,
+  listSystemUsers,
+  resetSystemUserPassword,
+  setSetting,
+  updateSystemUser,
+  type LoginTrailRow,
+  type SettingActivityRow,
+  type SystemUser as ApiSystemUser,
+} from '../lib/tauriApi'
 
 type SettingsPageProps = {
   isDarkMode: boolean
@@ -59,8 +73,11 @@ type SettingsPageProps = {
 
 type SystemUserStatus = 'Active' | 'Inactive'
 type SystemUser = {
+  id: number
+  username: string
   name: string
   email: string
+  profilePhotoData: string | null
   role: string
   status: SystemUserStatus
   login: string
@@ -161,26 +178,41 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
   const activeMenu = activeTab
   const [notifications, setNotifications] = useState(true)
   const [settingsActivity, setSettingsActivity] = useState<SettingActivityRow[]>([])
+  const [defaultLoanPeriod, setDefaultLoanPeriod] = useState('7')
+  const [finePerDay, setFinePerDay] = useState('5.00')
+  const [maximumRenewals, setMaximumRenewals] = useState('2')
+  const [gracePeriod, setGracePeriod] = useState('1')
+  const [reservationExpiry, setReservationExpiry] = useState('3')
+  const [libraryName, setLibraryName] = useState('City Central School Library')
+  const [libraryContactNumber, setLibraryContactNumber] = useState('(02) 8123-4567')
+  const [libraryEmail, setLibraryEmail] = useState('library@citycentralschool.edu.ph')
+  const [libraryInCharge, setLibraryInCharge] = useState('Maria Santos')
+  const [libraryAddress, setLibraryAddress] = useState('123 Education Street, Central District,\nCityville, 1234')
+  const [libraryDescription, setLibraryDescription] = useState('The City Central School Library supports students and teachers by providing quality resources and a quiet place to learn and discover.')
+  const [libraryLogoData, setLibraryLogoData] = useState<string | null>(null)
+  const logoInputRef = useRef<HTMLInputElement | null>(null)
+  const userPhotoInputRef = useRef<HTMLInputElement | null>(null)
 
   const [showCurrentPass, setShowCurrentPass] = useState(false)
   const [showNewPass, setShowNewPass] = useState(false)
   const [showConfirmPass, setShowConfirmPass] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordStatus, setPasswordStatus] = useState<{ type: 'idle' | 'success' | 'error'; message: string }>({ type: 'idle', message: '' })
+  const [isSavingPassword, setIsSavingPassword] = useState(false)
+  const [loginTrail, setLoginTrail] = useState<LoginTrailRow[]>([])
   const [isUserModalOpen, setIsUserModalOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<SystemUser | null>(null)
   const [userToDelete, setUserToDelete] = useState<SystemUser | null>(null)
   const [userForm, setUserForm] = useState({
     name: '',
     email: '',
+    profilePhotoData: null as string | null,
     role: 'Librarian',
     status: 'Active' as SystemUserStatus,
   })
-  const [users, setUsers] = useState<SystemUser[]>([
-    { name: 'Admin User', email: 'admin@citycentralschool.edu.ph', role: 'Librarian', status: 'Active', login: 'May 15, 2026 • 10:30 AM', color: 'bg-emerald-50 text-emerald-600' },
-    { name: 'Maria Santos', email: 'maria.santos@citycentralschool.edu.ph', role: 'Librarian', status: 'Active', login: 'May 15, 2026 • 09:15 AM', color: 'bg-emerald-50 text-emerald-600' },
-    { name: 'John Dela Cruz', email: 'john.delacruz@citycentralschool.edu.ph', role: 'Assistant', status: 'Active', login: 'May 14, 2026 • 02:20 PM', color: 'bg-blue-50 text-blue-600' },
-    { name: 'Ana Lim', email: 'ana.lim@citycentralschool.edu.ph', role: 'Assistant', status: 'Active', login: 'May 14, 2026 • 11:05 AM', color: 'bg-blue-50 text-blue-600' },
-    { name: 'Guest User', email: 'guest@citycentralschool.edu.ph', role: 'Viewer', status: 'Inactive', login: 'Apr 20, 2026 • 04:45 PM', color: 'bg-slate-50 text-slate-600' },
-  ])
+  const [users, setUsers] = useState<SystemUser[]>([])
 
   const cardClass = isDarkMode ? 'border-slate-800 bg-[#0a1633]' : 'border-slate-200 bg-white'
   const iconBoxBg = isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-[#f0fdf4] text-emerald-600'
@@ -198,9 +230,37 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
     }
   }
 
+  const mapApiUser = (user: ApiSystemUser): SystemUser => {
+    const lastLogin = user.lastLoginAt ? new Date(user.lastLoginAt) : null
+    const login = !lastLogin || Number.isNaN(lastLogin.getTime())
+      ? 'Never'
+      : `${lastLogin.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })} • ${lastLogin.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`
+    return {
+      id: user.id,
+      username: user.username,
+      name: user.fullName,
+      email: user.email,
+      profilePhotoData: user.profilePhotoData,
+      role: user.role,
+      status: user.isActive ? 'Active' : 'Inactive',
+      login,
+      color: roleColor(user.role),
+    }
+  }
+
+  const loadSystemUsers = async () => {
+    try {
+      const rows = await listSystemUsers(500)
+      setUsers(rows.map(mapApiUser))
+    } catch (error) {
+      console.error('Failed to load system users:', error)
+      setUsers([])
+    }
+  }
+
   const openAddUserModal = () => {
     setEditingUser(null)
-    setUserForm({ name: '', email: '', role: 'Librarian', status: 'Active' })
+    setUserForm({ name: '', email: '', profilePhotoData: null, role: 'Librarian', status: 'Active' })
     setIsUserModalOpen(true)
   }
 
@@ -209,48 +269,48 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
     setUserForm({
       name: user.name,
       email: user.email,
+      profilePhotoData: user.profilePhotoData,
       role: user.role,
       status: user.status,
     })
     setIsUserModalOpen(true)
   }
 
-  const saveUserFromModal = () => {
+  const saveUserFromModal = async () => {
     const trimmedName = userForm.name.trim()
     const trimmedEmail = userForm.email.trim()
     if (!trimmedName || !trimmedEmail) return
 
-    if (editingUser) {
-      setUsers((prev) =>
-        prev.map((item) =>
-          item.email === editingUser.email
-            ? {
-                ...item,
-                name: trimmedName,
-                email: trimmedEmail,
-                role: userForm.role,
-                status: userForm.status,
-                color: roleColor(userForm.role),
-              }
-            : item
-        )
-      )
-    } else {
-      setUsers((prev) => [
-        {
-          name: trimmedName,
+    try {
+      if (editingUser) {
+        await updateSystemUser({
+          id: editingUser.id,
+          fullName: trimmedName,
           email: trimmedEmail,
+          profilePhotoData: userForm.profilePhotoData,
           role: userForm.role,
-          status: userForm.status,
-          login: 'Just now',
-          color: roleColor(userForm.role),
-        },
-        ...prev,
-      ])
+          isActive: userForm.status === 'Active',
+        })
+      } else {
+        const derivedUsername = trimmedEmail.includes('@')
+          ? trimmedEmail.split('@')[0]
+          : trimmedName.toLowerCase().replace(/[^a-z0-9]+/g, '.')
+        await createSystemUser({
+          username: derivedUsername,
+          fullName: trimmedName,
+          email: trimmedEmail,
+          profilePhotoData: userForm.profilePhotoData,
+          password: 'password123',
+          role: userForm.role,
+          isActive: userForm.status === 'Active',
+        })
+      }
+      await loadSystemUsers()
+      setIsUserModalOpen(false)
+      setEditingUser(null)
+    } catch (error) {
+      console.error('Failed to save system user:', error)
     }
-
-    setIsUserModalOpen(false)
-    setEditingUser(null)
   }
 
   useEffect(() => {
@@ -270,16 +330,169 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
     }
   }, [])
 
+  useEffect(() => {
+    let cancelled = false
+    const loadLoginTrail = async () => {
+      try {
+        const rows = await listLoginTrail(20)
+        if (!cancelled) setLoginTrail(rows)
+      } catch (error) {
+        console.error('Failed to load login trail:', error)
+        if (!cancelled) setLoginTrail([])
+      }
+    }
+    loadLoginTrail()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    void loadSystemUsers()
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    const loadGeneralSettings = async () => {
+      try {
+        const [
+          loanPeriod,
+          fine,
+          renewals,
+          grace,
+          emailNotif,
+          reservationExpiryDays,
+          name,
+          contactNumber,
+          email,
+          inCharge,
+          address,
+          description,
+          logoData,
+        ] = await Promise.all([
+          getSetting('general.default_loan_period'),
+          getSetting('general.fine_per_day'),
+          getSetting('general.maximum_renewals'),
+          getSetting('general.grace_period'),
+          getSetting('general.email_notifications'),
+          getSetting('general.reservation_expiry_days'),
+          getSetting('library.name'),
+          getSetting('library.contact_number'),
+          getSetting('library.email'),
+          getSetting('library.in_charge'),
+          getSetting('library.address'),
+          getSetting('library.description'),
+          getSetting('library.logo_data'),
+        ])
+
+        if (cancelled) return
+        if (loanPeriod) setDefaultLoanPeriod(loanPeriod)
+        if (fine) setFinePerDay(fine)
+        if (renewals) setMaximumRenewals(renewals)
+        if (grace) setGracePeriod(grace)
+        if (reservationExpiryDays) setReservationExpiry(reservationExpiryDays)
+        if (emailNotif) setNotifications(emailNotif === 'true')
+        if (name) setLibraryName(name)
+        if (contactNumber) setLibraryContactNumber(contactNumber)
+        if (email) setLibraryEmail(email)
+        if (inCharge) setLibraryInCharge(inCharge)
+        if (address) setLibraryAddress(address)
+        if (description) setLibraryDescription(description)
+        if (logoData) setLibraryLogoData(logoData)
+      } catch (error) {
+        console.error('Failed to load general settings:', error)
+      }
+    }
+
+    loadGeneralSettings()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const saveGeneralSetting = async (key: string, value: string) => {
+    try {
+      await setSetting(key, value)
+    } catch (error) {
+      console.error(`Failed to save setting ${key}:`, error)
+    }
+  }
+
+  const handleSavePassword = async () => {
+    if (!currentPassword.trim() || !newPassword.trim() || !confirmPassword.trim()) {
+      setPasswordStatus({ type: 'error', message: 'Please fill out all password fields.' })
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordStatus({ type: 'error', message: 'New password and confirm password do not match.' })
+      return
+    }
+    if (newPassword.length < 8) {
+      setPasswordStatus({ type: 'error', message: 'New password must be at least 8 characters.' })
+      return
+    }
+
+    setIsSavingPassword(true)
+    setPasswordStatus({ type: 'idle', message: '' })
+    try {
+      await changePassword({ currentPassword, newPassword })
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+      setPasswordStatus({ type: 'success', message: 'Password updated successfully.' })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to change password.'
+      setPasswordStatus({ type: 'error', message })
+    } finally {
+      setIsSavingPassword(false)
+    }
+  }
+
+  const handleLogoFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = async () => {
+      const result = typeof reader.result === 'string' ? reader.result : null
+      if (!result) return
+      setLibraryLogoData(result)
+      await saveGeneralSetting('library.logo_data', result)
+    }
+    reader.readAsDataURL(file)
+    event.target.value = ''
+  }
+
+  const removeLibraryLogo = async () => {
+    setLibraryLogoData(null)
+    await saveGeneralSetting('library.logo_data', '')
+  }
+
+  const handleUserProfilePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      const result = typeof reader.result === 'string' ? reader.result : null
+      setUserForm((prev) => ({ ...prev, profilePhotoData: result }))
+    }
+    reader.readAsDataURL(file)
+    event.target.value = ''
+  }
+
+  const totalUsers = users.length
+  const activeUsers = users.filter((user) => user.status === 'Active').length
+  const inactiveUsers = totalUsers - activeUsers
+  const rolesCount = new Set(users.map((user) => user.role)).size
 
   const renderUsersAndRoles = () => (
     <div className="space-y-8">
       {/* Stats Overview */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          { label: 'Total Users', value: '12', sub: 'All active system users', icon: UsersRound, color: 'bg-emerald-50 text-emerald-600', darkColor: 'bg-emerald-500/10 text-emerald-400' },
-          { label: 'Roles', value: '3', sub: 'System roles defined', icon: ShieldCheck, color: 'bg-teal-50 text-teal-600', darkColor: 'bg-teal-500/10 text-teal-400' },
-          { label: 'Active Users', value: '11', sub: 'Currently active accounts', icon: UserCircle, color: 'bg-blue-50 text-blue-600', darkColor: 'bg-blue-500/10 text-blue-400' },
-          { label: 'Inactive Users', value: '1', sub: 'Deactivated accounts', icon: UserX, color: 'bg-orange-50 text-orange-600', darkColor: 'bg-orange-500/10 text-orange-400' },
+          { label: 'Total Users', value: String(totalUsers), sub: 'All active system users', icon: UsersRound, color: 'bg-emerald-50 text-emerald-600', darkColor: 'bg-emerald-500/10 text-emerald-400' },
+          { label: 'Roles', value: String(rolesCount), sub: 'System roles defined', icon: ShieldCheck, color: 'bg-teal-50 text-teal-600', darkColor: 'bg-teal-500/10 text-teal-400' },
+          { label: 'Active Users', value: String(activeUsers), sub: 'Currently active accounts', icon: UserCircle, color: 'bg-blue-50 text-blue-600', darkColor: 'bg-blue-500/10 text-blue-400' },
+          { label: 'Inactive Users', value: String(inactiveUsers), sub: 'Deactivated accounts', icon: UserX, color: 'bg-orange-50 text-orange-600', darkColor: 'bg-orange-500/10 text-orange-400' },
         ].map((stat) => (
           <div key={stat.label} className={`group flex cursor-pointer items-center justify-between rounded-2xl border p-6 transition-all hover:shadow-lg ${cardClass}`}>
             <div className="flex items-center gap-5">
@@ -319,7 +532,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className={`relative z-10 ${isDarkMode ? 'overflow-x-auto lg:overflow-visible bg-[#0b1738]' : 'overflow-x-auto lg:overflow-visible bg-white'}`}>
             <table className="w-full text-left">
               <thead className={`text-[11px] font-bold uppercase tracking-wider ${isDarkMode ? 'bg-[#0f1f49] text-slate-300 border-y border-slate-800/50' : 'bg-slate-50 text-slate-600 border-y border-slate-100'}`}>
                 <tr>
@@ -332,11 +545,15 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
               </thead>
               <tbody className={isDarkMode ? 'bg-[#0b1738]' : 'bg-white'}>
                 {users.map((user) => (
-                  <tr key={user.email} className={`border-b last:border-0 transition-colors ${isDarkMode ? 'border-slate-800/50 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}>
+                  <tr key={user.id} className={`border-b last:border-0 transition-colors ${isDarkMode ? 'border-slate-800/50 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}>
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-4">
-                        <div className={`grid h-10 w-10 place-items-center rounded-full text-white text-xs font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200'}`}>
-                           {user.name.split(' ').map(n => n[0]).join('')}
+                        <div className={`grid h-10 w-10 place-items-center overflow-hidden rounded-full text-white text-xs font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200'}`}>
+                          {user.profilePhotoData ? (
+                            <img src={user.profilePhotoData} alt={`${user.name} profile`} className="h-full w-full object-cover" />
+                          ) : (
+                            user.name.split(' ').map(n => n[0]).join('')
+                          )}
                         </div>
                         <div>
                           <p className={`text-[13px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{user.name}</p>
@@ -356,18 +573,27 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                       </div>
                     </td>
                     <td className="px-8 py-5 text-[12px] font-semibold text-slate-500">{user.login}</td>
-                    <td className="px-8 py-5 text-right">
+                    <td className="px-8 py-5 text-right align-top">
                       <UserRowActionsMenu
                         isDarkMode={isDarkMode}
                         isActive={user.status === 'Active'}
                         onView={() => alert(`Viewing ${user.name} profile...`)}
                         onEdit={() => openEditUserModal(user)}
-                        onResetPassword={() => alert(`Password reset email sent to ${user.email}`)}
+                        onResetPassword={() => {
+                          void resetSystemUserPassword(user.id, 'password123').then(loadSystemUsers).catch((error) => {
+                            console.error('Failed to reset password:', error)
+                          })
+                        }}
                         onToggleStatus={() => {
-                          setUsers((prev) => prev.map((item) => item.email === user.email
-                            ? { ...item, status: item.status === 'Active' ? 'Inactive' : 'Active' }
-                            : item
-                          ))
+                          void updateSystemUser({
+                            id: user.id,
+                            fullName: user.name,
+                            email: user.email,
+                            role: user.role,
+                            isActive: user.status !== 'Active',
+                          }).then(loadSystemUsers).catch((error) => {
+                            console.error('Failed to toggle user status:', error)
+                          })
                         }}
                         onDelete={() => setUserToDelete(user)}
                       />
@@ -379,7 +605,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
           </div>
 
           <div className="px-8 py-6 flex items-center justify-between border-t border-slate-100 dark:border-slate-800">
-            <p className={`text-[12px] font-bold ${subLabelClass}`}>Showing 1 to {users.length} of 12 users</p>
+            <p className={`text-[12px] font-bold ${subLabelClass}`}>Showing 1 to {users.length} of {users.length} users</p>
             <div className="flex items-center gap-2">
               <button className={`grid h-10 w-10 place-items-center rounded-xl border ${inputClass}`}><ChevronLeft size={16} /></button>
               <button className="h-10 w-10 rounded-xl bg-emerald-600 text-[13px] font-bold text-white">1</button>
@@ -465,15 +691,37 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
 
           <div className="flex flex-col items-center">
             <div className={`h-36 w-36 rounded-full border-2 p-2 ${isDarkMode ? 'border-slate-800 bg-slate-900/50' : 'border-slate-100 bg-white shadow-sm'}`}>
-              <div className={`flex h-full w-full items-center justify-center rounded-full ${isDarkMode ? 'bg-emerald-500/10' : 'bg-emerald-50'}`}>
-                <Library size={48} className="text-emerald-600 dark:text-emerald-400" strokeWidth={1.5} />
-              </div>
+              {libraryLogoData ? (
+                <img
+                  src={libraryLogoData}
+                  alt="Library logo"
+                  className="h-full w-full rounded-full object-cover"
+                />
+              ) : (
+                <div className={`flex h-full w-full items-center justify-center rounded-full ${isDarkMode ? 'bg-emerald-500/10' : 'bg-emerald-50'}`}>
+                  <Library size={48} className="text-emerald-600 dark:text-emerald-400" strokeWidth={1.5} />
+                </div>
+              )}
             </div>
             <div className="mt-8 flex w-full flex-col gap-3">
-              <button className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 py-3 text-[13px] font-bold text-slate-700 transition-all hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800/50">
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/jpg,image/svg+xml"
+                className="hidden"
+                onChange={handleLogoFileChange}
+              />
+              <button
+                onClick={() => logoInputRef.current?.click()}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 py-3 text-[13px] font-bold text-slate-700 transition-all hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800/50"
+              >
                 <Upload size={16} /> Change Logo
               </button>
-              <button className="flex w-full items-center justify-center gap-2 rounded-xl border border-rose-100 py-3 text-[13px] font-bold text-rose-500 transition-all hover:bg-rose-50 dark:border-rose-900/20 dark:hover:bg-rose-900/40">
+              <button
+                onClick={() => { void removeLibraryLogo() }}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-rose-100 py-3 text-[13px] font-bold text-rose-500 transition-all hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-900/20 dark:hover:bg-rose-900/40"
+                disabled={!libraryLogoData}
+              >
                 <Trash2 size={16} /> Remove Logo
               </button>
             </div>
@@ -527,32 +775,62 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
           <div className="space-y-5">
             <div>
               <label className={`mb-2 block text-[13px] font-bold ${labelClass}`}>Library Name</label>
-              <input className={`h-12 w-full rounded-xl border px-4 text-[13px] font-semibold outline-none focus:border-emerald-500 transition-colors ${inputClass}`} defaultValue="City Central School Library" />
+              <input
+                className={`h-12 w-full rounded-xl border px-4 text-[13px] font-semibold outline-none focus:border-emerald-500 transition-colors ${inputClass}`}
+                value={libraryName}
+                onChange={(event) => setLibraryName(event.target.value)}
+                onBlur={() => saveGeneralSetting('library.name', libraryName)}
+              />
             </div>
             <div>
               <label className={`mb-2 block text-[13px] font-bold ${labelClass}`}>Contact Number</label>
-              <input className={`h-12 w-full rounded-xl border px-4 text-[13px] font-semibold outline-none focus:border-emerald-500 transition-colors ${inputClass}`} defaultValue="(02) 8123-4567" />
+              <input
+                className={`h-12 w-full rounded-xl border px-4 text-[13px] font-semibold outline-none focus:border-emerald-500 transition-colors ${inputClass}`}
+                value={libraryContactNumber}
+                onChange={(event) => setLibraryContactNumber(event.target.value)}
+                onBlur={() => saveGeneralSetting('library.contact_number', libraryContactNumber)}
+              />
             </div>
             <div>
               <label className={`mb-2 block text-[13px] font-bold ${labelClass}`}>Email</label>
-              <input className={`h-12 w-full rounded-xl border px-4 text-[13px] font-semibold outline-none focus:border-emerald-500 transition-colors ${inputClass}`} defaultValue="library@citycentralschool.edu.ph" />
+              <input
+                className={`h-12 w-full rounded-xl border px-4 text-[13px] font-semibold outline-none focus:border-emerald-500 transition-colors ${inputClass}`}
+                value={libraryEmail}
+                onChange={(event) => setLibraryEmail(event.target.value)}
+                onBlur={() => saveGeneralSetting('library.email', libraryEmail)}
+              />
             </div>
           </div>
 
           <div className="space-y-5">
             <div>
               <label className={`mb-2 block text-[13px] font-bold ${labelClass}`}>Librarian / In-Charge</label>
-              <input className={`h-12 w-full rounded-xl border px-4 text-[13px] font-semibold outline-none focus:border-emerald-500 transition-colors ${inputClass}`} defaultValue="Maria Santos" />
+              <input
+                className={`h-12 w-full rounded-xl border px-4 text-[13px] font-semibold outline-none focus:border-emerald-500 transition-colors ${inputClass}`}
+                value={libraryInCharge}
+                onChange={(event) => setLibraryInCharge(event.target.value)}
+                onBlur={() => saveGeneralSetting('library.in_charge', libraryInCharge)}
+              />
             </div>
             <div>
               <label className={`mb-2 block text-[13px] font-bold ${labelClass}`}>Address</label>
-              <textarea className={`h-[148px] w-full resize-none rounded-xl border px-4 py-3 text-[13px] font-semibold outline-none focus:border-emerald-500 transition-colors ${inputClass}`} defaultValue="123 Education Street, Central District,&#10;Cityville, 1234" />
+              <textarea
+                className={`h-[148px] w-full resize-none rounded-xl border px-4 py-3 text-[13px] font-semibold outline-none focus:border-emerald-500 transition-colors ${inputClass}`}
+                value={libraryAddress}
+                onChange={(event) => setLibraryAddress(event.target.value)}
+                onBlur={() => saveGeneralSetting('library.address', libraryAddress)}
+              />
             </div>
           </div>
 
           <div className="md:col-span-2">
             <label className={`mb-2 block text-[13px] font-bold ${labelClass}`}>Description (Optional)</label>
-            <textarea className={`h-24 w-full resize-none rounded-xl border px-4 py-3 text-[13px] font-semibold outline-none focus:border-emerald-500 transition-colors ${inputClass}`} defaultValue="The City Central School Library supports students and teachers by providing quality resources and a quiet place to learn and discover." />
+            <textarea
+              className={`h-24 w-full resize-none rounded-xl border px-4 py-3 text-[13px] font-semibold outline-none focus:border-emerald-500 transition-colors ${inputClass}`}
+              value={libraryDescription}
+              onChange={(event) => setLibraryDescription(event.target.value)}
+              onBlur={() => saveGeneralSetting('library.description', libraryDescription)}
+            />
           </div>
         </div>
       </section>
@@ -575,10 +853,10 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {[
-            { label: 'Default Loan Period', sub: '(days)', desc: 'Number of days a book can be borrowed.', value: '7', icon: Calendar },
-            { label: 'Fine Per Day', sub: '(PHP)', desc: 'Amount charged for each overdue day.', value: '5.00', icon: CreditCard },
-            { label: 'Maximum Renewals', sub: '(times)', desc: 'How many times a loan can be renewed.', value: '2', icon: RotateCcw },
-            { label: 'Grace Period', sub: '(days)', desc: 'Number of days before fines are applied.', value: '1', icon: Clock },
+            { label: 'Default Loan Period', sub: '(days)', desc: 'Number of days a book can be borrowed.', value: defaultLoanPeriod, onChange: setDefaultLoanPeriod, dbKey: 'general.default_loan_period', icon: Calendar },
+            { label: 'Fine Per Day', sub: '(PHP)', desc: 'Amount charged for each overdue day.', value: finePerDay, onChange: setFinePerDay, dbKey: 'general.fine_per_day', icon: CreditCard },
+            { label: 'Maximum Renewals', sub: '(times)', desc: 'How many times a loan can be renewed.', value: maximumRenewals, onChange: setMaximumRenewals, dbKey: 'general.maximum_renewals', icon: RotateCcw },
+            { label: 'Grace Period', sub: '(days)', desc: 'Number of days before fines are applied.', value: gracePeriod, onChange: setGracePeriod, dbKey: 'general.grace_period', icon: Clock },
           ].map((item) => (
             <div key={item.label} className="space-y-4">
               <div className="flex items-center gap-3">
@@ -591,7 +869,13 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                 </div>
               </div>
               <div className={`relative flex h-12 w-full items-center justify-between rounded-xl border px-4 ${inputClass}`}>
-                <input type="text" className="w-full bg-transparent text-[15px] font-bold outline-none" defaultValue={item.value} />
+                <input
+                  type="text"
+                  className="w-full bg-transparent text-[15px] font-bold outline-none"
+                  value={item.value}
+                  onChange={(event) => item.onChange(event.target.value)}
+                  onBlur={() => saveGeneralSetting(item.dbKey, item.value)}
+                />
                 <div className="flex flex-col border-l border-slate-200 pl-3 dark:border-slate-800">
                   <button className="text-slate-400 hover:text-emerald-500 transition-colors"><ChevronDown size={14} className="rotate-180" /></button>
                   <button className="text-slate-400 hover:text-emerald-500 transition-colors"><ChevronDown size={14} /></button>
@@ -632,7 +916,11 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
               </div>
               <div className="flex items-center gap-6">
                 <button
-                  onClick={() => setNotifications(!notifications)}
+                  onClick={() => {
+                    const next = !notifications
+                    setNotifications(next)
+                    void saveGeneralSetting('general.email_notifications', String(next))
+                  }}
                   className={`relative h-[26px] w-[50px] shrink-0 rounded-full transition-all duration-300 ${
                     notifications ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-700'
                   }`}
@@ -662,7 +950,13 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
               </div>
               <div className="flex items-center gap-6">
                 <div className={`relative flex h-11 w-24 items-center justify-between rounded-xl border px-3 ${isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'}`}>
-                  <input type="text" className="w-full bg-transparent text-[14px] font-bold outline-none" defaultValue="3" />
+                  <input
+                    type="text"
+                    className="w-full bg-transparent text-[14px] font-bold outline-none"
+                    value={reservationExpiry}
+                    onChange={(event) => setReservationExpiry(event.target.value)}
+                    onBlur={() => saveGeneralSetting('general.reservation_expiry_days', reservationExpiry)}
+                  />
                   <div className="flex flex-col border-l border-slate-200 pl-2 dark:border-slate-800">
                     <ChevronDown size={12} className="rotate-180 text-slate-400" />
                     <ChevronDown size={12} className="text-slate-400" />
@@ -706,7 +1000,9 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                 <input 
                   type={showCurrentPass ? "text" : "password"}
                   className={`h-12 w-full rounded-xl border px-4 text-[13px] font-semibold outline-none focus:border-emerald-500 transition-colors pr-12 ${inputClass}`} 
-                  placeholder="Enter your current password" 
+                  placeholder="Enter your current password"
+                  value={currentPassword}
+                  onChange={(event) => setCurrentPassword(event.target.value)}
                 />
                 <button 
                   type="button"
@@ -724,7 +1020,9 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                 <input 
                   type={showNewPass ? "text" : "password"}
                   className={`h-12 w-full rounded-xl border px-4 text-[13px] font-semibold outline-none focus:border-emerald-500 transition-colors pr-12 ${inputClass}`} 
-                  placeholder="Enter your new password" 
+                  placeholder="Enter your new password"
+                  value={newPassword}
+                  onChange={(event) => setNewPassword(event.target.value)}
                 />
                 <button 
                   type="button"
@@ -743,7 +1041,9 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                 <input 
                   type={showConfirmPass ? "text" : "password"}
                   className={`h-12 w-full rounded-xl border px-4 text-[13px] font-semibold outline-none focus:border-emerald-500 transition-colors pr-12 ${inputClass}`} 
-                  placeholder="Confirm your new password" 
+                  placeholder="Confirm your new password"
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
                 />
                 <button 
                   type="button"
@@ -755,10 +1055,19 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
               </div>
             </div>
 
-            <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#059669] py-4 text-sm font-bold text-white shadow-sm transition-all hover:bg-emerald-700 active:scale-[0.98]">
+            <button
+              onClick={() => { void handleSavePassword() }}
+              disabled={isSavingPassword}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#059669] py-4 text-sm font-bold text-white shadow-sm transition-all hover:bg-emerald-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+            >
               <Lock size={18} />
-              Save Password
+              {isSavingPassword ? 'Saving...' : 'Save Password'}
             </button>
+            {passwordStatus.message ? (
+              <p className={`text-[12px] font-semibold ${passwordStatus.type === 'success' ? 'text-emerald-600' : 'text-rose-500'}`}>
+                {passwordStatus.message}
+              </p>
+            ) : null}
           </div>
         </section>
 
@@ -784,14 +1093,30 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                 </tr>
               </thead>
               <tbody>
-                {[
-                  { name: 'Admin User', role: 'Librarian', action: 'Login', date: 'May 15, 2026', time: '10:30 AM' },
-                  { name: 'Admin User', role: 'Librarian', action: 'Logout', date: 'May 15, 2026', time: '12:15 PM' },
-                  { name: 'Maria Santos', role: 'Librarian', action: 'Login', date: 'May 15, 2026', time: '09:05 AM' },
-                  { name: 'Maria Santos', role: 'Librarian', action: 'Logout', date: 'May 15, 2026', time: '09:45 AM' },
-                  { name: 'John Dela Cruz', role: 'Assistant Librarian', action: 'Login', date: 'May 14, 2026', time: '04:20 PM' },
-                ].map((trail, idx) => (
-                  <tr key={idx} className={`border-t transition-colors duration-150 ${isDarkMode ? 'border-slate-700 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}>
+                {loginTrail.flatMap((session, idx) => {
+                  const loginDate = new Date(session.loginAt)
+                  const loginRow = {
+                    key: `login-${idx}`,
+                    name: session.username,
+                    role: session.role,
+                    action: 'Login',
+                    date: Number.isNaN(loginDate.getTime()) ? 'Unknown date' : loginDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }),
+                    time: Number.isNaN(loginDate.getTime()) ? '--:--' : loginDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }),
+                  }
+                  const logoutRows = session.logoutAt ? (() => {
+                    const logoutDate = new Date(session.logoutAt as string)
+                    return [{
+                      key: `logout-${idx}`,
+                      name: session.username,
+                      role: session.role,
+                      action: 'Logout',
+                      date: Number.isNaN(logoutDate.getTime()) ? 'Unknown date' : logoutDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }),
+                      time: Number.isNaN(logoutDate.getTime()) ? '--:--' : logoutDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }),
+                    }]
+                  })() : []
+                  return [loginRow, ...logoutRows]
+                }).slice(0, 8).map((trail) => (
+                  <tr key={trail.key} className={`border-t transition-colors duration-150 ${isDarkMode ? 'border-slate-700 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div className={`grid h-10 w-10 place-items-center rounded-full text-[11px] font-bold text-white ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200'}`}>
@@ -818,6 +1143,13 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                     </td>
                   </tr>
                 ))}
+                {loginTrail.length === 0 ? (
+                  <tr>
+                    <td colSpan={3} className={`px-4 py-8 text-center text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                      No login activity yet.
+                    </td>
+                  </tr>
+                ) : null}
               </tbody>
             </table>
           </div>
@@ -852,6 +1184,12 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
       if (key.startsWith('security.')) return 'Account Security'
       if (key.startsWith('users.')) return 'Users & Roles'
       return 'General'
+    }
+
+    const prettifySettingKey = (key: string) => {
+      const field = key.includes('.') ? key.split('.').slice(1).join('.') : key
+      const words = field.split(/[_\.]+/).filter(Boolean)
+      return words.map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
     }
 
     const activityMeta = (module: string) => {
@@ -889,7 +1227,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
       const when = formatActivityTime(item.updatedAt)
       return {
         id: `${item.key}-${index}`,
-        title: `${item.key.replaceAll('.', ' ')} updated`,
+        title: `${prettifySettingKey(item.key)} Updated`,
         detail: item.value.length > 80 ? `${item.value.slice(0, 80)}...` : item.value,
         module,
         updatedBy: 'Admin User',
@@ -1119,6 +1457,35 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
             </div>
             <form className="space-y-5 px-6 py-5">
                 <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2 md:col-span-2">
+                    <label className={`text-sm font-bold ${labelClass}`}>Profile Photo</label>
+                    <input
+                      ref={userPhotoInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png"
+                      className="hidden"
+                      onChange={handleUserProfilePhotoChange}
+                    />
+                    <div className="flex items-center gap-3">
+                      <div className={`grid h-10 w-10 place-items-center overflow-hidden rounded-full ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
+                        {userForm.profilePhotoData ? (
+                          <img src={userForm.profilePhotoData} alt="User profile preview" className="h-full w-full object-cover" />
+                        ) : (
+                          <UsersRound size={16} />
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => userPhotoInputRef.current?.click()}
+                        className={`h-10 rounded-lg border px-4 text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}
+                      >
+                        Upload Photo
+                      </button>
+                      <span className={`text-xs ${subLabelClass}`}>
+                        JPG, PNG (Max 2MB)
+                      </span>
+                    </div>
+                  </div>
                   <div className="space-y-2">
                     <label className={`text-sm font-bold ${labelClass}`}>Full Name</label>
                   <input
@@ -1163,7 +1530,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                 </div>
               <div className="grid gap-3 pt-1 sm:grid-cols-2">
                 <button type="button" onClick={() => { setIsUserModalOpen(false); setEditingUser(null) }} className={`h-11 rounded-xl border text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>Cancel</button>
-                <button type="button" onClick={saveUserFromModal} className="h-11 rounded-xl bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-700">
+                <button type="button" onClick={() => { void saveUserFromModal() }} className="h-11 rounded-xl bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-700">
                   {editingUser ? 'Save Changes' : 'Add User'}
                 </button>
               </div>
@@ -1184,8 +1551,12 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
               <button
                 type="button"
                 onClick={() => {
-                  setUsers((prev) => prev.filter((item) => item.email !== userToDelete.email))
-                  setUserToDelete(null)
+                  void deleteSystemUser(userToDelete.id)
+                    .then(loadSystemUsers)
+                    .catch((error) => {
+                      console.error('Failed to delete system user:', error)
+                    })
+                    .finally(() => setUserToDelete(null))
                 }}
                 className="h-11 flex-1 rounded-xl bg-rose-600 font-bold text-white transition-all hover:bg-rose-700"
               >
@@ -1198,3 +1569,5 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
     </div>
   )
 }
+
+

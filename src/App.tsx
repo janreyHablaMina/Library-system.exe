@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
+import { listen } from '@tauri-apps/api/event'
 import { AlertTriangle, ArrowLeft, ArrowLeftRight, ArrowRight, BarChart3, Bell, BookOpen, BookPlus, Bookmark, Calendar, ChevronRight, Clock3, Feather, FileText, Grid2x2, LayoutDashboard, Library, Mail, MessageCircle, Moon, RotateCcw, Search, Settings2, Shield, Sun, Undo2, UserCircle, UserPlus, Users, UsersRound } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import heroImage from './assets/login.avif'
@@ -67,12 +68,14 @@ type RecentBorrowedItem = {
   bookTitle: string
   memberName: string
   borrowDateLabel: string
+  bookCoverData: string | null
 }
 type OverdueReturnItem = {
   id: number
   bookTitle: string
   memberName: string
   overdueLabel: string
+  memberPhotoData: string | null
 }
 type BorrowedCategoryItem = {
   category: string
@@ -82,6 +85,7 @@ type BorrowedCategoryItem = {
 type LowStockItem = {
   key: string
   title: string
+  coverData: string | null
   available: number
   total: number
   level: 'Low' | 'Out'
@@ -91,6 +95,7 @@ type UpcomingDueItem = {
   bookTitle: string
   memberName: string
   dueDateLabel: string
+  memberPhotoData: string | null
 }
 type QuickReportItem = {
   label: string
@@ -142,6 +147,16 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
   const [upcomingDueItems, setUpcomingDueItems] = useState<UpcomingDueItem[]>([])
   const profileMenuRef = useRef<HTMLDivElement | null>(null)
   const notificationsRef = useRef<HTMLDivElement | null>(null)
+
+  const refreshNotifications = async () => {
+    try {
+      await syncNotifications()
+      const rows = await listNotifications(12)
+      setNotifications(rows)
+    } catch (error) {
+      console.error('Failed to refresh notifications:', error)
+    }
+  }
   const openTransactionsPage = (tab: 'all' | 'borrowed' | 'returned' | 'overdue' = 'all') => {
     setTransactionActiveTab(tab)
     setActivePage('Transactions')
@@ -189,16 +204,48 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
   }, [activePage])
 
   useEffect(() => {
-    const loadNotifications = async () => {
-      try {
-        await syncNotifications()
-        const rows = await listNotifications(12)
-        setNotifications(rows)
-      } catch (error) {
-        console.error('Failed to load notifications:', error)
+    void refreshNotifications()
+  }, [])
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      void refreshNotifications()
+    }, 10000)
+
+    const handleFocus = () => {
+      void refreshNotifications()
+    }
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        void refreshNotifications()
       }
     }
-    void loadNotifications()
+
+    window.addEventListener('focus', handleFocus)
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      window.clearInterval(interval)
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
+  }, [])
+
+  useEffect(() => {
+    let unlisten: (() => void) | null = null
+    const bind = async () => {
+      try {
+        unlisten = await listen('notifications:refresh', () => {
+          void refreshNotifications()
+        })
+      } catch (error) {
+        console.error('Failed to bind notifications event listener:', error)
+      }
+    }
+    void bind()
+    return () => {
+      if (unlisten) unlisten()
+    }
   }, [])
 
     useEffect(() => {
@@ -235,6 +282,7 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
               id: tx.id,
               bookTitle: tx.bookTitle,
               memberName: tx.memberName,
+              bookCoverData: tx.bookCoverData ?? null,
               borrowDateLabel: Number.isNaN(new Date(tx.borrowDate).getTime())
                 ? '-'
                 : new Date(tx.borrowDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
@@ -254,12 +302,19 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
                 bookTitle: tx.bookTitle,
                 memberName: tx.memberName,
                 overdueLabel: `${days} day${days === 1 ? '' : 's'}`,
+                memberPhotoData: tx.memberProfilePhotoData ?? null,
               }
             })
         )
         const categoryByBookId = new Map<number, string>()
         for (const book of books) {
           categoryByBookId.set(book.id, book.category?.trim() || 'Uncategorized')
+        }
+        const txCoverByTitle = new Map<string, string>()
+        for (const tx of transactions) {
+          if (!tx.bookCoverData) continue
+          const key = tx.bookTitle.trim().toLowerCase()
+          if (!txCoverByTitle.has(key)) txCoverByTitle.set(key, tx.bookCoverData)
         }
         const borrowedTx = transactions.filter((tx) => tx.status === 'Active' || tx.status === 'Borrowed' || tx.status === 'Returned' || tx.status === 'Overdue')
         const counts = new Map<string, number>()
@@ -278,10 +333,13 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
               percent: total > 0 ? (count / total) * 100 : 0,
             }))
         )
-        const byTitle = new Map<string, { title: string; available: number; total: number }>()
+        const byTitle = new Map<string, { title: string; coverData: string | null; available: number; total: number }>()
         for (const book of books) {
           const key = `${book.title.trim().toLowerCase()}|${book.author.trim().toLowerCase()}`
-          const row = byTitle.get(key) ?? { title: book.title, available: 0, total: 0 }
+          const fallbackCover = txCoverByTitle.get(book.title.trim().toLowerCase()) ?? null
+          const row = byTitle.get(key) ?? { title: book.title, coverData: book.coverData ?? fallbackCover, available: 0, total: 0 }
+          if (!row.coverData && book.coverData) row.coverData = book.coverData
+          if (!row.coverData && fallbackCover) row.coverData = fallbackCover
           row.total += 1
           if (book.available) row.available += 1
           byTitle.set(key, row)
@@ -291,6 +349,7 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
             .map(([key, row]) => ({
               key,
               title: row.title,
+              coverData: row.coverData,
               available: row.available,
               total: row.total,
               level: row.available === 0 ? 'Out' : 'Low',
@@ -311,6 +370,7 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
               id: tx.id,
               bookTitle: tx.bookTitle,
               memberName: tx.memberName,
+              memberPhotoData: tx.memberProfilePhotoData ?? members.find((member) => member.id === tx.memberId)?.profilePhotoData ?? null,
               dueDateLabel: Number.isNaN(new Date(tx.dueDate).getTime())
                 ? '-'
                 : new Date(tx.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
@@ -339,13 +399,7 @@ const unreadNotifications = notifications.filter((item) => !item.isRead).length
 
   const handleOpenNotifications = async () => {
     setIsNotificationsOpen((v) => !v)
-    try {
-      await syncNotifications()
-      const rows = await listNotifications(12)
-      setNotifications(rows)
-    } catch (error) {
-      console.error('Failed to refresh notifications:', error)
-    }
+    await refreshNotifications()
   }
 
   const handleReadNotification = async (id: number) => {
@@ -960,7 +1014,13 @@ const unreadNotifications = notifications.filter((item) => !item.isRead).length
                         idx < recentBorrowedItems.length - 1 ? 'border-b border-slate-100' : ''
                       }`}
                     >
-                      <div className="grid h-11 w-8 place-items-center rounded-md border border-slate-200 bg-slate-50 text-base">B</div>
+                      <div className="grid h-11 w-8 place-items-center overflow-hidden rounded-md border border-slate-200 bg-slate-50 text-base">
+                        {item.bookCoverData ? (
+                          <img src={item.bookCoverData} alt={`${item.bookTitle} cover`} className="h-full w-full object-cover" />
+                        ) : (
+                          'B'
+                        )}
+                      </div>
                       <div><p className="text-sm leading-snug font-semibold text-slate-900">{item.bookTitle}</p><p className="text-xs text-slate-500">Borrow transaction</p></div>
                       <div><p className="text-[11px] font-semibold text-slate-500">Borrowed by</p><p className="text-sm font-semibold text-slate-700">{item.memberName}</p></div>
                       <span className="w-fit rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">{item.borrowDateLabel}</span>
@@ -981,10 +1041,17 @@ const unreadNotifications = notifications.filter((item) => !item.isRead).length
                   {overdueReturnItems.map((item, idx) => (
                     <div
                       key={item.id}
-                      className={`grid grid-cols-1 gap-2 px-4 py-3 transition-colors duration-150 hover:bg-slate-50 md:grid-cols-[1.8fr_1fr_auto] md:items-center ${
+                      className={`grid grid-cols-1 gap-2 px-4 py-3 transition-colors duration-150 hover:bg-slate-50 md:grid-cols-[40px_1.8fr_1fr_auto] md:items-center ${
                         idx < overdueReturnItems.length - 1 ? 'border-b border-slate-100' : ''
                       }`}
                     >
+                      <div className="grid h-10 w-10 place-items-center overflow-hidden rounded-full bg-slate-100 text-xs font-bold text-slate-700">
+                        {item.memberPhotoData ? (
+                          <img src={item.memberPhotoData} alt={`${item.memberName} profile`} className="h-full w-full object-cover" />
+                        ) : (
+                          item.memberName.trim().charAt(0).toUpperCase()
+                        )}
+                      </div>
                       <div><p className="text-sm leading-snug font-semibold text-slate-900">{item.bookTitle}</p><p className="text-xs text-slate-500">Overdue transaction</p></div>
                       <p className="text-sm font-semibold text-slate-700">{item.memberName}</p>
                       <span className="w-fit rounded-md bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-600">{item.overdueLabel}</span>
@@ -1009,11 +1076,10 @@ const unreadNotifications = notifications.filter((item) => !item.isRead).length
                     return (
                       <div
                         key={item.id}
-                        className={`-mx-4 grid grid-cols-[44px_1fr_auto] items-start gap-2 px-4 py-2.5 transition-colors duration-150 hover:bg-slate-50 ${
+                        className={`-mx-4 grid grid-cols-[1fr_auto] items-start gap-2 px-4 py-2.5 transition-colors duration-150 hover:bg-slate-50 ${
                           idx < Math.min(6, notifications.length) - 1 ? 'border-b border-slate-100' : ''
                         }`}
                       >
-                        <div className="grid h-10 w-10 place-items-center rounded-full bg-emerald-50 text-sm font-bold text-emerald-700">N</div>
                         <div>
                           <p className="text-sm font-semibold text-slate-900">{item.title}</p>
                           <p className="text-xs font-medium text-slate-500">{item.message}</p>
@@ -1078,9 +1144,18 @@ const unreadNotifications = notifications.filter((item) => !item.isRead).length
                 <div className="space-y-0 text-xs">
                   {lowStockItems.map((item, idx) => (
                     <div key={item.key} className={`flex items-start justify-between gap-3 rounded-md px-1 py-2 transition-colors duration-150 hover:bg-slate-50 ${idx < lowStockItems.length - 1 ? 'border-b border-slate-100' : ''}`}>
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex items-start gap-2.5">
+                        <div className="grid h-11 w-8 place-items-center overflow-hidden rounded-md border border-slate-200 bg-slate-50 text-base text-slate-600">
+                          {item.coverData ? (
+                            <img src={item.coverData} alt={`${item.title} cover`} className="h-full w-full object-cover" />
+                          ) : (
+                            'B'
+                          )}
+                        </div>
+                        <div>
                         <p className="flex items-center gap-2 text-sm font-semibold text-slate-800"><span className={`h-2.5 w-2.5 rounded-full ${item.level === 'Out' ? 'bg-rose-500' : 'bg-amber-500'}`} />{item.title}</p>
                         <p className="pl-4 text-xs text-slate-500">Available: {item.available} / Total: {item.total}</p>
+                        </div>
                       </div>
                       <span className={`rounded-md px-2.5 py-1 text-xs font-semibold ${item.level === 'Out' ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'}`}>{item.level}</span>
                     </div>
@@ -1141,9 +1216,18 @@ const unreadNotifications = notifications.filter((item) => !item.isRead).length
                 <div className="space-y-0">
                   {upcomingDueItems.map((item, idx) => (
                     <div key={item.id} className={`flex items-start justify-between gap-3 rounded-md px-2 py-2 transition-colors duration-150 hover:bg-slate-50 ${idx < upcomingDueItems.length - 1 ? 'border-b border-slate-100' : ''}`}>
-                      <div>
-                        <p className="text-sm font-semibold text-slate-800">{item.bookTitle}</p>
-                        <p className="text-xs font-medium text-slate-500">{item.memberName}</p>
+                      <div className="flex items-start gap-3">
+                        <div className="grid h-9 w-9 place-items-center overflow-hidden rounded-full bg-slate-100 text-xs font-bold text-slate-700">
+                          {item.memberPhotoData ? (
+                            <img src={item.memberPhotoData} alt={`${item.memberName} profile`} className="h-full w-full object-cover" />
+                          ) : (
+                            item.memberName.trim().charAt(0).toUpperCase()
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-slate-800">{item.bookTitle}</p>
+                          <p className="text-xs font-medium text-slate-500">{item.memberName}</p>
+                        </div>
                       </div>
                       <span className="rounded-md bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-600">{item.dueDateLabel}</span>
                     </div>

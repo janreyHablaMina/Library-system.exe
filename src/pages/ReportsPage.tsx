@@ -436,7 +436,13 @@ export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMember
                       <tr key={row.id} className={`border-t transition-colors ${isDarkMode ? 'border-slate-700 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}>
                         <td className="px-6 py-4">
                            <div className="flex items-center gap-3">
-                              <span className={`grid h-11 w-11 place-items-center rounded-full text-sm font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>{row.name.slice(0, 1).toUpperCase()}</span>
+                              <span className={`grid h-11 w-11 place-items-center overflow-hidden rounded-full text-sm font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                                {row.profilePhotoData ? (
+                                  <img src={row.profilePhotoData} alt={`${row.name} profile`} className="h-full w-full object-cover" />
+                                ) : (
+                                  row.name.slice(0, 1).toUpperCase()
+                                )}
+                              </span>
                               <div>
                                 <p className="text-sm font-medium">{row.name}</p>
                                 <p className={`text-[10px] ${labelClass}`}>{row.id}</p>

@@ -40,6 +40,50 @@ export type SessionUser = {
   loginAt: string
 }
 
+export type LoginTrailRow = {
+  username: string
+  role: string
+  loginAt: string
+  logoutAt: string | null
+  isActive: boolean
+}
+
+export type ChangePasswordPayload = {
+  currentPassword: string
+  newPassword: string
+}
+
+export type SystemUser = {
+  id: number
+  username: string
+  fullName: string
+  email: string
+  profilePhotoData: string | null
+  role: string
+  isActive: boolean
+  createdAt: string
+  lastLoginAt: string | null
+}
+
+export type CreateSystemUserPayload = {
+  username: string
+  fullName: string
+  email: string
+  profilePhotoData?: string | null
+  password: string
+  role: string
+  isActive: boolean
+}
+
+export type UpdateSystemUserPayload = {
+  id: number
+  fullName: string
+  email: string
+  profilePhotoData?: string | null
+  role: string
+  isActive: boolean
+}
+
 export type NotificationItem = {
   id: number
   notificationType: string
@@ -136,8 +180,10 @@ export type BorrowTransaction = {
   memberId: number
   memberName: string
   memberCode: string
+  memberProfilePhotoData: string | null
   bookId: number
   bookTitle: string
+  bookCoverData: string | null
   borrowDate: string
   dueDate: string
   returnDate: string | null
@@ -413,6 +459,34 @@ export async function logout(): Promise<void> {
 
 export async function getActiveSession(): Promise<SessionUser | null> {
   return invoke<SessionUser | null>('get_active_session')
+}
+
+export async function listLoginTrail(limit?: number): Promise<LoginTrailRow[]> {
+  return invoke<LoginTrailRow[]>('list_login_trail', { limit })
+}
+
+export async function changePassword(payload: ChangePasswordPayload): Promise<void> {
+  return invoke<void>('change_password', { payload })
+}
+
+export async function listSystemUsers(limit?: number): Promise<SystemUser[]> {
+  return invoke<SystemUser[]>('list_system_users', { limit })
+}
+
+export async function createSystemUser(payload: CreateSystemUserPayload): Promise<number> {
+  return invoke<number>('create_system_user', { payload })
+}
+
+export async function updateSystemUser(payload: UpdateSystemUserPayload): Promise<void> {
+  return invoke<void>('update_system_user', { payload })
+}
+
+export async function deleteSystemUser(id: number): Promise<void> {
+  return invoke<void>('delete_system_user', { id })
+}
+
+export async function resetSystemUserPassword(id: number, newPassword: string): Promise<void> {
+  return invoke<void>('reset_system_user_password', { id, newPassword })
 }
 
 export async function expandMainWindow(): Promise<void> {
