@@ -1,5 +1,5 @@
 ﻿import { useEffect, useMemo, useRef, useState } from 'react'
-import { AlertTriangle, Check, ChevronDown, Search, X } from 'lucide-react'
+import { Check, ChevronDown, Search, X } from 'lucide-react'
 import {
   createBorrowTransaction,
   listBooks,
@@ -34,6 +34,7 @@ type BookItem = {
   isbn: string
   copyId: string
   availableCopies: number
+  available: boolean
   icon: string
   coverData: string | null
 }
@@ -132,13 +133,14 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions }: BorrowRetur
     profilePhotoData: m.profilePhotoData || null,
   }))
 
-  const mapBooks = (rows: Book[]): BookItem[] => rows.filter((b) => b.available).map((b) => ({
+  const mapBooks = (rows: Book[]): BookItem[] => rows.map((b) => ({
     id: b.id,
     title: b.title,
     author: b.author,
     isbn: b.isbn || '-',
     copyId: `BK-${String(b.id).padStart(6, '0')}`,
     availableCopies: b.available ? 1 : 0,
+    available: b.available,
     icon: '📘',
     coverData: b.coverData || null,
   }))
@@ -227,17 +229,19 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions }: BorrowRetur
     m.memberId.toLowerCase().includes(memberSearchQuery.toLowerCase()),
   ), [members, memberSearchQuery])
 
+  const borrowModeBooks = useMemo(() => books.filter((b) => b.available), [books])
+
   const returnModeBooks = useMemo(() => {
-    if (!selectedMember) return books
+    if (!selectedMember) return []
     const activeForMember = activeRows.filter((r) => r.memberId === selectedMember.memberId)
     const ids = new Set(activeForMember.map((r) => r.copyId))
     return books.filter((b) => ids.has(b.copyId))
   }, [books, activeRows, selectedMember])
 
   const filteredBooksList = useMemo(() => {
-    const source = activeTab === 'borrow' ? books : returnModeBooks
+    const source = activeTab === 'borrow' ? borrowModeBooks : returnModeBooks
     return source.filter((b) => b.title.toLowerCase().includes(bookSearchQuery.toLowerCase()) || b.isbn.includes(bookSearchQuery))
-  }, [books, returnModeBooks, activeTab, bookSearchQuery])
+  }, [borrowModeBooks, returnModeBooks, activeTab, bookSearchQuery])
 
   const handleConfirmAction = async () => {
     if (!selectedMember || !selectedBook) {
@@ -576,12 +580,6 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions }: BorrowRetur
         </div>
       ) : null}
 
-      {activeTab === 'return' && !selectedMember ? (
-        <div className="fixed bottom-4 left-4 z-40 flex items-center gap-2 rounded-xl bg-amber-100 px-3 py-2 text-xs font-semibold text-amber-800">
-          <AlertTriangle size={14} />
-          Select a member first to return borrowed books.
-        </div>
-      ) : null}
     </div>
   )
 }

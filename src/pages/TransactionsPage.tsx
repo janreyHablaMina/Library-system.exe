@@ -1,9 +1,23 @@
-import { 
-  ArrowLeft, CalendarDays, ChevronDown, Download, RotateCcw, Search, 
-  ClipboardList, ArrowDownToLine, ArrowUpFromLine, AlertTriangle,
-  MoreHorizontal, Eye, CheckCircle, Receipt, Printer, Send
+import {
+  AlertTriangle,
+  ArrowDownToLine,
+  ArrowLeft,
+  ArrowUpFromLine,
+  CalendarDays,
+  CheckCircle,
+  ChevronDown,
+  ClipboardList,
+  Download,
+  Eye,
+  MoreHorizontal,
+  Printer,
+  Receipt,
+  RotateCcw,
+  Search,
+  Send,
 } from 'lucide-react'
-import { useMemo, useState, useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { listBorrowTransactions, listMembers, returnBorrowTransaction, type BorrowTransaction, type Member } from '../lib/tauriApi'
 
 type TransactionType = 'Borrow' | 'Return'
 type TransactionStatus = 'Active' | 'Returned' | 'Overdue'
@@ -18,10 +32,12 @@ type TransactionsPageProps = {
 
 type TransactionRow = {
   id: string
+  transactionId: number
   type: TransactionType
   member: string
   memberId: string
   memberAvatar: string
+  memberPhotoData: string | null
   book: string
   author: string
   copyId: string
@@ -30,16 +46,8 @@ type TransactionRow = {
   returnDate: string
   status: TransactionStatus
   fine: string
+  fineValue: number
 }
-
-const transactions: TransactionRow[] = [
-  { id: 'TRX-2026-0042', type: 'Borrow', member: 'Juan Dela Cruz', memberId: 'STU-2026-001', memberAvatar: '\u{1F468}\u{1F3FB}', book: 'Atomic Habits', author: 'James Clear', copyId: 'BK-2026-0001', borrowDate: 'May 6, 2026 10:30 AM', dueDate: 'May 20, 2026', returnDate: '-', status: 'Active', fine: 'PHP 0.00' },
-  { id: 'TRX-2026-0041', type: 'Borrow', member: 'Maria Santos', memberId: 'STU-2026-002', memberAvatar: '\u{1F469}\u{1F3FB}', book: 'The Psychology of Money', author: 'Morgan Housel', copyId: 'BK-2026-0003', borrowDate: 'May 5, 2026 03:15 PM', dueDate: 'May 19, 2026', returnDate: '-', status: 'Active', fine: 'PHP 0.00' },
-  { id: 'TRX-2026-0040', type: 'Return', member: 'Liza Montero', memberId: 'STA-2026-002', memberAvatar: '\u{1F469}\u{200D}\u{1F4BC}', book: 'Rich Dad Poor Dad', author: 'Robert T. Kiyosaki', copyId: 'BK-2026-0008', borrowDate: 'Apr 28, 2026 09:10 AM', dueDate: 'May 12, 2026', returnDate: 'May 5, 2026 11:20 AM', status: 'Returned', fine: 'PHP 0.00' },
-  { id: 'TRX-2026-0039', type: 'Return', member: 'Visitor - Alex Tan', memberId: 'VIS-2026-001', memberAvatar: '\u{1F9D1}\u{1F3FB}', book: 'The Power of Habit', author: 'Charles Duhigg', copyId: 'BK-2026-0009', borrowDate: 'Apr 27, 2026 02:45 PM', dueDate: 'May 11, 2026', returnDate: 'May 5, 2026 09:15 AM', status: 'Returned', fine: 'PHP 0.00' },
-  { id: 'TRX-2026-0038', type: 'Borrow', member: 'Ana Lim', memberId: 'STU-2026-004', memberAvatar: '\u{1F469}\u{1F3FD}', book: 'Thinking, Fast and Slow', author: 'Daniel Kahneman', copyId: 'BK-2026-0005', borrowDate: 'May 3, 2026 01:00 PM', dueDate: 'May 17, 2026', returnDate: '-', status: 'Overdue', fine: 'PHP 25.00' },
-  { id: 'TRX-2026-0037', type: 'Borrow', member: 'Mark Anthony Villanueva', memberId: 'TCH-2026-001', memberAvatar: '\u{1F468}\u{1F3FE}', book: 'Deep Work', author: 'Cal Newport', copyId: 'BK-2026-0002', borrowDate: 'May 2, 2026 11:25 AM', dueDate: 'May 16, 2026', returnDate: '-', status: 'Active', fine: 'PHP 0.00' },
-]
 
 function getTypeClass(type: TransactionType) {
   return type === 'Borrow'
@@ -53,7 +61,63 @@ function getStatusClass(status: TransactionStatus) {
   return 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
 }
 
-// ─── Transaction Actions Dropdown Menu ───────────────────────────────────────────
+function formatDate(value: string | null) {
+  if (!value) return '-'
+  const d = new Date(value)
+  if (Number.isNaN(d.getTime())) return '-'
+  return d.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+function formatDateOnly(value: string | null) {
+  if (!value) return '-'
+  const d = new Date(value)
+  if (Number.isNaN(d.getTime())) return '-'
+  return d.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+}
+
+function inferStatus(tx: BorrowTransaction): TransactionStatus {
+  if (tx.status.toLowerCase() === 'returned' || !!tx.returnDate) return 'Returned'
+  const due = new Date(tx.dueDate)
+  if (!Number.isNaN(due.getTime()) && due.getTime() < Date.now()) return 'Overdue'
+  return 'Active'
+}
+
+function toTransactionRow(tx: BorrowTransaction, memberMap: Map<string, Member>): TransactionRow {
+  const status = inferStatus(tx)
+  const type: TransactionType = status === 'Returned' ? 'Return' : 'Borrow'
+  const fineValue = Number(tx.fine || 0)
+  const memberRecord = memberMap.get(tx.memberCode)
+
+  return {
+    id: `TRX-${String(new Date(tx.createdAt || Date.now()).getFullYear())}-${String(tx.id).padStart(4, '0')}`,
+    transactionId: tx.id,
+    type,
+    member: tx.memberName,
+    memberId: tx.memberCode,
+    memberAvatar: tx.memberName?.trim()?.charAt(0)?.toUpperCase() || 'M',
+    memberPhotoData: memberRecord?.profilePhotoData || null,
+    book: tx.bookTitle,
+    author: '-',
+    copyId: `BK-${String(tx.bookId).padStart(6, '0')}`,
+    borrowDate: formatDate(tx.borrowDate),
+    dueDate: formatDateOnly(tx.dueDate),
+    returnDate: tx.returnDate ? formatDate(tx.returnDate) : '-',
+    status,
+    fine: `PHP ${fineValue.toFixed(2)}`,
+    fineValue,
+  }
+}
+
 type TransactionActionsMenuProps = {
   isDarkMode: boolean
   status: TransactionStatus
@@ -73,7 +137,7 @@ function TransactionActionsMenu({
   onMarkReturned,
   onSendReminder,
   onRecordPayment,
-  onPrintReceipt
+  onPrintReceipt,
 }: TransactionActionsMenuProps) {
   const [open, setOpen] = useState(false)
   const [openUpward, setOpenUpward] = useState(false)
@@ -95,7 +159,7 @@ function TransactionActionsMenu({
       const spaceBelow = window.innerHeight - rect.bottom
       setOpenUpward(spaceBelow < 225)
     }
-    setOpen(v => !v)
+    setOpen((v) => !v)
   }
 
   const surface = isDarkMode
@@ -104,9 +168,7 @@ function TransactionActionsMenu({
 
   const itemBase =
     'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-100 text-left'
-  const itemNormal = isDarkMode
-    ? 'text-slate-200 hover:bg-slate-800'
-    : 'text-slate-700 hover:bg-slate-50'
+  const itemNormal = isDarkMode ? 'text-slate-200 hover:bg-slate-800' : 'text-slate-700 hover:bg-slate-50'
   const divider = isDarkMode ? 'border-slate-700/60' : 'border-slate-100'
 
   return (
@@ -123,39 +185,23 @@ function TransactionActionsMenu({
               ? 'border-slate-700 text-slate-300 hover:bg-slate-800'
               : 'border-slate-200 text-slate-600 hover:bg-slate-50'
         }`}
-        aria-label="Transaction actions"
-        aria-haspopup="menu"
-        aria-expanded={open}
       >
         <MoreHorizontal size={14} />
       </button>
 
       {open && (
         <div
-          className={`absolute right-0 z-50 w-56 rounded-xl border p-1.5 ${surface} animate-[fadeIn_0.12s_ease] ${
-            openUpward 
-              ? 'bottom-full mb-1.5 origin-bottom-right' 
-              : 'top-full mt-1.5 origin-top-right'
+          className={`absolute right-0 z-50 w-56 rounded-xl border p-1.5 ${surface} ${
+            openUpward ? 'bottom-full mb-1.5 origin-bottom-right' : 'top-full mt-1.5 origin-top-right'
           }`}
-          role="menu"
-          style={{ animation: openUpward ? 'trxMenuInUp 0.13s cubic-bezier(0.16,1,0.3,1)' : 'trxMenuInDown 0.13s cubic-bezier(0.16,1,0.3,1)' }}
         >
-          <style>{`
-            @keyframes trxMenuInDown {
-              from { opacity: 0; transform: scale(0.95) translateY(-6px); }
-              to   { opacity: 1; transform: scale(1)    translateY(0);    }
-            }
-            @keyframes trxMenuInUp {
-              from { opacity: 0; transform: scale(0.95) translateY(6px); }
-              to   { opacity: 1; transform: scale(1)    translateY(0);    }
-            }
-          `}</style>
-
           <button
             type="button"
             className={`${itemBase} ${itemNormal}`}
-            role="menuitem"
-            onClick={() => { setOpen(false); onViewDetails(); }}
+            onClick={() => {
+              setOpen(false)
+              onViewDetails()
+            }}
           >
             <Eye size={15} className="shrink-0 text-sky-500" />
             View Details
@@ -165,8 +211,10 @@ function TransactionActionsMenu({
             <button
               type="button"
               className={`${itemBase} ${itemNormal}`}
-              role="menuitem"
-              onClick={() => { setOpen(false); onMarkReturned(); }}
+              onClick={() => {
+                setOpen(false)
+                onMarkReturned()
+              }}
             >
               <CheckCircle size={15} className="shrink-0 text-emerald-500" />
               Mark as Returned
@@ -177,8 +225,10 @@ function TransactionActionsMenu({
             <button
               type="button"
               className={`${itemBase} ${itemNormal}`}
-              role="menuitem"
-              onClick={() => { setOpen(false); onSendReminder(); }}
+              onClick={() => {
+                setOpen(false)
+                onSendReminder()
+              }}
             >
               <Send size={15} className="shrink-0 text-amber-500" />
               Send Reminder
@@ -189,8 +239,10 @@ function TransactionActionsMenu({
             <button
               type="button"
               className={`${itemBase} ${itemNormal}`}
-              role="menuitem"
-              onClick={() => { setOpen(false); onRecordPayment(); }}
+              onClick={() => {
+                setOpen(false)
+                onRecordPayment()
+              }}
             >
               <Receipt size={15} className="shrink-0 text-rose-500" />
               Settle Fine
@@ -202,8 +254,10 @@ function TransactionActionsMenu({
           <button
             type="button"
             className={`${itemBase} ${itemNormal}`}
-            role="menuitem"
-            onClick={() => { setOpen(false); onPrintReceipt(); }}
+            onClick={() => {
+              setOpen(false)
+              onPrintReceipt()
+            }}
           >
             <Printer size={15} className="shrink-0 text-slate-400" />
             Print Receipt
@@ -214,35 +268,55 @@ function TransactionActionsMenu({
   )
 }
 
-// ─── Main Component ─────────────────────────────────────────────────────────────
 export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, initialTab = 'all' }: TransactionsPageProps) {
   const [activeTab, setActiveTab] = useState<TransactionTab>(initialTab)
-  const [transactionList, setTransactionList] = useState<TransactionRow[]>(transactions)
+  const [transactionList, setTransactionList] = useState<TransactionRow[]>([])
   const [showToast, setShowToast] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  const loadTransactions = async () => {
+    setLoading(true)
+    try {
+      const [rows, members] = await Promise.all([
+        listBorrowTransactions('All', 1000),
+        listMembers(2000),
+      ])
+      const memberMap = new Map<string, Member>(members.map((m) => [m.memberId, m]))
+      setTransactionList(rows.map((row) => toTransactionRow(row, memberMap)))
+    } catch (error) {
+      console.error(error)
+      setShowToast('Failed to load transactions.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
     setActiveTab(initialTab)
   }, [initialTab])
 
+  useEffect(() => {
+    void loadTransactions()
+  }, [])
+
   const triggerToast = (msg: string) => {
     setShowToast(msg)
-    const timer = setTimeout(() => setShowToast(null), 3000)
-    return () => clearTimeout(timer)
+    setTimeout(() => setShowToast(null), 3000)
   }
 
-  // Action Handler Callback functions
-  const handleMarkReturned = (id: string, bookTitle: string) => {
-    setTransactionList(prev => prev.map(row => {
-      if (row.id === id) {
-        return {
-          ...row,
-          status: 'Returned',
-          returnDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-        }
-      }
-      return row
-    }))
-    triggerToast(`Successfully marked "${bookTitle}" as returned!`)
+  const handleMarkReturned = async (row: TransactionRow) => {
+    try {
+      await returnBorrowTransaction({
+        transactionId: row.transactionId,
+        returnDate: new Date().toISOString(),
+        fine: row.fineValue,
+      })
+      await loadTransactions()
+      triggerToast(`Successfully marked "${row.book}" as returned!`)
+    } catch (error) {
+      console.error(error)
+      triggerToast('Failed to mark transaction as returned.')
+    }
   }
 
   const handleSendReminder = (memberName: string) => {
@@ -250,16 +324,7 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
   }
 
   const handleSettleFine = (id: string, fineAmount: string) => {
-    setTransactionList(prev => prev.map(row => {
-      if (row.id === id) {
-        return {
-          ...row,
-          fine: 'PHP 0.00'
-        }
-      }
-      return row
-    }))
-    triggerToast(`Outstanding fine of ${fineAmount} settled successfully!`)
+    triggerToast(`Outstanding fine of ${fineAmount} noted for ${id}.`)
   }
 
   const handlePrintReceipt = (id: string) => {
@@ -295,11 +360,7 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
               <ArrowLeft size={16} />
             </button>
             <nav aria-label="Breadcrumb" className={`text-sm font-semibold ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-              <button
-                type="button"
-                onClick={onBack}
-                className={`transition-colors hover:underline ${isDarkMode ? 'hover:text-slate-200' : 'hover:text-slate-700'}`}
-              >
+              <button type="button" onClick={onBack} className={`transition-colors hover:underline ${isDarkMode ? 'hover:text-slate-200' : 'hover:text-slate-700'}`}>
                 Borrow / Return
               </button>
               <span className="mx-1">/</span>
@@ -312,47 +373,20 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
           </button>
         </div>
 
-        <div className={`mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4`}>
-          <article className={`rounded-xl border p-4 transition-all duration-200 hover:-translate-y-0.5 ${isDarkMode ? 'border-slate-700 bg-[#0b1738] hover:border-emerald-500/60 hover:shadow-[0_12px_24px_-16px_rgba(16,185,129,0.45)]' : 'border-slate-200 bg-white hover:border-emerald-200 hover:shadow-[0_12px_24px_-16px_rgba(15,23,42,0.35)]'}`}>
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <article className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
             <div className="flex items-center gap-4">
               <span className={`grid h-11 w-11 place-items-center rounded-full ${isDarkMode ? 'bg-blue-500/15 text-blue-300' : 'bg-blue-50 text-blue-600'}`}><ClipboardList size={18} /></span>
               <div>
                 <p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Total Transactions</p>
                 <p className={`text-4xl font-black leading-tight ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{counts.all}</p>
-                <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Apr 6 - May 6, 2026</p>
+                <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Live from database</p>
               </div>
             </div>
           </article>
-          <article className={`rounded-xl border p-4 transition-all duration-200 hover:-translate-y-0.5 ${isDarkMode ? 'border-slate-700 bg-[#0b1738] hover:border-emerald-500/60 hover:shadow-[0_12px_24px_-16px_rgba(16,185,129,0.45)]' : 'border-slate-200 bg-white hover:border-emerald-200 hover:shadow-[0_12px_24px_-16px_rgba(15,23,42,0.35)]'}`}>
-            <div className="flex items-center gap-4">
-              <span className={`grid h-11 w-11 place-items-center rounded-full ${isDarkMode ? 'bg-emerald-500/15 text-emerald-300' : 'bg-emerald-50 text-emerald-600'}`}><ArrowDownToLine size={18} /></span>
-              <div>
-                <p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Borrowed</p>
-                <p className={`text-4xl font-black leading-tight ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{counts.borrowed}</p>
-                <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{counts.all ? ((counts.borrowed / counts.all) * 100).toFixed(2) : '0.00'}%</p>
-              </div>
-            </div>
-          </article>
-          <article className={`rounded-xl border p-4 transition-all duration-200 hover:-translate-y-0.5 ${isDarkMode ? 'border-slate-700 bg-[#0b1738] hover:border-emerald-500/60 hover:shadow-[0_12px_24px_-16px_rgba(16,185,129,0.45)]' : 'border-slate-200 bg-white hover:border-emerald-200 hover:shadow-[0_12px_24px_-16px_rgba(15,23,42,0.35)]'}`}>
-            <div className="flex items-center gap-4">
-              <span className={`grid h-11 w-11 place-items-center rounded-full ${isDarkMode ? 'bg-blue-500/15 text-blue-300' : 'bg-blue-50 text-blue-600'}`}><ArrowUpFromLine size={18} /></span>
-              <div>
-                <p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Returned</p>
-                <p className={`text-4xl font-black leading-tight ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{counts.returned}</p>
-                <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{counts.all ? ((counts.returned / counts.all) * 100).toFixed(2) : '0.00'}%</p>
-              </div>
-            </div>
-          </article>
-          <article className={`rounded-xl border p-4 transition-all duration-200 hover:-translate-y-0.5 ${isDarkMode ? 'border-slate-700 bg-[#0b1738] hover:border-rose-500/60 hover:shadow-[0_12px_24px_-16px_rgba(244,63,94,0.45)]' : 'border-slate-200 bg-white hover:border-rose-200 hover:shadow-[0_12px_24px_-16px_rgba(15,23,42,0.35)]'}`}>
-            <div className="flex items-center gap-4">
-              <span className={`grid h-11 w-11 place-items-center rounded-full ${isDarkMode ? 'bg-rose-500/15 text-rose-300' : 'bg-rose-50 text-rose-600'}`}><AlertTriangle size={18} /></span>
-              <div>
-                <p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Overdue</p>
-                <p className={`text-4xl font-black leading-tight ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{counts.overdue}</p>
-                <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{counts.all ? ((counts.overdue / counts.all) * 100).toFixed(2) : '0.00'}%</p>
-              </div>
-            </div>
-          </article>
+          <article className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}><div className="flex items-center gap-4"><span className={`grid h-11 w-11 place-items-center rounded-full ${isDarkMode ? 'bg-emerald-500/15 text-emerald-300' : 'bg-emerald-50 text-emerald-600'}`}><ArrowDownToLine size={18} /></span><div><p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Borrowed</p><p className={`text-4xl font-black leading-tight ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{counts.borrowed}</p><p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{counts.all ? ((counts.borrowed / counts.all) * 100).toFixed(2) : '0.00'}%</p></div></div></article>
+          <article className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}><div className="flex items-center gap-4"><span className={`grid h-11 w-11 place-items-center rounded-full ${isDarkMode ? 'bg-blue-500/15 text-blue-300' : 'bg-blue-50 text-blue-600'}`}><ArrowUpFromLine size={18} /></span><div><p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Returned</p><p className={`text-4xl font-black leading-tight ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{counts.returned}</p><p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{counts.all ? ((counts.returned / counts.all) * 100).toFixed(2) : '0.00'}%</p></div></div></article>
+          <article className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}><div className="flex items-center gap-4"><span className={`grid h-11 w-11 place-items-center rounded-full ${isDarkMode ? 'bg-rose-500/15 text-rose-300' : 'bg-rose-50 text-rose-600'}`}><AlertTriangle size={18} /></span><div><p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Overdue</p><p className={`text-4xl font-black leading-tight ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{counts.overdue}</p><p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{counts.all ? ((counts.overdue / counts.all) * 100).toFixed(2) : '0.00'}%</p></div></div></article>
         </div>
 
         <div className={`mt-4 overflow-x-auto rounded-xl border ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
@@ -384,7 +418,7 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
           </div>
         </div>
 
-        <div className={`mt-4 overflow-hidden lg:overflow-visible rounded-xl border ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+        <div className={`mt-4 overflow-hidden rounded-xl border ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
           <div className={`flex flex-wrap items-center gap-3 border-b p-3 rounded-t-xl ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
             <label className={`group flex h-11 min-w-[280px] flex-1 items-center rounded-xl border px-3 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
               <Search size={16} className={`mr-2 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
@@ -400,15 +434,15 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
             ))}
             <div className={`flex h-11 min-w-[250px] items-center gap-2 rounded-xl border px-3 text-sm ${isDarkMode ? 'border-slate-700 text-slate-200' : 'border-slate-200 text-slate-700'}`}>
               <CalendarDays size={15} />
-              Apr 6, 2026 - May 6, 2026
+              Dynamic date range
             </div>
-            <button type="button" className={`inline-flex h-11 items-center gap-2 rounded-xl border px-4 text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
+            <button type="button" onClick={() => void loadTransactions()} className={`inline-flex h-11 items-center gap-2 rounded-xl border px-4 text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
               <RotateCcw size={15} />
               Reset
             </button>
           </div>
 
-          <div className="overflow-x-auto lg:overflow-visible relative z-10">
+          <div className="overflow-x-auto relative z-10">
             <table className="min-w-[1250px] w-full text-left text-sm">
               <thead className={isDarkMode ? 'bg-[#0f1f49] text-slate-300' : 'bg-slate-50 text-slate-600'}>
                 <tr>
@@ -427,17 +461,22 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
               </thead>
               <tbody>
                 {filteredTransactions.map((row) => (
-                  <tr
-                    key={row.id}
-                    onClick={() => onOpenTransactionDetail(row.id)}
-                    className={`border-t cursor-pointer transition-colors ${isDarkMode ? 'border-slate-700 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}
-                  >
+                  <tr key={row.id} onClick={() => onOpenTransactionDetail(row.id)} className={`border-t cursor-pointer transition-colors ${isDarkMode ? 'border-slate-700 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}>
                     <td className={`px-4 py-3 font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{row.id}</td>
                     <td className="px-3 py-3"><span className={`rounded-md px-2 py-1 text-xs font-semibold ${getTypeClass(row.type)}`}>{row.type}</span></td>
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-2">
-                        <span className={`grid h-9 w-9 place-items-center rounded-full text-base ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>{row.memberAvatar}</span>
-                        <div><p className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{row.member}</p><p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{row.memberId}</p></div>
+                        <span className={`grid h-9 w-9 place-items-center overflow-hidden rounded-full text-base ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                          {row.memberPhotoData ? (
+                            <img src={row.memberPhotoData} alt={`${row.member} avatar`} className="h-full w-full object-cover" />
+                          ) : (
+                            row.memberAvatar
+                          )}
+                        </span>
+                        <div>
+                          <p className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{row.member}</p>
+                          <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{row.memberId}</p>
+                        </div>
                       </div>
                     </td>
                     <td className="px-3 py-3"><p className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{row.book}</p><p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{row.author}</p></td>
@@ -446,14 +485,14 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
                     <td className={`px-3 py-3 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{row.dueDate}</td>
                     <td className={`px-3 py-3 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{row.returnDate}</td>
                     <td className="px-3 py-3"><span className={`rounded-md px-2 py-1 text-xs font-semibold ${getStatusClass(row.status)}`}>{row.status}</span></td>
-                    <td className={`px-3 py-3 font-semibold ${row.fine !== 'PHP 0.00' ? 'text-rose-600' : isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{row.fine}</td>
+                    <td className={`px-3 py-3 font-semibold ${row.fineValue > 0 ? 'text-rose-600' : isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{row.fine}</td>
                     <td className="px-3 py-3 text-right">
                       <TransactionActionsMenu
                         isDarkMode={isDarkMode}
                         status={row.status}
-                        hasFine={row.fine !== 'PHP 0.00'}
+                        hasFine={row.fineValue > 0}
                         onViewDetails={() => onOpenTransactionDetail(row.id)}
-                        onMarkReturned={() => handleMarkReturned(row.id, row.book)}
+                        onMarkReturned={() => void handleMarkReturned(row)}
                         onSendReminder={() => handleSendReminder(row.member)}
                         onRecordPayment={() => handleSettleFine(row.id, row.fine)}
                         onPrintReceipt={() => handlePrintReceipt(row.id)}
@@ -461,34 +500,28 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
                     </td>
                   </tr>
                 ))}
+                {!loading && filteredTransactions.length === 0 && (
+                  <tr>
+                    <td colSpan={11} className={`px-4 py-8 text-center text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                      No transactions found.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
 
           <div className={`flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm rounded-b-xl ${isDarkMode ? 'border-slate-700 text-slate-300' : 'border-slate-200 text-slate-600'}`}>
             <p>Showing 1 to {filteredTransactions.length} of {filteredTransactions.length} transactions</p>
-            <div className="flex items-center gap-2">
-              <select className={`h-9 rounded-lg border px-3 text-sm ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
-                <option>10 per page</option>
-              </select>
-              <button type="button" className={`grid h-9 w-9 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}>{'<'}</button>
-              <button type="button" className="grid h-9 w-9 place-items-center rounded-lg bg-emerald-50 font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">1</button>
-              <button type="button" className={`grid h-9 w-9 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}>2</button>
-              <button type="button" className={`grid h-9 w-9 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}>3</button>
-              <button type="button" className={`grid h-9 w-9 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}>Next</button>
-            </div>
+            <div className="flex items-center gap-2"><select className={`h-9 rounded-lg border px-3 text-sm ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}><option>10 per page</option></select></div>
           </div>
         </div>
       </section>
 
       {showToast && (
-        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl border px-5 py-4 shadow-xl transition-all duration-300 animate-[fadeIn_0.2s_ease-out] ${
-          isDarkMode 
-            ? 'border-slate-700 bg-slate-900 text-slate-100' 
-            : 'border-slate-200 bg-white text-slate-800'
-        }`}>
+        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl border px-5 py-4 shadow-xl ${isDarkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-800'}`}>
           <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">
-            <span className="text-sm font-bold">✓</span>
+            <span className="text-sm font-bold">OK</span>
           </div>
           <p className="text-sm font-semibold">{showToast}</p>
         </div>
