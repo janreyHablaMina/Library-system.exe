@@ -554,6 +554,7 @@ const greetingName = formatDisplayName(activeUsername)
       category: data.category.trim() || null,
       isbn: data.isbn.trim() || null,
       coverData,
+      shelfLocation: data.shelfLocation.trim() || null,
       totalCopies: data.numberOfCopies,
     })
     setBooksRefreshKey((value) => value + 1)
@@ -1066,6 +1067,11 @@ const greetingName = formatDisplayName(activeUsername)
                 isDarkMode={isDarkMode}
                 onBack={() => setIsBookDetailOpen(false)}
                 book={selectedBook}
+                onViewAllTransactions={() => {
+                  setIsBookDetailOpen(false)
+                  setTransactionActiveTab('all')
+                  setActivePage('All Transactions')
+                }}
               />
             ) : (
               <BooksPage

@@ -7,6 +7,7 @@ export type Book = {
   category: string | null
   isbn: string | null
   coverData: string | null
+  shelfLocation: string | null
   available: number
   totalCopies: number
   isArchived: boolean
@@ -19,6 +20,7 @@ export type CreateBookPayload = {
   category?: string | null
   isbn?: string | null
   coverData?: string | null
+  shelfLocation?: string | null
   totalCopies?: number
 }
 
@@ -29,6 +31,7 @@ export type UpdateBookPayload = {
   category?: string | null
   isbn?: string | null
   coverData?: string | null
+  shelfLocation?: string | null
   available: number
   totalCopies: number
   isArchived: boolean

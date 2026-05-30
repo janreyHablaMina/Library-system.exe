@@ -23,6 +23,7 @@ type BookDetailPageProps = {
   isDarkMode: boolean
   onBack: () => void
   book: BookDetailData | null
+  onViewAllTransactions?: () => void
 }
 
 type HistoryItem = {
@@ -35,7 +36,7 @@ type HistoryItem = {
   status: 'Returned' | 'Overdue'
 }
 
-export function BookDetailPage({ isDarkMode, onBack, book }: BookDetailPageProps) {
+export function BookDetailPage({ isDarkMode, onBack, book, onViewAllTransactions }: BookDetailPageProps) {
   const [history, setHistory] = useState<BorrowTransaction[]>([])
   
   useEffect(() => {
@@ -121,7 +122,7 @@ export function BookDetailPage({ isDarkMode, onBack, book }: BookDetailPageProps
                 </div>
                 <div>
                   <span className={`inline-flex rounded-md px-2.5 py-1 text-xs font-semibold ${isDarkMode ? 'bg-emerald-500/15 text-emerald-300' : 'bg-emerald-50 text-emerald-600'}`}>
-                    {book?.callNumber || '-'}
+                    {book?.shelfLocation || '-'}
                   </span>
                 </div>
 
@@ -188,7 +189,7 @@ export function BookDetailPage({ isDarkMode, onBack, book }: BookDetailPageProps
                   <Clock3 size={20} className={isDarkMode ? 'text-slate-400' : 'text-emerald-600'} />
                   <h2 className="text-lg font-bold">Borrow History</h2>
                 </div>
-                <button type="button" className={`text-[13px] font-bold transition-colors hover:underline ${isDarkMode ? 'text-emerald-400 hover:text-emerald-300' : 'text-emerald-600 hover:text-emerald-700'}`}>
+                <button type="button" onClick={onViewAllTransactions} className={`text-[13px] font-bold transition-colors hover:underline ${isDarkMode ? 'text-emerald-400 hover:text-emerald-300' : 'text-emerald-600 hover:text-emerald-700'}`}>
                   View all &rarr;
                 </button>
               </div>

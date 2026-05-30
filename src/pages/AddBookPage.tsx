@@ -33,7 +33,7 @@ export type AddBookFormData = {
   edition: string
   description: string
   numberOfCopies: number
-  shelfCallNumber: string
+  shelfLocation: string
   status: BookAvailability
   catalogCallNumber: string
   publicationPlace: string
@@ -74,7 +74,7 @@ const initialForm: AddBookFormData = {
   edition: '',
   description: '',
   numberOfCopies: 1,
-  shelfCallNumber: '',
+  shelfLocation: '',
   status: 'Available',
   catalogCallNumber: '',
   publicationPlace: '',
@@ -666,6 +666,15 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
                     placeholder="Enter number of copies"
                   />
                   <FieldError error={errors.numberOfCopies} />
+                </div>
+                <div>
+                  <label className={`text-xs font-black ${labelClass}`}>Shelf Location (Optional)</label>
+                  <input
+                    value={form.shelfLocation}
+                    onChange={(e) => setField('shelfLocation', e.target.value)}
+                    className={`mt-2 h-12 w-full rounded-xl border px-4 text-sm outline-none focus:border-emerald-500 ${inputClass}`}
+                    placeholder="e.g. 300.72 KAH or A-12"
+                  />
                 </div>
                 <div>
                   <label className={`text-xs font-black ${labelClass}`}>Status *</label>
