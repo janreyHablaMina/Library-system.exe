@@ -85,10 +85,10 @@ type BookItem = {
 }
 
 const mockMembers: MemberItem[] = [
-  { id: 1, name: 'Maria Santos', memberId: 'MS-00125', type: 'Student', phone: '0917 123 4567', email: 'maria.santos@email.com', borrowedCount: 2, limit: '3 / 5', avatar: 'MS', profilePhotoData: null, outstandingFines: '$0.00' },
-  { id: 2, name: 'Juan Dela Cruz', memberId: 'JD-00098', type: 'Student', phone: '0912 345 6789', email: 'juan.delacruz@email.com', borrowedCount: 2, limit: '3 / 5', avatar: 'JD', profilePhotoData: null, outstandingFines: '$0.00' },
-  { id: 3, name: 'Ana Lim', memberId: 'AL-00076', type: 'Student', phone: '0934 567 8901', email: 'ana.lim@email.com', borrowedCount: 3, limit: '2 / 5', avatar: 'AL', profilePhotoData: null, outstandingFines: '$0.00' },
-  { id: 4, name: 'Carlo Garcia', memberId: 'CG-00063', type: 'Student', phone: '0945 678 9012', email: 'carlo.garcia@email.com', borrowedCount: 1, limit: '4 / 5', avatar: 'CG', profilePhotoData: null, outstandingFines: '$120.00' },
+  { id: 1, name: 'Maria Santos', memberId: 'MS-00125', type: 'Student', phone: '0917 123 4567', email: 'maria.santos@email.com', borrowedCount: 2, limit: '3 / 5', avatar: 'MS', profilePhotoData: null, outstandingFines: '$0.00', status: 'Active' },
+  { id: 2, name: 'Juan Dela Cruz', memberId: 'JD-00098', type: 'Student', phone: '0912 345 6789', email: 'juan.delacruz@email.com', borrowedCount: 2, limit: '3 / 5', avatar: 'JD', profilePhotoData: null, outstandingFines: '$0.00', status: 'Active' },
+  { id: 3, name: 'Ana Lim', memberId: 'AL-00076', type: 'Student', phone: '0934 567 8901', email: 'ana.lim@email.com', borrowedCount: 3, limit: '2 / 5', avatar: 'AL', profilePhotoData: null, outstandingFines: '$0.00', status: 'Active' },
+  { id: 4, name: 'Carlo Garcia', memberId: 'CG-00063', type: 'Student', phone: '0945 678 9012', email: 'carlo.garcia@email.com', borrowedCount: 1, limit: '4 / 5', avatar: 'CG', profilePhotoData: null, outstandingFines: '$120.00', status: 'Suspended' },
 ]
 const mockBooks: BookItem[] = [
   { 
@@ -712,7 +712,9 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
             title: book.title,
             author: book.author,
             isbn: book.isbn ?? `N/A-${book.id}`,
-            availableCopies: book.available ? 1 : 0,
+            availableCopies: book.available,
+            totalCopies: book.totalCopies,
+            shelfLocation: book.shelfLocation || 'Central Library - Fiction Section',
             category: book.category ?? 'General',
             publisher: 'N/A',
             coverUrl: book.coverData ?? 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=150&auto=format&fit=crop&q=80',
@@ -1067,7 +1069,7 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
                 <Download size={16} />
                 Export
               </button>
-              <button type="button" onClick={() => { setIsAddModalOpen(true); setEditingReservation(null); setSelectedBook(null); setSelectedMember(null); setReservationDate('2026-05-21'); setExpiresOn('2026-05-28'); setNotes(''); setPriority('Normal'); setNotifyEmail(true); setNotifySMS(true); setFormError(null); }} className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white hover:bg-emerald-700 transition-all shadow-sm">
+              <button type="button" onClick={() => { setIsAddModalOpen(true); setEditingReservation(null); setSelectedBook(null); setSelectedMember(null); const now = new Date(); setReservationDate(now.toISOString().slice(0, 10)); now.setDate(now.getDate() + 7); setExpiresOn(now.toISOString().slice(0, 10)); setNotes(''); setPriority('Normal'); setNotifyEmail(true); setNotifySMS(true); setFormError(null); }} className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white hover:bg-emerald-700 transition-all shadow-sm">
                 <Plus size={18} />
                 New Reservation
               </button>
@@ -1516,7 +1518,7 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
                     <h3 className={`text-base font-bold ${isDarkMode ? 'text-slate-100' : 'text-[#0a1b4f]'}`}>3. Reservation Details</h3>
                     <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'} mt-0.5`}>Provide reservation information.</p>
                     
-                    <div className="mt-4 grid gap-4 md:grid-cols-3">
+                    <div className="mt-4 grid gap-4 md:grid-cols-2">
                       <div>
                         <label className={`text-[11px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Reservation Date</label>
                         <div className={`mt-1.5 flex h-11 items-center gap-2 rounded-xl border px-3.5 focus-within:border-emerald-500 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
@@ -1539,17 +1541,7 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
                         <p className={`mt-1 text-[10px] leading-tight ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Member will be notified before this date.</p>
                       </div>
 
-                      <div>
-                        <label className={`text-[11px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Priority</label>
-                        <div className="relative mt-1.5">
-                          <select value={priority} onChange={(e) => setPriority(e.target.value)} className={`h-11 w-full appearance-none rounded-xl border pl-4 pr-10 outline-none text-xs font-semibold focus:border-emerald-500 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100' : 'border-slate-200 bg-white text-slate-700'}`}>
-                            <option>Normal</option>
-                            <option>High</option>
-                            <option>Urgent</option>
-                          </select>
-                          <ChevronDown size={16} className={`pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
-                        </div>
-                      </div>
+
                     </div>
 
                     <div className="mt-5 grid gap-5 md:grid-cols-2">
@@ -1733,25 +1725,17 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
                               <span className={`font-mono font-extrabold block mt-0.5 truncate ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{selectedBook?.isbn}</span>
                             </div>
                             
-                            <div className={`p-2 rounded-lg border transition-all ${
+                            <div className={`col-span-2 p-2 rounded-lg border transition-all ${
                               isDarkMode ? 'bg-slate-900/30 border-slate-800/80 hover:border-slate-700' : 'bg-slate-50/60 border-slate-100 hover:border-slate-200/80'
                             }`}>
                               <span className="text-slate-400 font-bold block text-[8px] uppercase tracking-wider">Reservations</span>
                               <span className="font-extrabold block mt-0.5 text-blue-600 dark:text-blue-400 flex items-center gap-1">
                                 <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse inline-block"></span>
-                                2 waiting
+                                {reservations.filter(r => r.bookId === selectedBook?.id && (r.status === 'Pending' || r.status === 'Ready for Pickup')).length} waiting
                               </span>
                             </div>
                             
-                            <div className={`p-2 rounded-lg border transition-all ${
-                              isDarkMode ? 'bg-slate-900/30 border-slate-800/80 hover:border-slate-700' : 'bg-slate-50/60 border-slate-100 hover:border-slate-200/80'
-                            }`}>
-                              <span className="text-slate-400 font-bold block text-[8px] uppercase tracking-wider">Location</span>
-                              <span className={`font-extrabold block mt-0.5 truncate flex items-center gap-0.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`} title="Central Library - Fiction Section">
-                                <MapPin size={10} className="shrink-0 text-slate-400" />
-                                <span className="truncate">Central - Fiction</span>
-                              </span>
-                            </div>
+
                           </div>
                         </div>
                       </div>
@@ -1884,17 +1868,13 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
                         <span className="text-slate-400 font-bold">Expires On</span>
                         <span className={`font-extrabold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{formatExpiresDate(expiresOn)}</span>
                       </div>
-                      <div className="flex justify-between items-center text-[11px]">
-                        <span className="text-slate-400 font-bold">Priority</span>
-                        <span className={`font-extrabold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{priority}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-[11px]">
-                        <span className="text-slate-400 font-bold">Pickup Location</span>
-                        <span className={`font-extrabold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Central Library</span>
-                      </div>
+
+
                       <div className="flex justify-between items-center text-[11px]">
                         <span className="text-slate-400 font-bold">Estimated Wait Time</span>
-                        <span className={`font-extrabold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>~ 2 days</span>
+                        <span className={`font-extrabold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                          {!selectedBook ? '-' : selectedBook.availableCopies > 0 ? 'Available immediately' : `~ ${(reservations.filter(r => r.bookId === selectedBook.id && (r.status === 'Pending' || r.status === 'Ready for Pickup')).length * 3) + 2} days`}
+                        </span>
                       </div>
                     </div>
                   </div>
