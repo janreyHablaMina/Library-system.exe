@@ -37,8 +37,8 @@ const stats = [
   { label: 'Total Categories', value: '24', subValue: '↑ 3 this month', icon: Layers, color: 'text-emerald-600', bg: 'bg-emerald-50' },
   { label: 'Active Categories', value: '22', subValue: '91.7% of total', icon: BookOpen, color: 'text-blue-600', bg: 'bg-blue-50' },
   { label: 'Books in Categories', value: '6,619', subValue: 'Total books', icon: Briefcase, color: 'text-amber-600', bg: 'bg-amber-50' },
-  { label: 'Most Popular', value: 'Fiction', subValue: '2,317 books', icon: Palette, color: 'text-violet-600', bg: 'bg-violet-50' },
-  { label: 'New This Month', value: '2', subValue: 'New categories added', icon: Plus, color: 'text-rose-600', bg: 'bg-rose-50' },
+  
+  
 ]
 
 const categoriesData: CategoryRow[] = [
@@ -268,8 +268,8 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
       { label: 'Total Categories', value: totalCategories.toLocaleString('en-US'), subValue: 'From database records', icon: Layers, color: 'text-emerald-600', bg: 'bg-emerald-50' },
       { label: 'Active Categories', value: activeCategories.toLocaleString('en-US'), subValue: `${activePct}% of total`, icon: BookOpen, color: 'text-blue-600', bg: 'bg-blue-50' },
       { label: 'Books in Categories', value: booksCount.toLocaleString('en-US'), subValue: 'Total books', icon: Briefcase, color: 'text-amber-600', bg: 'bg-amber-50' },
-      { label: 'Most Popular', value: topCategory, subValue: 'Based on current list', icon: Palette, color: 'text-violet-600', bg: 'bg-violet-50' },
-      { label: 'New This Month', value: '0', subValue: 'New categories added', icon: Plus, color: 'text-rose-600', bg: 'bg-rose-50' },
+      
+      
     ]
   }, [categoriesList, booksCount])
 
@@ -289,7 +289,7 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
           </div>
         </div>
 
-        <section className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <section className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {stats.map((stat) => {
             const Icon = stat.icon
             return (
@@ -331,10 +331,7 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
                 </div>
               </div>
 
-              <button className={`inline-flex h-11 items-center gap-2 rounded-xl border px-4 text-xs font-bold transition-all ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-white'}`}>
-                <Filter size={16} />
-                Filter
-              </button>
+              
             </div>
           </div>
 
@@ -346,7 +343,6 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Description</th>
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider text-center">Books</th>
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Created On</th>
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider text-center">Actions</th>
                 </tr>
               </thead>
@@ -375,10 +371,6 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
                         }`}>
                           {cat.status}
                         </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <p className={`text-[11px] font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{cat.createdOn}</p>
-                        <p className={`text-[10px] font-medium ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{cat.createdTime}</p>
                       </td>
                       <td className="px-6 py-4">
                         <CategoryActionsMenu

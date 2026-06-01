@@ -5,7 +5,7 @@ import { AlertTriangle, ChevronDown, Download, Eye, Grid2x2, List, Mail, MoreHor
 import { createMember, listMembers, type Member } from '../lib/tauriApi'
 
 type MemberType = 'Student' | 'Teacher' | 'Staff' | 'Visitor'
-type MemberStatus = 'Active' | 'Overdue' | 'Inactive'
+type MemberStatus = 'Active' | 'Suspended' | 'Inactive'
 
 type MemberRow = {
   id: number
@@ -61,7 +61,7 @@ function getTypeClass(type: MemberType) {
 
 function getStatusClass(status: MemberStatus) {
   if (status === 'Active') return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
-  if (status === 'Overdue') return 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
+  if (status === 'Suspended') return 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
   return 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
 }
 
@@ -219,12 +219,12 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
   const [memberList, setMemberList] = useState<MemberRow[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('All')
-  const [selectedDept, setSelectedDept] = useState('All')
+  const [selectedType, setselectedType] = useState('All')
   const [activeStatTab, setActiveStatTab] = useState<'All Members' | 'Students' | 'Teachers' | 'Staff' | 'Visitors'>('All Members')
 
   // Dynamically compute unique departments
-  const uniqueDepts = useMemo(() => {
-    return Array.from(new Set(memberList.map(m => m.department))).sort()
+  const uniqueTypes = useMemo(() => {
+    return Array.from(new Set(memberList.map(m => m.type))).sort()
   }, [memberList])
 
   const toMemberRow = (member: Member): MemberRow => {
@@ -233,7 +233,7 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
       ? memberType
       : 'Visitor'
     const memberStatus = member.status as MemberStatus
-    const safeStatus: MemberStatus = ['Active', 'Overdue', 'Inactive'].includes(memberStatus)
+    const safeStatus: MemberStatus = ['Active', 'Suspended', 'Inactive'].includes(memberStatus)
       ? memberStatus
       : 'Active'
 
@@ -289,7 +289,7 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
     if (selectedStatus !== 'All' && member.status !== selectedStatus) return false
 
     // 3. Department Dropdown
-    if (selectedDept !== 'All' && member.department !== selectedDept) return false
+    if (selectedType !== 'All' && member.type !== selectedType) return false
 
     // 4. Search Text Input (name, memberId, email, contact)
     if (searchTerm.trim() !== '') {
@@ -308,7 +308,7 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
   const handleResetFilters = () => {
     setSearchTerm('')
     setSelectedStatus('All')
-    setSelectedDept('All')
+    setselectedType('All')
     setActiveStatTab('All Members')
   }
 
@@ -546,7 +546,7 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
                 }`}
               >
                 <option value="All">Status: All</option>
-                {['Active', 'Overdue', 'Inactive'].map(st => (
+                {['Active', 'Suspended', 'Inactive'].map(st => (
                   <option key={st} value={st}>{st}</option>
                 ))}
               </select>
@@ -556,14 +556,14 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
             {/* Department Course Select */}
             <div className="relative">
               <select 
-                value={selectedDept} 
-                onChange={(e) => setSelectedDept(e.target.value)}
+                value={selectedType} 
+                onChange={(e) => setselectedType(e.target.value)}
                 className={`h-11 appearance-none rounded-xl border py-2 pl-3 pr-9 text-sm outline-none min-w-[220px] max-w-[250px] truncate ${
                   isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'
                 }`}
               >
-                <option value="All">Department / Course: All</option>
-                {uniqueDepts.map(dept => (
+                <option value="All">Member Type: All</option>
+                {uniqueTypes.map(dept => (
                   <option key={dept} value={dept}>{dept}</option>
                 ))}
               </select>
@@ -605,8 +605,6 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
                     <th className="px-3 py-3 font-semibold">Member</th>
                     <th className="px-3 py-3 font-semibold">Member ID</th>
                     <th className="px-3 py-3 font-semibold">Type</th>
-                    <th className="px-3 py-3 font-semibold">Course / Department</th>
-                    <th className="px-3 py-3 font-semibold">Contact</th>
                     <th className="px-3 py-3 font-semibold">Borrowed</th>
                     <th className="px-3 py-3 font-semibold">Status</th>
                     <th className="px-3 py-3 font-semibold text-right">Actions</th>
@@ -644,11 +642,6 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
                       <td className="px-3 py-3">
                         <span className={`rounded-md px-2 py-1 text-xs font-semibold ${getTypeClass(member.type)}`}>{member.type}</span>
                       </td>
-                      <td className="px-3 py-3">
-                        <p className={`font-medium ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{member.department}</p>
-                        <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{member.yearOrRole}</p>
-                      </td>
-                      <td className={`px-3 py-3 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{member.contact}</td>
                       <td className={`px-3 py-3 font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{member.borrowed}</td>
                       <td className="px-3 py-3">
                         <span className={`rounded-md px-2 py-1 text-xs font-semibold ${getStatusClass(member.status)}`}>{member.status}</span>
@@ -829,7 +822,7 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
                     <select value={memberForm.status} onChange={(event) => handleMemberFormChange('status', event.target.value)} className={`h-11 w-full appearance-none rounded-xl border pl-3 pr-10 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100' : 'border-slate-200 bg-white text-slate-700'}`}>
                       <option value="Active">Active</option>
                       <option value="Inactive">Inactive</option>
-                      <option value="Overdue">Overdue</option>
+                      <option value="Suspended">Suspended</option>
                     </select>
                     <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
                   </div>
@@ -847,5 +840,8 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
     </div>
   )
 }
+
+
+
 
 

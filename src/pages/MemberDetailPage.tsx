@@ -58,7 +58,7 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
         avatarColor: 'bg-emerald-500',
         type: dbMember.memberType,
         department: dbMember.department || 'General',
-        status: (dbMember.status as 'Active' | 'Inactive' | 'Overdue') || 'Active',
+        status: (dbMember.status as 'Active' | 'Inactive' | 'Suspended') || 'Active',
         dateJoined,
         memberSince: 'N/A',
         lastUpdated: 'Synced from database',
@@ -608,10 +608,10 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
                 <div>
                   <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Status <span className="text-rose-500">*</span></label>
                   <div className="relative">
-                    <select value={editForm.status} onChange={(e) => setEditForm((p) => ({ ...p, status: e.target.value as 'Active' | 'Inactive' | 'Overdue' }))} className={`h-11 w-full appearance-none rounded-xl border pl-3 pr-10 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100' : 'border-slate-200 bg-white text-slate-700'}`}>
+                    <select value={editForm.status} onChange={(e) => setEditForm((p) => ({ ...p, status: e.target.value as 'Active' | 'Inactive' | 'Suspended' }))} className={`h-11 w-full appearance-none rounded-xl border pl-3 pr-10 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100' : 'border-slate-200 bg-white text-slate-700'}`}>
                       <option value="Active">Active</option>
                       <option value="Inactive">Inactive</option>
-                      <option value="Overdue">Overdue</option>
+                      <option value="Suspended">Suspended</option>
                     </select>
                     <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
                   </div>
@@ -689,4 +689,5 @@ function Summary({
     </div>
   )
 }
+
 

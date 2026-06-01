@@ -397,8 +397,8 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
       { label: 'Total Authors', value: totalAuthors.toLocaleString('en-US'), subValue: 'From database records', icon: Users, color: 'text-emerald-600', bg: 'bg-emerald-50' },
       { label: 'Active Authors', value: activeAuthors.toLocaleString('en-US'), subValue: `${activePct}% of total`, icon: Pencil, color: 'text-blue-600', bg: 'bg-blue-50' },
       { label: 'Books by Authors', value: allBooksCount.toLocaleString('en-US'), subValue: 'Total books written', icon: BookOpen, color: 'text-amber-600', bg: 'bg-amber-50' },
-      { label: 'Top Nationality', value: topNationality, subValue: `${topNationalityCount.toLocaleString('en-US')} author(s)`, icon: Star, color: 'text-violet-600', bg: 'bg-violet-50' },
-      { label: 'New This Month', value: '0', subValue: 'New authors added', icon: Calendar, color: 'text-rose-600', bg: 'bg-rose-50' },
+      
+      
     ]
   }, [authorsList, allBooksCount])
 
@@ -422,7 +422,7 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
           </div>
         </div>
 
-        <section className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <section className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {stats.map((stat) => {
             const Icon = stat.icon
             return (
@@ -453,20 +453,6 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
             
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-slate-500">Nationality</span>
-                <div className="relative">
-                  <select value={selectedNationality} onChange={(e) => setSelectedNationality(e.target.value)} className={`h-11 min-w-[140px] appearance-none rounded-xl border py-2 pl-4 pr-10 text-xs font-bold outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
-                    <option value="All">All</option>
-                    <option value="British">British</option>
-                    <option value="American">American</option>
-                    <option value="Japanese">Japanese</option>
-                    <option value="Brazilian">Brazilian</option>
-                  </select>
-                  <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
                 <span className="text-xs font-bold text-slate-500">Status</span>
                 <div className="relative">
                   <select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)} className={`h-11 min-w-[120px] appearance-none rounded-xl border py-2 pl-4 pr-10 text-xs font-bold outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
@@ -490,10 +476,7 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
                 </div>
               </div>
 
-              <button className={`inline-flex h-11 items-center gap-2 rounded-xl border px-4 text-xs font-bold transition-all ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-white'}`}>
-                <Filter size={16} />
-                Filter
-              </button>
+              
             </div>
           </div>
 
@@ -504,9 +487,7 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Author</th>
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Nationality</th>
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider text-center">Books</th>
-                  <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Date of Birth</th>
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Added On</th>
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider text-center">Actions</th>
                 </tr>
               </thead>
@@ -537,7 +518,6 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
                     <td className="px-6 py-4 text-center">
                       <span className={`text-xs font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{author.books}</span>
                     </td>
-                    <td className={`px-6 py-4 text-xs font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{author.dob}</td>
                     <td className="px-6 py-4">
                       <span className={`rounded-md px-3 py-1 text-[11px] font-semibold tracking-wide ${
                         author.status === 'Active' 
@@ -546,10 +526,6 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
                       }`}>
                         {author.status}
                       </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className={`text-[11px] font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{author.addedOn}</p>
-                      <p className={`text-[10px] font-medium ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{author.addedTime}</p>
                     </td>
                     <td className="px-6 py-4 text-center">
                       <AuthorActionsMenu
