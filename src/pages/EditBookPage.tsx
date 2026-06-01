@@ -14,7 +14,7 @@ import {
   Trash2
 } from 'lucide-react'
 
-type BookStatus = 'Available' | 'Borrowed' | 'Overdue'
+type BookStatus = 'Available' | 'Borrowed' | 'Overdue' | 'Archived'
 
 type BookRow = {
   id: number
@@ -87,7 +87,7 @@ function HighFidelityBookCover({ title, author }: { title: string; author: strin
 
 export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageProps) {
   // Tab states
-  const [activeTab, setActiveTab] = useState<'basic' | 'catalog' | 'notes'>('basic')
+  const [activeTab, setActiveTab] = useState<'basic' | 'catalog' | 'inventory' | 'notes'>('basic')
 
   // Cover Upload States & Ref
   const coverInputRef = React.useRef<HTMLInputElement | null>(null)
@@ -171,7 +171,7 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
     ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500 focus:border-emerald-500'
     : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400 focus:border-emerald-500'
 
-  const tabItemClass = (tab: 'basic' | 'catalog' | 'notes') => {
+  const tabItemClass = (tab: 'basic' | 'catalog' | 'inventory' | 'notes') => {
     const isActive = activeTab === tab
     return `flex items-center gap-2 px-1 py-3 text-sm font-semibold border-b-2 transition-all duration-150 ${
       isActive
@@ -304,6 +304,7 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
                           <option value="Available">Available</option>
                           <option value="Borrowed">Borrowed</option>
                           <option value="Overdue">Overdue</option>
+                          <option value="Archived">Archived</option>
                         </select>
                         <span className={`pointer-events-none absolute left-4 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full ${
                           status === 'Available' ? 'bg-emerald-500'
@@ -663,6 +664,7 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
                       <option value="Available">Available</option>
                       <option value="Borrowed">Borrowed</option>
                       <option value="Overdue">Overdue</option>
+                      <option value="Archived">Archived</option>
                     </select>
                     {/* Status dot indicator */}
                     <span className={`pointer-events-none absolute left-4 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full ${

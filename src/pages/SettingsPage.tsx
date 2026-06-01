@@ -54,12 +54,15 @@ import {
   createSystemUser,
   deleteSystemUser,
   getSetting,
+  listEmailLogs,
   listLoginTrail,
   listSettingsActivity,
   listSystemUsers,
   resetSystemUserPassword,
   setSetting,
+  testEmailConfiguration,
   updateSystemUser,
+  type EmailLog,
   type LoginTrailRow,
   type SettingActivityRow,
   type SystemUser as ApiSystemUser,
@@ -213,6 +216,19 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
     status: 'Active' as SystemUserStatus,
   })
   const [users, setUsers] = useState<SystemUser[]>([])
+  const [emailEnabled, setEmailEnabled] = useState(false)
+  const [automaticReminders, setAutomaticReminders] = useState(false)
+  const [senderName, setSenderName] = useState('Library Management System')
+  const [senderEmail, setSenderEmail] = useState('')
+  const [smtpHost, setSmtpHost] = useState('')
+  const [smtpPort, setSmtpPort] = useState('587')
+  const [smtpUsername, setSmtpUsername] = useState('')
+  const [smtpPassword, setSmtpPassword] = useState('')
+  const [testEmailTo, setTestEmailTo] = useState('')
+  const [emailTestStatus, setEmailTestStatus] = useState<{ type: 'idle' | 'success' | 'error'; message: string }>({ type: 'idle', message: '' })
+  const [emailLogs, setEmailLogs] = useState<EmailLog[]>([])
+  const [emailLogSearch, setEmailLogSearch] = useState('')
+  const [emailLogStatus, setEmailLogStatus] = useState('')
 
   const cardClass = isDarkMode ? 'border-slate-800 bg-[#0a1633]' : 'border-slate-200 bg-white'
   const iconBoxBg = isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-[#f0fdf4] text-emerald-600'
@@ -369,6 +385,14 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
           address,
           description,
           logoData,
+          configuredEmailEnabled,
+          configuredAutomaticReminders,
+          configuredSenderName,
+          configuredSenderEmail,
+          configuredSmtpHost,
+          configuredSmtpPort,
+          configuredSmtpUsername,
+          configuredSmtpPassword,
         ] = await Promise.all([
           getSetting('general.default_loan_period'),
           getSetting('general.fine_per_day'),
@@ -383,6 +407,14 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
           getSetting('library.address'),
           getSetting('library.description'),
           getSetting('library.logo_data'),
+          getSetting('email.enabled'),
+          getSetting('email.automatic_reminders'),
+          getSetting('email.sender_name'),
+          getSetting('email.sender_email'),
+          getSetting('email.smtp_host'),
+          getSetting('email.smtp_port'),
+          getSetting('email.smtp_username'),
+          getSetting('email.smtp_password'),
         ])
 
         if (cancelled) return
@@ -399,6 +431,17 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
         if (address) setLibraryAddress(address)
         if (description) setLibraryDescription(description)
         if (logoData) setLibraryLogoData(logoData)
+        if (configuredEmailEnabled) setEmailEnabled(configuredEmailEnabled === 'true')
+        if (configuredAutomaticReminders) setAutomaticReminders(configuredAutomaticReminders === 'true')
+        if (configuredSenderName) setSenderName(configuredSenderName)
+        if (configuredSenderEmail) {
+          setSenderEmail(configuredSenderEmail)
+          setTestEmailTo(configuredSenderEmail)
+        }
+        if (configuredSmtpHost) setSmtpHost(configuredSmtpHost)
+        if (configuredSmtpPort) setSmtpPort(configuredSmtpPort)
+        if (configuredSmtpUsername) setSmtpUsername(configuredSmtpUsername)
+        if (configuredSmtpPassword) setSmtpPassword(configuredSmtpPassword)
       } catch (error) {
         console.error('Failed to load general settings:', error)
       }
@@ -415,6 +458,42 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
       await setSetting(key, value)
     } catch (error) {
       console.error(`Failed to save setting ${key}:`, error)
+    }
+  }
+
+  const loadEmailLogs = async () => {
+    try {
+      const rows = await listEmailLogs(emailLogSearch, emailLogStatus, 200)
+      setEmailLogs(rows)
+    } catch (error) {
+      console.error('Failed to load email logs:', error)
+      setEmailLogs([])
+    }
+  }
+
+  useEffect(() => {
+    if (activeMenu !== 'Email Logs') return
+    void loadEmailLogs()
+  }, [activeMenu, emailLogSearch, emailLogStatus])
+
+  const saveEmailSetting = async (key: string, value: string) => {
+    await saveGeneralSetting(key, value)
+  }
+
+  const handleTestEmail = async () => {
+    const recipient = testEmailTo.trim() || senderEmail.trim()
+    if (!recipient) {
+      setEmailTestStatus({ type: 'error', message: 'Enter a test recipient email address.' })
+      return
+    }
+    setEmailTestStatus({ type: 'idle', message: '' })
+    try {
+      const message = await testEmailConfiguration(recipient)
+      setEmailTestStatus({ type: 'success', message })
+      void loadEmailLogs()
+    } catch (error) {
+      setEmailTestStatus({ type: 'error', message: error instanceof Error ? error.message : 'Failed to send test email.' })
+      void loadEmailLogs()
     }
   }
 
@@ -1168,6 +1247,135 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
     </div>
   )
 
+  const renderEmailConfiguration = () => (
+    <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+      <section className={`rounded-2xl border p-6 ${cardClass}`}>
+        <div className="mb-6 flex items-center gap-4">
+          <div className={`grid h-12 w-12 place-items-center rounded-2xl ${iconBoxBg}`}><Mail size={24} /></div>
+          <div>
+            <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Email Configuration</h3>
+            <p className={`text-sm ${subLabelClass}`}>Configure the sender and SMTP account used for book reminders.</p>
+          </div>
+        </div>
+
+        <div className="space-y-5">
+          {[
+            { label: 'Enable Email Notifications', value: emailEnabled, setter: setEmailEnabled, key: 'email.enabled' },
+            { label: 'Enable Automatic Reminders', value: automaticReminders, setter: setAutomaticReminders, key: 'email.automatic_reminders' },
+          ].map((toggle) => (
+            <div key={toggle.key} className={`flex items-center justify-between rounded-xl border p-4 ${inputClass}`}>
+              <div>
+                <p className={`text-sm font-bold ${labelClass}`}>{toggle.label}</p>
+                <p className={`text-xs ${subLabelClass}`}>{toggle.value ? 'Enabled' : 'Disabled'}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const next = !toggle.value
+                  toggle.setter(next)
+                  void saveEmailSetting(toggle.key, String(next))
+                }}
+                className={`relative h-7 w-12 rounded-full transition-colors ${toggle.value ? 'bg-emerald-600' : isDarkMode ? 'bg-slate-700' : 'bg-slate-300'}`}
+              >
+                <span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-transform ${toggle.value ? 'translate-x-5' : 'translate-x-1'}`} />
+              </button>
+            </div>
+          ))}
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {[
+              { label: 'Sender Name', value: senderName, setter: setSenderName, key: 'email.sender_name', placeholder: 'Library Management System' },
+              { label: 'Sender Email', value: senderEmail, setter: setSenderEmail, key: 'email.sender_email', placeholder: 'library@example.com' },
+              { label: 'SMTP Host', value: smtpHost, setter: setSmtpHost, key: 'email.smtp_host', placeholder: 'smtp.gmail.com' },
+              { label: 'SMTP Port', value: smtpPort, setter: setSmtpPort, key: 'email.smtp_port', placeholder: '587' },
+              { label: 'SMTP Username', value: smtpUsername, setter: setSmtpUsername, key: 'email.smtp_username', placeholder: 'SMTP username' },
+              { label: 'SMTP Password / App Password', value: smtpPassword, setter: setSmtpPassword, key: 'email.smtp_password', placeholder: 'App password' },
+            ].map((field) => (
+              <label key={field.key} className="space-y-2">
+                <span className={`text-sm font-bold ${labelClass}`}>{field.label}</span>
+                <input
+                  type={field.label === 'SMTP Password / App Password' ? 'password' : 'text'}
+                  value={field.value}
+                  onChange={(event) => field.setter(event.target.value)}
+                  onBlur={() => void saveEmailSetting(field.key, field.value)}
+                  placeholder={field.placeholder}
+                  className={`h-11 w-full rounded-xl border px-3 text-sm outline-none focus:border-emerald-500 ${inputClass}`}
+                />
+              </label>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className={`rounded-2xl border p-6 ${cardClass}`}>
+        <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Test Email</h3>
+        <p className={`mt-1 text-sm ${subLabelClass}`}>Send a quick test using the current configuration.</p>
+        <div className="mt-5 space-y-3">
+          <label className="space-y-2">
+            <span className={`text-sm font-bold ${labelClass}`}>Recipient Email</span>
+            <input value={testEmailTo} onChange={(event) => setTestEmailTo(event.target.value)} placeholder="recipient@example.com" className={`h-11 w-full rounded-xl border px-3 text-sm outline-none focus:border-emerald-500 ${inputClass}`} />
+          </label>
+          <button type="button" onClick={() => void handleTestEmail()} className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#059669] px-5 text-sm font-bold text-white hover:bg-emerald-700">
+            <Send size={16} /> Test Email
+          </button>
+          {emailTestStatus.message ? (
+            <p className={`text-sm font-semibold ${emailTestStatus.type === 'success' ? 'text-emerald-600' : 'text-rose-500'}`}>{emailTestStatus.message}</p>
+          ) : null}
+        </div>
+      </section>
+    </div>
+  )
+
+  const renderEmailLogs = () => (
+    <section className={`overflow-hidden rounded-2xl border ${cardClass}`}>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b px-6 py-4 dark:border-slate-800">
+        <div className="flex flex-1 items-center gap-3">
+          <div className={`flex h-11 min-w-64 items-center rounded-xl border px-3 ${inputClass}`}>
+            <Search size={16} className={subLabelClass} />
+            <input value={emailLogSearch} onChange={(event) => setEmailLogSearch(event.target.value)} placeholder="Search borrower, email, or book..." className="ml-2 w-full bg-transparent text-sm outline-none" />
+          </div>
+          <select value={emailLogStatus} onChange={(event) => setEmailLogStatus(event.target.value)} className={`h-11 rounded-xl border px-3 text-sm outline-none ${inputClass}`}>
+            <option value="">All statuses</option>
+            <option value="Sent">Sent</option>
+            <option value="Failed">Failed</option>
+            <option value="Pending">Pending</option>
+          </select>
+        </div>
+        <button type="button" onClick={() => void loadEmailLogs()} className={`inline-flex h-11 items-center gap-2 rounded-xl border px-4 text-sm font-bold ${inputClass}`}>
+          <RotateCcw size={15} /> Refresh
+        </button>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-sm">
+          <thead className={isDarkMode ? 'bg-[#0f1f49]/50 text-slate-300' : 'bg-slate-50 text-slate-600'}>
+            <tr>
+              <th className="px-6 py-3 font-semibold">Borrower</th>
+              <th className="px-6 py-3 font-semibold">Email</th>
+              <th className="px-6 py-3 font-semibold">Book</th>
+              <th className="px-6 py-3 font-semibold">Type</th>
+              <th className="px-6 py-3 font-semibold">Status</th>
+              <th className="px-6 py-3 font-semibold text-right">Sent Date</th>
+            </tr>
+          </thead>
+          <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
+            {emailLogs.length === 0 ? (
+              <tr><td colSpan={6} className={`px-6 py-10 text-center ${subLabelClass}`}>No email logs yet.</td></tr>
+            ) : emailLogs.map((log) => (
+              <tr key={log.id} className={isDarkMode ? 'hover:bg-[#12244f]' : 'hover:bg-slate-50'}>
+                <td className={`px-6 py-4 font-semibold ${labelClass}`}>{log.borrowerName}</td>
+                <td className={`px-6 py-4 ${subLabelClass}`}>{log.emailAddress}</td>
+                <td className={`px-6 py-4 ${labelClass}`}>{log.bookTitle}</td>
+                <td className={`px-6 py-4 ${subLabelClass}`}>{log.emailType}</td>
+                <td className="px-6 py-4"><span className={`rounded-full px-2.5 py-1 text-xs font-bold ${log.status === 'Sent' ? 'bg-emerald-50 text-emerald-700' : log.status === 'Failed' ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-700'}`}>{log.status}</span></td>
+                <td className={`px-6 py-4 text-right ${subLabelClass}`}>{new Date(log.sentAt).toLocaleString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  )
+
   const renderSettingsOverview = () => {
     const formatActivityTime = (rawDate: string) => {
       const parsed = new Date(rawDate)
@@ -1275,6 +1483,22 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
               btnText: 'Manage Security', 
               tab: 'Account Security',
               color: 'text-blue-500 bg-blue-50 dark:bg-blue-500/10'
+            },
+            {
+              title: 'Email Configuration',
+              desc: 'Set up SMTP, automatic reminders and test outgoing library emails.',
+              icon: Mail,
+              btnText: 'Configure Email',
+              tab: 'Email Configuration',
+              color: 'text-sky-500 bg-sky-50 dark:bg-sky-500/10'
+            },
+            {
+              title: 'Email Logs',
+              desc: 'Review sent, failed and pending reminder emails.',
+              icon: History,
+              btnText: 'View Logs',
+              tab: 'Email Logs',
+              color: 'text-amber-500 bg-amber-50 dark:bg-amber-500/10'
             }
           ].map((card) => (
             <section key={card.title} className={`flex flex-col rounded-2xl border p-6 transition-all duration-300 hover:shadow-lg ${cardClass}`}>
@@ -1390,10 +1614,14 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                     ? 'Configure basic system preferences and rules.'
                   : activeMenu === 'Account Security'
                     ? 'Manage your account password and view login trail.'
+                  : activeMenu === 'Email Configuration'
+                    ? 'Configure SMTP and reminder delivery settings.'
+                  : activeMenu === 'Email Logs'
+                    ? 'Search and review reminder email delivery history.'
                   : 'Manage your library system preferences and configuration.'}
               </p>
             </div>
-            {activeMenu === 'Overview' ? null : activeMenu === 'Users & Roles' ? (
+            {activeMenu === 'Overview' || activeMenu === 'Email Logs' ? null : activeMenu === 'Users & Roles' ? (
               <div className="flex gap-3">
                 <button 
                   onClick={() => alert('Exporting user data...')}
@@ -1430,6 +1658,10 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
             renderGeneralSettings()
           ) : activeMenu === 'Account Security' ? (
             renderAccountSecurity()
+          ) : activeMenu === 'Email Configuration' ? (
+            renderEmailConfiguration()
+          ) : activeMenu === 'Email Logs' ? (
+            renderEmailLogs()
           ) : (
             renderSettingsOverview()
           )}

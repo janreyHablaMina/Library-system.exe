@@ -17,13 +17,15 @@ import {
   Phone,
   Plus,
   RefreshCw,
+  Send,
   User,
   UserCheck,
   X,
 } from 'lucide-react'
 import bookCover from '../assets/login.avif'
 import { mockMembersData } from './memberDetailData'
-import { listMembers, updateMember, type Member as DbMember } from '../lib/tauriApi'
+import { listBorrowTransactions, listMembers, sendManualEmailReminder, updateMember, type Member as DbMember } from '../lib/tauriApi'
+import type { LoanItem } from './memberDetailData'
 
 type Props = {
   isDarkMode: boolean
@@ -33,6 +35,8 @@ type Props = {
 
 export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
   const [dbMember, setDbMember] = useState<DbMember | null>(null)
+  const [currentLoans, setCurrentLoans] = useState<LoanItem[]>([])
+  const [toast, setToast] = useState('')
   const [loadingMember, setLoadingMember] = useState(true)
   const d = useMemo(() => {
     if (dbMember) {
@@ -59,10 +63,10 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
         memberSince: 'N/A',
         lastUpdated: 'Synced from database',
         totalLoans: dbMember.borrowed,
-        currentLoans: dbMember.borrowed,
+        currentLoans: currentLoans.length,
         reservationsCount: 0,
         fines: 'PHP 0.00',
-        loansList: [],
+        loansList: currentLoans,
         reservationsList: [],
         notes: [],
         activities: [
@@ -78,7 +82,7 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
       }
     }
     return mockMembersData[memberId && mockMembersData[memberId] ? memberId : 1]
-  }, [dbMember, memberId])
+  }, [currentLoans, dbMember, memberId])
 
   const [member, setMember] = useState({ ...d, profileImage: bookCover })
   const [copied, setCopied] = useState(false)
@@ -126,6 +130,43 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
   }, [memberId])
 
   useEffect(() => {
+    let mounted = true
+    const loadLoans = async () => {
+      if (!dbMember) {
+        setCurrentLoans([])
+        return
+      }
+      try {
+        const rows = await listBorrowTransactions('Active', 500)
+        const today = new Date()
+        const loans = rows
+          .filter((row) => row.memberId === dbMember.id && !row.returnDate)
+          .map((row) => {
+            const due = new Date(row.dueDate)
+            const diffDays = Math.ceil((due.getTime() - today.getTime()) / 86400000)
+            const status = diffDays < 0 ? 'Overdue' : diffDays <= 2 ? 'Due Soon' : 'Normal'
+            const statusLabel = diffDays < 0 ? `${Math.abs(diffDays)} day(s) overdue` : diffDays === 0 ? 'Due today' : diffDays <= 2 ? `Due in ${diffDays} day(s)` : 'On Time'
+            return {
+              id: row.id,
+              title: row.bookTitle,
+              author: 'Library collection',
+              dueDate: due.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+              status,
+              statusLabel,
+            } as LoanItem
+          })
+        if (mounted) setCurrentLoans(loans)
+      } catch {
+        if (mounted) setCurrentLoans([])
+      }
+    }
+    void loadLoans()
+    return () => {
+      mounted = false
+    }
+  }, [dbMember])
+
+  useEffect(() => {
     setMember({
       ...d,
       profileImage: dbMember?.profilePhotoData || bookCover,
@@ -137,6 +178,16 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
     await navigator.clipboard.writeText(member.memberId)
     setCopied(true)
     setTimeout(() => setCopied(false), 1600)
+  }
+
+  const handleSendLoanReminder = async (loan: LoanItem) => {
+    try {
+      const message = await sendManualEmailReminder(loan.id)
+      setToast(message)
+    } catch (error) {
+      setToast(error instanceof Error ? error.message : 'Failed to send email reminder.')
+    }
+    window.setTimeout(() => setToast(''), 3000)
   }
 
   const saveNote = (e: React.FormEvent) => {
@@ -228,6 +279,11 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
   return (
     <div className={`flex-1 overflow-y-auto min-h-0 w-full ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
       <div className="max-w-[1600px] mx-auto p-6 space-y-5">
+        {toast ? (
+          <div className={`rounded-xl border px-4 py-3 text-sm font-semibold ${isDarkMode ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200' : 'border-emerald-200 bg-emerald-50 text-emerald-700'}`}>
+            {toast}
+          </div>
+        ) : null}
         <div className="flex items-center justify-between gap-4">
           <button
             onClick={onBack}
@@ -307,6 +363,14 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
                       <p className={`text-sm font-semibold ${loan.status === 'Overdue' ? 'text-rose-500' : ''}`}>{loan.dueDate}</p>
                     </div>
                     <span className={`text-xs font-semibold rounded-lg px-3 py-1.5 ${loan.status === 'Overdue' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'}`}>{loan.statusLabel}</span>
+                    <button
+                      type="button"
+                      onClick={() => { void handleSendLoanReminder(loan) }}
+                      className={`inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-xs font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}
+                    >
+                      <Send size={13} />
+                      Email
+                    </button>
                   </div>
                 ))
               ) : (

@@ -1,4 +1,5 @@
-use chrono::Utc;
+use chrono::{Duration, NaiveDate, Utc};
+use lettre::{message::Mailbox, transport::smtp::authentication::Credentials, Message, SmtpTransport, Transport};
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 use std::{fs, path::PathBuf};
@@ -243,6 +244,27 @@ struct BorrowTransactionRow {
   status: String,
   fine: f64,
   created_at: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct EmailLogRow {
+  id: i64,
+  borrower_name: String,
+  email_address: String,
+  book_title: String,
+  email_type: String,
+  status: String,
+  sent_at: String,
+  error_message: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct EmailLogStats {
+  sent_today: i64,
+  failed: i64,
+  pending: i64,
 }
 
 #[derive(Debug, Deserialize)]
@@ -522,6 +544,19 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
         unique_key TEXT UNIQUE,
         created_at TEXT NOT NULL
       );
+      CREATE TABLE IF NOT EXISTS email_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        borrow_transaction_id INTEGER,
+        borrower_name TEXT NOT NULL,
+        email_address TEXT NOT NULL,
+        book_title TEXT NOT NULL,
+        email_type TEXT NOT NULL,
+        status TEXT NOT NULL,
+        sent_at TEXT NOT NULL,
+        error_message TEXT,
+        automatic_key TEXT UNIQUE,
+        FOREIGN KEY(borrow_transaction_id) REFERENCES borrow_transactions(id) ON DELETE SET NULL
+      );
       ",
     )
     .map_err(|e| format!("init schema failed: {e}"))?;
@@ -581,6 +616,12 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
       return Err(format!("users profile photo migration failed: {e}"));
     }
   }
+  if let Err(e) = conn.execute("ALTER TABLE email_logs ADD COLUMN automatic_key TEXT", []) {
+    let msg = e.to_string();
+    if !msg.contains("duplicate column name") {
+      return Err(format!("email logs migration failed: {e}"));
+    }
+  }
 
   conn
     .execute(
@@ -624,6 +665,150 @@ fn upsert_notification(conn: &Connection, ntype: &str, title: &str, message: &st
     )
     .map_err(|e| format!("upsert notification failed: {e}"))?;
   Ok(())
+}
+
+fn emit_notifications_refresh(app: &tauri::AppHandle) {
+  let _ = app.emit("notifications:refresh", ());
+}
+
+fn setting_bool(conn: &Connection, key: &str, default_value: bool) -> bool {
+  conn
+    .query_row("SELECT value FROM settings WHERE key = ?1", params![key], |row| row.get::<_, String>(0))
+    .map(|value| value == "true")
+    .unwrap_or(default_value)
+}
+
+fn email_template(email_type: &str, member_name: &str, book_title: &str, due_date: &str) -> (String, String) {
+  match email_type {
+    "Due Tomorrow" => (
+      "Library Book Due Reminder".to_string(),
+      format!(
+        "Hello {member_name},\n\nThis is a reminder that your borrowed book \"{book_title}\" is due on {due_date}.\n\nPlease return the book on or before the due date.\n\nThank you,\nLibrary Management System"
+      ),
+    ),
+    "Due Today" => (
+      "Library Book Due Today".to_string(),
+      format!(
+        "Hello {member_name},\n\nYour borrowed book \"{book_title}\" is due today ({due_date}).\n\nPlease return it to the library to avoid penalties.\n\nThank you,\nLibrary Management System"
+      ),
+    ),
+    _ => (
+      "Overdue Library Book Notice".to_string(),
+      format!(
+        "Hello {member_name},\n\nYour borrowed book \"{book_title}\" was due on {due_date} and is now overdue.\n\nPlease return the book as soon as possible.\n\nThank you,\nLibrary Management System"
+      ),
+    ),
+  }
+}
+
+fn log_email(
+  conn: &Connection,
+  tx_id: Option<i64>,
+  borrower_name: &str,
+  email_address: &str,
+  book_title: &str,
+  email_type: &str,
+  status: &str,
+  error_message: Option<&str>,
+  automatic_key: Option<&str>,
+) -> Result<(), String> {
+  conn
+    .execute(
+      "
+      INSERT INTO email_logs (
+        borrow_transaction_id, borrower_name, email_address, book_title,
+        email_type, status, sent_at, error_message, automatic_key
+      )
+      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)
+      ON CONFLICT(automatic_key) DO NOTHING
+      ",
+      params![
+        tx_id,
+        borrower_name,
+        email_address,
+        book_title,
+        email_type,
+        status,
+        Utc::now().to_rfc3339(),
+        error_message,
+        automatic_key
+      ],
+    )
+    .map_err(|e| format!("log email failed: {e}"))?;
+  Ok(())
+}
+
+fn send_email_from_settings(conn: &Connection, to: &str, subject: &str, body: &str) -> Result<(), String> {
+  let enabled = setting_bool(conn, "email.enabled", false);
+  if !enabled {
+    return Err("Email notifications are disabled.".to_string());
+  }
+  let smtp_host = conn.query_row("SELECT value FROM settings WHERE key = 'email.smtp_host'", [], |row| row.get::<_, String>(0)).unwrap_or_default();
+  let smtp_port = conn.query_row("SELECT value FROM settings WHERE key = 'email.smtp_port'", [], |row| row.get::<_, String>(0)).unwrap_or_else(|_| "587".to_string());
+  let smtp_username = conn.query_row("SELECT value FROM settings WHERE key = 'email.smtp_username'", [], |row| row.get::<_, String>(0)).unwrap_or_default();
+  let smtp_password = conn.query_row("SELECT value FROM settings WHERE key = 'email.smtp_password'", [], |row| row.get::<_, String>(0)).unwrap_or_default();
+  let sender_name = conn.query_row("SELECT value FROM settings WHERE key = 'email.sender_name'", [], |row| row.get::<_, String>(0)).unwrap_or_else(|_| "Library Management System".to_string());
+  let sender_email = conn.query_row("SELECT value FROM settings WHERE key = 'email.sender_email'", [], |row| row.get::<_, String>(0)).unwrap_or_default();
+  if smtp_host.trim().is_empty() || sender_email.trim().is_empty() || smtp_username.trim().is_empty() || smtp_password.trim().is_empty() {
+    return Err("SMTP host, sender email, username, and password are required.".to_string());
+  }
+  let port = smtp_port.trim().parse::<u16>().unwrap_or(587);
+  let from = Mailbox::new(Some(sender_name), sender_email.parse().map_err(|e| format!("invalid sender email: {e}"))?);
+  let to = to.parse().map_err(|e| format!("invalid recipient email: {e}"))?;
+  let message = Message::builder()
+    .from(from)
+    .to(to)
+    .subject(subject)
+    .body(body.to_string())
+    .map_err(|e| format!("build email failed: {e}"))?;
+  let mailer = SmtpTransport::relay(smtp_host.trim())
+    .map_err(|e| format!("smtp relay failed: {e}"))?
+    .port(port)
+    .credentials(Credentials::new(smtp_username, smtp_password))
+    .build();
+  mailer.send(&message).map_err(|e| format!("smtp send failed: {e}"))?;
+  Ok(())
+}
+
+fn send_reminder_for_transaction(conn: &Connection, transaction_id: i64, email_type: &str, automatic_key: Option<String>) -> Result<String, String> {
+  let (member_name, email, book_title, due_date, return_date): (String, Option<String>, String, String, Option<String>) = conn
+    .query_row(
+      "
+      SELECT m.full_name, m.email, b.title, t.due_date, t.return_date
+      FROM borrow_transactions t
+      INNER JOIN members m ON m.id = t.member_id
+      INNER JOIN books b ON b.id = t.book_id
+      WHERE t.id = ?1
+      ",
+      params![transaction_id],
+      |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?)),
+    )
+    .map_err(|e| format!("fetch reminder transaction failed: {e}"))?;
+
+  if return_date.is_some() {
+    return Err("Book has already been returned.".to_string());
+  }
+
+  let email_address = email.unwrap_or_default();
+  if email_address.trim().is_empty() {
+    log_email(conn, Some(transaction_id), &member_name, "", &book_title, email_type, "Failed", Some("Member has no email address."), automatic_key.as_deref())?;
+    return Err("Member has no email address.".to_string());
+  }
+
+  let due_label = NaiveDate::parse_from_str(&due_date[..due_date.len().min(10)], "%Y-%m-%d")
+    .map(|date| date.format("%b %d, %Y").to_string())
+    .unwrap_or(due_date.clone());
+  let (subject, body) = email_template(email_type, &member_name, &book_title, &due_label);
+  match send_email_from_settings(conn, &email_address, &subject, &body) {
+    Ok(()) => {
+      log_email(conn, Some(transaction_id), &member_name, &email_address, &book_title, email_type, "Sent", None, automatic_key.as_deref())?;
+      Ok(format!("Email reminder sent to {member_name}."))
+    }
+    Err(error) => {
+      log_email(conn, Some(transaction_id), &member_name, &email_address, &book_title, email_type, "Failed", Some(&error), automatic_key.as_deref())?;
+      Err(error)
+    }
+  }
 }
 
 #[tauri::command]
@@ -790,10 +975,6 @@ fn update_system_user(app: tauri::AppHandle, payload: UpdateSystemUserPayload) -
   Ok(())
 }
 
-fn emit_notifications_refresh(app: &tauri::AppHandle) {
-  let _ = app.emit("notifications:refresh", ());
-}
-
 #[tauri::command]
 fn delete_system_user(app: tauri::AppHandle, id: i64) -> Result<(), String> {
   let conn = open_db(&database_path(&app)?)?;
@@ -905,6 +1086,41 @@ fn list_books(app: tauri::AppHandle, limit: Option<i64>) -> Result<Vec<Book>, St
 }
 
 #[tauri::command]
+fn search_books(app: tauri::AppHandle, query: String, limit: Option<i64>) -> Result<Vec<Book>, String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  let max_rows = limit.unwrap_or(5).clamp(1, 50);
+  let like_pattern = format!("%{}%", query.trim());
+  let mut stmt = conn
+    .prepare(
+      "SELECT id, title, author, category, isbn, cover_data, available, created_at
+       FROM books
+       WHERE title LIKE ?1 OR author LIKE ?1
+       ORDER BY id DESC
+       LIMIT ?2",
+    )
+    .map_err(|e| format!("prepare search query failed: {e}"))?;
+  let rows = stmt
+    .query_map(params![like_pattern, max_rows], |row| {
+      Ok(Book {
+        id: row.get(0)?,
+        title: row.get(1)?,
+        author: row.get(2)?,
+        category: row.get(3)?,
+        isbn: row.get(4)?,
+        cover_data: row.get(5)?,
+        available: row.get::<_, i64>(6)? == 1,
+        created_at: row.get(7)?,
+      })
+    })
+    .map_err(|e| format!("search books failed: {e}"))?;
+
+  rows
+    .collect::<Result<Vec<_>, _>>()
+    .map_err(|e| format!("collect rows failed: {e}"))
+}
+
+#[tauri::command]
 fn update_book(app: tauri::AppHandle, payload: UpdateBookPayload) -> Result<(), String> {
   let conn = open_db(&database_path(&app)?)?;
   init_schema(&conn)?;
@@ -949,8 +1165,9 @@ fn create_member(app: tauri::AppHandle, payload: CreateMemberPayload) -> Result<
   let full_name = payload.full_name.trim();
   let member_type = payload.member_type.trim();
   let member_id = payload.member_id.trim();
-  if full_name.is_empty() || member_type.is_empty() || member_id.is_empty() {
-    return Err("fullName, memberType, and memberId are required".to_string());
+  let email = payload.email.as_deref().unwrap_or("").trim();
+  if full_name.is_empty() || member_type.is_empty() || member_id.is_empty() || email.is_empty() {
+    return Err("fullName, memberType, memberId, and email are required".to_string());
   }
 
   let conn = open_db(&database_path(&app)?)?;
@@ -967,7 +1184,7 @@ fn create_member(app: tauri::AppHandle, payload: CreateMemberPayload) -> Result<
         member_id,
         payload.department.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
         payload.contact_number.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
-        payload.email.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
+        email,
         payload.address.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
         payload.profile_photo_data,
         payload.status.unwrap_or_else(|| "Active".to_string()),
@@ -1013,6 +1230,48 @@ fn list_members(app: tauri::AppHandle, limit: Option<i64>) -> Result<Vec<Member>
       })
     })
     .map_err(|e| format!("list members failed: {e}"))?;
+
+  rows
+    .collect::<Result<Vec<_>, _>>()
+    .map_err(|e| format!("collect members failed: {e}"))
+}
+
+#[tauri::command]
+fn search_members(app: tauri::AppHandle, query: String, limit: Option<i64>) -> Result<Vec<Member>, String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  let max_rows = limit.unwrap_or(5).clamp(1, 50);
+  let like_pattern = format!("%{}%", query.trim());
+  let mut stmt = conn
+    .prepare(
+      "
+      SELECT id, full_name, member_type, member_id, department, contact_number, email, address, profile_photo_data, status, borrowed, created_at
+      FROM members
+      WHERE full_name LIKE ?1 OR member_id LIKE ?1
+      ORDER BY id DESC
+      LIMIT ?2
+      ",
+    )
+    .map_err(|e| format!("prepare search members query failed: {e}"))?;
+
+  let rows = stmt
+    .query_map(params![like_pattern, max_rows], |row| {
+      Ok(Member {
+        id: row.get(0)?,
+        full_name: row.get(1)?,
+        member_type: row.get(2)?,
+        member_id: row.get(3)?,
+        department: row.get(4)?,
+        contact_number: row.get(5)?,
+        email: row.get(6)?,
+        address: row.get(7)?,
+        profile_photo_data: row.get(8)?,
+        status: row.get(9)?,
+        borrowed: row.get(10)?,
+        created_at: row.get(11)?,
+      })
+    })
+    .map_err(|e| format!("search members failed: {e}"))?;
 
   rows
     .collect::<Result<Vec<_>, _>>()
@@ -1120,6 +1379,45 @@ fn list_authors(app: tauri::AppHandle, limit: Option<i64>) -> Result<Vec<Author>
       })
     })
     .map_err(|e| format!("list authors failed: {e}"))?;
+
+  rows
+    .collect::<Result<Vec<_>, _>>()
+    .map_err(|e| format!("collect authors failed: {e}"))
+}
+
+#[tauri::command]
+fn search_authors(app: tauri::AppHandle, query: String, limit: Option<i64>) -> Result<Vec<Author>, String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  let max_rows = limit.unwrap_or(5).clamp(1, 50);
+  let like_pattern = format!("%{}%", query.trim());
+  let mut stmt = conn
+    .prepare(
+      "
+      SELECT id, name, email, nationality, dob, profile_photo_data, status, biography, created_at
+      FROM authors
+      WHERE name LIKE ?1
+      ORDER BY id DESC
+      LIMIT ?2
+      ",
+    )
+    .map_err(|e| format!("prepare search authors query failed: {e}"))?;
+
+  let rows = stmt
+    .query_map(params![like_pattern, max_rows], |row| {
+      Ok(Author {
+        id: row.get(0)?,
+        name: row.get(1)?,
+        email: row.get(2)?,
+        nationality: row.get(3)?,
+        dob: row.get(4)?,
+        profile_photo_data: row.get(5)?,
+        status: row.get(6)?,
+        biography: row.get(7)?,
+        created_at: row.get(8)?,
+      })
+    })
+    .map_err(|e| format!("search authors failed: {e}"))?;
 
   rows
     .collect::<Result<Vec<_>, _>>()
@@ -1908,6 +2206,151 @@ fn send_email_smtp(to: String, subject: String, body: String) -> Result<String, 
 }
 
 #[tauri::command]
+fn send_manual_email_reminder(app: tauri::AppHandle, transaction_id: i64) -> Result<String, String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  match send_reminder_for_transaction(&conn, transaction_id, "Manual", None) {
+    Ok(message) => {
+      upsert_notification(
+        &conn,
+        "email",
+        "Email Reminder Sent",
+        &message,
+        &format!("email:manual:{}", Utc::now().timestamp_millis()),
+      )?;
+      emit_notifications_refresh(&app);
+      Ok(message)
+    }
+    Err(error) => {
+      upsert_notification(
+        &conn,
+        "email",
+        "Email Reminder Failed",
+        &error,
+        &format!("email:manual_failed:{}", Utc::now().timestamp_millis()),
+      )?;
+      emit_notifications_refresh(&app);
+      Err(error)
+    }
+  }
+}
+
+#[tauri::command]
+fn run_automatic_email_reminders(app: tauri::AppHandle) -> Result<i64, String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  if !setting_bool(&conn, "email.enabled", false) || !setting_bool(&conn, "email.automatic_reminders", false) {
+    return Ok(0);
+  }
+
+  let today = Utc::now().date_naive();
+  let tomorrow = today + Duration::days(1);
+  let mut stmt = conn
+    .prepare(
+      "
+      SELECT t.id, t.due_date
+      FROM borrow_transactions t
+      WHERE t.return_date IS NULL
+        AND t.status IN ('Active', 'Borrowed')
+      ",
+    )
+    .map_err(|e| format!("prepare auto reminders failed: {e}"))?;
+  let rows = stmt
+    .query_map([], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, String>(1)?)))
+    .map_err(|e| format!("query auto reminders failed: {e}"))?;
+
+  let mut attempted = 0;
+  for row in rows {
+    let (tx_id, due_date) = row.map_err(|e| format!("read auto reminder row failed: {e}"))?;
+    let due = NaiveDate::parse_from_str(&due_date[..due_date.len().min(10)], "%Y-%m-%d");
+    let Ok(due) = due else { continue };
+    let (email_type, key_date) = if due == tomorrow {
+      ("Due Tomorrow", today)
+    } else if due == today {
+      ("Due Today", today)
+    } else if due < today {
+      ("Overdue", today)
+    } else {
+      continue;
+    };
+    let key = format!("auto:{tx_id}:{email_type}:{key_date}");
+    let exists: i64 = conn
+      .query_row("SELECT COUNT(*) FROM email_logs WHERE automatic_key = ?1", params![key], |row| row.get(0))
+      .unwrap_or(0);
+    if exists > 0 {
+      continue;
+    }
+    attempted += 1;
+    let _ = send_reminder_for_transaction(&conn, tx_id, email_type, Some(key));
+  }
+
+  if attempted > 0 {
+    emit_notifications_refresh(&app);
+  }
+  Ok(attempted)
+}
+
+#[tauri::command]
+fn list_email_logs(app: tauri::AppHandle, search: Option<String>, status: Option<String>, limit: Option<i64>) -> Result<Vec<EmailLogRow>, String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  let q = format!("%{}%", search.unwrap_or_default().trim());
+  let status_filter = status.unwrap_or_default();
+  let max_rows = limit.unwrap_or(200).clamp(1, 1000);
+  let mut stmt = conn
+    .prepare(
+      "
+      SELECT id, borrower_name, email_address, book_title, email_type, status, sent_at, error_message
+      FROM email_logs
+      WHERE (?1 = '%%' OR borrower_name LIKE ?1 OR email_address LIKE ?1 OR book_title LIKE ?1 OR email_type LIKE ?1)
+        AND (?2 = '' OR status = ?2)
+      ORDER BY datetime(sent_at) DESC, id DESC
+      LIMIT ?3
+      ",
+    )
+    .map_err(|e| format!("prepare email logs failed: {e}"))?;
+  let rows = stmt
+    .query_map(params![q, status_filter, max_rows], |row| {
+      Ok(EmailLogRow {
+        id: row.get(0)?,
+        borrower_name: row.get(1)?,
+        email_address: row.get(2)?,
+        book_title: row.get(3)?,
+        email_type: row.get(4)?,
+        status: row.get(5)?,
+        sent_at: row.get(6)?,
+        error_message: row.get(7)?,
+      })
+    })
+    .map_err(|e| format!("list email logs failed: {e}"))?;
+  rows.collect::<Result<Vec<_>, _>>().map_err(|e| format!("collect email logs failed: {e}"))
+}
+
+#[tauri::command]
+fn get_email_log_stats(app: tauri::AppHandle) -> Result<EmailLogStats, String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  let today = Utc::now().date_naive().to_string();
+  let sent_today = conn.query_row(
+    "SELECT COUNT(*) FROM email_logs WHERE status = 'Sent' AND substr(sent_at, 1, 10) = ?1",
+    params![today],
+    |row| row.get(0),
+  ).unwrap_or(0);
+  let failed = conn.query_row("SELECT COUNT(*) FROM email_logs WHERE status = 'Failed'", [], |row| row.get(0)).unwrap_or(0);
+  let pending = conn.query_row("SELECT COUNT(*) FROM email_logs WHERE status = 'Pending'", [], |row| row.get(0)).unwrap_or(0);
+  Ok(EmailLogStats { sent_today, failed, pending })
+}
+
+#[tauri::command]
+fn test_email_configuration(app: tauri::AppHandle, to: String) -> Result<String, String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+  send_email_from_settings(&conn, &to, "Library Email Configuration Test", "This is a test email from Library Management System.")?;
+  log_email(&conn, None, "Test Recipient", &to, "Configuration Test", "Manual", "Sent", None, None)?;
+  Ok("Test email sent.".to_string())
+}
+
+#[tauri::command]
 fn send_sms_gateway(phone: String, message: String) -> Result<String, String> {
   let summary = format!(
     "SMS gateway stub queued. Phone: {phone}, Message chars: {}",
@@ -2296,13 +2739,16 @@ pub fn run() {
       list_settings_activity,
       create_book,
       list_books,
+      search_books,
       update_book,
       delete_book,
       create_member,
       list_members,
+      search_members,
       update_member,
       create_author,
       list_authors,
+      search_authors,
       delete_author,
       create_category,
       list_categories,
@@ -2328,6 +2774,11 @@ pub fn run() {
       expand_main_window,
       restore_login_window,
       send_email_smtp,
+      send_manual_email_reminder,
+      run_automatic_email_reminders,
+      list_email_logs,
+      get_email_log_stats,
+      test_email_configuration,
       send_sms_gateway,
       export_report
       ,

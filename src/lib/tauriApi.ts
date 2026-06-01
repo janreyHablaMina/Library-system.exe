@@ -93,6 +93,23 @@ export type NotificationItem = {
   createdAt: string
 }
 
+export type EmailLog = {
+  id: number
+  borrowerName: string
+  emailAddress: string
+  bookTitle: string
+  emailType: string
+  status: string
+  sentAt: string
+  errorMessage: string | null
+}
+
+export type EmailLogStats = {
+  sentToday: number
+  failed: number
+  pending: number
+}
+
 export type Member = {
   id: number
   fullName: string
@@ -341,6 +358,10 @@ export async function listBooks(limit?: number): Promise<Book[]> {
   return invoke<Book[]>('list_books', { limit })
 }
 
+export async function searchBooks(query: string, limit?: number): Promise<Book[]> {
+  return invoke<Book[]>('search_books', { query, limit })
+}
+
 export async function updateBook(payload: UpdateBookPayload): Promise<void> {
   return invoke<void>('update_book', { payload })
 }
@@ -357,6 +378,10 @@ export async function listMembers(limit?: number): Promise<Member[]> {
   return invoke<Member[]>('list_members', { limit })
 }
 
+export async function searchMembers(query: string, limit?: number): Promise<Member[]> {
+  return invoke<Member[]>('search_members', { query, limit })
+}
+
 export async function updateMember(payload: UpdateMemberPayload): Promise<void> {
   return invoke<void>('update_member', { payload })
 }
@@ -367,6 +392,10 @@ export async function createAuthor(payload: CreateAuthorPayload): Promise<number
 
 export async function listAuthors(limit?: number): Promise<Author[]> {
   return invoke<Author[]>('list_authors', { limit })
+}
+
+export async function searchAuthors(query: string, limit?: number): Promise<Author[]> {
+  return invoke<Author[]>('search_authors', { query, limit })
 }
 
 export async function deleteAuthor(id: number): Promise<void> {
@@ -439,6 +468,26 @@ export async function deleteStaff(id: number): Promise<void> {
 
 export async function sendEmailSmtp(to: string, subject: string, body: string): Promise<string> {
   return invoke<string>('send_email_smtp', { to, subject, body })
+}
+
+export async function sendManualEmailReminder(transactionId: number): Promise<string> {
+  return invoke<string>('send_manual_email_reminder', { transactionId })
+}
+
+export async function runAutomaticEmailReminders(): Promise<number> {
+  return invoke<number>('run_automatic_email_reminders')
+}
+
+export async function listEmailLogs(search?: string, status?: string, limit?: number): Promise<EmailLog[]> {
+  return invoke<EmailLog[]>('list_email_logs', { search, status, limit })
+}
+
+export async function getEmailLogStats(): Promise<EmailLogStats> {
+  return invoke<EmailLogStats>('get_email_log_stats')
+}
+
+export async function testEmailConfiguration(to: string): Promise<string> {
+  return invoke<string>('test_email_configuration', { to })
 }
 
 export async function sendSmsGateway(phone: string, message: string): Promise<string> {

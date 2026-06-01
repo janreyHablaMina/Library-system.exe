@@ -375,7 +375,7 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
     event.preventDefault()
 
     // Basic validation
-    if (!memberForm.fullName.trim() || !memberForm.memberType || !memberForm.memberId) return
+    if (!memberForm.fullName.trim() || !memberForm.memberType || !memberForm.memberId || !memberForm.email.trim()) return
 
     if (memberToEdit) {
       setMemberList(prev => prev.map(m => m.id === memberToEdit.id ? {
@@ -785,7 +785,7 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
                   </div>
                 </div>
                 <div>
-                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Email Address</label>
+                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Email Address <span className="text-rose-500">*</span></label>
                   <div className={`flex h-11 items-center rounded-xl border px-3 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
                     <Mail size={15} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />
                     <input value={memberForm.email} onChange={(event) => handleMemberFormChange('email', event.target.value)} placeholder="Enter email address" className={`ml-2 w-full bg-transparent text-sm outline-none ${isDarkMode ? 'text-slate-100 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400'}`} />

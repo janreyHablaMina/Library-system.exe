@@ -17,7 +17,7 @@ import {
   Send,
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { listBorrowTransactions, listMembers, returnBorrowTransaction, type BorrowTransaction, type Member } from '../lib/tauriApi'
+import { listBorrowTransactions, listMembers, returnBorrowTransaction, sendManualEmailReminder, type BorrowTransaction, type Member } from '../lib/tauriApi'
 
 type TransactionType = 'Borrow' | 'Return'
 type TransactionStatus = 'Active' | 'Returned' | 'Overdue'
@@ -221,7 +221,7 @@ function TransactionActionsMenu({
             </button>
           )}
 
-          {status === 'Overdue' && (
+          {(status === 'Active' || status === 'Overdue') && (
             <button
               type="button"
               className={`${itemBase} ${itemNormal}`}
@@ -231,7 +231,7 @@ function TransactionActionsMenu({
               }}
             >
               <Send size={15} className="shrink-0 text-amber-500" />
-              Send Reminder
+              Send Email Reminder
             </button>
           )}
 
@@ -319,8 +319,13 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
     }
   }
 
-  const handleSendReminder = (memberName: string) => {
-    triggerToast(`Overdue reminder successfully sent to ${memberName}!`)
+  const handleSendReminder = async (row: TransactionRow) => {
+    try {
+      const message = await sendManualEmailReminder(row.transactionId)
+      triggerToast(message)
+    } catch (error) {
+      triggerToast(error instanceof Error ? error.message : `Failed to send reminder to ${row.member}.`)
+    }
   }
 
   const handleSettleFine = (id: string, fineAmount: string) => {
@@ -493,7 +498,7 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
                         hasFine={row.fineValue > 0}
                         onViewDetails={() => onOpenTransactionDetail(row.id)}
                         onMarkReturned={() => void handleMarkReturned(row)}
-                        onSendReminder={() => handleSendReminder(row.member)}
+                        onSendReminder={() => { void handleSendReminder(row) }}
                         onRecordPayment={() => handleSettleFine(row.id, row.fine)}
                         onPrintReceipt={() => handlePrintReceipt(row.id)}
                       />

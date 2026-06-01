@@ -148,6 +148,7 @@ export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMember
           due: new Date(tx.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
           days: `${daysOverdue} day${daysOverdue > 1 ? 's' : ''}`,
           fine: tx.fine,
+          profilePhotoData: memberPhotoByCode.get(tx.memberCode) || null,
         }
       })
 

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { listen } from '@tauri-apps/api/event'
-import { AlertTriangle, ArrowLeft, ArrowLeftRight, ArrowRight, BarChart3, Bell, BookOpen, BookPlus, Bookmark, Calendar, ChevronRight, Clock3, Feather, FileText, Grid2x2, LayoutDashboard, Library, Mail, MessageCircle, Moon, RotateCcw, Search, Settings2, Shield, Sun, Undo2, UserCircle, UserPlus, Users, UsersRound } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, ArrowLeftRight, ArrowRight, BarChart3, Bell, BookOpen, BookPlus, Bookmark, Calendar, ChevronRight, Clock3, Feather, FileText, Grid2x2, LayoutDashboard, Library, Lock, LogOut, Mail, MessageCircle, Moon, RotateCcw, Search, Settings2, Shield, Sun, Undo2, UserCircle, UserPlus, Users, UsersRound } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import heroImage from './assets/login.avif'
 import { BooksPage } from './pages/BooksPage'
@@ -21,7 +21,7 @@ import { AuthorDetailPage } from './pages/AuthorDetailPage'
 import { CategoriesPage } from './pages/CategoriesPage'
 import { ReservationsPage } from './pages/ReservationsPage'
 import { StaffPage } from './pages/StaffPage'
-import { createBook, expandMainWindow, getActiveSession, listAuthors, listBooks, listBorrowTransactions, listMembers, listNotifications, login as loginWithDb, logout as logoutFromDb, markAllNotificationsRead, markNotificationAsRead, restoreLoginWindow, syncNotifications, type NotificationItem } from './lib/tauriApi'
+import { createBook, expandMainWindow, getActiveSession, getEmailLogStats, listAuthors, listBooks, listBorrowTransactions, listMembers, listNotifications, login as loginWithDb, logout as logoutFromDb, markAllNotificationsRead, markNotificationAsRead, restoreLoginWindow, runAutomaticEmailReminders, searchAuthors, searchBooks, searchMembers, syncNotifications, type NotificationItem } from './lib/tauriApi'
 
 
 type LoginFormState = {
@@ -62,6 +62,9 @@ type DashboardStats = {
   overdueBooks: number
   totalMembers: number
   totalAuthors: number
+  emailsSentToday: number
+  failedEmails: number
+  pendingEmails: number
 }
 type RecentBorrowedItem = {
   id: number
@@ -109,9 +112,28 @@ const quickReportItems: QuickReportItem[] = [
   { label: 'Monthly Activities', icon: FileText },
 ]
 
+function getGreetingForDate(date: Date) {
+  const hour = date.getHours()
+  if (hour < 12) return 'Good morning'
+  if (hour < 18) return 'Good afternoon'
+  return 'Good evening'
+}
+
+function formatDisplayName(username: string | null) {
+  if (!username) return 'Admin'
+  return username
+    .trim()
+    .split(/[\s._-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ') || 'Admin'
+}
+
 function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(false)
+  const [currentTime, setCurrentTime] = useState(() => new Date())
+  const [activeUsername, setActiveUsername] = useState<string | null>(null)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -130,6 +152,7 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
   const [isAuthorDetailOpen, setIsAuthorDetailOpen] = useState(false)
   const [selectedAuthorId, setSelectedAuthorId] = useState<number | null>(null)
   const [transactionActiveTab, setTransactionActiveTab] = useState<'all' | 'borrowed' | 'returned' | 'overdue'>('all')
+  const [borrowReturnActiveTab, setBorrowReturnActiveTab] = useState<'borrow' | 'return'>('borrow')
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
@@ -139,6 +162,9 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
     overdueBooks: 0,
     totalMembers: 0,
     totalAuthors: 0,
+    emailsSentToday: 0,
+    failedEmails: 0,
+    pendingEmails: 0,
   })
   const [recentBorrowedItems, setRecentBorrowedItems] = useState<RecentBorrowedItem[]>([])
   const [overdueReturnItems, setOverdueReturnItems] = useState<OverdueReturnItem[]>([])
@@ -147,10 +173,56 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
   const [upcomingDueItems, setUpcomingDueItems] = useState<UpcomingDueItem[]>([])
   const profileMenuRef = useRef<HTMLDivElement | null>(null)
   const notificationsRef = useRef<HTMLDivElement | null>(null)
+  const searchContainerRef = useRef<HTMLDivElement | null>(null)
+
+  const [searchQuery, setSearchQuery] = useState('')
+  const [isSearchFocused, setIsSearchFocused] = useState(false)
+  const [globalSearchData, setGlobalSearchData] = useState<{
+    books: { id: number; title: string; author: string; cover: string | null; category: string | null; available: boolean }[]
+    members: { id: number; fullName: string; memberId: string }[]
+    authors: { id: number; name: string; profilePhotoData: string | null }[]
+  }>({ books: [], members: [], authors: [] })
+
+  useEffect(() => {
+    let mounted = true
+    if (!searchQuery.trim()) {
+      setGlobalSearchData({ books: [], members: [], authors: [] })
+      return
+    }
+
+    const timer = setTimeout(() => {
+      const loadSearchData = async () => {
+        try {
+          const q = searchQuery.trim()
+          const [books, members, authors] = await Promise.all([
+            searchBooks(q, 5),
+            searchMembers(q, 5),
+            searchAuthors(q, 5)
+          ])
+          if (mounted) {
+            setGlobalSearchData({
+              books: books.map(b => ({ id: b.id, title: b.title, author: b.author, cover: b.coverData || '📘', category: b.category, available: b.available })),
+              members: members.map(m => ({ id: m.id, fullName: m.fullName, memberId: m.memberId })),
+              authors: authors.map(a => ({ id: a.id, name: a.name, profilePhotoData: a.profilePhotoData }))
+            })
+          }
+        } catch (error) {
+          console.error('Failed to load global search data:', error)
+        }
+      }
+      void loadSearchData()
+    }, 300)
+
+    return () => {
+      mounted = false
+      clearTimeout(timer)
+    }
+  }, [searchQuery])
 
   const refreshNotifications = async () => {
     try {
       await syncNotifications()
+      await runAutomaticEmailReminders()
       const rows = await listNotifications(12)
       setNotifications(rows)
     } catch (error) {
@@ -163,12 +235,38 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
   }
 
   useEffect(() => {
+    let mounted = true
+    const loadActiveUser = async () => {
+      try {
+        const session = await getActiveSession()
+        if (mounted) setActiveUsername(session?.username ?? null)
+      } catch (error) {
+        console.error('Failed to load active user:', error)
+      }
+    }
+    void loadActiveUser()
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setCurrentTime(new Date())
+    }, 60 * 1000)
+    return () => window.clearInterval(interval)
+  }, [])
+
+  useEffect(() => {
     const handlePointerDown = (event: MouseEvent) => {
       if (!profileMenuRef.current?.contains(event.target as Node)) {
         setIsProfileOpen(false)
       }
       if (!notificationsRef.current?.contains(event.target as Node)) {
         setIsNotificationsOpen(false)
+      }
+      if (!searchContainerRef.current?.contains(event.target as Node)) {
+        setIsSearchFocused(false)
       }
     }
 
@@ -253,11 +351,12 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
 
     const loadDashboardStats = async () => {
       try {
-        const [books, members, authors, transactions] = await Promise.all([
+        const [books, members, authors, transactions, emailStats] = await Promise.all([
           listBooks(5000),
           listMembers(5000),
           listAuthors(5000),
           listBorrowTransactions(undefined, 5000),
+          getEmailLogStats(),
         ])
         const now = Date.now()
         const activeBorrowTx = transactions.filter((tx) => tx.status === 'Active' || tx.status === 'Borrowed')
@@ -273,6 +372,9 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
           overdueBooks: overdueActiveTx.length,
           totalMembers: members.length,
           totalAuthors: authors.length,
+          emailsSentToday: emailStats.sentToday,
+          failedEmails: emailStats.failed,
+          pendingEmails: emailStats.pending,
         })
         setRecentBorrowedItems(
           activeBorrowTx
@@ -352,7 +454,7 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
               coverData: row.coverData,
               available: row.available,
               total: row.total,
-              level: row.available === 0 ? 'Out' : 'Low',
+              level: (row.available === 0 ? 'Out' : 'Low') as 'Out' | 'Low',
             }))
             .filter((row) => row.available <= 1)
             .sort((a, b) => {
@@ -384,6 +486,8 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
     void loadDashboardStats()
   }, [activePage, booksRefreshKey])
 const unreadNotifications = notifications.filter((item) => !item.isRead).length
+const greetingText = getGreetingForDate(currentTime)
+const greetingName = formatDisplayName(activeUsername)
 
   const formatNotificationTime = (isoDate: string) => {
     const dt = new Date(isoDate)
@@ -658,18 +762,181 @@ const unreadNotifications = notifications.filter((item) => !item.isRead).length
               >
                 {sidebarCollapsed ? <ArrowRight size={20} strokeWidth={2.2} /> : <ArrowLeft size={20} strokeWidth={2.2} />}
               </button>
-              <form className={`group flex h-12 w-[520px] items-center rounded-full border px-4 focus-within:border-emerald-500 ${dashboardTheme.search}`} role="search">
-                <label htmlFor="header-search" className="sr-only">Search library records</label>
-                <Search size={16} className={`mr-3 transition-colors ${dashboardTheme.searchIcon}`} />
-                <input
-                  id="header-search"
-                  type="search"
-                  placeholder="Search books, members, authors, categories..."
-                  className={`w-full bg-transparent text-sm font-light placeholder:font-light outline-none ${dashboardTheme.searchInput}`}
-                />
-              </form>
+              <div ref={searchContainerRef} className="relative group flex h-12 w-[520px] items-center rounded-full border focus-within:border-emerald-500 transition-colors bg-transparent z-50">
+                <form className={`flex w-full h-full items-center rounded-full px-4 ${dashboardTheme.search}`} role="search" onSubmit={(e) => e.preventDefault()}>
+                  <label htmlFor="header-search" className="sr-only">Search library records</label>
+                  <Search size={16} className={`mr-3 transition-colors ${dashboardTheme.searchIcon}`} />
+                  <input
+                    id="header-search"
+                    type="search"
+                    placeholder="Search books, members, authors..."
+                    className={`w-full bg-transparent text-sm font-light placeholder:font-light outline-none ${dashboardTheme.searchInput}`}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => setIsSearchFocused(true)}
+                  />
+                </form>
+
+                {isSearchFocused && searchQuery.length > 0 && (
+                  <div className={`absolute top-[calc(100%+8px)] left-0 w-full rounded-xl border shadow-xl overflow-hidden ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                    <div className="max-h-96 overflow-y-auto py-2">
+                      {(() => {
+                        const bMatches = globalSearchData.books;
+                        const mMatches = globalSearchData.members;
+                        const aMatches = globalSearchData.authors;
+                        const hasResults = bMatches.length > 0 || mMatches.length > 0 || aMatches.length > 0;
+
+                        if (!hasResults) {
+                          return <div className={`px-4 py-3 text-sm text-center ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>No results found for "{searchQuery}"</div>;
+                        }
+
+                        return (
+                          <>
+                            {bMatches.length > 0 && (
+                              <div className="mb-2">
+                                <div className={`px-4 py-1 text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Books</div>
+                                {bMatches.map(b => (
+                                  <button
+                                    key={`book-${b.id}`}
+                                    type="button"
+                                    className={`w-full text-left px-4 py-2 text-sm flex gap-3 items-center transition-colors ${isDarkMode ? 'hover:bg-slate-800/60' : 'hover:bg-slate-50'}`}
+                                    onClick={() => {
+                                      setIsSearchFocused(false);
+                                      setSearchQuery('');
+                                      setActivePage('Books');
+                                      setIsAddBookOpen(false);
+                                      listBooks().then(books => {
+                                        const book = books.find(x => x.id === b.id);
+                                        if (book) {
+                                          setSelectedBook({
+                                            id: book.id,
+                                            cover: book.coverData || '📘',
+                                            title: book.title,
+                                            isbn: book.isbn ?? '-',
+                                            author: book.author,
+                                            category: book.category ?? 'Uncategorized',
+                                            callNumber: '-',
+                                            year: new Date(book.createdAt).getFullYear() || new Date().getFullYear(),
+                                            status: book.available ? 'Available' : 'Borrowed',
+                                            available: book.available ? '1 / 1' : '0 / 1',
+                                          });
+                                          setIsBookDetailOpen(true);
+                                        }
+                                      });
+                                    }}
+                                  >
+                                    <span className={`grid h-12 w-9 place-items-center rounded overflow-hidden shrink-0 ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                                      {b.cover && (b.cover.startsWith('data:') || b.cover.startsWith('http') || b.cover.startsWith('blob:')) ? (
+                                        <img src={b.cover} alt="" className="h-full w-full object-cover" />
+                                      ) : (
+                                        <span className="text-xl">{b.cover}</span>
+                                      )}
+                                    </span>
+                                    <div className="flex flex-col flex-1 min-w-0">
+                                      <span className={`font-semibold truncate ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{b.title}</span>
+                                      <span className={`text-xs truncate ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{b.author}</span>
+                                    </div>
+                                    <div className="flex flex-col items-end shrink-0 gap-1">
+                                      {b.category && (
+                                        <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
+                                          {b.category}
+                                        </span>
+                                      )}
+                                      <span className={`text-[10px] font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                                        {b.available ? '1 / 1' : '0 / 1'} copies
+                                      </span>
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+
+                            {mMatches.length > 0 && (
+                              <div className="mb-2">
+                                <div className={`px-4 py-1 text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Members</div>
+                                {mMatches.map(m => (
+                                  <button
+                                    key={`member-${m.id}`}
+                                    type="button"
+                                    className={`w-full text-left px-4 py-2 text-sm flex flex-col transition-colors ${isDarkMode ? 'hover:bg-slate-800/60' : 'hover:bg-slate-50'}`}
+                                    onClick={() => {
+                                      setIsSearchFocused(false);
+                                      setSearchQuery('');
+                                      setActivePage('Members');
+                                      setSelectedMemberId(m.id);
+                                      setIsMemberDetailOpen(true);
+                                    }}
+                                  >
+                                    <span className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{m.fullName}</span>
+                                    <span className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>ID: {m.memberId}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+
+                            {aMatches.length > 0 && (
+                              <div>
+                                <div className={`px-4 py-1 text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Authors</div>
+                                {aMatches.map(a => (
+                                  <button
+                                    key={`author-${a.id}`}
+                                    type="button"
+                                    className={`w-full text-left px-4 py-2 text-sm flex gap-3 items-center transition-colors ${isDarkMode ? 'hover:bg-slate-800/60' : 'hover:bg-slate-50'}`}
+                                    onClick={() => {
+                                      setIsSearchFocused(false);
+                                      setSearchQuery('');
+                                      setActivePage('Authors');
+                                      setSelectedAuthorId(a.id);
+                                      setIsAuthorDetailOpen(true);
+                                    }}
+                                  >
+                                    <span className={`grid h-8 w-8 place-items-center overflow-hidden rounded-full shrink-0 ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                                      {a.profilePhotoData ? (
+                                        <img src={a.profilePhotoData} alt={`${a.name} profile`} className="h-full w-full object-cover" />
+                                      ) : (
+                                        <span className={`text-xs font-bold ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                                          {a.name.slice(0, 1).toUpperCase()}
+                                        </span>
+                                      )}
+                                    </span>
+                                    <span className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{a.name}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                )}
+              </div>
               <div className="ml-auto flex items-center gap-4">
                 <div className="hidden items-center gap-2 lg:flex">
+                  <div className={`mr-3 pr-4 hidden items-center gap-5 border-r ${isDarkMode ? 'border-slate-800' : 'border-slate-200'} lg:flex`}>
+                    <div className="flex items-center gap-2.5">
+                      <div className={`grid h-8 w-8 place-items-center rounded-full ${isDarkMode ? 'bg-indigo-500/10 text-indigo-400' : 'bg-indigo-50 text-indigo-600'}`}>
+                        <Calendar size={14} strokeWidth={2.5} />
+                      </div>
+                      <div className="flex flex-col justify-center">
+                        <span className={`text-[9px] font-bold uppercase tracking-widest ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Date</span>
+                        <span className={`text-xs font-semibold leading-tight ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>
+                          {currentTime.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2.5">
+                      <div className={`grid h-8 w-8 place-items-center rounded-full ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600'}`}>
+                        <Clock3 size={14} strokeWidth={2.5} />
+                      </div>
+                      <div className="flex flex-col justify-center">
+                        <span className={`text-[9px] font-bold uppercase tracking-widest ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Time</span>
+                        <span className={`text-xs font-semibold tabular-nums leading-tight ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>
+                          {currentTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                   <button
                     type="button"
                     onClick={() => setIsDarkMode((value) => !value)}
@@ -723,11 +990,14 @@ const unreadNotifications = notifications.filter((item) => !item.isRead).length
                   </div>
                 </div>
                 <div ref={profileMenuRef} className={`relative hidden items-center gap-3 border-l pl-4 md:flex ${dashboardTheme.profileBorder}`}>
-                  <div className="grid h-11 w-11 place-items-center rounded-full bg-gradient-to-br from-blue-100 to-violet-200 text-xl">👨🏻</div>
-                                  <div>
-                    <p className={`text-sm font-semibold ${dashboardTheme.profileName}`}>Admin User</p>
+                  <div className={`grid h-11 w-11 place-items-center rounded-full font-bold uppercase tracking-wider shrink-0 ${isDarkMode ? 'bg-indigo-500/20 text-indigo-300' : 'bg-indigo-100 text-indigo-700'}`}>
+                    {activeUsername ? activeUsername.slice(0, 2) : 'AD'}
+                  </div>
+                  <div>
+                    <p className={`text-sm font-semibold truncate max-w-[120px] ${dashboardTheme.profileName}`}>{formatDisplayName(activeUsername)}</p>
                     <p className={`text-xs ${dashboardTheme.profileRole}`}>Librarian</p>
-                  </div><button
+                  </div>
+                  <button
                     type="button"
                     onClick={() => setIsProfileOpen((value) => !value)}
                     className={`grid h-8 w-8 place-items-center rounded-lg ${dashboardTheme.iconBtn}`}
@@ -740,7 +1010,30 @@ const unreadNotifications = notifications.filter((item) => !item.isRead).length
                     </svg>
                   </button>
                   {isProfileOpen ? (
-                    <div id="profile-menu" role="menu" className="absolute right-0 top-14 z-20 w-36 rounded-lg border border-slate-200 bg-white p-1 shadow-lg">
+                    <div id="profile-menu" role="menu" className={`absolute right-0 top-14 z-20 w-52 rounded-xl border p-1.5 shadow-xl ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsProfileOpen(false)
+                        }}
+                        role="menuitem"
+                        className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-semibold transition-colors ${isDarkMode ? 'text-slate-200 hover:bg-slate-800/60' : 'text-slate-700 hover:bg-slate-50'}`}
+                      >
+                        <UserCircle size={16} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />
+                        My Profile
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsProfileOpen(false)
+                        }}
+                        role="menuitem"
+                        className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-semibold transition-colors ${isDarkMode ? 'text-slate-200 hover:bg-slate-800/60' : 'text-slate-700 hover:bg-slate-50'}`}
+                      >
+                        <Lock size={16} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />
+                        Change Password
+                      </button>
+                      <div className={`my-1 h-px w-full ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`} />
                       <button
                         type="button"
                         onClick={() => {
@@ -748,8 +1041,9 @@ const unreadNotifications = notifications.filter((item) => !item.isRead).length
                           setShowLogoutConfirm(true)
                         }}
                         role="menuitem"
-                        className="w-full rounded-md px-3 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                        className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-bold transition-colors ${isDarkMode ? 'text-rose-400 hover:bg-rose-500/10' : 'text-rose-600 hover:bg-rose-50'}`}
                       >
+                        <LogOut size={16} />
                         Logout
                       </button>
                     </div>
@@ -808,7 +1102,9 @@ const unreadNotifications = notifications.filter((item) => !item.isRead).length
             )
           ) : activePage === 'Transactions' ? (
             <BorrowReturnPage
+              key={borrowReturnActiveTab}
               isDarkMode={isDarkMode}
+              initialTab={borrowReturnActiveTab}
               onOpenTransactions={(tab) => {
                 setTransactionActiveTab(tab)
                 setActivePage('All Transactions')
@@ -873,7 +1169,7 @@ const unreadNotifications = notifications.filter((item) => !item.isRead).length
             <section className="p-5">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div>
-                  <h2 className={`text-3xl font-black ${dashboardTheme.greetingTitle}`}>Good morning, Admin! 👋</h2>
+                  <h2 className={`text-3xl font-black ${dashboardTheme.greetingTitle}`}>{greetingText}, {greetingName}! 👋</h2>
                   <p className={`mt-1 text-sm ${dashboardTheme.greetingSub}`}>Here&apos;s what&apos;s happening in your library today.</p>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -891,7 +1187,7 @@ const unreadNotifications = notifications.filter((item) => !item.isRead).length
                   <button
                     type="button"
                     onClick={() => {
-                      setTransactionActiveTab('all')
+                      setBorrowReturnActiveTab('borrow')
                       setActivePage('Transactions')
                     }}
                     className={`flex min-w-[160px] items-center gap-3 rounded-xl border px-5 py-3 text-sm font-medium ${dashboardTheme.quickAction}`}
@@ -902,7 +1198,7 @@ const unreadNotifications = notifications.filter((item) => !item.isRead).length
                   <button
                     type="button"
                     onClick={() => {
-                      setTransactionActiveTab('all')
+                      setBorrowReturnActiveTab('return')
                       setActivePage('Transactions')
                     }}
                     className={`flex min-w-[160px] items-center gap-3 rounded-xl border px-5 py-3 text-sm font-medium ${dashboardTheme.quickAction}`}
@@ -925,7 +1221,7 @@ const unreadNotifications = notifications.filter((item) => !item.isRead).length
               </div>
             </section>
 
-            <section className="grid gap-3 px-5 pb-3 sm:grid-cols-2 xl:grid-cols-6">
+            <section className="grid gap-3 px-5 pb-3 sm:grid-cols-2 xl:grid-cols-6 2xl:grid-cols-9">
               <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-2 flex items-center gap-3">
                   <div className="rounded-lg bg-emerald-50 p-2"><BookOpen size={18} className="text-emerald-600" /></div>
@@ -998,6 +1294,30 @@ const unreadNotifications = notifications.filter((item) => !item.isRead).length
                   <path d="M0 11 L12 9 L22 10 L32 8 L42 9 L52 7 L62 8 L72 6 L82 7 L100 5" fill="none" stroke="#14b8a6" strokeWidth="1.8" strokeLinecap="round" />
                 </svg>
               </article>
+              <button type="button" onClick={() => { setActivePage('Settings'); setActiveSettingsTab('Email Logs') }} className={`rounded-xl border p-4 text-left shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+                <div className="mb-2 flex items-center gap-3">
+                  <div className="rounded-lg bg-sky-50 p-2"><Mail size={18} className="text-sky-600" /></div>
+                  <p className="text-sm font-semibold text-slate-600">Emails Sent Today</p>
+                </div>
+                <p className="text-3xl font-extrabold text-slate-900">{dashboardStats.emailsSentToday.toLocaleString('en-US')}</p>
+                <p className="mt-1 text-sm font-semibold text-sky-600">View email logs</p>
+              </button>
+              <button type="button" onClick={() => { setActivePage('Settings'); setActiveSettingsTab('Email Logs') }} className={`rounded-xl border p-4 text-left shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+                <div className="mb-2 flex items-center gap-3">
+                  <div className="rounded-lg bg-rose-50 p-2"><AlertTriangle size={18} className="text-rose-500" /></div>
+                  <p className="text-sm font-semibold text-slate-600">Failed Emails</p>
+                </div>
+                <p className="text-3xl font-extrabold text-slate-900">{dashboardStats.failedEmails.toLocaleString('en-US')}</p>
+                <p className="mt-1 text-sm font-semibold text-rose-500">Needs attention</p>
+              </button>
+              <button type="button" onClick={() => { setActivePage('Settings'); setActiveSettingsTab('Email Logs') }} className={`rounded-xl border p-4 text-left shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+                <div className="mb-2 flex items-center gap-3">
+                  <div className="rounded-lg bg-amber-50 p-2"><Clock3 size={18} className="text-amber-500" /></div>
+                  <p className="text-sm font-semibold text-slate-600">Pending Emails</p>
+                </div>
+                <p className="text-3xl font-extrabold text-slate-900">{dashboardStats.pendingEmails.toLocaleString('en-US')}</p>
+                <p className="mt-1 text-sm font-semibold text-amber-500">Queued reminders</p>
+              </button>
             </section>
 
             <section className="grid gap-3 px-5 pb-4 xl:grid-cols-[40fr_35fr_25fr]">
