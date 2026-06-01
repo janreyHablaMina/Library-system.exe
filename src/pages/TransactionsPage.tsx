@@ -1,3 +1,4 @@
+import { Toast } from '../components/ui/Toast'
 import {
   AlertTriangle,
   ArrowDownToLine,
@@ -523,14 +524,9 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
         </div>
       </section>
 
-      {showToast && (
-        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl border px-5 py-4 shadow-xl ${isDarkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-800'}`}>
-          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">
-            <span className="text-sm font-bold">OK</span>
-          </div>
-          <p className="text-sm font-semibold">{showToast}</p>
-        </div>
-      )}
+      <Toast message={showToast} onClose={() => setShowToast(null)} isDarkMode={isDarkMode} />
     </div>
   )
 }
+
+

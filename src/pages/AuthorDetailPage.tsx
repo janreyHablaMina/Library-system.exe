@@ -1,3 +1,4 @@
+import { Toast } from '../components/ui/Toast'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { AlertTriangle, ArrowLeft, BookMarked, BookOpen, Calendar, Clock, Copy, Eye, Feather, Globe, Mail, MoreHorizontal, Pencil, Quote, RefreshCw, Trash2, UserCheck, Archive } from 'lucide-react'
 import { deleteBook, listAuthors, listBooks, updateBook, type Author as DbAuthor, type Book } from '../lib/tauriApi'
@@ -180,11 +181,7 @@ export function AuthorDetailPage({ isDarkMode, onBack, authorId }: Props) {
 
   return (
     <div className={`flex-1 overflow-y-auto min-h-0 w-full ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
-      {showToast ? (
-        <div className="fixed top-4 right-4 z-[120] rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-lg">
-          {showToast}
-        </div>
-      ) : null}
+      <Toast message={showToast} onClose={() => setShowToast(null)} isDarkMode={isDarkMode} />
       {bookToDelete ? (
         <div className="fixed inset-0 z-[140] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
           <div className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
@@ -578,3 +575,5 @@ function Meta({
     </div>
   )
 }
+
+

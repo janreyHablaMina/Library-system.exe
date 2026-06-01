@@ -1,3 +1,4 @@
+import { Toast } from '../components/ui/Toast'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 import { AlertTriangle, ChevronDown, Download, Eye, Grid2x2, List, Mail, MoreHorizontal, Pencil, Phone, RotateCcw, Search, Trash2, UserPlus, Users, X } from 'lucide-react'
@@ -427,14 +428,7 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
   return (
     <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
       {/* Toast Notification */}
-      {showToast && (
-        <div className="fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-lg animate-slide-in">
-          <span>{showToast}</span>
-          <button onClick={() => setShowToast(null)} className="rounded p-0.5 hover:bg-emerald-500">
-            <X size={16} />
-          </button>
-        </div>
-      )}
+      <Toast message={showToast} onClose={() => setShowToast(null)} isDarkMode={isDarkMode} />
 
       {/* Styled Confirmation Modal (Delete) */}
       {memberToDelete && (

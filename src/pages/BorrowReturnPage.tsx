@@ -1,3 +1,4 @@
+import { Toast } from '../components/ui/Toast'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Check, ChevronDown, Search, X } from 'lucide-react'
 import {
@@ -575,12 +576,10 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 
         </div>
       </section>
 
-      {showToast ? (
-        <div className="fixed bottom-4 right-4 z-50 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-lg">
-          {showToast}
-        </div>
-      ) : null}
+      <Toast message={showToast} onClose={() => setShowToast(null)} isDarkMode={isDarkMode} />
 
     </div>
   )
 }
+
+

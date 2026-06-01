@@ -660,7 +660,10 @@ const greetingName = formatDisplayName(activeUsername)
                     {navItems.slice(1, 5).map((item) => (
                       <button
                         key={item.id}
-                        onClick={() => setActivePage(item.id as any)}
+                        onClick={() => {
+                          setActivePage(item.id as any)
+                          if (item.id === 'Members') setMemberAddModalTrigger(0)
+                        }}
                         className={`group flex w-full items-center gap-3 rounded-xl py-3 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-2' : 'px-4'} ${
                           activePage === item.id
                             ? 'bg-emerald-500/20 text-emerald-300'
@@ -682,7 +685,10 @@ const greetingName = formatDisplayName(activeUsername)
                     {navItems.slice(5, 7).map((item) => (
                       <button
                         key={item.id}
-                        onClick={() => setActivePage(item.id as any)}
+                        onClick={() => {
+                          setActivePage(item.id as any)
+                          if (item.id === 'Members') setMemberAddModalTrigger(0)
+                        }}
                         className={`group flex w-full items-center gap-3 rounded-xl py-3 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-2' : 'px-4'} ${
                           activePage === item.id
                             ? 'bg-emerald-500/20 text-emerald-300'
@@ -704,7 +710,10 @@ const greetingName = formatDisplayName(activeUsername)
                     {navItems.slice(7, 9).map((item) => (
                       <button
                         key={item.id}
-                        onClick={() => setActivePage(item.id as any)}
+                        onClick={() => {
+                          setActivePage(item.id as any)
+                          if (item.id === 'Members') setMemberAddModalTrigger(0)
+                        }}
                         className={`group flex w-full items-center gap-3 rounded-xl py-3 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-2' : 'px-4'} ${
                           activePage === item.id
                             ? 'bg-emerald-500/20 text-emerald-300'
@@ -865,6 +874,7 @@ const greetingName = formatDisplayName(activeUsername)
                                       setIsSearchFocused(false);
                                       setSearchQuery('');
                                       setActivePage('Members');
+                                      setMemberAddModalTrigger(0);
                                       setSelectedMemberId(m.id);
                                       setIsMemberDetailOpen(true);
                                     }}
@@ -1144,6 +1154,7 @@ const greetingName = formatDisplayName(activeUsername)
               }}
               onViewTopMembers={() => {
                 setActivePage('Members')
+                setMemberAddModalTrigger(0)
               }}
             />
           ) : activePage === 'Settings' ? (

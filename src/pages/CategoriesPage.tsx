@@ -1,3 +1,4 @@
+import { Toast } from '../components/ui/Toast'
 import { useState, useRef, useEffect, useMemo } from 'react'
 import type { FormEvent } from 'react'
 import { ChevronDown, Search, Plus, X, BookOpen, Layers, Monitor, GraduationCap, Globe, Palette, Briefcase, Atom, Library, Filter, Pencil, Trash2, MoreHorizontal, AlertTriangle } from 'lucide-react'
@@ -499,12 +500,7 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
       )}
 
       {/* Success Toast Notification */}
-      {showToast && (
-        <div className="fixed bottom-5 right-5 z-50 flex items-center gap-2.5 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-950/20 animate-in slide-in-from-bottom-5">
-          <BookOpen size={16} />
-          {showToast}
-        </div>
-      )}
+      <Toast message={showToast} onClose={() => setShowToast(null)} isDarkMode={isDarkMode} />
 
       {/* Delete Confirmation Warning Modal */}
       {categoryToDelete && (
@@ -529,3 +525,5 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
     </div>
   )
 }
+
+
