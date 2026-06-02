@@ -1513,10 +1513,10 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
               </div>
               <button 
                 onClick={() => onTabChange?.(card.tab)}
-                className={`mt-auto flex w-full items-center justify-between rounded-xl border p-3.5 text-xs font-bold transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 ${inputClass}`}
+                className={`mt-auto flex w-full items-center justify-between rounded-xl border p-3.5 text-xs font-bold transition-all hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:border-emerald-500/30 dark:hover:bg-emerald-500/10 ${inputClass}`}
               >
                 <span className="text-emerald-600 dark:text-emerald-400">{card.btnText}</span>
-                <ChevronRight size={16} className="text-slate-400" />
+                <ChevronRight size={16} className="text-emerald-500/50" />
               </button>
             </section>
           ))}
