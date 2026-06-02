@@ -284,7 +284,7 @@ type ReservationDetailsViewProps = {
   onCheckOut?: (reservation: any) => void
 }
 
-function ReservationDetailsViewNew({ reservation, isDarkMode, onBack, onCheckOut }: ReservationDetailsViewProps) {
+function ReservationDetailsViewNew({ reservation, isDarkMode, onBack, onCheckOut, onEdit }: ReservationDetailsViewProps) {
   const book = reservation.book
   const member = reservation.member
 
