@@ -383,6 +383,9 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
     return result
   }, [authorsList, searchTerm, selectedNationality, selectedStatus, sortBy])
 
+  const totalPages = Math.ceil(filteredAuthors.length / itemsPerPage)
+  const paginatedAuthors = filteredAuthors.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+
   const stats = useMemo(() => {
     const totalAuthors = authorsList.length
     const activeAuthors = authorsList.filter((a) => a.status === 'Active').length
