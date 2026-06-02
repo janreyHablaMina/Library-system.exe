@@ -552,121 +552,76 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
             <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleStaffSubmit}>
               <div className="min-h-0 flex-1 overflow-y-auto px-8 py-7">
                 <div className="space-y-7">
-                <div>
-                <h4 className={`mb-4 text-sm font-black uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Identity & Contact</h4>
-                <div className="grid gap-6 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Full Name <span className="text-rose-500">*</span></label>
-                    <input name="fullName" defaultValue={editingStaff?.name ?? ''} placeholder="e.g. James Anderson" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} required />
-                  </div>
-                  <div className="space-y-2">
-                    <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Email Address <span className="text-rose-500">*</span></label>
-                    <input name="email" defaultValue={editingStaff?.email ?? ''} placeholder="email@infolib.com" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} required />
-                  </div>
-                  <div className="space-y-2">
-                    <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Staff ID</label>
-                    <input name="staffCode" defaultValue={editingStaff?.id ?? ''} placeholder="Auto-generate (e.g. ST-009)" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} />
-                  </div>
-                  <div className="space-y-2">
-                    <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Phone Number</label>
-                    <input name="phone" type="tel" defaultValue={editingStaff?.phone ?? ''} placeholder="0917 123 4567" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Profile Photo</label>
-                    <div className="flex items-center gap-3">
-                      <span className={`grid h-12 w-12 place-items-center overflow-hidden rounded-full border text-xs font-bold ${isDarkMode ? 'border-slate-700 bg-slate-800/50 text-slate-300' : 'border-slate-200 bg-slate-100 text-slate-600'}`}>
-                        {profilePhotoPreview ? (
-                          <img src={profilePhotoPreview} alt="Profile preview" className="h-full w-full object-cover" />
-                        ) : (
-                          avatarFromName(editingStaff?.name || 'Staff')
-                        )}
-                      </span>
-                      <input type="file" accept="image/png,image/jpeg" onChange={handleProfilePhotoChange} className={`block w-full text-sm ${isDarkMode ? 'text-slate-300 file:bg-slate-800 file:text-slate-200 file:border-slate-700' : 'text-slate-700 file:bg-slate-100 file:text-slate-700 file:border-slate-200'} file:mr-4 file:rounded-lg file:border file:px-3 file:py-2`} />
+                  <div>
+                    <h4 className={`mb-4 text-sm font-black uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Identity & Access</h4>
+                    <div className="grid gap-6 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Full Name <span className="text-rose-500">*</span></label>
+                        <input name="fullName" defaultValue={editingStaff?.name ?? ''} placeholder="e.g. James Anderson" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} required />
+                      </div>
+                      <div className="space-y-2">
+                        <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Email Address <span className="text-rose-500">*</span></label>
+                        <input name="email" defaultValue={editingStaff?.email ?? ''} placeholder="email@infolib.com" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} required />
+                      </div>
+                      <div className="space-y-2">
+                        <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>System Role <span className="text-rose-500">*</span></label>
+                        <div className="relative">
+                          <select name="role" defaultValue={editingStaff?.role ?? 'Librarian'} className={`h-12 w-full appearance-none rounded-xl border pl-4 pr-10 text-sm font-bold outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`}>
+                            <option>Librarian</option>
+                            <option>Administrator</option>
+                            <option>Assistant Librarian</option>
+                            <option>Library Clerk</option>
+                          </select>
+                          <ChevronDown size={18} className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Status <span className="text-rose-500">*</span></label>
+                        <div className="relative">
+                          <select name="status" defaultValue={editingStaff?.status ?? 'Active'} className={`h-12 w-full appearance-none rounded-xl border pl-4 pr-10 text-sm font-bold outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`}>
+                            <option>Active</option>
+                            <option>Inactive</option>
+                          </select>
+                          <ChevronDown size={18} className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Emergency Contact (Optional)</label>
-                    <input name="emergencyContact" defaultValue={editingStaff?.emergencyContact ?? ''} placeholder="Name and phone number" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} />
-                  </div>
-                </div>
-              </div>
 
-              <div className={`${isDarkMode ? 'border-slate-800' : 'border-slate-100'} border-t pt-6`}>
-                <h4 className={`mb-4 text-sm font-black uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Role & Employment</h4>
-                <div className="grid gap-6 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>System Role</label>
-                    <div className="relative">
-                      <select name="role" defaultValue={editingStaff?.role ?? 'Librarian'} className={`h-12 w-full appearance-none rounded-xl border pl-4 pr-10 text-sm font-bold outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`}>
-                        <option>Librarian</option>
-                        <option>Administrator</option>
-                        <option>Assistant Librarian</option>
-                        <option>Library Clerk</option>
-                      </select>
-                      <ChevronDown size={18} className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                  <div className={`${isDarkMode ? 'border-slate-800' : 'border-slate-100'} border-t pt-6`}>
+                    <h4 className={`mb-4 text-sm font-black uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Account Credentials</h4>
+                    <div className="grid gap-6 md:grid-cols-2">
+                      <div className="space-y-2 md:col-span-2">
+                        <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Username <span className="text-rose-500">*</span></label>
+                        <input name="username" defaultValue={editingStaff?.username ?? ''} placeholder="j.anderson" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} required />
+                      </div>
+                      <div className="space-y-2">
+                        <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Password <span className="text-rose-500">*</span></label>
+                        <input name="tempPassword" type="password" defaultValue={editingStaff?.tempPassword ?? ''} placeholder="Enter password" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} required />
+                      </div>
+                      <div className="space-y-2">
+                        <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Confirm Password <span className="text-rose-500">*</span></label>
+                        <input type="password" placeholder="Re-enter password" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} required />
+                      </div>
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Assigned Branch</label>
-                    <div className="relative">
-                      <select name="branch" defaultValue={editingStaff?.branch ?? 'Central Library'} className={`h-12 w-full appearance-none rounded-xl border pl-4 pr-10 text-sm font-bold outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`}>
-                        <option>Central Library</option>
-                        <option>North Branch</option>
-                        <option>West Branch</option>
-                        <option>South Branch</option>
-                      </select>
-                      <ChevronDown size={18} className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Status</label>
-                    <div className="relative">
-                      <select name="status" defaultValue={editingStaff?.status ?? 'Active'} className={`h-12 w-full appearance-none rounded-xl border pl-4 pr-10 text-sm font-bold outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`}>
-                        <option>Active</option>
-                        <option>Inactive</option>
-                      </select>
-                      <ChevronDown size={18} className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Employee Type</label>
-                    <div className="relative">
-                      <select name="employeeType" defaultValue={editingStaff?.employeeType ?? 'Full-time'} className={`h-12 w-full appearance-none rounded-xl border pl-4 pr-10 text-sm font-bold outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`}>
-                        <option>Full-time</option>
-                        <option>Part-time</option>
-                        <option>Contract</option>
-                      </select>
-                      <ChevronDown size={18} className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
-                    </div>
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Start Date</label>
-                    <input name="startDate" type="date" defaultValue={editingStaff?.startDate ?? ''} className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} />
-                  </div>
-                </div>
-              </div>
 
-              <div className={`${isDarkMode ? 'border-slate-800' : 'border-slate-100'} border-t pt-6`}>
-                <h4 className={`mb-4 text-sm font-black uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Account Access</h4>
-                <div className="grid gap-6 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Username</label>
-                    <input name="username" defaultValue={editingStaff?.username ?? ''} placeholder="j.anderson" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} />
+                  <div className={`${isDarkMode ? 'border-slate-800' : 'border-slate-100'} border-t pt-6`}>
+                    <h4 className={`mb-4 text-sm font-black uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Optional</h4>
+                    <div className="space-y-2">
+                      <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Profile Photo</label>
+                      <div className="flex items-center gap-3">
+                        <span className={`grid h-12 w-12 place-items-center overflow-hidden rounded-full border text-xs font-bold ${isDarkMode ? 'border-slate-700 bg-slate-800/50 text-slate-300' : 'border-slate-200 bg-slate-100 text-slate-600'}`}>
+                          {profilePhotoPreview ? (
+                            <img src={profilePhotoPreview} alt="Profile preview" className="h-full w-full object-cover" />
+                          ) : (
+                            avatarFromName(editingStaff?.name || 'Staff')
+                          )}
+                        </span>
+                        <input type="file" accept="image/png,image/jpeg" onChange={handleProfilePhotoChange} className={`block w-full text-sm ${isDarkMode ? 'text-slate-300 file:bg-slate-800 file:text-slate-200 file:border-slate-700' : 'text-slate-700 file:bg-slate-100 file:text-slate-700 file:border-slate-200'} file:mr-4 file:rounded-lg file:border file:px-3 file:py-2`} />
+                      </div>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Temporary Password</label>
-                    <input name="tempPassword" type="password" defaultValue={editingStaff?.tempPassword ?? ''} placeholder="Enter temporary password" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Confirm Password</label>
-                    <input type="password" placeholder="Re-enter temporary password" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} />
-                  </div>
-                </div>
-                <label className={`mt-4 inline-flex items-center gap-2 text-sm font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                  <input name="requirePasswordReset" type="checkbox" defaultChecked={editingStaff?.requirePasswordReset ?? true} className="h-4 w-4 rounded border-slate-300 text-emerald-600" />
-                  Require password reset on first login
-                </label>
-              </div>
                 </div>
               </div>
 
