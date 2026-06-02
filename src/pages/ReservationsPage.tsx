@@ -397,19 +397,19 @@ function ReservationDetailsViewNew({ reservation, isDarkMode, onBack, onCheckOut
               <p className="mt-1 text-sm font-semibold text-emerald-600">{book.author}</p>
               
               <div className="mt-6 space-y-3 text-sm">
-                <div className="flex justify-between border-b pb-2 border-slate-100 dark:border-slate-800">
+                <div className="flex justify-between pb-1">
                   <span className="font-medium text-slate-500">Category</span>
                   <span className={`font-semibold ${primaryText}`}>Fiction</span>
                 </div>
-                <div className="flex justify-between border-b pb-2 border-slate-100 dark:border-slate-800">
+                <div className="flex justify-between pb-1">
                   <span className="font-medium text-slate-500">ISBN</span>
                   <span className={`font-semibold ${primaryText}`}>978-0061122415</span>
                 </div>
-                <div className="flex justify-between border-b pb-2 border-slate-100 dark:border-slate-800">
+                <div className="flex justify-between pb-1">
                   <span className="font-medium text-slate-500">Available Copies</span>
                   <span className={`font-bold text-emerald-600`}>1 copy</span>
                 </div>
-                <div className="flex justify-between border-b pb-2 border-slate-100 dark:border-slate-800">
+                <div className="flex justify-between pb-1">
                   <span className="font-medium text-slate-500">Total Copies</span>
                   <span className={`font-semibold ${primaryText}`}>4 copies</span>
                 </div>
