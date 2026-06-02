@@ -84,26 +84,42 @@ function StaffActionsMenu({ isDarkMode, onEdit, onDelete }: StaffActionsMenuProp
         <MoreHorizontal size={15} />
       </button>
 
-      {open ? (
+      {open && (
         <div
-          className={`absolute right-0 z-50 w-44 rounded-xl border p-1.5 ${surface} ${
-            openUpward ? 'bottom-full mb-1.5' : 'top-full mt-1.5'
+          className={`absolute right-0 z-50 w-44 rounded-xl border p-1.5 ${surface} animate-[fadeIn_0.12s_ease] ${
+            openUpward 
+              ? 'bottom-full mb-1.5 origin-bottom-right' 
+              : 'top-full mt-1.5 origin-top-right'
           }`}
           role="menu"
+          style={{ animation: openUpward ? 'bookMenuInUp 0.13s cubic-bezier(0.16,1,0.3,1)' : 'bookMenuInDown 0.13s cubic-bezier(0.16,1,0.3,1)' }}
         >
+          <style>{`
+            @keyframes bookMenuInDown {
+              from { opacity: 0; transform: scale(0.95) translateY(-6px); }
+              to   { opacity: 1; transform: scale(1)    translateY(0);    }
+            }
+            @keyframes bookMenuInUp {
+              from { opacity: 0; transform: scale(0.95) translateY(6px); }
+              to   { opacity: 1; transform: scale(1)    translateY(0);    }
+            }
+          `}</style>
           <button
             type="button"
-            className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium ${
+            className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors duration-100 ${
               isDarkMode ? 'text-slate-200 hover:bg-slate-800' : 'text-slate-700 hover:bg-slate-50'
             }`}
             onClick={() => { setOpen(false); onEdit() }}
           >
-            <Pencil size={14} className="text-blue-500" />
+            <Pencil size={14} className="text-violet-500" />
             Edit Staff
           </button>
+          
+          <div className={`my-1.5 border-t ${isDarkMode ? 'border-slate-700/60' : 'border-slate-100'}`} />
+          
           <button
             type="button"
-            className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium ${
+            className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors duration-100 ${
               isDarkMode ? 'text-rose-400 hover:bg-rose-500/10' : 'text-rose-600 hover:bg-rose-50'
             }`}
             onClick={() => { setOpen(false); onDelete() }}
@@ -112,7 +128,7 @@ function StaffActionsMenu({ isDarkMode, onEdit, onDelete }: StaffActionsMenuProp
             Delete Staff
           </button>
         </div>
-      ) : null}
+      )}
     </div>
   )
 }
@@ -442,7 +458,7 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className={`relative z-10 ${isDarkMode ? 'overflow-x-auto lg:overflow-visible bg-[#0b1738]' : 'overflow-x-auto lg:overflow-visible bg-white'}`}>
             <table className="w-full text-left text-sm border-collapse">
               <thead className={isDarkMode ? 'bg-[#0f1f49]/50 text-slate-400' : 'bg-slate-50/50 text-slate-500'}>
                 <tr>
