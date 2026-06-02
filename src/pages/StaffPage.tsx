@@ -377,8 +377,8 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
           })}
         </section>
 
-        <div className={`mt-8 overflow-hidden rounded-2xl border ${isDarkMode ? 'border-slate-800 bg-[#0a1633]' : 'border-slate-200/60 bg-white shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)]'}`}>
-          <div className={`flex flex-wrap items-center gap-4 p-4 ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
+        <div className={`mt-8 rounded-2xl border ${isDarkMode ? 'border-slate-800 bg-[#0a1633]' : 'border-slate-200/60 bg-white shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)]'}`}>
+          <div className={`flex flex-wrap items-center gap-4 p-4 rounded-t-2xl ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
             <label className={`group flex h-12 min-w-[320px] flex-1 items-center rounded-xl border px-3 transition-all ${isDarkMode ? 'border-slate-700 focus-within:border-emerald-500 bg-[#0f1f49]' : 'border-slate-200 focus-within:border-emerald-500 bg-slate-50'}`}>
               <Search size={18} className={`mr-2 transition-colors ${isDarkMode ? 'text-slate-500 group-focus-within:text-emerald-400' : 'text-slate-400 group-focus-within:text-emerald-600'}`} />
               <input
@@ -458,8 +458,8 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
             </div>
           </div>
 
-          <div className={`relative z-10 ${isDarkMode ? 'overflow-x-auto lg:overflow-visible bg-[#0b1738]' : 'overflow-x-auto lg:overflow-visible bg-white'}`}>
-            <table className="w-full text-left text-sm border-collapse">
+          <div className={`relative z-10 overflow-visible ${isDarkMode ? 'bg-[#0b1738]' : 'bg-white'}`}>
+            <table className="w-full min-w-[800px] text-left text-sm border-collapse">
               <thead className={isDarkMode ? 'bg-[#0f1f49]/50 text-slate-400' : 'bg-slate-50/50 text-slate-500'}>
                 <tr>
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Staff Name</th>
