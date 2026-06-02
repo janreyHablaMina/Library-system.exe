@@ -979,6 +979,7 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
             onCheckOut={(res) => onNavigateToBorrow && onNavigateToBorrow(res.memberId, res.bookId)}
             onEdit={(res) => {
               openEditReservation(res);
+              setActiveViewReservationId(null);
             }}
             onCancel={() => {
               updateReservationActionStatus(activeViewReservationId, 'Cancelled');
