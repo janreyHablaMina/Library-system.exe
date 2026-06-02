@@ -21,7 +21,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { listBorrowTransactions, listMembers, returnBorrowTransaction, sendManualEmailReminder, type BorrowTransaction, type Member } from '../lib/tauriApi'
 
 type TransactionType = 'Borrow' | 'Return'
-type TransactionStatus = 'Active' | 'Returned' | 'Overdue'
+type TransactionStatus = 'Borrowed' | 'Returned' | 'Overdue'
 type TransactionTab = 'all' | 'borrowed' | 'returned' | 'overdue'
 
 type TransactionsPageProps = {
@@ -57,7 +57,7 @@ function getTypeClass(type: TransactionType) {
 }
 
 function getStatusClass(status: TransactionStatus) {
-  if (status === 'Active') return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
+  if (status === 'Borrowed') return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
   if (status === 'Returned') return 'bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300'
   return 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
 }
@@ -90,7 +90,7 @@ function inferStatus(tx: BorrowTransaction): TransactionStatus {
   if (tx.status.toLowerCase() === 'returned' || !!tx.returnDate) return 'Returned'
   const due = new Date(tx.dueDate)
   if (!Number.isNaN(due.getTime()) && due.getTime() < Date.now()) return 'Overdue'
-  return 'Active'
+  return 'Borrowed'
 }
 
 function toTransactionRow(tx: BorrowTransaction, memberMap: Map<string, Member>): TransactionRow {
@@ -208,7 +208,7 @@ function TransactionActionsMenu({
             View Details
           </button>
 
-          {(status === 'Active' || status === 'Overdue') && (
+          {(status === 'Borrowed' || status === 'Overdue') && (
             <button
               type="button"
               className={`${itemBase} ${itemNormal}`}
@@ -222,7 +222,7 @@ function TransactionActionsMenu({
             </button>
           )}
 
-          {(status === 'Active' || status === 'Overdue') && (
+          {(status === 'Borrowed' || status === 'Overdue') && (
             <button
               type="button"
               className={`${itemBase} ${itemNormal}`}
@@ -365,6 +365,9 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
     return transactionList
   }, [activeTab, transactionList])
 
+  const totalPages = Math.max(1, Math.ceil(filteredTransactions.length / itemsPerPage))
+  const paginatedTransactions = filteredTransactions.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+
   return (
     <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
       <section className="p-5">
@@ -432,52 +435,35 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
           </div>
         </div>
 
-        <div className={`mt-4 overflow-hidden rounded-xl border ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+        <div className={`mt-4 lg:overflow-visible overflow-hidden rounded-xl border ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
           <div className={`flex flex-wrap items-center gap-3 border-b p-3 rounded-t-xl ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
             <label className={`group flex h-11 min-w-[280px] flex-1 items-center rounded-xl border px-3 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
               <Search size={16} className={`mr-2 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
               <input placeholder="Search by member name, book title or copy ID..." className={`w-full bg-transparent text-sm outline-none ${isDarkMode ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400'}`} />
             </label>
-            {['Type: All', 'Status: All'].map((item) => (
-              <div key={item} className="relative">
-                <select className={`h-11 min-w-[145px] appearance-none rounded-xl border pl-3 pr-10 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100' : 'border-slate-200 bg-white text-slate-700'}`}>
-                  <option>{item}</option>
-                </select>
-                <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
-              </div>
-            ))}
-            <div className={`flex h-11 min-w-[250px] items-center gap-2 rounded-xl border px-3 text-sm ${isDarkMode ? 'border-slate-700 text-slate-200' : 'border-slate-200 text-slate-700'}`}>
-              <CalendarDays size={15} />
-              Dynamic date range
-            </div>
+            
+            
             <button type="button" onClick={() => void loadTransactions()} className={`inline-flex h-11 items-center gap-2 rounded-xl border px-4 text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
               <RotateCcw size={15} />
               Reset
             </button>
           </div>
 
-          <div className="overflow-x-auto relative z-10">
-            <table className="min-w-[1250px] w-full text-left text-sm">
+          <div className={`relative z-10 ${isDarkMode ? 'overflow-x-auto lg:overflow-visible bg-[#0b1738]' : 'overflow-x-auto lg:overflow-visible bg-white'}`}>
+            <table className="w-full min-w-[800px] text-left text-sm">
               <thead className={isDarkMode ? 'bg-[#0f1f49] text-slate-300' : 'bg-slate-50 text-slate-600'}>
                 <tr>
-                  <th className="px-4 py-3 font-semibold">ID</th>
-                  <th className="px-3 py-3 font-semibold">Type</th>
                   <th className="px-3 py-3 font-semibold">Member</th>
                   <th className="px-3 py-3 font-semibold">Book</th>
-                  <th className="px-3 py-3 font-semibold">Copy ID</th>
                   <th className="px-3 py-3 font-semibold">Borrow Date</th>
                   <th className="px-3 py-3 font-semibold">Due Date</th>
-                  <th className="px-3 py-3 font-semibold">Return Date</th>
                   <th className="px-3 py-3 font-semibold">Status</th>
-                  <th className="px-3 py-3 font-semibold">Fine</th>
                   <th className="px-3 py-3 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {paginatedTransactions.map((row) => (
                   <tr key={row.id} onClick={() => onOpenTransactionDetail(row.id)} className={`border-t cursor-pointer transition-colors ${isDarkMode ? 'border-slate-700 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}>
-                    <td className={`px-4 py-3 font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{row.id}</td>
-                    <td className="px-3 py-3"><span className={`rounded-md px-2 py-1 text-xs font-semibold ${getTypeClass(row.type)}`}>{row.type}</span></td>
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-2">
                         <span className={`grid h-9 w-9 place-items-center overflow-hidden rounded-full text-base ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
@@ -494,12 +480,9 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
                       </div>
                     </td>
                     <td className="px-3 py-3"><p className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{row.book}</p><p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{row.author}</p></td>
-                    <td className={`px-3 py-3 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{row.copyId}</td>
                     <td className={`px-3 py-3 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{row.borrowDate}</td>
                     <td className={`px-3 py-3 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{row.dueDate}</td>
-                    <td className={`px-3 py-3 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{row.returnDate}</td>
                     <td className="px-3 py-3"><span className={`rounded-md px-2 py-1 text-xs font-semibold ${getStatusClass(row.status)}`}>{row.status}</span></td>
-                    <td className={`px-3 py-3 font-semibold ${row.fineValue > 0 ? 'text-rose-600' : isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{row.fine}</td>
                     <td className="px-3 py-3 text-right">
                       <TransactionActionsMenu
                         isDarkMode={isDarkMode}
@@ -516,7 +499,7 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
                 ))}
                 {!loading && filteredTransactions.length === 0 && (
                   <tr>
-                    <td colSpan={11} className={`px-4 py-8 text-center text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                    <td colSpan={6} className={`px-4 py-8 text-center text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                       No transactions found.
                     </td>
                   </tr>

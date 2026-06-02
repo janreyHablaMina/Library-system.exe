@@ -287,6 +287,13 @@ struct CreateBorrowPayload {
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+struct ExtendDueDatePayload {
+  transaction_id: i64,
+  new_due_date: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct ReturnBorrowPayload {
   transaction_id: i64,
   return_date: String,
@@ -1655,6 +1662,20 @@ fn create_borrow_transaction(app: tauri::AppHandle, payload: CreateBorrowPayload
 }
 
 #[tauri::command]
+fn extend_borrow_due_date(app: tauri::AppHandle, payload: ExtendDueDatePayload) -> Result<(), String> {
+  let conn = open_db(&database_path(&app)?)?;
+  init_schema(&conn)?;
+
+  let mut stmt = conn.prepare("UPDATE borrow_transactions SET due_date = ?1 WHERE id = ?2 AND return_date IS NULL")
+    .map_err(|e| format!("prepare extend due date failed: {e}"))?;
+
+  stmt.execute(params![payload.new_due_date, payload.transaction_id])
+    .map_err(|e| format!("execute extend due date failed: {e}"))?;
+
+  Ok(())
+}
+
+#[tauri::command]
 fn return_borrow_transaction(app: tauri::AppHandle, payload: ReturnBorrowPayload) -> Result<(), String> {
   let conn = open_db(&database_path(&app)?)?;
   init_schema(&conn)?;
@@ -2862,6 +2883,7 @@ pub fn run() {
       update_category,
       delete_category,
       create_borrow_transaction,
+      extend_borrow_due_date,
       return_borrow_transaction,
       list_borrow_transactions,
       list_book_borrow_transactions,

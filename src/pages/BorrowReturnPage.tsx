@@ -7,6 +7,7 @@ import {
   listBorrowTransactions,
   listMembers,
   returnBorrowTransaction,
+  getSetting,
   type Book,
   type BorrowTransaction,
   type Member,
@@ -93,6 +94,7 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 
   const [books, setBooks] = useState<BookItem[]>([])
   const [activeRows, setActiveRows] = useState<BorrowedRow[]>([])
   const [returnedRows, setReturnedRows] = useState<ReturnedRow[]>([])
+  const [defaultLoanDays, setDefaultLoanDays] = useState<number>(14)
 
   const [selectedMember, setSelectedMember] = useState<MemberItem | null>(null)
   const [selectedBook, setSelectedBook] = useState<BookItem | null>(null)
@@ -188,11 +190,12 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 
 
   const loadData = async () => {
     try {
-      const [mRows, bRows, activeTx, returnedTx] = await Promise.all([
+      const [mRows, bRows, activeTx, returnedTx, loanPeriodStr] = await Promise.all([
         listMembers(1000),
         listBooks(2000),
         listBorrowTransactions('Active', 500),
         listBorrowTransactions('Returned', 500),
+        getSetting('general.default_loan_period'),
       ])
       const mappedMembers = mapMembers(mRows)
       const memberMap = new Map(mappedMembers.map((m) => [m.memberId, m]))
@@ -200,6 +203,9 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 
       setBooks(mapBooks(bRows))
       setActiveRows(mapActiveRows(activeTx, memberMap))
       setReturnedRows(mapReturnedRows(returnedTx, memberMap))
+      const loanDays = loanPeriodStr ? parseInt(loanPeriodStr, 10) : 14
+      setDefaultLoanDays(loanDays)
+      setDueDate(new Date(Date.now() + loanDays * 24 * 60 * 60 * 1000).toISOString().slice(0, 10))
     } catch {
       setShowToast('Failed to load borrow/return data.')
     }
@@ -280,6 +286,8 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 
       setMemberSearchQuery('')
       setBookSearchQuery('')
       setNotes('')
+      setBorrowDate(new Date().toISOString().slice(0, 10))
+      setDueDate(new Date(Date.now() + defaultLoanDays * 24 * 60 * 60 * 1000).toISOString().slice(0, 10))
       await loadData()
     } catch (error) {
       setShowToast(error instanceof Error ? error.message : 'Transaction failed.')
@@ -452,7 +460,14 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 
                 <div className="grid gap-3 md:grid-cols-2">
                   <div>
                     <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>3. Borrow Date</p>
-                    <input type="date" value={borrowDate} onChange={(e) => setBorrowDate(e.target.value)} className={`h-11 w-full rounded-xl border px-3 text-sm ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`} />
+                    <input type="date" value={borrowDate} onChange={(e) => {
+                      const newBorrowDate = e.target.value;
+                      setBorrowDate(newBorrowDate);
+                      if (newBorrowDate) {
+                        const newDue = new Date(new Date(newBorrowDate).getTime() + defaultLoanDays * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+                        setDueDate(newDue);
+                      }
+                    }} className={`h-11 w-full rounded-xl border px-3 text-sm ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`} />
                   </div>
                   <div>
                     <p className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>4. Due Date</p>

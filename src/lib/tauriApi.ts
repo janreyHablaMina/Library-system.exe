@@ -226,6 +226,12 @@ export type CreateBorrowPayload = {
   notes?: string | null
 }
 
+
+export type ExtendDueDatePayload = {
+  transactionId: number
+  newDueDate: string
+}
+
 export type ReturnBorrowPayload = {
   transactionId: number
   returnDate: string
@@ -428,6 +434,11 @@ export async function deleteCategory(id: number): Promise<void> {
 
 export async function createBorrowTransaction(payload: CreateBorrowPayload): Promise<number> {
   return invoke<number>('create_borrow_transaction', { payload })
+}
+
+
+export async function extendBorrowDueDate(payload: ExtendDueDatePayload): Promise<void> {
+  return invoke<void>('extend_borrow_due_date', { payload })
 }
 
 export async function returnBorrowTransaction(payload: ReturnBorrowPayload): Promise<void> {
