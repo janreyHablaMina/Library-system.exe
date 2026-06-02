@@ -146,10 +146,17 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
   const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [showToast, setShowToast] = useState<string | null>(null)
 
   useEffect(() => {
     setCurrentPage(1)
   }, [staffSearch, roleFilter, statusFilter])
+  useEffect(() => {
+    if (showToast) {
+      const timer = setTimeout(() => setShowToast(null), 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [showToast])
 
   const totalStaff = staffMembers.length
   const activeStaff = staffMembers.filter(s => s.status === 'Active').length
@@ -303,8 +310,10 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
       setIsSavingStaff(true)
       if (editingStaff) {
         await updateStaff({ id: editingStaff.dbId, ...payloadBase, requirePasswordReset: payloadBase.requirePasswordReset })
+        setShowToast('Staff member updated successfully!')
       } else {
         await createStaff(payloadBase)
+        setShowToast('Staff member added successfully!')
       }
       await refreshStaff()
       setIsAddModalOpen(false)
