@@ -143,7 +143,6 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
   const [staffSearch, setStaffSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState<'All Roles' | StaffRole>('All Roles')
   const [statusFilter, setStatusFilter] = useState<'All Status' | StaffStatus>('All Status')
-  const [branchFilter, setBranchFilter] = useState<'All Branches' | string>('All Branches')
   const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(null)
 
   const totalStaff = staffMembers.length
@@ -187,9 +186,8 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
 
     const matchesRole = roleFilter === 'All Roles' || staff.role === roleFilter
     const matchesStatus = statusFilter === 'All Status' || staff.status === statusFilter
-    const matchesBranch = branchFilter === 'All Branches' || staff.branch === branchFilter
 
-    return matchesSearch && matchesRole && matchesStatus && matchesBranch
+    return matchesSearch && matchesRole && matchesStatus
   })
 
   const avatarFromName = (name: string) => {
@@ -424,31 +422,12 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-slate-500">Branch</span>
-                <div className="relative">
-                  <select
-                    value={branchFilter}
-                    onChange={(event) => setBranchFilter(event.target.value)}
-                    className={`h-11 min-w-[140px] appearance-none rounded-xl border py-2 pl-4 pr-10 text-xs font-bold outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}
-                  >
-                    <option value="All Branches">All Branches</option>
-                    <option value="Central Library">Central Library</option>
-                    <option value="North Branch">North Branch</option>
-                    <option value="West Branch">West Branch</option>
-                    <option value="South Branch">South Branch</option>
-                  </select>
-                  <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
-                </div>
-              </div>
-
               <button
                 type="button"
                 onClick={() => {
                   setStaffSearch('')
                   setRoleFilter('All Roles')
                   setStatusFilter('All Status')
-                  setBranchFilter('All Branches')
                 }}
                 className={`inline-flex h-11 items-center gap-2 rounded-xl border px-4 text-xs font-bold transition-all ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-white'}`}
               >
