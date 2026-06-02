@@ -36,6 +36,7 @@ type BookItem = {
   isbn: string
   copyId: string
   availableCopies: number
+  totalCopies: number
   available: boolean
   icon: string
   coverData: string | null
@@ -141,8 +142,9 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 
     author: b.author,
     isbn: b.isbn || '-',
     copyId: `BK-${String(b.id).padStart(6, '0')}`,
-    availableCopies: b.available ? 1 : 0,
-    available: b.available,
+    availableCopies: b.available,
+    totalCopies: b.totalCopies,
+    available: b.available > 0,
     icon: '📘',
     coverData: b.coverData || null,
   }))
@@ -409,7 +411,10 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 
                         </span>
                         <div className="flex-1">
                           <p className={isDarkMode ? 'text-slate-100' : 'text-slate-900'}>{b.title}</p>
-                          <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{b.author} • {b.isbn}</p>
+                          <div className={`flex justify-between items-center text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                            <span>{b.author} • {b.isbn}</span>
+                            <span className="font-bold text-emerald-600 dark:text-emerald-400">{b.availableCopies} / {b.totalCopies} Available</span>
+                          </div>
                         </div>
                       </button>
                     ))}
@@ -432,6 +437,7 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 
                           <p className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{selectedBook.title}</p>
                           <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Author: {selectedBook.author}</p>
                           <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>ISBN: {selectedBook.isbn}</p>
+                          <p className={`text-xs font-bold ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>Available: {selectedBook.availableCopies} / {selectedBook.totalCopies}</p>
                         </div>
                       </div>
                       <button type="button" onClick={() => setSelectedBook(null)} className={`grid h-8 w-8 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-100'}`}>
