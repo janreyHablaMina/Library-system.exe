@@ -282,6 +282,7 @@ type ReservationDetailsViewProps = {
   isDarkMode: boolean
   onBack: () => void
   onCheckOut?: (reservation: any) => void
+  onEdit?: (reservation: ReservationRow) => void
 }
 
 function ReservationDetailsViewNew({ reservation, isDarkMode, onBack, onCheckOut, onEdit }: ReservationDetailsViewProps) {
@@ -482,17 +483,17 @@ function ReservationDetailsViewNew({ reservation, isDarkMode, onBack, onCheckOut
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           
-          <button type="button" className={`flex w-full flex-col items-start gap-3 rounded-xl border p-4 text-left transition-all ${isDarkMode ? 'border-blue-500/30 bg-blue-950/20 hover:bg-blue-950/40' : 'border-blue-100 bg-blue-50 hover:bg-blue-100/70'}`}>
+          <button type="button" onClick={() => onEdit && onEdit(reservation)} className={`flex w-full flex-col items-start gap-3 rounded-xl border p-4 text-left transition-all ${isDarkMode ? 'border-blue-500/30 bg-blue-950/20 hover:bg-blue-950/40' : 'border-blue-100 bg-blue-50 hover:bg-blue-100/70'}`}>
             <div className="flex w-full items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-full shadow-sm ${isDarkMode ? 'bg-blue-900/50 text-blue-400' : 'bg-white text-blue-600'}`}>
-                   <Clock3 size={18} />
+                   <Pencil size={18} />
                 </div>
-                <span className={`font-bold ${isDarkMode ? 'text-blue-400' : 'text-blue-700'}`}>Mark Ready for Pickup</span>
+                <span className={`font-bold ${isDarkMode ? 'text-blue-400' : 'text-blue-700'}`}>Edit Reservation</span>
               </div>
               <ChevronRight size={16} className={isDarkMode ? 'text-blue-400' : 'text-blue-600'} />
             </div>
-            <p className={`text-xs font-medium ${isDarkMode ? 'text-blue-400/80' : 'text-blue-600/80'}`}>Prepare this book for member pickup.</p>
+            <p className={`text-xs font-medium ${isDarkMode ? 'text-blue-400/80' : 'text-blue-600/80'}`}>Modify reservation details, dates, or branch.</p>
           </button>
 
           <button type="button" onClick={() => onCheckOut && onCheckOut(reservation)} className={`flex w-full flex-col items-start gap-3 rounded-xl border p-4 text-left transition-all ${isDarkMode ? 'border-emerald-500/30 bg-emerald-950/20 hover:bg-emerald-950/40' : 'border-emerald-100 bg-emerald-50 hover:bg-emerald-100/70'}`}>
@@ -975,6 +976,10 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
             isDarkMode={isDarkMode} 
             onBack={() => setActiveViewReservationId(null)}
             onCheckOut={(res) => onNavigateToBorrow && onNavigateToBorrow(res.memberId, res.bookId)}
+            onEdit={(res) => {
+              setEditingReservation(res);
+              setIsAddModalOpen(true);
+            }}
           />
       ) : !isAddModalOpen ? (
         <section className="p-5">
