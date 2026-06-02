@@ -36,13 +36,7 @@ type StaffActionsMenuProps = {
   onDelete: () => void
 }
 
-const stats = [
-  { label: 'Total Staff', value: '18', subValue: '↑ 2 this month', icon: Users, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-  { label: 'Active Staff', value: '16', subValue: '88.9% of total', icon: UserCheck, color: 'text-blue-600', bg: 'bg-blue-50' },
-  { label: 'Inactive Staff', value: '2', subValue: '11.1% of total', icon: UserX, color: 'text-amber-600', bg: 'bg-amber-50' },
-  { label: 'Administrators', value: '5', subValue: '27.8% of total', icon: ShieldCheck, color: 'text-violet-600', bg: 'bg-violet-50' },
-  { label: 'New This Month', value: '1', subValue: 'New staff added', icon: Calendar, color: 'text-rose-600', bg: 'bg-rose-50' },
-]
+
 
 function StaffActionsMenu({ isDarkMode, onEdit, onDelete }: StaffActionsMenuProps) {
   const [open, setOpen] = useState(false)
@@ -135,6 +129,27 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
   const [statusFilter, setStatusFilter] = useState<'All Status' | StaffStatus>('All Status')
   const [branchFilter, setBranchFilter] = useState<'All Branches' | string>('All Branches')
   const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(null)
+
+  const totalStaff = staffMembers.length
+  const activeStaff = staffMembers.filter(s => s.status === 'Active').length
+  const inactiveStaff = staffMembers.filter(s => s.status === 'Inactive').length
+  const adminStaff = staffMembers.filter(s => s.role === 'Administrator').length
+  
+  const currentMonth = new Date().getMonth()
+  const currentYear = new Date().getFullYear()
+  const newThisMonth = staffMembers.filter(s => {
+    const d = new Date(s.joinedOn)
+    return d.getMonth() === currentMonth && d.getFullYear() === currentYear
+  }).length
+
+  const dynamicStats = [
+    { label: 'Total Staff', value: totalStaff.toString(), subValue: `${newThisMonth} new this month`, icon: Users, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { label: 'Active Staff', value: activeStaff.toString(), subValue: totalStaff > 0 ? `${Math.round((activeStaff/totalStaff)*100)}% of total` : '0%', icon: UserCheck, color: 'text-blue-600', bg: 'bg-blue-50' },
+    { label: 'Inactive Staff', value: inactiveStaff.toString(), subValue: totalStaff > 0 ? `${Math.round((inactiveStaff/totalStaff)*100)}% of total` : '0%', icon: UserX, color: 'text-amber-600', bg: 'bg-amber-50' },
+    { label: 'Administrators', value: adminStaff.toString(), subValue: totalStaff > 0 ? `${Math.round((adminStaff/totalStaff)*100)}% of total` : '0%', icon: ShieldCheck, color: 'text-violet-600', bg: 'bg-violet-50' },
+    { label: 'New This Month', value: newThisMonth.toString(), subValue: 'New staff added', icon: Calendar, color: 'text-rose-600', bg: 'bg-rose-50' },
+  ]
+
 
   const getRoleStyle = (role: StaffRole) => {
     switch (role) {
@@ -325,7 +340,7 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
         </div>
 
         <section className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-          {stats.map((stat) => {
+          {dynamicStats.map((stat) => {
             const Icon = stat.icon
             return (
               <article key={stat.label} className={`rounded-xl border p-5 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${isDarkMode ? 'border-slate-800 bg-[#0a1633]' : 'border-slate-200 bg-white'}`}>
