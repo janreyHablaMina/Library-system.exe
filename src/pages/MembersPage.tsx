@@ -224,11 +224,11 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
 
+  const [activeStatTab, setActiveStatTab] = useState<'All Members' | 'Students' | 'Teachers' | 'Staff' | 'Visitors'>('All Members')
+
   useEffect(() => {
     setCurrentPage(1)
   }, [searchTerm, selectedStatus, selectedType, activeStatTab, itemsPerPage])
-
-  const [activeStatTab, setActiveStatTab] = useState<'All Members' | 'Students' | 'Teachers' | 'Staff' | 'Visitors'>('All Members')
 
   // Dynamically compute unique departments
   const uniqueTypes = useMemo(() => {
@@ -311,6 +311,9 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
 
     return true
   })
+
+  const totalPages = Math.ceil(filteredMembers.length / itemsPerPage)
+  const paginatedMembers = filteredMembers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   // Reset Filters
   const handleResetFilters = () => {
