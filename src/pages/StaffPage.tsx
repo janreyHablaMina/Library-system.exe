@@ -334,6 +334,7 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
       await deleteStaff(staffToDelete.dbId)
       await refreshStaff()
       setStaffToDelete(null)
+      setShowToast('Staff member deleted successfully!')
     } catch (error) {
       console.error('Failed to delete staff:', error)
       setStaffError('Failed to delete staff member. Please try again.')
