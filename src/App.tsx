@@ -152,6 +152,7 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
   const [isAuthorDetailOpen, setIsAuthorDetailOpen] = useState(false)
   const [selectedAuthorId, setSelectedAuthorId] = useState<number | null>(null)
   const [transactionActiveTab, setTransactionActiveTab] = useState<'all' | 'borrowed' | 'returned' | 'overdue'>('all')
+  const [borrowPrefill, setBorrowPrefill] = useState<{ memberId: number, bookId: number } | null>(null)
   const [borrowReturnActiveTab, setBorrowReturnActiveTab] = useState<'borrow' | 'return'>('borrow')
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
@@ -229,6 +230,13 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
       console.error('Failed to refresh notifications:', error)
     }
   }
+  
+  const handleNavigateToBorrow = (memberId: number, bookId: number) => {
+    setBorrowPrefill({ memberId, bookId })
+    setActivePage('Transactions')
+    setBorrowReturnActiveTab('borrow')
+  }
+
   const openTransactionsPage = (tab: 'all' | 'borrowed' | 'returned' | 'overdue' = 'all') => {
     setTransactionActiveTab(tab)
     setActivePage('All Transactions')
@@ -1119,14 +1127,15 @@ const greetingName = formatDisplayName(activeUsername)
             )
           ) : activePage === 'Transactions' ? (
             <BorrowReturnPage
-              key={borrowReturnActiveTab}
-              isDarkMode={isDarkMode}
-              initialTab={borrowReturnActiveTab}
-              onOpenTransactions={(tab) => {
-                setTransactionActiveTab(tab)
-                setActivePage('All Transactions')
-              }}
-            />
+                key={borrowReturnActiveTab}
+                isDarkMode={isDarkMode}
+                initialTab={borrowReturnActiveTab}
+                prefillBorrowData={borrowPrefill}
+                onOpenTransactions={(tab) => {
+                  setTransactionActiveTab(tab)
+                  setActivePage('All Transactions')
+                }}
+              />
           ) : activePage === 'All Transactions' ? (
             isTransactionDetailOpen ? (
               <TransactionDetailPage
@@ -1178,7 +1187,19 @@ const greetingName = formatDisplayName(activeUsername)
           ) : activePage === 'Categories' ? (
             <CategoriesPage isDarkMode={isDarkMode} />
           ) : activePage === 'Reservations' ? (
-            <ReservationsPage isDarkMode={isDarkMode} />
+            <ReservationsPage
+              isDarkMode={isDarkMode}
+              onOpenTransactionDetail={(id) => {
+                setSelectedTransactionId(id)
+                setIsTransactionDetailOpen(true)
+                setActivePage('All Transactions')
+              }}
+              onNavigateToBorrow={(memberId, bookId) => {
+                setBorrowPrefill({ memberId, bookId })
+                setBorrowReturnActiveTab('borrow')
+                setActivePage('Transactions')
+              }}
+            />
           ) : activePage === 'Staff' ? (
             <StaffPage isDarkMode={isDarkMode} />
           ) : (

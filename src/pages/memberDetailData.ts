@@ -4,7 +4,7 @@ export type LoanItem = {
 }
 export type ReservationItem = {
   id: number; title: string; author: string; reservedOn: string
-  status: 'Ready' | 'Pending'; statusLabel: string
+  status: 'Ready' | 'Reserved'; statusLabel: string
 }
 export type ActivityItem = {
   dateTime: string; activity: string; description: string; performedBy: string
@@ -70,7 +70,7 @@ export const mockMembersData: Record<number, MemberDetailData> = {
     lastUpdated: 'Aug 04, 2024 by Admin User',
     totalLoans: 5, currentLoans: 0, reservationsCount: 1, fines: '₱0.00',
     loansList: [],
-    reservationsList: [{ id: 202, title: 'Understanding Philippine social realities', author: 'Ramirez, Mina M.', reservedOn: 'May 16, 2025', status: 'Pending', statusLabel: 'Pending arrival' }],
+    reservationsList: [{ id: 202, title: 'Understanding Philippine social realities', author: 'Ramirez, Mina M.', reservedOn: 'May 16, 2025', status: 'Reserved', statusLabel: 'Reserved' }],
     notes: [],
     activities: [
       { dateTime: 'May 16, 2025 04:10 PM', activity: 'Reservation Placed', description: 'Reserved "Understanding Philippine social realities"', performedBy: 'Pedro Reyes' },

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Calendar, Clock3, CheckCircle2, XCircle, MapPin, Eye, Trash2, Download, Plus, Search, ChevronDown, Filter, ChevronLeft, ChevronRight, MoreHorizontal, BookOpen, UserRound, ArrowLeft, Info, X, Check, Mail, Smartphone, Printer, Pencil, AlertTriangle } from 'lucide-react'
 import { createReservation, deleteReservation, listBooks, listMembers, listReservations, updateReservation, updateReservationStatus } from '../lib/tauriApi'
 
-type ReservationStatus = 'Pending' | 'Ready for Pickup' | 'Completed' | 'Cancelled'
+type ReservationStatus = 'Reserved' | 'Ready for Pickup' | 'Expired' | 'Cancelled'
 
 type ReservationRow = {
   id: string
@@ -37,25 +37,27 @@ type ReservationRow = {
 
 type ReservationsPageProps = {
   isDarkMode: boolean
+  onOpenTransactionDetail: (id: string) => void
+  onNavigateToBorrow?: (memberId: number, bookId: number) => void
 }
 
 const stats = [
   { label: 'Total Reservations', value: '56', subValue: '↑ 12 this month', icon: Calendar, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-  { label: 'Pending', value: '24', subValue: '42.9% of total', icon: Clock3, color: 'text-blue-600', bg: 'bg-blue-50' },
+  { label: 'Reserved', value: '24', subValue: '42.9% of total', icon: Clock3, color: 'text-blue-600', bg: 'bg-blue-50' },
   { label: 'Ready for Pickup', value: '18', subValue: '32.1% of total', icon: MapPin, color: 'text-amber-600', bg: 'bg-amber-50' },
-  { label: 'Completed', value: '12', subValue: '21.4% of total', icon: CheckCircle2, color: 'text-violet-600', bg: 'bg-violet-50' },
+  { label: 'Expired', value: '12', subValue: '21.4% of total', icon: XCircle, color: 'text-rose-600', bg: 'bg-rose-50' },
   { label: 'Cancelled', value: '2', subValue: '3.6% of total', icon: XCircle, color: 'text-rose-600', bg: 'bg-rose-50' },
 ]
 
 const reservationsData: ReservationRow[] = [
-  { id: 'RES-00056', book: { title: 'The Alchemist', author: 'Paulo Coelho', cover: '📙' }, member: { name: 'Maria Santos', id: 'MS-00125', avatar: '👩🏽' }, pickupBranch: 'Central Library', reservedOn: 'May 14, 2026', reservedTime: '10:15 AM', status: 'Pending', expiresOn: 'May 21, 2026', expiresTime: '10:15 AM' },
+  { id: 'RES-00056', book: { title: 'The Alchemist', author: 'Paulo Coelho', cover: '📙' }, member: { name: 'Maria Santos', id: 'MS-00125', avatar: '👩🏽' }, pickupBranch: 'Central Library', reservedOn: 'May 14, 2026', reservedTime: '10:15 AM', status: 'Reserved', expiresOn: 'May 21, 2026', expiresTime: '10:15 AM' },
   { id: 'RES-00055', book: { title: 'Atomic Habits', author: 'James Clear', cover: '📕' }, member: { name: 'Juan Dela Cruz', id: 'JD-00098', avatar: '👨🏻' }, pickupBranch: 'North Branch', reservedOn: 'May 14, 2026', reservedTime: '09:45 AM', status: 'Ready for Pickup', expiresOn: 'May 17, 2026', expiresTime: '09:45 AM' },
   { id: 'RES-00054', book: { title: 'Thinking, Fast and Slow', author: 'Daniel Kahneman', cover: '📘' }, member: { name: 'Ana Lim', id: 'AL-00076', avatar: '👩🏻' }, pickupBranch: 'Central Library', reservedOn: 'May 13, 2026', reservedTime: '04:30 PM', status: 'Ready for Pickup', expiresOn: 'May 16, 2026', expiresTime: '04:30 PM' },
-  { id: 'RES-00053', book: { title: 'The 5 AM Club', author: 'Robin Sharma', cover: '📗' }, member: { name: 'Pedro Reyes', id: 'PR-00045', avatar: '👨🏼' }, pickupBranch: 'West Branch', reservedOn: 'May 13, 2026', reservedTime: '11:20 AM', status: 'Pending', expiresOn: 'May 20, 2026', expiresTime: '11:20 AM' },
-  { id: 'RES-00052', book: { title: 'Rich Dad Poor Dad', author: 'Robert Kiyosaki', cover: '📒' }, member: { name: 'Sarah Wilson', id: 'SW-00102', avatar: '👩🏼' }, pickupBranch: 'Central Library', reservedOn: 'May 12, 2026', reservedTime: '03:10 PM', status: 'Completed', expiresOn: 'May 13, 2026', expiresTime: '(Picked up)' },
+  { id: 'RES-00053', book: { title: 'The 5 AM Club', author: 'Robin Sharma', cover: '📗' }, member: { name: 'Pedro Reyes', id: 'PR-00045', avatar: '👨🏼' }, pickupBranch: 'West Branch', reservedOn: 'May 13, 2026', reservedTime: '11:20 AM', status: 'Reserved', expiresOn: 'May 20, 2026', expiresTime: '11:20 AM' },
+  { id: 'RES-00052', book: { title: 'Rich Dad Poor Dad', author: 'Robert Kiyosaki', cover: '📒' }, member: { name: 'Sarah Wilson', id: 'SW-00102', avatar: '👩🏼' }, pickupBranch: 'Central Library', reservedOn: 'May 12, 2026', reservedTime: '03:10 PM', status: 'Expired', expiresOn: 'May 13, 2026', expiresTime: '(Picked up)' },
   { id: 'RES-00051', book: { title: 'The Power of Habit', author: 'Charles Duhigg', cover: '📙' }, member: { name: 'Carlo Garcia', id: 'CG-00063', avatar: '👨🏻' }, pickupBranch: 'South Branch', reservedOn: 'May 12, 2026', reservedTime: '10:05 AM', status: 'Cancelled', expiresOn: 'May 12, 2026', expiresTime: '10:30 AM' },
   { id: 'RES-00050', book: { title: 'Sapiens', author: 'Yuval Noah Harari', cover: '📓' }, member: { name: 'Alicia H.', id: 'AH-00055', avatar: '👩🏻' }, pickupBranch: 'North Branch', reservedOn: 'May 11, 2026', reservedTime: '02:25 PM', status: 'Ready for Pickup', expiresOn: 'May 14, 2026', expiresTime: '02:25 PM' },
-  { id: 'RES-00049', book: { title: 'The Subtle Art of Not Caring', author: 'Mark Manson', cover: '📙' }, member: { name: 'John Doe', id: 'JD-00012', avatar: '👨🏼' }, pickupBranch: 'Central Library', reservedOn: 'May 11, 2026', reservedTime: '09:15 AM', status: 'Pending', expiresOn: 'May 18, 2026', expiresTime: '09:15 AM' },
+  { id: 'RES-00049', book: { title: 'The Subtle Art of Not Caring', author: 'Mark Manson', cover: '📙' }, member: { name: 'John Doe', id: 'JD-00012', avatar: '👨🏼' }, pickupBranch: 'Central Library', reservedOn: 'May 11, 2026', reservedTime: '09:15 AM', status: 'Reserved', expiresOn: 'May 18, 2026', expiresTime: '09:15 AM' },
 ]
 
 type MemberItem = {
@@ -239,7 +241,7 @@ function ReservationActionsMenu({ isDarkMode, onViewDetails, onEdit, onComplete,
             onClick={(e) => { e.stopPropagation(); setOpen(false); onComplete(); }}
           >
             <CheckCircle2 size={15} className="shrink-0 text-emerald-500" />
-            Mark as Completed
+            Check Out Book
           </button>
           <button
             type="button"
@@ -276,15 +278,15 @@ function ReservationActionsMenu({ isDarkMode, onViewDetails, onEdit, onComplete,
 }
 
 type ReservationDetailsViewProps = {
-  reservationId: string
+  reservation: ReservationRow
   isDarkMode: boolean
   onBack: () => void
+  onCheckOut?: (reservation: any) => void
 }
 
-function ReservationDetailsViewNew({ reservationId, isDarkMode, onBack }: ReservationDetailsViewProps) {
-  const reservation = reservationsData.find((item) => item.id === reservationId) ?? reservationsData[0]
-  const book = mockBooks.find((item) => item.title === reservation.book.title) ?? mockBooks[0]
-  const member = mockMembers.find((item) => item.name === reservation.member.name) ?? mockMembers[0]
+function ReservationDetailsViewNew({ reservation, isDarkMode, onBack, onCheckOut }: ReservationDetailsViewProps) {
+    const book = reservation.book
+    const member = reservation.member
 
   const topInfo = [
     { label: 'Reservation Date', value: `${reservation.reservedOn}, ${reservation.reservedTime}`, icon: Calendar },
@@ -296,15 +298,15 @@ function ReservationDetailsViewNew({ reservationId, isDarkMode, onBack }: Reserv
   const timeline = [
     { title: 'Reservation Created', at: 'May 14, 2026, 09:45 AM', note: 'Admin User', done: true },
     { title: 'Notified Member', at: 'May 14, 2026, 09:46 AM', note: 'Email, SMS, In-App', done: true },
-    { title: 'Ready for Pickup', at: '-', note: 'Pending', done: false },
-    { title: 'Picked Up', at: '-', note: 'Pending', done: false },
-    { title: 'Completed / Cancelled', at: '-', note: 'Pending', done: false },
+    { title: 'Ready for Pickup', at: '-', note: 'Reserved', done: false },
+    { title: 'Converted to Borrow', at: '-', note: 'Reserved', done: false },
+    { title: 'Expired / Cancelled', at: '-', note: 'Reserved', done: false },
   ]
   const getStatusStyle = (status: ReservationStatus) => {
     switch (status) {
-      case 'Pending': return 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400'
+      case 'Reserved': return 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400'
       case 'Ready for Pickup': return 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
-      case 'Completed': return 'bg-slate-50 text-slate-600 dark:bg-slate-500/10 dark:text-slate-400'
+      case 'Expired': return 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400'
       case 'Cancelled': return 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400'
     }
   }
@@ -551,17 +553,32 @@ function ReservationDetailsViewNew({ reservationId, isDarkMode, onBack }: Reserv
             <h3 className={`mb-4 text-lg font-bold ${isDarkMode ? 'text-slate-100' : 'text-[#0a1b4f]'}`}>Quick Actions</h3>
             <div className="space-y-3">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <button
-                  type="button"
-                  className={`inline-flex h-12 items-center justify-center gap-2 rounded-xl border text-sm font-bold transition-colors ${
-                    isDarkMode
-                      ? 'border-emerald-500/30 bg-emerald-950/20 text-emerald-300 hover:bg-emerald-950/35'
-                      : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-                  }`}
-                >
-                  <CheckCircle2 size={15} />
-                  Mark as Ready for Pickup
-                </button>
+                {reservation.status === 'Ready for Pickup' ? (
+                  <button
+                    type="button"
+                    onClick={() => onCheckOut && onCheckOut(reservation)}
+                    className={`inline-flex h-12 items-center justify-center gap-2 rounded-xl border text-sm font-bold transition-colors ${
+                      isDarkMode
+                        ? 'border-emerald-500/30 bg-emerald-950/20 text-emerald-300 hover:bg-emerald-950/35'
+                        : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                    }`}
+                  >
+                    <CheckCircle2 size={15} />
+                    Check Out Book
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className={`inline-flex h-12 items-center justify-center gap-2 rounded-xl border text-sm font-bold transition-colors ${
+                      isDarkMode
+                        ? 'border-blue-500/30 bg-blue-950/20 text-blue-300 hover:bg-blue-950/35'
+                        : 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100'
+                    }`}
+                  >
+                    <CheckCircle2 size={15} />
+                    Mark as Ready for Pickup
+                  </button>
+                )}
                 <button
                   type="button"
                   className={`inline-flex h-12 items-center justify-center gap-2 rounded-xl border text-sm font-bold transition-colors ${
@@ -623,7 +640,7 @@ function ReservationDetailsViewNew({ reservationId, isDarkMode, onBack }: Reserv
   )
 }
 
-export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
+export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNavigateToBorrow }: ReservationsPageProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [activeViewReservationId, setActiveViewReservationId] = useState<string | null>(null)
   const [reservationSearch, setReservationSearch] = useState('')
@@ -645,6 +662,9 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
   const [books, setBooks] = useState<BookItem[]>([])
   const [members, setMembers] = useState<MemberItem[]>([])
   const [reservations, setReservations] = useState<ReservationRow[]>([])
+
+    
+  
 
   const [selectedBook, setSelectedBook] = useState<BookItem | null>(null)
   const [selectedMember, setSelectedMember] = useState<MemberItem | null>(null)
@@ -690,7 +710,7 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
       if (status === 'Ready for Pickup' || status === 'Completed' || status === 'Cancelled') {
         return status
       }
-      return 'Pending'
+      return 'Reserved'
     }
     const avatarFromName = (name: string) => {
       const parts = name.trim().split(/\s+/).filter(Boolean)
@@ -819,9 +839,9 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
 
   const getStatusStyle = (status: ReservationStatus) => {
     switch (status) {
-      case 'Pending': return 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400'
+      case 'Reserved': return 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400'
       case 'Ready for Pickup': return 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
-      case 'Completed': return 'bg-slate-50 text-slate-600 dark:bg-slate-500/10 dark:text-slate-400'
+      case 'Expired': return 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400'
       case 'Cancelled': return 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400'
     }
   }
@@ -849,7 +869,7 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
   ): ReservationRow[] => {
     const toDate = (value: string) => new Date(value)
     const toStatus = (status: string): ReservationStatus =>
-      status === 'Ready for Pickup' || status === 'Completed' || status === 'Cancelled' ? status : 'Pending'
+      status === 'Ready for Pickup' || status === 'Expired' || status === 'Cancelled' ? status : 'Reserved'
 
     return rows.map((item) => {
       const matchedBook = loadedBooks.find((book) => book.id === item.bookId)
@@ -1052,11 +1072,12 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
         </div>
       )}
       {activeViewReservationId ? (
-        <ReservationDetailsViewNew 
-          reservationId={activeViewReservationId} 
-          isDarkMode={isDarkMode} 
-          onBack={() => setActiveViewReservationId(null)} 
-        />
+        <ReservationDetailsViewNew
+            reservation={reservations.find(r => r.id === activeViewReservationId)!} 
+            isDarkMode={isDarkMode} 
+            onBack={() => setActiveViewReservationId(null)}
+            onCheckOut={(res) => onNavigateToBorrow && onNavigateToBorrow(res.memberId, res.bookId)}
+          />
       ) : !isAddModalOpen ? (
         <section className="p-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -1120,32 +1141,16 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
                       className={`h-11 min-w-[120px] appearance-none rounded-xl border py-2 pl-4 pr-10 text-xs font-bold outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}
                     >
                       <option value="All">All</option>
-                      <option value="Pending">Pending</option>
+                      <option value="Reserved">Reserved</option>
                       <option value="Ready for Pickup">Ready for Pickup</option>
-                      <option value="Completed">Completed</option>
+                      <option value="Expired">Expired</option>
                       <option value="Cancelled">Cancelled</option>
                     </select>
                     <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-slate-500">Branch</span>
-                  <div className="relative">
-                    <select
-                      value={branchFilter}
-                      onChange={(event) => setBranchFilter(event.target.value)}
-                      className={`h-11 min-w-[140px] appearance-none rounded-xl border py-2 pl-4 pr-10 text-xs font-bold outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}
-                    >
-                      <option value="All Branches">All Branches</option>
-                      <option value="Central Library">Central Library</option>
-                      <option value="North Branch">North Branch</option>
-                      <option value="West Branch">West Branch</option>
-                      <option value="South Branch">South Branch</option>
-                    </select>
-                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
-                  </div>
-                </div>
+                
 
                 <button
                   type="button"
@@ -1183,7 +1188,7 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
                 </thead>
                 <tbody>
                   {filteredReservations.map((res) => (
-                    <tr key={res.id} className={`border-t transition-colors duration-150 ${isDarkMode ? 'border-slate-800 hover:bg-slate-800/30' : 'border-slate-100 hover:bg-slate-50'}`}>
+                    <tr key={res.id} onClick={() => setActiveViewReservationId(res.id)} className={`cursor-pointer border-t transition-colors duration-150 ${isDarkMode ? 'border-slate-800 hover:bg-slate-800/30' : 'border-slate-100 hover:bg-slate-50'}`}>
                       <td className="px-6 py-4">
                         <span className={`text-xs font-bold ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{res.id}</span>
                       </td>
@@ -1236,7 +1241,7 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
                           isDarkMode={isDarkMode}
                           onViewDetails={() => setActiveViewReservationId(res.id)}
                           onEdit={() => openEditReservation(res)}
-                          onComplete={() => updateReservationActionStatus(res.id, 'Completed')}
+                          onComplete={() => onNavigateToBorrow && onNavigateToBorrow(res.memberId, res.bookId)}
                           onCancel={() => updateReservationActionStatus(res.id, 'Cancelled')}
                           onDelete={() => setReservationToDelete(res)}
                         />
@@ -1731,7 +1736,7 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
                               <span className="text-slate-400 font-bold block text-[8px] uppercase tracking-wider">Reservations</span>
                               <span className="font-extrabold block mt-0.5 text-blue-600 dark:text-blue-400 flex items-center gap-1">
                                 <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse inline-block"></span>
-                                {reservations.filter(r => r.bookId === selectedBook?.id && (r.status === 'Pending' || r.status === 'Ready for Pickup')).length} waiting
+                                {reservations.filter(r => r.bookId === selectedBook?.id && (r.status === 'Reserved' || r.status === 'Ready for Pickup')).length} waiting
                               </span>
                             </div>
                             
@@ -1873,7 +1878,7 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
                       <div className="flex justify-between items-center text-[11px]">
                         <span className="text-slate-400 font-bold">Estimated Wait Time</span>
                         <span className={`font-extrabold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                          {!selectedBook ? '-' : selectedBook.availableCopies > 0 ? 'Available immediately' : `~ ${(reservations.filter(r => r.bookId === selectedBook.id && (r.status === 'Pending' || r.status === 'Ready for Pickup')).length * 3) + 2} days`}
+                          {!selectedBook ? '-' : selectedBook.availableCopies > 0 ? 'Available immediately' : `~ ${(reservations.filter(r => r.bookId === selectedBook.id && (r.status === 'Reserved' || r.status === 'Ready for Pickup')).length * 3) + 2} days`}
                         </span>
                       </div>
                     </div>
@@ -1897,5 +1902,3 @@ export function ReservationsPage({ isDarkMode }: ReservationsPageProps) {
     </div>
   )
 }
-
-

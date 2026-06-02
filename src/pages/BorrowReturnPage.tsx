@@ -6,6 +6,8 @@ import {
   listBooks,
   listBorrowTransactions,
   listMembers,
+  listReservations,
+  deleteReservation,
   returnBorrowTransaction,
   getSetting,
   type Book,
@@ -17,6 +19,7 @@ type BorrowReturnPageProps = {
   isDarkMode: boolean
   onOpenTransactions: (tab: 'all' | 'borrowed' | 'returned' | 'overdue') => void
   initialTab?: 'borrow' | 'return'
+  prefillBorrowData?: { memberId: number, bookId: number } | null
 }
 
 type MemberItem = {
@@ -80,7 +83,7 @@ function getFineClass(type: ReturnedRow['fineType']) {
     : 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
 }
 
-export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 'borrow' }: BorrowReturnPageProps) {
+export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 'borrow', prefillBorrowData }: BorrowReturnPageProps) {
   const [activeTab, setActiveTab] = useState<'borrow' | 'return'>(initialTab)
   const today = new Date().toISOString().slice(0, 10)
   const plus14 = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
@@ -216,6 +219,17 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 
   }, [])
 
   useEffect(() => {
+    if (prefillBorrowData && members.length > 0 && books.length > 0) {
+      const mem = members.find(m => m.id === prefillBorrowData.memberId)
+      if (mem) setSelectedMember(mem)
+      
+      const bk = books.find(b => b.id === prefillBorrowData.bookId)
+      if (bk) setSelectedBook(bk)
+    }
+  }, [prefillBorrowData, members, books])
+
+
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (memberDropdownRef.current && !memberDropdownRef.current.contains(event.target as Node)) {
         setShowMemberDropdown(false)
@@ -268,6 +282,14 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 
           dueDate,
           notes: notes.trim() || null,
         })
+        
+        // Find and delete matching reservation
+        const allRes = await listReservations('All', 500)
+        const matchingRes = allRes.find(r => r.memberId === selectedMember.id && r.bookId === selectedBook.id)
+        if (matchingRes) {
+          await deleteReservation(matchingRes.id)
+        }
+        
         setShowToast(`Successfully borrowed "${selectedBook.title}" to ${selectedMember.name}!`)
       } else {
         const tx = (await listBorrowTransactions('Active', 500)).find(
