@@ -283,9 +283,10 @@ type ReservationDetailsViewProps = {
   onBack: () => void
   onCheckOut?: (reservation: any) => void
   onEdit?: (reservation: ReservationRow) => void
+  onCancel?: () => void
 }
 
-function ReservationDetailsViewNew({ reservation, isDarkMode, onBack, onCheckOut, onEdit }: ReservationDetailsViewProps) {
+function ReservationDetailsViewNew({ reservation, isDarkMode, onBack, onCheckOut, onEdit, onCancel }: ReservationDetailsViewProps) {
   const book = reservation.book
   const member = reservation.member
 
@@ -509,7 +510,7 @@ function ReservationDetailsViewNew({ reservation, isDarkMode, onBack, onCheckOut
             <p className={`text-xs font-medium ${isDarkMode ? 'text-emerald-400/80' : 'text-emerald-600/80'}`}>Convert this reservation into a borrow transaction.</p>
           </button>
 
-          <button type="button" className={`flex w-full flex-col items-start gap-3 rounded-xl border p-4 text-left transition-all ${isDarkMode ? 'border-rose-500/30 bg-rose-950/20 hover:bg-rose-950/40' : 'border-rose-100 bg-rose-50 hover:bg-rose-100/70'}`}>
+          <button type="button" onClick={() => onCancel && onCancel()} className={`flex w-full flex-col items-start gap-3 rounded-xl border p-4 text-left transition-all ${isDarkMode ? 'border-rose-500/30 bg-rose-950/20 hover:bg-rose-950/40' : 'border-rose-100 bg-rose-50 hover:bg-rose-100/70'}`}>
             <div className="flex w-full items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-full shadow-sm ${isDarkMode ? 'bg-rose-900/50 text-rose-400' : 'bg-white text-rose-600'}`}>
@@ -979,6 +980,10 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
             onEdit={(res) => {
               setEditingReservation(res);
               setIsAddModalOpen(true);
+            }}
+            onCancel={() => {
+              updateReservationActionStatus(activeViewReservationId, 'Cancelled');
+              setActiveViewReservationId(null);
             }}
           />
       ) : !isAddModalOpen ? (
