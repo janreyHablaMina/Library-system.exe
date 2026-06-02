@@ -326,11 +326,7 @@ function ReservationDetailsViewNew({ reservation, isDarkMode, onBack, onCheckOut
             </div>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <button type="button" className={`inline-flex h-10 items-center gap-2 rounded-xl border px-4 text-xs font-bold ${isDarkMode ? 'border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}><Printer size={14} />Print</button>
-          <button type="button" className={`inline-flex h-10 items-center gap-2 rounded-xl border px-4 text-xs font-bold ${isDarkMode ? 'border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}><Pencil size={14} />Edit</button>
-          <button type="button" className={`inline-flex h-10 items-center gap-2 rounded-xl border px-4 text-xs font-bold ${isDarkMode ? 'border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}><MoreHorizontal size={14} />More</button>
-        </div>
+
       </div>
 
       {/* Top Summary Card */}
