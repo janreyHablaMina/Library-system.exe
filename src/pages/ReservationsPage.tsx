@@ -485,40 +485,40 @@ function ReservationDetailsViewNew({ reservation, isDarkMode, onBack, onCheckOut
           <button type="button" className={`flex w-full flex-col items-start gap-3 rounded-xl border p-4 text-left transition-all ${isDarkMode ? 'border-blue-500/30 bg-blue-950/20 hover:bg-blue-950/40' : 'border-blue-100 bg-blue-50 hover:bg-blue-100/70'}`}>
             <div className="flex w-full items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-blue-600 shadow-sm dark:bg-blue-900/50 dark:text-blue-400`}>
+                <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-full shadow-sm ${isDarkMode ? 'bg-blue-900/50 text-blue-400' : 'bg-white text-blue-600'}`}>
                    <Clock3 size={18} />
                 </div>
-                <span className={`font-bold text-blue-700 dark:text-blue-400`}>Mark Ready for Pickup</span>
+                <span className={`font-bold ${isDarkMode ? 'text-blue-400' : 'text-blue-700'}`}>Mark Ready for Pickup</span>
               </div>
-              <ChevronRight size={16} className="text-blue-400" />
+              <ChevronRight size={16} className={isDarkMode ? 'text-blue-400' : 'text-blue-600'} />
             </div>
-            <p className="text-xs font-medium text-blue-600/80 dark:text-blue-400/80">Prepare this book for member pickup.</p>
+            <p className={`text-xs font-medium ${isDarkMode ? 'text-blue-400/80' : 'text-blue-600/80'}`}>Prepare this book for member pickup.</p>
           </button>
 
           <button type="button" onClick={() => onCheckOut && onCheckOut(reservation)} className={`flex w-full flex-col items-start gap-3 rounded-xl border p-4 text-left transition-all ${isDarkMode ? 'border-emerald-500/30 bg-emerald-950/20 hover:bg-emerald-950/40' : 'border-emerald-100 bg-emerald-50 hover:bg-emerald-100/70'}`}>
             <div className="flex w-full items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-emerald-600 shadow-sm dark:bg-emerald-900/50 dark:text-emerald-400`}>
+                <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-full shadow-sm ${isDarkMode ? 'bg-emerald-900/50 text-emerald-400' : 'bg-white text-emerald-600'}`}>
                    <BookOpen size={18} />
                 </div>
-                <span className={`font-bold text-emerald-700 dark:text-emerald-400`}>Check Out Book</span>
+                <span className={`font-bold ${isDarkMode ? 'text-emerald-400' : 'text-emerald-700'}`}>Check Out Book</span>
               </div>
-              <ChevronRight size={16} className="text-emerald-400" />
+              <ChevronRight size={16} className={isDarkMode ? 'text-emerald-400' : 'text-emerald-600'} />
             </div>
-            <p className="text-xs font-medium text-emerald-600/80 dark:text-emerald-400/80">Convert this reservation into a borrow transaction.</p>
+            <p className={`text-xs font-medium ${isDarkMode ? 'text-emerald-400/80' : 'text-emerald-600/80'}`}>Convert this reservation into a borrow transaction.</p>
           </button>
 
           <button type="button" className={`flex w-full flex-col items-start gap-3 rounded-xl border p-4 text-left transition-all ${isDarkMode ? 'border-rose-500/30 bg-rose-950/20 hover:bg-rose-950/40' : 'border-rose-100 bg-rose-50 hover:bg-rose-100/70'}`}>
             <div className="flex w-full items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-rose-600 shadow-sm dark:bg-rose-900/50 dark:text-rose-400`}>
+                <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-full shadow-sm ${isDarkMode ? 'bg-rose-900/50 text-rose-400' : 'bg-white text-rose-600'}`}>
                    <XCircle size={18} />
                 </div>
-                <span className={`font-bold text-rose-700 dark:text-rose-400`}>Cancel Reservation</span>
+                <span className={`font-bold ${isDarkMode ? 'text-rose-400' : 'text-rose-700'}`}>Cancel Reservation</span>
               </div>
-              <ChevronRight size={16} className="text-rose-400" />
+              <ChevronRight size={16} className={isDarkMode ? 'text-rose-400' : 'text-rose-600'} />
             </div>
-            <p className="text-xs font-medium text-rose-600/80 dark:text-rose-400/80">Cancel this reservation. The book will be released.</p>
+            <p className={`text-xs font-medium ${isDarkMode ? 'text-rose-400/80' : 'text-rose-600/80'}`}>Cancel this reservation. The book will be released.</p>
           </button>
 
         </div>
