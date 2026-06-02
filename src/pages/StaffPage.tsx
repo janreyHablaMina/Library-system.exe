@@ -444,7 +444,6 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Staff Name</th>
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Email</th>
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Role</th>
-                  <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Branch</th>
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Status</th>
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Joined On</th>
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider text-center">Actions</th>
@@ -476,8 +475,7 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
                         {staff.role}
                       </span>
                     </td>
-                    <td className={`px-6 py-4 text-xs font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{staff.branch}</td>
-                    <td className="px-6 py-4">
+                                        <td className="px-6 py-4">
                       <span className={`rounded-md px-3 py-1 text-[11px] font-semibold tracking-wide ${
                         staff.status === 'Active' 
                           ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' 
