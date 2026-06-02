@@ -129,6 +129,20 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
   // Additional Notes
   const [notes, setNotes] = useState('Recommended reading for introductory college sociology courses. Updated text includes recent census data.')
 
+  const handleCopiesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newTotalStr = e.target.value;
+    const oldTotal = parseInt(numberOfCopies, 10) || 1;
+    const newTotal = parseInt(newTotalStr, 10) || 1;
+    const diff = newTotal - oldTotal;
+    
+    const currentAvailable = parseInt(availableCopies, 10) || 0;
+    const newAvailable = Math.max(0, currentAvailable + diff);
+    
+    setNumberOfCopies(newTotalStr);
+    setAvailableCopies(String(newAvailable));
+  };
+
+
   // Uploader Actions
   const handleChooseFile = () => {
     coverInputRef.current?.click()
@@ -495,7 +509,7 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
                         type="number"
                         min="1"
                         value={numberOfCopies}
-                        onChange={(e) => setNumberOfCopies(e.target.value)}
+                        onChange={handleCopiesChange}
                         className={`h-12 w-full rounded-xl border px-4 text-sm outline-none focus:border-emerald-500 ${inputClass}`}
                         placeholder="E.g., 7"
                       />
@@ -640,7 +654,7 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
                     type="number"
                     required
                     value={numberOfCopies}
-                    onChange={(e) => setNumberOfCopies(e.target.value)}
+                    onChange={handleCopiesChange}
                     className={`mt-1.5 h-11 w-full rounded-xl border px-4 outline-none ${inputClass}`}
                   />
                 </div>

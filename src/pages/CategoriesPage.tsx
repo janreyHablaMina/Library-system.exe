@@ -60,7 +60,7 @@ type CategoryActionsMenuProps = {
   isDarkMode: boolean
 }
 
-function CategoryActionsMenu({ category, onViewDetails, onEdit, onDelete, isDarkMode }: CategoryActionsMenuProps) {
+function CategoryActionsMenu({ category, onEdit, onDelete, isDarkMode }: CategoryActionsMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -106,16 +106,6 @@ function CategoryActionsMenu({ category, onViewDetails, onEdit, onDelete, isDark
           }`}
         >
           <button
-            onClick={() => { setIsOpen(false); onViewDetails(category) }}
-            type="button"
-            className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors ${
-              isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50'
-            }`}
-          >
-            <BookOpen size={13} className="text-sky-500" />
-            View Details
-          </button>
-          <button
             onClick={() => { setIsOpen(false); onEdit(category) }}
             type="button"
             className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors ${
@@ -153,6 +143,14 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
   const [showToast, setShowToast] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
+
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, statusFilter, itemsPerPage])
+
   const [booksCount, setBooksCount] = useState(0)
 
   const toCategoryRow = (category: DbCategory): CategoryRow => {
@@ -198,6 +196,10 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
       return matchesSearch && matchesStatus
     })
   }, [categoriesList, searchTerm, statusFilter])
+
+  const totalPages = Math.ceil(filteredCategories.length / itemsPerPage)
+  const paginatedCategories = filteredCategories.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+
 
   const handleFormChange = (field: keyof CategoryFormState, value: string) => {
     setCategoryForm((prev) => ({ ...prev, [field]: value }))
@@ -347,7 +349,7 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
                 </tr>
               </thead>
               <tbody>
-                {filteredCategories.map((cat) => {
+                {paginatedCategories.map((cat) => {
                    const CatIcon = cat.icon
                    return (
                     <tr key={cat.id} className={`border-t transition-colors duration-150 ${isDarkMode ? 'border-slate-700 hover:bg-slate-800/30' : 'border-slate-100 hover:bg-slate-50'}`}>
@@ -389,16 +391,24 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
           </div>
 
           <div className={`relative z-0 flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm rounded-b-xl ${isDarkMode ? 'border-slate-700 bg-[#0b1738] text-slate-300' : 'border-slate-200 bg-white text-slate-600'}`}>
-            <p>Showing 1 to {filteredCategories.length} of {categoriesList.length} categories</p>
+            <p>Showing {filteredCategories.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to {Math.min(currentPage * itemsPerPage, filteredCategories.length)} of {filteredCategories.length} categories</p>
             <div className="flex items-center gap-2">
-              <select className={`h-9 rounded-lg border px-3 text-sm ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
-                <option>10 per page</option>
+              <select value={itemsPerPage} onChange={(e) => setItemsPerPage(Number(e.target.value))} className={`h-9 rounded-lg border px-3 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
+                <option value={10}>10 per page</option>
+                <option value={20}>20 per page</option>
+                <option value={50}>50 per page</option>
               </select>
-              <button type="button" className={`grid h-9 w-9 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}>{'<'}</button>
-              <button type="button" className="grid h-9 w-9 place-items-center rounded-lg bg-emerald-50 font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">1</button>
-              <button type="button" className={`grid h-9 w-9 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}>2</button>
-              <button type="button" className={`grid h-9 w-9 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}>3</button>
-              <button type="button" className={`grid h-9 w-9 place-items-center rounded-lg border ${isDarkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}>{'>'}</button>
+              <button type="button" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className={`grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 hover:bg-slate-800 disabled:opacity-50' : 'border-slate-200 hover:bg-slate-50 disabled:opacity-50'}`}>{'<'}</button>
+              
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <button key={page} type="button" onClick={() => setCurrentPage(page)} className={page === currentPage ? "grid h-9 w-9 place-items-center rounded-lg bg-emerald-50 font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" : `grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}>
+                    {page}
+                  </button>
+                ))}
+              </div>
+
+              <button type="button" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0} className={`grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 hover:bg-slate-800 disabled:opacity-50' : 'border-slate-200 hover:bg-slate-50 disabled:opacity-50'}`}>{'>'}</button>
             </div>
           </div>
         </div>

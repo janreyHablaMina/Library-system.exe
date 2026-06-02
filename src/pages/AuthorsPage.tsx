@@ -212,6 +212,14 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
   const [selectedStatus, setSelectedStatus] = useState('All')
   const [sortBy, setSortBy] = useState('Name (A-Z)')
 
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, selectedStatus, sortBy, itemsPerPage])
+
+
   // Auto-expiring toast effect
   useEffect(() => {
     if (showToast) {
@@ -492,7 +500,7 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
                 </tr>
               </thead>
               <tbody>
-                {filteredAuthors.map((author) => (
+                {paginatedAuthors.map((author) => (
                   <tr key={author.id} className={`border-t transition-colors duration-150 ${isDarkMode ? 'border-slate-700 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -542,26 +550,28 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
           </div>
 
           <div className={`flex flex-wrap items-center justify-between gap-4 border-t p-4 text-xs font-bold rounded-b-xl ${isDarkMode ? 'border-slate-700 bg-[#0b1738] text-slate-300' : 'border-slate-200 bg-white text-slate-600'}`}>
-            <p>Showing 1 to 10 of 156 authors</p>
+            <p>Showing {filteredAuthors.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to {Math.min(currentPage * itemsPerPage, filteredAuthors.length)} of {filteredAuthors.length} authors</p>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1.5">
-                <button type="button" className={`grid h-8 w-8 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 text-slate-400 hover:bg-slate-800' : 'border-slate-200 text-slate-400 hover:bg-white'}`}>
+                <button type="button" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className={`grid h-8 w-8 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 text-slate-400 hover:bg-slate-800 disabled:opacity-50' : 'border-slate-200 text-slate-400 hover:bg-white disabled:opacity-50'}`}>
                   <ChevronLeft size={16} />
                 </button>
-                <button type="button" className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-600 text-white shadow-sm">1</button>
-                <button type="button" className={`grid h-8 w-8 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 text-slate-400 hover:bg-slate-800' : 'border-slate-200 text-slate-400 hover:bg-white'}`}>2</button>
-                <button type="button" className={`grid h-8 w-8 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 text-slate-400 hover:bg-slate-800' : 'border-slate-200 text-slate-400 hover:bg-white'}`}>3</button>
-                <span className="px-1 text-slate-300">...</span>
-                <button type="button" className={`grid h-8 w-8 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 text-slate-400 hover:bg-slate-800' : 'border-slate-200 text-slate-400 hover:bg-white'}`}>16</button>
-                <button type="button" className={`grid h-8 w-8 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 text-slate-400 hover:bg-slate-800' : 'border-slate-200 text-slate-400 hover:bg-white'}`}>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                    <button key={page} type="button" onClick={() => setCurrentPage(page)} className={page === currentPage ? "grid h-8 w-8 place-items-center rounded-lg bg-emerald-600 text-white shadow-sm" : `grid h-8 w-8 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 text-slate-400 hover:bg-slate-800' : 'border-slate-200 text-slate-400 hover:bg-white'}`}>
+                      {page}
+                    </button>
+                  ))}
+                </div>
+                <button type="button" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0} className={`grid h-8 w-8 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 text-slate-400 hover:bg-slate-800 disabled:opacity-50' : 'border-slate-200 text-slate-400 hover:bg-white disabled:opacity-50'}`}>
                   <ChevronRight size={16} />
                 </button>
               </div>
               <div className="relative">
-                <select className={`h-8 min-w-[100px] appearance-none rounded-lg border pl-3 pr-8 text-[11px] font-bold outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-slate-800 text-slate-300' : 'border-slate-200 bg-white text-slate-600'}`}>
-                  <option>10 / page</option>
-                  <option>20 / page</option>
-                  <option>50 / page</option>
+                <select value={itemsPerPage} onChange={(e) => setItemsPerPage(Number(e.target.value))} className={`h-8 min-w-[100px] appearance-none rounded-lg border pl-3 pr-8 text-[11px] font-bold outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-slate-800 text-slate-300' : 'border-slate-200 bg-white text-slate-600'}`}>
+                  <option value={10}>10 / page</option>
+                  <option value={20}>20 / page</option>
+                  <option value={50}>50 / page</option>
                 </select>
                 <ChevronDown size={12} className={`pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400`} />
               </div>
