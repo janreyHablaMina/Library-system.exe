@@ -800,6 +800,89 @@ fn log_email(
     Ok(())
 }
 
+
+fn wrap_in_onyx_html(subject: &str, body_text: &str) -> String {
+    let mut body_html = body_text.replace("\n\n", "</p><p>").replace("\n", "<br/>");
+    if !body_html.starts_with("<p>") {
+        body_html = format!("<p>{}</p>", body_html);
+    }
+    
+    format!(r#"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {{
+            background-color: #18181B;
+            color: #e4e4e7;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }}
+        .container {{
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: #27272A;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            border: 1px solid #3F3F46;
+        }}
+        .header {{
+            background-color: #18181B;
+            padding: 24px;
+            text-align: center;
+            border-bottom: 2px solid #10b981;
+        }}
+        .header h1 {{
+            margin: 0;
+            color: #f4f4f5;
+            font-size: 20px;
+            font-weight: 600;
+        }}
+        .content {{
+            padding: 32px 24px;
+            line-height: 1.6;
+            font-size: 15px;
+            color: #d4d4d8;
+        }}
+        .content p {{
+            margin-top: 0;
+            margin-bottom: 16px;
+        }}
+        .footer {{
+            background-color: #18181B;
+            padding: 16px;
+            text-align: center;
+            font-size: 12px;
+            color: #71717a;
+            border-top: 1px solid #3F3F46;
+        }}
+        .accent {{
+            color: #10b981;
+            font-weight: 600;
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Library <span class="accent">System</span></h1>
+        </div>
+        <div class="content">
+            {}
+        </div>
+        <div class="footer">
+            &copy; 2026 Library Management System. All rights reserved.
+        </div>
+    </div>
+</body>
+</html>
+"#, body_html)
+}
+
 fn send_email_from_settings(
     conn: &Connection,
     to: &str,
@@ -869,11 +952,13 @@ fn send_email_from_settings(
     let to = to
         .parse()
         .map_err(|e| format!("invalid recipient email: {e}"))?;
+    let html_body = wrap_in_onyx_html(subject, body);
     let message = Message::builder()
         .from(from)
         .to(to)
         .subject(subject)
-        .body(body.to_string())
+        .header(lettre::message::header::ContentType::TEXT_HTML)
+        .body(html_body)
         .map_err(|e| format!("build email failed: {e}"))?;
     let mailer = SmtpTransport::relay(smtp_host.trim())
         .map_err(|e| format!("smtp relay failed: {e}"))?
@@ -2552,12 +2637,39 @@ fn delete_staff(app: tauri::AppHandle, id: i64) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn send_email_smtp(to: String, subject: String, body: String) -> Result<String, String> {
-    let summary = format!(
-        "SMTP stub queued. To: {to}, Subject: {subject}, Body chars: {}",
-        body.chars().count()
-    );
-    Ok(summary)
+fn send_email_smtp(app: tauri::AppHandle, to: String, subject: String, body: String) -> Result<String, String> {
+    let conn = open_db(&database_path(&app)?)?;
+    init_schema(&conn)?;
+    match send_email_from_settings(&conn, &to, &subject, &body) {
+        Ok(()) => {
+            log_email(
+                &conn,
+                None,
+                "Manual Email",
+                &to,
+                "Custom Notification",
+                "Manual",
+                "Sent",
+                None,
+                None,
+            )?;
+            Ok("Email sent successfully".to_string())
+        }
+        Err(e) => {
+            log_email(
+                &conn,
+                None,
+                "Manual Email",
+                &to,
+                "Custom Notification",
+                "Manual",
+                "Failed",
+                Some(&e),
+                None,
+            )?;
+            Err(e)
+        }
+    }
 }
 
 #[tauri::command]

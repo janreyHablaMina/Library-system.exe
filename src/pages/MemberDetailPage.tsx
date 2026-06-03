@@ -23,6 +23,7 @@ import {
   X,
 } from 'lucide-react'
 import bookCover from '../assets/login.avif'
+import { SendEmailModal } from '../components/modals/SendEmailModal'
 import { mockMembersData } from './memberDetailData'
 import { listBorrowTransactions, listMembers, sendManualEmailReminder, updateMember, type Member as DbMember } from '../lib/tauriApi'
 import type { LoanItem } from './memberDetailData'
@@ -102,6 +103,7 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
     status: d.status,
   })
   const [editPhotoPreview, setEditPhotoPreview] = useState<string>(bookCover)
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false)
 
   useEffect(() => {
     let mounted = true
@@ -541,6 +543,14 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
           </div>
         </section>
       </div>
+      <SendEmailModal
+        isOpen={isEmailModalOpen}
+        onClose={() => setIsEmailModalOpen(false)}
+        member={{ id: memberId || 0, fullName: member.name, email: member.email !== 'n/a' ? member.email : null }}
+        onSuccess={() => setToast('Email sent successfully!')}
+        isDarkMode={isDarkMode}
+      />
+
       {isEditOpen ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-zinc-900/45 p-4">
           <section className={`w-full max-w-5xl rounded-2xl border shadow-2xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
