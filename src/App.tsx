@@ -576,7 +576,7 @@ const greetingName = formatDisplayName(activeUsername)
         aside: 'border-[#27272A] bg-[#18181B] relative overflow-hidden shadow-[4px_0_24px_-12px_rgba(0,0,0,0.5)] z-20',
         asideTitle: 'text-white',
         asideSub: 'text-[#D4D4D8]',
-        asideHover: 'hover:bg-gradient-to-r hover:from-[#27272A]/80 hover:to-transparent hover:text-white hover:translate-x-1',
+        asideHover: 'hover:bg-gradient-to-r hover:from-[#27272A]/80 hover:to-transparent hover:text-white hover:tranzinc-x-1',
         asideActive: 'bg-gradient-to-r from-emerald-500/15 to-transparent border-l-[3px] border-[#10B981] text-[#34D399] drop-shadow-[0_2px_4px_rgba(16,185,129,0.2)]',
         asideIdle: 'border-l-[3px] border-transparent text-[#D4D4D8]',
         profileCard: 'backdrop-blur-xl bg-[#27272A]/40 border border-[#3F3F46]/50 shadow-lg',
@@ -602,35 +602,35 @@ const greetingName = formatDisplayName(activeUsername)
         cardMuted: 'text-[#858585]',
       }
     : {
-        main: 'bg-white text-slate-800',
-        frame: 'border-slate-200 bg-white',
+        main: 'bg-white text-zinc-800',
+        frame: 'border-zinc-200 bg-white',
         aside: 'border-[#27272A] bg-[#18181B] relative overflow-hidden shadow-[4px_0_24px_-12px_rgba(0,0,0,0.5)] z-20',
         asideTitle: 'text-white',
         asideSub: 'text-[#D4D4D8]',
-        asideHover: 'hover:bg-gradient-to-r hover:from-[#27272A]/80 hover:to-transparent hover:text-white hover:translate-x-1',
+        asideHover: 'hover:bg-gradient-to-r hover:from-[#27272A]/80 hover:to-transparent hover:text-white hover:tranzinc-x-1',
         asideActive: 'bg-gradient-to-r from-emerald-500/15 to-transparent border-l-[3px] border-[#10B981] text-[#34D399] drop-shadow-[0_2px_4px_rgba(16,185,129,0.2)]',
         asideIdle: 'border-l-[3px] border-transparent text-[#D4D4D8]',
         profileCard: 'backdrop-blur-xl bg-[#27272A]/40 border border-[#3F3F46]/50 shadow-lg',
         avatarBg: 'bg-[#27272A] border-[#3F3F46]/50',
         rowBorder: 'border-[#27272A]',
         navActive: 'bg-emerald-600 text-white shadow-[0_10px_20px_-10px_rgba(5,150,105,0.85)]',
-        navIdle: 'text-slate-600 hover:bg-slate-100',
-        header: 'border-slate-200 bg-white',
-        search: 'border-slate-200 bg-white',
-        searchIcon: 'text-slate-400 group-focus-within:text-emerald-600',
-        searchInput: 'text-slate-700 placeholder:text-slate-400',
-        iconBtn: 'text-slate-600 hover:bg-slate-100',
+        navIdle: 'text-zinc-600 hover:bg-zinc-100',
+        header: 'border-zinc-200 bg-white',
+        search: 'border-zinc-200 bg-white',
+        searchIcon: 'text-zinc-400 group-focus-within:text-emerald-600',
+        searchInput: 'text-zinc-700 placeholder:text-zinc-400',
+        iconBtn: 'text-zinc-600 hover:bg-zinc-100',
         profileBorder: 'border-emerald-800/55',
-        profileName: 'text-slate-900',
-        profileRole: 'text-slate-500',
+        profileName: 'text-zinc-900',
+        profileRole: 'text-zinc-500',
         contentBg: 'bg-[#f8fafc]',
-        greetingTitle: 'text-slate-900',
-        greetingSub: 'text-slate-500',
-        quickAction: 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50',
-        cardPanel: 'border-slate-200 bg-white',
-        cardTitle: 'text-slate-800',
-        cardText: 'text-slate-700',
-        cardMuted: 'text-slate-500',
+        greetingTitle: 'text-zinc-900',
+        greetingSub: 'text-zinc-500',
+        quickAction: 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50',
+        cardPanel: 'border-zinc-200 bg-white',
+        cardTitle: 'text-zinc-800',
+        cardText: 'text-zinc-700',
+        cardMuted: 'text-zinc-500',
       }
 
   return (
@@ -796,7 +796,7 @@ const greetingName = formatDisplayName(activeUsername)
                 </form>
 
                 {isSearchFocused && searchQuery.length > 0 && (
-                  <div className={`absolute top-[calc(100%+8px)] left-0 w-full rounded-xl border shadow-xl overflow-hidden ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                  <div className={`absolute top-[calc(100%+8px)] left-0 w-full rounded-xl border shadow-xl overflow-hidden ${isDarkMode ? 'border-zinc-700 bg-[#27272A]' : 'border-zinc-200 bg-white'}`}>
                     <div className="max-h-96 overflow-y-auto py-2">
                       {(() => {
                         const bMatches = globalSearchData.books;
@@ -805,19 +805,19 @@ const greetingName = formatDisplayName(activeUsername)
                         const hasResults = bMatches.length > 0 || mMatches.length > 0 || aMatches.length > 0;
 
                         if (!hasResults) {
-                          return <div className={`px-4 py-3 text-sm text-center ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>No results found for "{searchQuery}"</div>;
+                          return <div className={`px-4 py-3 text-sm text-center ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>No results found for "{searchQuery}"</div>;
                         }
 
                         return (
                           <>
                             {bMatches.length > 0 && (
                               <div className="mb-2">
-                                <div className={`px-4 py-1 text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Books</div>
+                                <div className={`px-4 py-1 text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>Books</div>
                                 {bMatches.map(b => (
                                   <button
                                     key={`book-${b.id}`}
                                     type="button"
-                                    className={`w-full text-left px-4 py-2 text-sm flex gap-3 items-center transition-colors ${isDarkMode ? 'hover:bg-slate-800/60' : 'hover:bg-slate-50'}`}
+                                    className={`w-full text-left px-4 py-2 text-sm flex gap-3 items-center transition-colors ${isDarkMode ? 'hover:bg-zinc-800/60' : 'hover:bg-zinc-50'}`}
                                     onClick={() => {
                                       setIsSearchFocused(false);
                                       setSearchQuery('');
@@ -843,7 +843,7 @@ const greetingName = formatDisplayName(activeUsername)
                                       });
                                     }}
                                   >
-                                    <span className={`grid h-12 w-9 place-items-center rounded overflow-hidden shrink-0 ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                                    <span className={`grid h-12 w-9 place-items-center rounded overflow-hidden shrink-0 ${isDarkMode ? 'bg-zinc-800' : 'bg-zinc-100'}`}>
                                       {b.cover && (b.cover.startsWith('data:') || b.cover.startsWith('http') || b.cover.startsWith('blob:')) ? (
                                         <img src={b.cover} alt="" className="h-full w-full object-cover" />
                                       ) : (
@@ -851,16 +851,16 @@ const greetingName = formatDisplayName(activeUsername)
                                       )}
                                     </span>
                                     <div className="flex flex-col flex-1 min-w-0">
-                                      <span className={`font-semibold truncate ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{b.title}</span>
-                                      <span className={`text-xs truncate ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{b.author}</span>
+                                      <span className={`font-semibold truncate ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{b.title}</span>
+                                      <span className={`text-xs truncate ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{b.author}</span>
                                     </div>
                                     <div className="flex flex-col items-end shrink-0 gap-1">
                                       {b.category && (
-                                        <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
+                                        <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${isDarkMode ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-100 text-zinc-600'}`}>
                                           {b.category}
                                         </span>
                                       )}
-                                      <span className={`text-[10px] font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                                      <span className={`text-[10px] font-medium ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
                                         {b.available ? '1 / 1' : '0 / 1'} copies
                                       </span>
                                     </div>
@@ -871,12 +871,12 @@ const greetingName = formatDisplayName(activeUsername)
 
                             {mMatches.length > 0 && (
                               <div className="mb-2">
-                                <div className={`px-4 py-1 text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Members</div>
+                                <div className={`px-4 py-1 text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>Members</div>
                                 {mMatches.map(m => (
                                   <button
                                     key={`member-${m.id}`}
                                     type="button"
-                                    className={`w-full text-left px-4 py-2 text-sm flex flex-col transition-colors ${isDarkMode ? 'hover:bg-slate-800/60' : 'hover:bg-slate-50'}`}
+                                    className={`w-full text-left px-4 py-2 text-sm flex flex-col transition-colors ${isDarkMode ? 'hover:bg-zinc-800/60' : 'hover:bg-zinc-50'}`}
                                     onClick={() => {
                                       setIsSearchFocused(false);
                                       setSearchQuery('');
@@ -886,8 +886,8 @@ const greetingName = formatDisplayName(activeUsername)
                                       setIsMemberDetailOpen(true);
                                     }}
                                   >
-                                    <span className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{m.fullName}</span>
-                                    <span className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>ID: {m.memberId}</span>
+                                    <span className={`font-semibold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{m.fullName}</span>
+                                    <span className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>ID: {m.memberId}</span>
                                   </button>
                                 ))}
                               </div>
@@ -895,12 +895,12 @@ const greetingName = formatDisplayName(activeUsername)
 
                             {aMatches.length > 0 && (
                               <div>
-                                <div className={`px-4 py-1 text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Authors</div>
+                                <div className={`px-4 py-1 text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>Authors</div>
                                 {aMatches.map(a => (
                                   <button
                                     key={`author-${a.id}`}
                                     type="button"
-                                    className={`w-full text-left px-4 py-2 text-sm flex gap-3 items-center transition-colors ${isDarkMode ? 'hover:bg-slate-800/60' : 'hover:bg-slate-50'}`}
+                                    className={`w-full text-left px-4 py-2 text-sm flex gap-3 items-center transition-colors ${isDarkMode ? 'hover:bg-zinc-800/60' : 'hover:bg-zinc-50'}`}
                                     onClick={() => {
                                       setIsSearchFocused(false);
                                       setSearchQuery('');
@@ -909,16 +909,16 @@ const greetingName = formatDisplayName(activeUsername)
                                       setIsAuthorDetailOpen(true);
                                     }}
                                   >
-                                    <span className={`grid h-8 w-8 place-items-center overflow-hidden rounded-full shrink-0 ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                                    <span className={`grid h-8 w-8 place-items-center overflow-hidden rounded-full shrink-0 ${isDarkMode ? 'bg-zinc-800' : 'bg-zinc-100'}`}>
                                       {a.profilePhotoData ? (
                                         <img src={a.profilePhotoData} alt={`${a.name} profile`} className="h-full w-full object-cover" />
                                       ) : (
-                                        <span className={`text-xs font-bold ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                                        <span className={`text-xs font-bold ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>
                                           {a.name.slice(0, 1).toUpperCase()}
                                         </span>
                                       )}
                                     </span>
-                                    <span className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{a.name}</span>
+                                    <span className={`font-semibold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{a.name}</span>
                                   </button>
                                 ))}
                               </div>
@@ -932,14 +932,14 @@ const greetingName = formatDisplayName(activeUsername)
               </div>
               <div className="ml-auto flex items-center gap-4">
                 <div className="hidden items-center gap-2 lg:flex">
-                  <div className={`mr-3 pr-4 hidden items-center gap-5 border-r ${isDarkMode ? 'border-slate-800' : 'border-slate-200'} lg:flex`}>
+                  <div className={`mr-3 pr-4 hidden items-center gap-5 border-r ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'} lg:flex`}>
                     <div className="flex items-center gap-2.5">
                       <div className={`grid h-8 w-8 place-items-center rounded-full ${isDarkMode ? 'bg-indigo-500/10 text-indigo-400' : 'bg-indigo-50 text-indigo-600'}`}>
                         <Calendar size={14} strokeWidth={2.5} />
                       </div>
                       <div className="flex flex-col justify-center">
-                        <span className={`text-[9px] font-bold uppercase tracking-widest ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Date</span>
-                        <span className={`text-xs font-semibold leading-tight ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>
+                        <span className={`text-[9px] font-bold uppercase tracking-widest ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>Date</span>
+                        <span className={`text-xs font-semibold leading-tight ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>
                           {currentTime.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                         </span>
                       </div>
@@ -949,8 +949,8 @@ const greetingName = formatDisplayName(activeUsername)
                         <Clock3 size={14} strokeWidth={2.5} />
                       </div>
                       <div className="flex flex-col justify-center">
-                        <span className={`text-[9px] font-bold uppercase tracking-widest ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Time</span>
-                        <span className={`text-xs font-semibold tabular-nums leading-tight ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>
+                        <span className={`text-[9px] font-bold uppercase tracking-widest ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>Time</span>
+                        <span className={`text-xs font-semibold tabular-nums leading-tight ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>
                           {currentTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
                         </span>
                       </div>
@@ -983,24 +983,24 @@ const greetingName = formatDisplayName(activeUsername)
                       ) : null}
                     </button>
                     {isNotificationsOpen ? (
-                      <div className={`absolute right-0 top-11 z-30 w-80 rounded-xl border p-2 shadow-xl ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                      <div className={`absolute right-0 top-11 z-30 w-80 rounded-xl border p-2 shadow-xl ${isDarkMode ? 'border-zinc-700 bg-[#27272A]' : 'border-zinc-200 bg-white'}`}>
                         <div className="mb-2 flex items-center justify-between px-2 py-1">
-                          <p className={`text-sm font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Notifications</p>
+                          <p className={`text-sm font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Notifications</p>
                           <button type="button" onClick={() => void handleReadAllNotifications()} className="text-[11px] font-semibold text-emerald-600 hover:underline">Mark all read</button>
                         </div>
                         <div className="max-h-80 overflow-auto">
                           {notifications.length === 0 ? (
-                            <p className={`px-2 py-6 text-center text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>No notifications yet.</p>
+                            <p className={`px-2 py-6 text-center text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>No notifications yet.</p>
                           ) : notifications.map((item) => (
                             <button
                               key={item.id}
                               type="button"
                               onClick={() => void handleReadNotification(item.id)}
-                              className={`mb-1 w-full rounded-lg px-2 py-2 text-left transition ${item.isRead ? (isDarkMode ? 'bg-transparent hover:bg-slate-800/60' : 'bg-transparent hover:bg-slate-50') : (isDarkMode ? 'bg-emerald-500/10 hover:bg-emerald-500/15' : 'bg-emerald-50 hover:bg-emerald-100')}`}
+                              className={`mb-1 w-full rounded-lg px-2 py-2 text-left transition ${item.isRead ? (isDarkMode ? 'bg-transparent hover:bg-zinc-800/60' : 'bg-transparent hover:bg-zinc-50') : (isDarkMode ? 'bg-emerald-500/10 hover:bg-emerald-500/15' : 'bg-emerald-50 hover:bg-emerald-100')}`}
                             >
-                              <p className={`text-xs font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{item.title}</p>
-                              <p className={`mt-0.5 text-[11px] ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{item.message}</p>
-                              <p className={`mt-1 text-[10px] ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{formatNotificationTime(item.createdAt)}</p>
+                              <p className={`text-xs font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{item.title}</p>
+                              <p className={`mt-0.5 text-[11px] ${isDarkMode ? 'text-zinc-300' : 'text-zinc-600'}`}>{item.message}</p>
+                              <p className={`mt-1 text-[10px] ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>{formatNotificationTime(item.createdAt)}</p>
                             </button>
                           ))}
                         </div>
@@ -1029,16 +1029,16 @@ const greetingName = formatDisplayName(activeUsername)
                     </svg>
                   </button>
                   {isProfileOpen ? (
-                    <div id="profile-menu" role="menu" className={`absolute right-0 top-14 z-20 w-52 rounded-xl border p-1.5 shadow-xl ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
+                    <div id="profile-menu" role="menu" className={`absolute right-0 top-14 z-20 w-52 rounded-xl border p-1.5 shadow-xl ${isDarkMode ? 'border-zinc-700 bg-[#27272A]' : 'border-zinc-200 bg-white'}`}>
                       <button
                         type="button"
                         onClick={() => {
                           setIsProfileOpen(false)
                         }}
                         role="menuitem"
-                        className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-semibold transition-colors ${isDarkMode ? 'text-slate-200 hover:bg-slate-800/60' : 'text-slate-700 hover:bg-slate-50'}`}
+                        className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-semibold transition-colors ${isDarkMode ? 'text-zinc-200 hover:bg-zinc-800/60' : 'text-zinc-700 hover:bg-zinc-50'}`}
                       >
-                        <UserCircle size={16} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />
+                        <UserCircle size={16} className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} />
                         My Profile
                       </button>
                       <button
@@ -1047,12 +1047,12 @@ const greetingName = formatDisplayName(activeUsername)
                           setIsProfileOpen(false)
                         }}
                         role="menuitem"
-                        className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-semibold transition-colors ${isDarkMode ? 'text-slate-200 hover:bg-slate-800/60' : 'text-slate-700 hover:bg-slate-50'}`}
+                        className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-semibold transition-colors ${isDarkMode ? 'text-zinc-200 hover:bg-zinc-800/60' : 'text-zinc-700 hover:bg-zinc-50'}`}
                       >
-                        <Lock size={16} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />
+                        <Lock size={16} className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} />
                         Change Password
                       </button>
-                      <div className={`my-1 h-px w-full ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`} />
+                      <div className={`my-1 h-px w-full ${isDarkMode ? 'bg-zinc-800' : 'bg-zinc-100'}`} />
                       <button
                         type="button"
                         onClick={() => {
@@ -1262,47 +1262,47 @@ const greetingName = formatDisplayName(activeUsername)
             <section className="px-5 pb-2">
               <h3 className={`text-sm font-bold uppercase tracking-wider ${dashboardTheme.cardTitle} mb-3`}>Library Overview</h3>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-tranzinc-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-2 flex items-center gap-3">
                   <div className="rounded-lg bg-emerald-50 p-2"><BookOpen size={18} className="text-emerald-600" /></div>
-                  <p className="text-sm font-semibold text-slate-600">Total Books</p>
+                  <p className="text-sm font-semibold text-zinc-600">Total Books</p>
                 </div>
-                <p className="text-3xl font-extrabold text-slate-900">{dashboardStats.totalBooks.toLocaleString('en-US')}</p>
+                <p className="text-3xl font-extrabold text-zinc-900">{dashboardStats.totalBooks.toLocaleString('en-US')}</p>
               </article>
-              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-tranzinc-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-2 flex items-center gap-3">
                   <div className="rounded-lg bg-emerald-50 p-2"><Bookmark size={18} className="text-emerald-600" /></div>
-                  <p className="text-sm font-semibold text-slate-600">Available Books</p>
+                  <p className="text-sm font-semibold text-zinc-600">Available Books</p>
                 </div>
-                <p className="text-3xl font-extrabold text-slate-900">{dashboardStats.availableBooks.toLocaleString('en-US')}</p>
+                <p className="text-3xl font-extrabold text-zinc-900">{dashboardStats.availableBooks.toLocaleString('en-US')}</p>
               </article>
-              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-tranzinc-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-2 flex items-center gap-3">
                   <div className="rounded-lg bg-amber-50 p-2"><Undo2 size={18} className="text-amber-500" /></div>
-                  <p className="text-sm font-semibold text-slate-600">Borrowed Books</p>
+                  <p className="text-sm font-semibold text-zinc-600">Borrowed Books</p>
                 </div>
-                <p className="text-3xl font-extrabold text-slate-900">{dashboardStats.borrowedBooks.toLocaleString('en-US')}</p>
+                <p className="text-3xl font-extrabold text-zinc-900">{dashboardStats.borrowedBooks.toLocaleString('en-US')}</p>
               </article>
-              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-tranzinc-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-2 flex items-center gap-3">
                   <div className="rounded-lg bg-rose-50 p-2"><Clock3 size={18} className="text-rose-500" /></div>
-                  <p className="text-sm font-semibold text-slate-600">Overdue Books</p>
+                  <p className="text-sm font-semibold text-zinc-600">Overdue Books</p>
                 </div>
-                <p className="text-3xl font-extrabold text-slate-900">{dashboardStats.overdueBooks.toLocaleString('en-US')}</p>
+                <p className="text-3xl font-extrabold text-zinc-900">{dashboardStats.overdueBooks.toLocaleString('en-US')}</p>
               </article>
-              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-tranzinc-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-2 flex items-center gap-3">
                   <div className="rounded-lg bg-emerald-50 p-2"><Users size={18} className="text-emerald-600" /></div>
-                  <p className="text-sm font-semibold text-slate-600">Total Members</p>
+                  <p className="text-sm font-semibold text-zinc-600">Total Members</p>
                 </div>
-                <p className="text-3xl font-extrabold text-slate-900">{dashboardStats.totalMembers.toLocaleString('en-US')}</p>
+                <p className="text-3xl font-extrabold text-zinc-900">{dashboardStats.totalMembers.toLocaleString('en-US')}</p>
               </article>
-              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-tranzinc-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-2 flex items-center gap-3">
                   <div className="rounded-lg bg-emerald-50 p-2"><BookPlus size={18} className="text-emerald-600" /></div>
-                  <p className="text-sm font-semibold text-slate-600">Total Authors</p>
+                  <p className="text-sm font-semibold text-zinc-600">Total Authors</p>
                 </div>
-                <p className="text-3xl font-extrabold text-slate-900">{dashboardStats.totalAuthors.toLocaleString('en-US')}</p>
+                <p className="text-3xl font-extrabold text-zinc-900">{dashboardStats.totalAuthors.toLocaleString('en-US')}</p>
               </article>
               </div>
             </section>
@@ -1310,35 +1310,35 @@ const greetingName = formatDisplayName(activeUsername)
             <section className="px-5 pb-3 mt-2">
               <h3 className={`text-sm font-bold uppercase tracking-wider ${dashboardTheme.cardTitle} mb-3`}>Email Activity</h3>
               <div className="grid gap-3 sm:grid-cols-1 md:grid-cols-3">
-                <button type="button" onClick={() => { setActivePage('Settings'); setActiveSettingsTab('Email Logs') }} className={`rounded-xl border p-4 text-left shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+                <button type="button" onClick={() => { setActivePage('Settings'); setActiveSettingsTab('Email Logs') }} className={`rounded-xl border p-4 text-left shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-tranzinc-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                   <div className="mb-2 flex items-center gap-3">
                     <div className="rounded-lg bg-sky-50 p-2"><Mail size={18} className="text-sky-600" /></div>
-                    <p className="text-sm font-semibold text-slate-600">Emails Sent Today</p>
+                    <p className="text-sm font-semibold text-zinc-600">Emails Sent Today</p>
                   </div>
-                  <p className="text-3xl font-extrabold text-slate-900">{dashboardStats.emailsSentToday.toLocaleString('en-US')}</p>
+                  <p className="text-3xl font-extrabold text-zinc-900">{dashboardStats.emailsSentToday.toLocaleString('en-US')}</p>
                   <p className="mt-1 text-sm font-semibold text-sky-600">View email logs</p>
                 </button>
-                <button type="button" onClick={() => { setActivePage('Settings'); setActiveSettingsTab('Email Logs') }} className={`rounded-xl border p-4 text-left shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+                <button type="button" onClick={() => { setActivePage('Settings'); setActiveSettingsTab('Email Logs') }} className={`rounded-xl border p-4 text-left shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-tranzinc-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                   <div className="mb-2 flex items-center gap-3">
                     <div className="rounded-lg bg-rose-50 p-2"><AlertTriangle size={18} className="text-rose-500" /></div>
-                    <p className="text-sm font-semibold text-slate-600">Failed Emails</p>
+                    <p className="text-sm font-semibold text-zinc-600">Failed Emails</p>
                   </div>
-                  <p className="text-3xl font-extrabold text-slate-900">{dashboardStats.failedEmails.toLocaleString('en-US')}</p>
+                  <p className="text-3xl font-extrabold text-zinc-900">{dashboardStats.failedEmails.toLocaleString('en-US')}</p>
                   <p className="mt-1 text-sm font-semibold text-rose-500">Needs attention</p>
                 </button>
-                <button type="button" onClick={() => { setActivePage('Settings'); setActiveSettingsTab('Email Logs') }} className={`rounded-xl border p-4 text-left shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+                <button type="button" onClick={() => { setActivePage('Settings'); setActiveSettingsTab('Email Logs') }} className={`rounded-xl border p-4 text-left shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-tranzinc-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                   <div className="mb-2 flex items-center gap-3">
                     <div className="rounded-lg bg-amber-50 p-2"><Clock3 size={18} className="text-amber-500" /></div>
-                    <p className="text-sm font-semibold text-slate-600">Pending Emails</p>
+                    <p className="text-sm font-semibold text-zinc-600">Pending Emails</p>
                   </div>
-                  <p className="text-3xl font-extrabold text-slate-900">{dashboardStats.pendingEmails.toLocaleString('en-US')}</p>
+                  <p className="text-3xl font-extrabold text-zinc-900">{dashboardStats.pendingEmails.toLocaleString('en-US')}</p>
                   <p className="mt-1 text-sm font-semibold text-amber-500">Queued reminders</p>
                 </button>
               </div>
             </section>
 
             <section className="grid gap-3 px-5 pb-4 xl:grid-cols-[40fr_35fr_25fr]">
-              <article className={`overflow-hidden rounded-2xl border shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+              <article className={`overflow-hidden rounded-2xl border shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-tranzinc-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="flex items-center justify-between px-4 py-3">
                   <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Recent Borrowed Books</h3>
                   <button type="button" onClick={() => openTransactionsPage('borrowed')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
@@ -1347,29 +1347,29 @@ const greetingName = formatDisplayName(activeUsername)
                   {recentBorrowedItems.map((item, idx) => (
                     <div
                       key={item.id}
-                      className={`grid grid-cols-1 gap-2 px-4 py-2.5 transition-colors duration-150 hover:bg-slate-50 md:grid-cols-[40px_1.8fr_1fr_auto] md:items-center ${
-                        idx < recentBorrowedItems.length - 1 ? 'border-b border-slate-100' : ''
+                      className={`grid grid-cols-1 gap-2 px-4 py-2.5 transition-colors duration-150 hover:bg-zinc-50 md:grid-cols-[40px_1.8fr_1fr_auto] md:items-center ${
+                        idx < recentBorrowedItems.length - 1 ? 'border-b border-zinc-100' : ''
                       }`}
                     >
-                      <div className="grid h-11 w-8 place-items-center overflow-hidden rounded-md border border-slate-200 bg-slate-50 text-base">
+                      <div className="grid h-11 w-8 place-items-center overflow-hidden rounded-md border border-zinc-200 bg-zinc-50 text-base">
                         {item.bookCoverData ? (
                           <img src={item.bookCoverData} alt={`${item.bookTitle} cover`} className="h-full w-full object-cover" />
                         ) : (
                           'B'
                         )}
                       </div>
-                      <div><p className="text-sm leading-snug font-semibold text-slate-900">{item.bookTitle}</p><p className="text-xs text-slate-500">Borrow transaction</p></div>
-                      <div><p className="text-[11px] font-semibold text-slate-500">Borrowed by</p><p className="text-sm font-semibold text-slate-700">{item.memberName}</p></div>
+                      <div><p className="text-sm leading-snug font-semibold text-zinc-900">{item.bookTitle}</p><p className="text-xs text-zinc-500">Borrow transaction</p></div>
+                      <div><p className="text-[11px] font-semibold text-zinc-500">Borrowed by</p><p className="text-sm font-semibold text-zinc-700">{item.memberName}</p></div>
                       <span className="w-fit rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">{item.borrowDateLabel}</span>
                     </div>
                   ))}
                   {recentBorrowedItems.length === 0 ? (
-                    <p className="px-4 py-3 text-sm text-slate-500">No borrowed books yet.</p>
+                    <p className="px-4 py-3 text-sm text-zinc-500">No borrowed books yet.</p>
                   ) : null}
                 </div>
               </article>
 
-              <article className={`overflow-hidden rounded-2xl border shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+              <article className={`overflow-hidden rounded-2xl border shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-tranzinc-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="flex items-center justify-between px-4 py-3">
                   <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Overdue Returns</h3>
                   <button type="button" onClick={() => openTransactionsPage('overdue')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
@@ -1378,29 +1378,29 @@ const greetingName = formatDisplayName(activeUsername)
                   {overdueReturnItems.map((item, idx) => (
                     <div
                       key={item.id}
-                      className={`grid grid-cols-1 gap-2 px-4 py-3 transition-colors duration-150 hover:bg-slate-50 md:grid-cols-[40px_1.8fr_1fr_auto] md:items-center ${
-                        idx < overdueReturnItems.length - 1 ? 'border-b border-slate-100' : ''
+                      className={`grid grid-cols-1 gap-2 px-4 py-3 transition-colors duration-150 hover:bg-zinc-50 md:grid-cols-[40px_1.8fr_1fr_auto] md:items-center ${
+                        idx < overdueReturnItems.length - 1 ? 'border-b border-zinc-100' : ''
                       }`}
                     >
-                      <div className="grid h-10 w-10 place-items-center overflow-hidden rounded-full bg-slate-100 text-xs font-bold text-slate-700">
+                      <div className="grid h-10 w-10 place-items-center overflow-hidden rounded-full bg-zinc-100 text-xs font-bold text-zinc-700">
                         {item.memberPhotoData ? (
                           <img src={item.memberPhotoData} alt={`${item.memberName} profile`} className="h-full w-full object-cover" />
                         ) : (
                           item.memberName.trim().charAt(0).toUpperCase()
                         )}
                       </div>
-                      <div><p className="text-sm leading-snug font-semibold text-slate-900">{item.bookTitle}</p><p className="text-xs text-slate-500">Overdue transaction</p></div>
-                      <p className="text-sm font-semibold text-slate-700">{item.memberName}</p>
+                      <div><p className="text-sm leading-snug font-semibold text-zinc-900">{item.bookTitle}</p><p className="text-xs text-zinc-500">Overdue transaction</p></div>
+                      <p className="text-sm font-semibold text-zinc-700">{item.memberName}</p>
                       <span className="w-fit rounded-md bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-600">{item.overdueLabel}</span>
                     </div>
                   ))}
                   {overdueReturnItems.length === 0 ? (
-                    <p className="px-4 py-3 text-sm text-slate-500">No overdue returns.</p>
+                    <p className="px-4 py-3 text-sm text-zinc-500">No overdue returns.</p>
                   ) : null}
                 </div>
               </article>
 
-              <article className={`rounded-2xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+              <article className={`rounded-2xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-tranzinc-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-3 flex items-center justify-between pb-3">
                   <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Today&apos;s Activity</h3>
                   <button type="button" onClick={() => setActivePage('Reports')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
@@ -1413,27 +1413,27 @@ const greetingName = formatDisplayName(activeUsername)
                     return (
                       <div
                         key={item.id}
-                        className={`-mx-4 grid grid-cols-[1fr_auto] items-start gap-2 px-4 py-2.5 transition-colors duration-150 hover:bg-slate-50 ${
-                          idx < Math.min(6, notifications.length) - 1 ? 'border-b border-slate-100' : ''
+                        className={`-mx-4 grid grid-cols-[1fr_auto] items-start gap-2 px-4 py-2.5 transition-colors duration-150 hover:bg-zinc-50 ${
+                          idx < Math.min(6, notifications.length) - 1 ? 'border-b border-zinc-100' : ''
                         }`}
                       >
                         <div>
-                          <p className="text-sm font-semibold text-slate-900">{item.title}</p>
-                          <p className="text-xs font-medium text-slate-500">{item.message}</p>
+                          <p className="text-sm font-semibold text-zinc-900">{item.title}</p>
+                          <p className="text-xs font-medium text-zinc-500">{item.message}</p>
                         </div>
-                        <p className="pt-1 text-right text-xs font-semibold text-slate-500">{dateText}<br />{timeText}</p>
+                        <p className="pt-1 text-right text-xs font-semibold text-zinc-500">{dateText}<br />{timeText}</p>
                       </div>
                     )
                   })}
                   {notifications.length === 0 ? (
-                    <p className="px-1 py-2 text-sm text-slate-500">No activity yet.</p>
+                    <p className="px-1 py-2 text-sm text-zinc-500">No activity yet.</p>
                   ) : null}
                 </div>
               </article>
             </section>
 
             <section className="grid gap-3 px-5 pb-5 xl:grid-cols-3">
-              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-tranzinc-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Most Borrowed Categories</h3>
                   <button type="button" onClick={() => setActivePage('Reports')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
@@ -1457,32 +1457,32 @@ const greetingName = formatDisplayName(activeUsername)
                         <div className="mx-auto h-36 w-36 rounded-full p-7" style={{ background: bg }}>
                           <div className="h-full w-full rounded-full bg-white" />
                         </div>
-                        <div className="mx-auto w-full max-w-[220px] space-y-2.5 text-xs text-slate-600">
+                        <div className="mx-auto w-full max-w-[220px] space-y-2.5 text-xs text-zinc-600">
                           {borrowedCategories.length > 0 ? borrowedCategories.map((item, idx) => (
                             <p key={item.category} className="flex items-center justify-between gap-2">
                               <span className="flex items-center gap-2">
                                 <span className="h-2.5 w-2.5 rounded-full" style={{ background: colors[idx % colors.length] }} />
                                 {item.category}
                               </span>
-                              <span className="font-semibold text-slate-700">{item.percent.toFixed(1)}% ({item.count})</span>
+                              <span className="font-semibold text-zinc-700">{item.percent.toFixed(1)}% ({item.count})</span>
                             </p>
-                          )) : <p className="text-slate-500">No borrow data yet.</p>}
+                          )) : <p className="text-zinc-500">No borrow data yet.</p>}
                         </div>
                       </div>
                     )
                   })()}
                 </div>
               </article>
-              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-tranzinc-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Low Stock / Missing Copies</h3>
                   <button type="button" onClick={() => setActivePage('Books')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
                 </div>
                 <div className="space-y-0 text-xs">
                   {lowStockItems.map((item, idx) => (
-                    <div key={item.key} className={`flex items-start justify-between gap-3 rounded-md px-1 py-2 transition-colors duration-150 hover:bg-slate-50 ${idx < lowStockItems.length - 1 ? 'border-b border-slate-100' : ''}`}>
+                    <div key={item.key} className={`flex items-start justify-between gap-3 rounded-md px-1 py-2 transition-colors duration-150 hover:bg-zinc-50 ${idx < lowStockItems.length - 1 ? 'border-b border-zinc-100' : ''}`}>
                       <div className="min-w-0 flex items-start gap-2.5">
-                        <div className="grid h-11 w-8 place-items-center overflow-hidden rounded-md border border-slate-200 bg-slate-50 text-base text-slate-600">
+                        <div className="grid h-11 w-8 place-items-center overflow-hidden rounded-md border border-zinc-200 bg-zinc-50 text-base text-zinc-600">
                           {item.coverData ? (
                             <img src={item.coverData} alt={`${item.title} cover`} className="h-full w-full object-cover" />
                           ) : (
@@ -1490,29 +1490,29 @@ const greetingName = formatDisplayName(activeUsername)
                           )}
                         </div>
                         <div>
-                        <p className="flex items-center gap-2 text-sm font-semibold text-slate-800"><span className={`h-2.5 w-2.5 rounded-full ${item.level === 'Out' ? 'bg-rose-500' : 'bg-amber-500'}`} />{item.title}</p>
-                        <p className="pl-4 text-xs text-slate-500">Available: {item.available} / Total: {item.total}</p>
+                        <p className="flex items-center gap-2 text-sm font-semibold text-zinc-800"><span className={`h-2.5 w-2.5 rounded-full ${item.level === 'Out' ? 'bg-rose-500' : 'bg-amber-500'}`} />{item.title}</p>
+                        <p className="pl-4 text-xs text-zinc-500">Available: {item.available} / Total: {item.total}</p>
                         </div>
                       </div>
                       <span className={`rounded-md px-2.5 py-1 text-xs font-semibold ${item.level === 'Out' ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'}`}>{item.level}</span>
                     </div>
                   ))}
                   {lowStockItems.length === 0 ? (
-                    <p className="px-1 py-2 text-sm text-slate-500">No low stock or missing copies.</p>
+                    <p className="px-1 py-2 text-sm text-zinc-500">No low stock or missing copies.</p>
                   ) : null}
                 </div>
               </article>
 
-              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-tranzinc-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Upcoming Due Dates</h3>
                   <button type="button" onClick={() => openTransactionsPage('overdue')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
                 </div>
                 <div className="space-y-0">
                   {upcomingDueItems.map((item, idx) => (
-                    <div key={item.id} className={`flex items-start justify-between gap-3 rounded-md px-2 py-2 transition-colors duration-150 hover:bg-slate-50 ${idx < upcomingDueItems.length - 1 ? 'border-b border-slate-100' : ''}`}>
+                    <div key={item.id} className={`flex items-start justify-between gap-3 rounded-md px-2 py-2 transition-colors duration-150 hover:bg-zinc-50 ${idx < upcomingDueItems.length - 1 ? 'border-b border-zinc-100' : ''}`}>
                       <div className="flex items-start gap-3">
-                        <div className="grid h-9 w-9 place-items-center overflow-hidden rounded-full bg-slate-100 text-xs font-bold text-slate-700">
+                        <div className="grid h-9 w-9 place-items-center overflow-hidden rounded-full bg-zinc-100 text-xs font-bold text-zinc-700">
                           {item.memberPhotoData ? (
                             <img src={item.memberPhotoData} alt={`${item.memberName} profile`} className="h-full w-full object-cover" />
                           ) : (
@@ -1520,15 +1520,15 @@ const greetingName = formatDisplayName(activeUsername)
                           )}
                         </div>
                         <div>
-                          <p className="text-sm font-semibold text-slate-800">{item.bookTitle}</p>
-                          <p className="text-xs font-medium text-slate-500">{item.memberName}</p>
+                          <p className="text-sm font-semibold text-zinc-800">{item.bookTitle}</p>
+                          <p className="text-xs font-medium text-zinc-500">{item.memberName}</p>
                         </div>
                       </div>
                       <span className="rounded-md bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-600">{item.dueDateLabel}</span>
                     </div>
                   ))}
                   {upcomingDueItems.length === 0 ? (
-                    <p className="px-2 py-2 text-sm text-slate-500">No upcoming due dates.</p>
+                    <p className="px-2 py-2 text-sm text-zinc-500">No upcoming due dates.</p>
                   ) : null}
                 </div>
               </article>
@@ -1538,15 +1538,15 @@ const greetingName = formatDisplayName(activeUsername)
         </section>
       </div>
       {showLogoutConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
-          <div className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/60 p-4 backdrop-blur-sm">
+          <div className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
             <div className="flex items-start gap-4">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-rose-500/10 text-rose-500">
                 <AlertTriangle size={24} />
               </div>
               <div className="flex-1">
-                <h3 className={`text-lg font-bold leading-6 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Logout</h3>
-                <p className={`mt-2 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                <h3 className={`text-lg font-bold leading-6 ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Logout</h3>
+                <p className={`mt-2 text-sm ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
                   Are you sure you want to log out of your account?
                 </p>
               </div>
@@ -1557,7 +1557,7 @@ const greetingName = formatDisplayName(activeUsername)
                 onClick={() => setShowLogoutConfirm(false)}
                 disabled={isLoggingOut}
                 className={`rounded-xl border px-4 py-2 text-sm font-semibold ${
-                  isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'
+                  isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'
                 }`}
               >
                 Cancel
@@ -1671,7 +1671,7 @@ function App() {
 
   if (isCheckingSession) {
     return (
-      <main className="grid h-screen place-items-center bg-[#f4f6f8] text-slate-600">
+      <main className="grid h-screen place-items-center bg-[#f4f6f8] text-zinc-600">
         <p className="text-sm font-semibold">Loading session...</p>
       </main>
     )
@@ -1716,22 +1716,22 @@ function App() {
             <form onSubmit={handleSubmit} className="flex h-full w-full max-w-[410px] flex-col px-1 py-1" noValidate>
               <div className="flex flex-1 flex-col justify-center space-y-3">
                 <header className="space-y-1 text-center">
-                  <h2 className="text-3xl font-extrabold tracking-tight text-slate-800">Welcome Back!</h2>
-                  <p className="text-base text-slate-500">Sign in to continue to your account</p>
+                  <h2 className="text-3xl font-extrabold tracking-tight text-zinc-800">Welcome Back!</h2>
+                  <p className="text-base text-zinc-500">Sign in to continue to your account</p>
                 </header>
 
                 <div className="space-y-1">
-                  <label htmlFor="username" className="block text-sm font-semibold text-slate-700">User Name</label>
-                  <div className="flex h-10 items-center rounded-xl border border-slate-300 bg-white px-3 focus-within:border-emerald-600 focus-within:ring-2 focus-within:ring-emerald-100">
-                    <input id="username" type="text" autoComplete="username" value={formState.username} onChange={(event) => { setLoginError(''); setFormState((previous) => ({ ...previous, username: event.target.value })) }} placeholder="Enter your username" className="h-full w-full bg-transparent text-sm text-slate-800 outline-none" required />
+                  <label htmlFor="username" className="block text-sm font-semibold text-zinc-700">User Name</label>
+                  <div className="flex h-10 items-center rounded-xl border border-zinc-300 bg-white px-3 focus-within:border-emerald-600 focus-within:ring-2 focus-within:ring-emerald-100">
+                    <input id="username" type="text" autoComplete="username" value={formState.username} onChange={(event) => { setLoginError(''); setFormState((previous) => ({ ...previous, username: event.target.value })) }} placeholder="Enter your username" className="h-full w-full bg-transparent text-sm text-zinc-800 outline-none" required />
                   </div>
                 </div>
 
                 <div className="space-y-1">
-                  <label htmlFor="password" className="block text-sm font-semibold text-slate-700">Password</label>
-                  <div className="flex h-10 items-center rounded-xl border border-slate-300 bg-white px-3 focus-within:border-emerald-600 focus-within:ring-2 focus-within:ring-emerald-100">
-                    <input id="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" value={formState.password} onChange={(event) => { setLoginError(''); setFormState((previous) => ({ ...previous, password: event.target.value })) }} placeholder="Enter your password" className="h-full w-full bg-transparent text-sm text-slate-800 outline-none" required />
-                    <button type="button" onClick={() => setShowPassword((value) => !value)} className="text-slate-500 hover:text-slate-700" aria-label={showPassword ? 'Hide password' : 'Show password'}>
+                  <label htmlFor="password" className="block text-sm font-semibold text-zinc-700">Password</label>
+                  <div className="flex h-10 items-center rounded-xl border border-zinc-300 bg-white px-3 focus-within:border-emerald-600 focus-within:ring-2 focus-within:ring-emerald-100">
+                    <input id="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" value={formState.password} onChange={(event) => { setLoginError(''); setFormState((previous) => ({ ...previous, password: event.target.value })) }} placeholder="Enter your password" className="h-full w-full bg-transparent text-sm text-zinc-800 outline-none" required />
+                    <button type="button" onClick={() => setShowPassword((value) => !value)} className="text-zinc-500 hover:text-zinc-700" aria-label={showPassword ? 'Hide password' : 'Show password'}>
                       {showPassword ? 'Hide' : 'Show'}
                     </button>
                   </div>
@@ -1744,8 +1744,8 @@ function App() {
                 </div>
 
                 <div className="flex items-center justify-between text-xs">
-                  <label className="flex cursor-pointer items-center gap-3 text-slate-600">
-                    <input type="checkbox" checked={formState.rememberMe} onChange={(event) => setFormState((previous) => ({ ...previous, rememberMe: event.target.checked }))} className="h-4 w-4 rounded border-slate-300 text-emerald-600" />
+                  <label className="flex cursor-pointer items-center gap-3 text-zinc-600">
+                    <input type="checkbox" checked={formState.rememberMe} onChange={(event) => setFormState((previous) => ({ ...previous, rememberMe: event.target.checked }))} className="h-4 w-4 rounded border-zinc-300 text-emerald-600" />
                     Remember me
                   </label>
                   <button type="button" className="font-semibold text-emerald-700 hover:text-emerald-800">Forgot password?</button>
@@ -1758,7 +1758,7 @@ function App() {
                 </button>
               </div>
 
-              <p className="mt-auto pt-3 text-center text-xs text-slate-500">© 2026 infoLib. All rights reserved.</p>
+              <p className="mt-auto pt-3 text-center text-xs text-zinc-500">© 2026 infoLib. All rights reserved.</p>
             </form>
           </section>
         </div>
