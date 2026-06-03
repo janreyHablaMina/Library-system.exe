@@ -653,23 +653,6 @@ const greetingName = formatDisplayName(activeUsername)
                 </div>
               ) : null}
             </div>
-
-            {/* Profile & Search */}
-            {!sidebarCollapsed ? (
-              <div className="mt-2 space-y-3">
-                <div className={`flex items-center gap-3 rounded-lg p-2 ${dashboardTheme.profileCard}`}>
-                  <div className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border text-xs font-bold ${dashboardTheme.avatarBg}`}>AU</div>
-                  <div className="flex flex-col">
-                    <p className="text-xs font-semibold text-white">Admin User</p>
-                    <p className="text-[10px] text-[#A1A1AA]">Librarian</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 rounded-md border border-[#3F3F46] bg-[#27272A] px-3 py-1.5">
-                  <Search size={14} className="text-[#A1A1AA]" />
-                  <input type="text" placeholder="Quick search..." className="w-full bg-transparent text-xs text-white outline-none placeholder:text-[#A1A1AA]" />
-                </div>
-              </div>
-            ) : null}
           </div>
 
           <nav className="relative z-10 flex-1 overflow-y-auto px-3 pb-5 text-sm space-y-6">
