@@ -655,7 +655,7 @@ const greetingName = formatDisplayName(activeUsername)
             </div>
           </div>
 
-          <nav className="relative z-10 flex-1 overflow-y-auto px-3 pb-5 text-sm space-y-6">
+          <nav className="relative z-10 flex-1 overflow-y-auto px-3 pb-5 text-sm space-y-3">
                 {/* Top Section - Dashboard */}
                 <div>
                    {(() => {
@@ -678,7 +678,7 @@ const greetingName = formatDisplayName(activeUsername)
                 </div>
 
                 {/* LIBRARY Section */}
-                <div className="pt-2">
+                <div>
                   {!sidebarCollapsed ? <div className="mb-1.5 px-3"><span className="text-[10px] font-bold uppercase tracking-wider text-[#71717A]">Library</span></div> : null}
                   <div className="space-y-0.5">
                     {navItems.slice(1, 5).map((item) => (
@@ -702,7 +702,7 @@ const greetingName = formatDisplayName(activeUsername)
                 </div>
 
                 {/* CIRCULATION Section */}
-                <div className="pt-2">
+                <div>
                   {!sidebarCollapsed ? <div className="mb-1.5 px-3"><span className="text-[10px] font-bold uppercase tracking-wider text-[#71717A]">Circulation</span></div> : null}
                   <div className="space-y-0.5">
                     {navItems.slice(5, 7).map((item) => (
@@ -726,7 +726,7 @@ const greetingName = formatDisplayName(activeUsername)
                 </div>
 
                 {/* MANAGEMENT Section */}
-                <div className="pt-2">
+                <div>
                   {!sidebarCollapsed ? <div className="mb-1.5 px-3"><span className="text-[10px] font-bold uppercase tracking-wider text-[#71717A]">Management</span></div> : null}
                   <div className="space-y-0.5">
                     {navItems.slice(7, 9).map((item) => (
