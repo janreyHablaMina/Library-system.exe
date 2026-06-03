@@ -655,7 +655,7 @@ const greetingName = formatDisplayName(activeUsername)
             </div>
           </div>
 
-          <nav className="relative z-10 flex-1 overflow-y-auto px-3 pb-5 text-sm space-y-6">
+          <nav className="relative z-10 flex flex-1 flex-col overflow-y-auto px-3 pb-5 text-sm space-y-6">
                 {/* Top Section - Dashboard */}
                 <div>
                    {(() => {
@@ -726,7 +726,7 @@ const greetingName = formatDisplayName(activeUsername)
                 </div>
 
                 {/* MANAGEMENT Section */}
-                <div>
+                <div className="mt-auto pt-6">
                   {!sidebarCollapsed ? <div className="mb-2 px-3"><span className="text-[10px] font-bold uppercase tracking-wider text-[#71717A]">Management</span></div> : null}
                   <div className="space-y-1">
                     {navItems.slice(7, 9).map((item) => (
