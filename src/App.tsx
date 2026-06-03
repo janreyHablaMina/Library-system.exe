@@ -573,7 +573,7 @@ const greetingName = formatDisplayName(activeUsername)
     ? {
         main: 'bg-[#181818] text-[#cccccc]',
         frame: 'border-[#2b2b2b] bg-[#181818]',
-        aside: 'border-[#1E293B] bg-[#111111] relative overflow-hidden shadow-[4px_0_24px_-12px_rgba(0,0,0,0.5)] z-20',
+        aside: 'border-[#1E293B] bg-[#0b1220] relative overflow-hidden shadow-[4px_0_24px_-12px_rgba(0,0,0,0.5)] z-20',
         asideTitle: 'text-[#E2E8F0]',
         asideSub: 'text-[#94A3B8]',
         asideHover: 'hover:bg-gradient-to-r hover:from-[#1E293B]/80 hover:to-transparent hover:text-[#E2E8F0] hover:translate-x-1',
@@ -602,7 +602,7 @@ const greetingName = formatDisplayName(activeUsername)
     : {
         main: 'bg-white text-slate-800',
         frame: 'border-slate-200 bg-white',
-        aside: 'border-[#E5E7EB] bg-white relative overflow-hidden shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)] z-20',
+        aside: 'border-[#E5E7EB] bg-slate-100 relative overflow-hidden shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)] z-20',
         asideTitle: 'text-[#111827]',
         asideSub: 'text-[#6B7280]',
         asideHover: 'hover:bg-gradient-to-r hover:from-slate-100/80 hover:to-transparent hover:text-[#111827] hover:translate-x-1',
