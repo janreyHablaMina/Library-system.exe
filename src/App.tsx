@@ -641,7 +641,7 @@ const greetingName = formatDisplayName(activeUsername)
           {isDarkMode && (
             <div className="pointer-events-none absolute left-0 top-0 h-96 w-full bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-emerald-500/10 via-[#0F172A]/5 to-transparent" />
           )}
-          <div className={`relative z-10 flex flex-col gap-4 px-4 pt-8 pb-6`}>
+          <div className={`relative z-10 flex flex-col gap-6 px-4 pt-12 pb-6`}>
             <div className="flex items-center gap-3">
               <div className={`grid place-items-center rounded-full shadow-sm ${dashboardTheme.avatarBg} ${sidebarCollapsed ? 'h-10 w-10 mx-auto' : 'h-10 w-10 shrink-0'}`}>
                 <div className="grid place-items-center rounded-full border-2 border-[#10B981] font-black text-[#10B981] h-8 w-8 text-xs">CC</div>
@@ -655,7 +655,7 @@ const greetingName = formatDisplayName(activeUsername)
             </div>
           </div>
 
-          <nav className="relative z-10 flex flex-1 flex-col overflow-y-auto px-3 pt-4 pb-5 text-sm space-y-6">
+          <nav className="relative z-10 flex flex-1 flex-col overflow-y-auto px-3 pt-6 pb-5 text-sm space-y-6">
                 {/* Top Section - Dashboard */}
                 <div>
                    {(() => {
