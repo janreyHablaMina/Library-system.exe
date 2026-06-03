@@ -960,9 +960,19 @@ fn send_email_from_settings(
         .header(lettre::message::header::ContentType::TEXT_HTML)
         .body(html_body)
         .map_err(|e| format!("build email failed: {e}"))?;
-    let mailer = SmtpTransport::relay(smtp_host.trim())
-        .map_err(|e| format!("smtp relay failed: {e}"))?
+    let tls_params = lettre::transport::smtp::client::TlsParameters::builder(smtp_host.trim().to_string())
+        .build()
+        .map_err(|e| format!("tls builder failed: {e}"))?;
+
+    let tls_config = if port == 465 {
+        lettre::transport::smtp::client::Tls::Wrapper(tls_params)
+    } else {
+        lettre::transport::smtp::client::Tls::Required(tls_params)
+    };
+
+    let mailer = SmtpTransport::builder_dangerous(smtp_host.trim())
         .port(port)
+        .tls(tls_config)
         .credentials(Credentials::new(smtp_username, smtp_password))
         .build();
     mailer

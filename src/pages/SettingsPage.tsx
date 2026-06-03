@@ -492,7 +492,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
       setEmailTestStatus({ type: 'success', message })
       void loadEmailLogs()
     } catch (error) {
-      setEmailTestStatus({ type: 'error', message: error instanceof Error ? error.message : 'Failed to send test email.' })
+      setEmailTestStatus({ type: 'error', message: typeof error === 'string' ? error : error instanceof Error ? error.message : 'Failed to send test email.' })
       void loadEmailLogs()
     }
   }
