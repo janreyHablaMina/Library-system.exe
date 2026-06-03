@@ -118,3 +118,32 @@ body {
 .dashboard-dark [class~="text-sky-600"] {
   color: #38bdf8 !important;
 }
+
+/* Global VS Code Theme Overrides for all pages */
+.dashboard-dark [class~="bg-[#0b1738]"],
+.dashboard-dark [class~="bg-[#0f1f49]"],
+.dashboard-dark [class~="bg-[#0a1633]"],
+.dashboard-dark [class~="bg-slate-900"] {
+  background-color: #1e1e1e !important;
+}
+
+.dashboard-dark [class~="bg-[#020617]"],
+.dashboard-dark [class~="bg-[#05112e]"],
+.dashboard-dark [class~="bg-slate-950"] {
+  background-color: #181818 !important;
+}
+
+.dashboard-dark [class~="border-slate-700"],
+.dashboard-dark [class~="border-slate-800"] {
+  border-color: #2b2b2b !important;
+}
+
+.dashboard-dark [class~="text-slate-200"],
+.dashboard-dark [class~="text-slate-300"],
+.dashboard-dark [class~="text-slate-100"] {
+  color: #cccccc !important;
+}
+
+.dashboard-dark [class~="text-slate-400"] {
+  color: #858585 !important;
+}
