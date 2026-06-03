@@ -102,3 +102,19 @@ body {
   filter: invert(0.85);
   opacity: 0.9;
 }
+
+.dashboard-dark [class~="bg-slate-50"] {
+  background-color: rgba(30, 41, 59, 0.5) !important;
+}
+
+.dashboard-dark [class~="bg-slate-100"] {
+  background-color: rgba(51, 65, 85, 0.5) !important;
+}
+
+.dashboard-dark [class~="bg-sky-50"] {
+  background-color: rgba(14, 165, 233, 0.14) !important;
+}
+
+.dashboard-dark [class~="text-sky-600"] {
+  color: #38bdf8 !important;
+}
