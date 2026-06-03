@@ -573,7 +573,7 @@ const greetingName = formatDisplayName(activeUsername)
     ? {
         main: 'bg-[#181818] text-[#cccccc]',
         frame: 'border-[#2b2b2b] bg-[#181818]',
-        aside: 'border border-[#27272A] bg-[#18181B] relative overflow-hidden shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)] z-20',
+        aside: 'border-[#27272A] bg-[#18181B] relative overflow-hidden shadow-[4px_0_24px_-12px_rgba(0,0,0,0.5)] z-20',
         asideTitle: 'text-white',
         asideSub: 'text-[#D4D4D8]',
         asideHover: 'hover:bg-gradient-to-r hover:from-[#27272A]/80 hover:to-transparent hover:text-white hover:translate-x-1',
@@ -604,7 +604,7 @@ const greetingName = formatDisplayName(activeUsername)
     : {
         main: 'bg-white text-slate-800',
         frame: 'border-slate-200 bg-white',
-        aside: 'border border-[#27272A] bg-[#18181B] relative overflow-hidden shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)] z-20',
+        aside: 'border-[#27272A] bg-[#18181B] relative overflow-hidden shadow-[4px_0_24px_-12px_rgba(0,0,0,0.5)] z-20',
         asideTitle: 'text-white',
         asideSub: 'text-[#D4D4D8]',
         asideHover: 'hover:bg-gradient-to-r hover:from-[#27272A]/80 hover:to-transparent hover:text-white hover:translate-x-1',
@@ -636,7 +636,7 @@ const greetingName = formatDisplayName(activeUsername)
   return (
     <main className={`h-screen overflow-hidden p-0 ${dashboardTheme.main} ${isDarkMode ? 'dashboard-dark' : ''}`}>
       <div className={`flex h-full w-full overflow-hidden ${dashboardTheme.frame}`}>
-        <aside className={`hidden shrink-0 my-4 ml-4 rounded-3xl transition-all duration-200 lg:flex lg:flex-col ${dashboardTheme.aside} ${sidebarCollapsed ? 'w-20' : 'w-64'}`} style={{ height: 'calc(100vh - 2rem)' }}>
+        <aside className={`hidden h-full shrink-0 border-r transition-all duration-200 lg:flex lg:flex-col ${dashboardTheme.aside} ${sidebarCollapsed ? 'w-20' : 'w-64'}`}>
           {/* Subtle glow for dark mode */}
           {isDarkMode && (
             <div className="pointer-events-none absolute left-0 top-0 h-96 w-full bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-emerald-500/10 via-[#0F172A]/5 to-transparent" />
