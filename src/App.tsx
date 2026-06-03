@@ -641,45 +641,63 @@ const greetingName = formatDisplayName(activeUsername)
           {isDarkMode && (
             <div className="pointer-events-none absolute left-0 top-0 h-96 w-full bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-emerald-500/10 via-[#0F172A]/5 to-transparent" />
           )}
-          <div className={`relative z-10 border-b ${dashboardTheme.rowBorder} ${sidebarCollapsed ? 'px-2 py-4' : 'px-5 py-5'}`}>
-            <div className="flex flex-col items-center">
-              <div className={`grid place-items-center rounded-full shadow-sm ${dashboardTheme.avatarBg} ${sidebarCollapsed ? 'h-12 w-12' : 'h-16 w-16'}`}>
-                <div className={`grid place-items-center rounded-full border-2 border-[#10B981] font-black text-[#10B981] ${sidebarCollapsed ? 'h-8 w-8 text-sm' : 'h-12 w-12 text-base'}`}>CC</div>
+          <div className={`relative z-10 flex flex-col gap-4 px-4 py-5`}>
+            <div className="flex items-center gap-3">
+              <div className={`grid place-items-center rounded-full shadow-sm ${dashboardTheme.avatarBg} ${sidebarCollapsed ? 'h-10 w-10 mx-auto' : 'h-10 w-10 shrink-0'}`}>
+                <div className="grid place-items-center rounded-full border-2 border-[#10B981] font-black text-[#10B981] h-8 w-8 text-xs">CC</div>
               </div>
               {!sidebarCollapsed ? (
-                <>
-                  <p className={`mt-3 text-center text-[20px] font-black tracking-tight ${dashboardTheme.asideTitle}`}>info<span className="text-[#10B981]">Lib</span></p>
-                  <p className={`mt-0.5 text-center text-[10px] font-semibold uppercase tracking-[0.08em] ${dashboardTheme.asideSub}`}>Library Management System</p>
-                </>
+                <div className="flex flex-col">
+                  <p className={`text-base font-black tracking-tight ${dashboardTheme.asideTitle}`}>info<span className="text-[#10B981]">Lib</span></p>
+                  <p className={`text-[10px] font-semibold uppercase tracking-[0.08em] ${dashboardTheme.asideSub}`}>Admin Workspace</p>
+                </div>
               ) : null}
             </div>
+
+            {/* Profile & Search */}
+            {!sidebarCollapsed ? (
+              <div className="mt-2 space-y-3">
+                <div className={`flex items-center gap-3 rounded-lg p-2 ${dashboardTheme.profileCard}`}>
+                  <div className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border text-xs font-bold ${dashboardTheme.avatarBg}`}>AU</div>
+                  <div className="flex flex-col">
+                    <p className={`text-xs font-semibold ${dashboardTheme.cardTitle}`}>Admin User</p>
+                    <p className={`text-[10px] ${dashboardTheme.cardMuted}`}>Librarian</p>
+                  </div>
+                </div>
+                <div className={`flex items-center gap-2 rounded-md border px-3 py-1.5 ${dashboardTheme.search} border-opacity-20`}>
+                  <Search size={14} className="text-[#A1A1AA]" />
+                  <input type="text" placeholder="Quick search..." className={`w-full bg-transparent text-xs outline-none placeholder:text-[#A1A1AA] ${dashboardTheme.searchInput}`} />
+                </div>
+              </div>
+            ) : null}
           </div>
-          <nav className="relative z-10 flex-1 overflow-y-auto py-5 text-sm">
+
+          <nav className="relative z-10 flex-1 overflow-y-auto px-3 pb-5 text-sm space-y-6">
                 {/* Top Section - Dashboard */}
-                <div className="px-4 mt-4">
+                <div>
                    {(() => {
                      const DashIcon = navItems[0].icon;
                      return (
                        <button
                         key={navItems[0].id}
                         onClick={() => setActivePage(navItems[0].id as any)}
-                        className={`group flex w-full items-center gap-3 rounded-xl py-2.5 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-2' : 'px-4'} ${
+                        className={`group flex w-full items-center gap-3 rounded-md py-1.5 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-1' : 'px-3'} ${
                           activePage === navItems[0].id
                             ? dashboardTheme.asideActive
                             : `${dashboardTheme.asideIdle} ${dashboardTheme.asideHover}`
                         }`}
                       >
-                        <DashIcon size={18} className="" />
-                        {!sidebarCollapsed ? <span className="flex-1 text-left font-semibold">{navItems[0].label}</span> : null}
+                        <DashIcon size={16} className="" />
+                        {!sidebarCollapsed ? <span className="flex-1 text-left font-medium text-xs">{navItems[0].label}</span> : null}
                       </button>
                      )
                    })()}
                 </div>
 
                 {/* LIBRARY Section */}
-                <div className="mt-8 px-4">
-                  {!sidebarCollapsed ? <p className="px-4 text-[11px] font-bold uppercase tracking-[0.15em] ${dashboardTheme.asideSub}">Library</p> : null}
-                  <div className="mt-4 space-y-1">
+                <div>
+                  {!sidebarCollapsed ? <div className="mb-2 px-3 flex items-center gap-2"><div className="h-[1px] flex-1 bg-slate-700/50"></div><span className="text-[9px] font-bold uppercase tracking-wider text-[#A1A1AA]">Library</span><div className="h-[1px] flex-1 bg-slate-700/50"></div></div> : null}
+                  <div className="space-y-0.5">
                     {navItems.slice(1, 5).map((item) => (
                       <button
                         key={item.id}
@@ -687,24 +705,23 @@ const greetingName = formatDisplayName(activeUsername)
                           setActivePage(item.id as any)
                           if (item.id === 'Members') setMemberAddModalTrigger(0)
                         }}
-                        className={`group flex w-full items-center gap-3 rounded-xl py-2.5 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-2' : 'px-4'} ${
+                        className={`group flex w-full items-center gap-3 rounded-md py-1.5 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-1' : 'px-3'} ${
                           activePage === item.id
                             ? dashboardTheme.asideActive
                             : `${dashboardTheme.asideIdle} ${dashboardTheme.asideHover}`
                         }`}
                       >
-                        <item.icon size={18} className="" />
-                        {!sidebarCollapsed ? <span className="flex-1 text-left font-semibold">{item.label}</span> : null}
-                        {!sidebarCollapsed ? <ChevronRight size={14} className={`transition-transform duration-300 ${activePage === item.id ? 'rotate-90' : 'opacity-70'}`} /> : null}
+                        <item.icon size={16} className="" />
+                        {!sidebarCollapsed ? <span className="flex-1 text-left font-medium text-xs">{item.label}</span> : null}
                       </button>
                     ))}
                   </div>
                 </div>
 
                 {/* CIRCULATION Section */}
-                <div className="mt-6 px-4">
-                  {!sidebarCollapsed ? <p className="px-4 text-[11px] font-bold uppercase tracking-[0.15em] ${dashboardTheme.asideSub}">Circulation</p> : null}
-                  <div className="mt-4 space-y-1">
+                <div>
+                  {!sidebarCollapsed ? <div className="mb-2 px-3 flex items-center gap-2"><div className="h-[1px] flex-1 bg-slate-700/50"></div><span className="text-[9px] font-bold uppercase tracking-wider text-[#A1A1AA]">Circulation</span><div className="h-[1px] flex-1 bg-slate-700/50"></div></div> : null}
+                  <div className="space-y-0.5">
                     {navItems.slice(5, 7).map((item) => (
                       <button
                         key={item.id}
@@ -712,24 +729,23 @@ const greetingName = formatDisplayName(activeUsername)
                           setActivePage(item.id as any)
                           if (item.id === 'Members') setMemberAddModalTrigger(0)
                         }}
-                        className={`group flex w-full items-center gap-3 rounded-xl py-2.5 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-2' : 'px-4'} ${
+                        className={`group flex w-full items-center gap-3 rounded-md py-1.5 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-1' : 'px-3'} ${
                           activePage === item.id
                             ? dashboardTheme.asideActive
                             : `${dashboardTheme.asideIdle} ${dashboardTheme.asideHover}`
                         }`}
                       >
-                        <item.icon size={18} className="" />
-                        {!sidebarCollapsed ? <span className="flex-1 text-left font-semibold">{item.label}</span> : null}
-                        {!sidebarCollapsed ? <ChevronRight size={14} className={`transition-transform duration-300 ${activePage === item.id ? 'rotate-90' : 'opacity-70'}`} /> : null}
+                        <item.icon size={16} className="" />
+                        {!sidebarCollapsed ? <span className="flex-1 text-left font-medium text-xs">{item.label}</span> : null}
                       </button>
                     ))}
                   </div>
                 </div>
 
                 {/* MANAGEMENT Section */}
-                <div className="mt-6 px-4">
-                  {!sidebarCollapsed ? <p className="px-4 text-[11px] font-bold uppercase tracking-[0.15em] ${dashboardTheme.asideSub}">Management</p> : null}
-                  <div className="mt-4 space-y-1">
+                <div>
+                  {!sidebarCollapsed ? <div className="mb-2 px-3 flex items-center gap-2"><div className="h-[1px] flex-1 bg-slate-700/50"></div><span className="text-[9px] font-bold uppercase tracking-wider text-[#A1A1AA]">Management</span><div className="h-[1px] flex-1 bg-slate-700/50"></div></div> : null}
+                  <div className="space-y-0.5">
                     {navItems.slice(7, 9).map((item) => (
                       <button
                         key={item.id}
@@ -737,50 +753,35 @@ const greetingName = formatDisplayName(activeUsername)
                           setActivePage(item.id as any)
                           if (item.id === 'Members') setMemberAddModalTrigger(0)
                         }}
-                        className={`group flex w-full items-center gap-3 rounded-xl py-2.5 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-2' : 'px-4'} ${
+                        className={`group flex w-full items-center gap-3 rounded-md py-1.5 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-1' : 'px-3'} ${
                           activePage === item.id
                             ? dashboardTheme.asideActive
                             : `${dashboardTheme.asideIdle} ${dashboardTheme.asideHover}`
                         }`}
                       >
-                        <item.icon size={18} className="" />
-                        {!sidebarCollapsed ? <span className="flex-1 text-left font-semibold">{item.label}</span> : null}
-                        {!sidebarCollapsed ? <ChevronRight size={14} className={`transition-transform duration-300 ${activePage === item.id ? 'rotate-90' : 'opacity-70'}`} /> : null}
+                        <item.icon size={16} className="" />
+                        {!sidebarCollapsed ? <span className="flex-1 text-left font-medium text-xs">{item.label}</span> : null}
                       </button>
                     ))}
                   </div>
                 </div>
-
-                {/* SYSTEM Section */}
-                <div className="mt-6 px-4 pb-4">
-                  {!sidebarCollapsed ? <p className="px-4 text-[11px] font-bold uppercase tracking-[0.15em] ${dashboardTheme.asideSub}">System</p> : null}
-                  <div className="mt-4 space-y-1">
-                    <button
-                      onClick={() => {
-                        setActivePage('Settings')
-                        setActiveSettingsTab('Overview')
-                      }}
-                      className={`group flex w-full items-center gap-3 rounded-xl py-2.5 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-2' : 'px-4'} ${
-                        activePage === 'Settings'
-                          ? dashboardTheme.asideActive
-                          : `${dashboardTheme.asideIdle} ${dashboardTheme.asideHover}`
-                      }`}
-                    >
-                      <Settings2 size={18} className="" />
-                      <span className="flex-1 text-left font-semibold">{!sidebarCollapsed ? 'Settings' : ''}</span>
-                    </button>
-                  </div>
-                </div>
           </nav>
-          <div className={`relative z-10 border-t ${dashboardTheme.rowBorder} ${sidebarCollapsed ? 'p-2' : 'p-4'}`}>
-            {!sidebarCollapsed ? (
-              <div className={`rounded-xl p-3 ${dashboardTheme.profileCard}`}>
-                <p className={`text-sm font-semibold ${dashboardTheme.cardTitle}`}>Admin User</p>
-                <p className={`text-xs ${dashboardTheme.cardMuted}`}>Librarian</p>
-              </div>
-            ) : (
-              <div className={`grid h-10 w-10 place-items-center rounded-full border text-xs font-bold ${dashboardTheme.avatarBg}`}>AU</div>
-            )}
+
+          <div className={`relative z-10 mt-auto border-t ${dashboardTheme.rowBorder} p-3`}>
+            <button
+              onClick={() => {
+                setActivePage('Settings')
+                setActiveSettingsTab('Overview')
+              }}
+              className={`group flex w-full items-center gap-3 rounded-md py-1.5 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-1' : 'px-3'} ${
+                activePage === 'Settings'
+                  ? dashboardTheme.asideActive
+                  : `${dashboardTheme.asideIdle} ${dashboardTheme.asideHover}`
+              }`}
+            >
+              <Settings2 size={16} className="" />
+              {!sidebarCollapsed ? <span className="flex-1 text-left font-medium text-xs">Settings</span> : null}
+            </button>
           </div>
         </aside>
 
