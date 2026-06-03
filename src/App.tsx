@@ -573,12 +573,13 @@ const greetingName = formatDisplayName(activeUsername)
     ? {
         main: 'bg-[#181818] text-[#cccccc]',
         frame: 'border-[#2b2b2b] bg-[#181818]',
-        aside: 'border-[#1E293B] bg-[#0F172A]',
+        aside: 'border-[#1E293B] bg-[#111111] relative overflow-hidden shadow-[4px_0_24px_-12px_rgba(0,0,0,0.5)] z-20',
         asideTitle: 'text-[#E2E8F0]',
         asideSub: 'text-[#94A3B8]',
-        asideHover: 'hover:bg-[#1E293B] hover:text-[#E2E8F0]',
-        asideActive: 'bg-[rgba(16,185,129,0.15)] border-l-[3px] border-[#10B981] text-[#34D399]',
+        asideHover: 'hover:bg-gradient-to-r hover:from-[#1E293B]/80 hover:to-transparent hover:text-[#E2E8F0] hover:translate-x-1',
+        asideActive: 'bg-gradient-to-r from-emerald-500/15 to-transparent border-l-[3px] border-[#10B981] text-[#34D399] drop-shadow-[0_2px_4px_rgba(16,185,129,0.2)]',
         asideIdle: 'border-l-[3px] border-transparent text-[#94A3B8]',
+        profileCard: 'backdrop-blur-xl bg-[#1E293B]/40 border border-slate-700/50 shadow-lg',
         navActive: 'bg-[linear-gradient(90deg,#34d399_0%,#10b981_100%)] text-white shadow-[0_14px_22px_-16px_rgba(16,185,129,0.95)]',
         navIdle: 'text-emerald-50/90 hover:bg-emerald-700/40',
         header: 'border-[#2b2b2b] bg-[#1e1e1e]',
@@ -601,12 +602,13 @@ const greetingName = formatDisplayName(activeUsername)
     : {
         main: 'bg-white text-slate-800',
         frame: 'border-slate-200 bg-white',
-        aside: 'border-[#E5E7EB] bg-white',
+        aside: 'border-[#E5E7EB] bg-white relative overflow-hidden shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)] z-20',
         asideTitle: 'text-[#111827]',
         asideSub: 'text-[#6B7280]',
-        asideHover: 'hover:bg-[#F3F4F6] hover:text-[#111827]',
-        asideActive: 'bg-[rgba(16,185,129,0.12)] border-l-[3px] border-[#10B981] text-[#10B981]',
+        asideHover: 'hover:bg-gradient-to-r hover:from-slate-100/80 hover:to-transparent hover:text-[#111827] hover:translate-x-1',
+        asideActive: 'bg-gradient-to-r from-emerald-50/90 to-transparent border-l-[3px] border-[#10B981] text-[#10B981] drop-shadow-sm',
         asideIdle: 'border-l-[3px] border-transparent text-[#6B7280]',
+        profileCard: 'backdrop-blur-xl bg-white/60 border border-white/60 shadow-lg',
         navActive: 'bg-emerald-600 text-white shadow-[0_10px_20px_-10px_rgba(5,150,105,0.85)]',
         navIdle: 'text-slate-600 hover:bg-slate-100',
         header: 'border-slate-200 bg-white',
@@ -631,7 +633,11 @@ const greetingName = formatDisplayName(activeUsername)
     <main className={`h-screen overflow-hidden p-0 ${dashboardTheme.main} ${isDarkMode ? 'dashboard-dark' : ''}`}>
       <div className={`flex h-full w-full overflow-hidden ${dashboardTheme.frame}`}>
         <aside className={`hidden h-full shrink-0 border-r transition-all duration-200 lg:flex lg:flex-col ${dashboardTheme.aside} ${sidebarCollapsed ? 'w-20' : 'w-64'}`}>
-          <div className={`border-b ${dashboardTheme.rowBorder} ${sidebarCollapsed ? 'px-2 py-4' : 'px-5 py-5'}`}>
+          {/* Subtle glow for dark mode */}
+          {isDarkMode && (
+            <div className="pointer-events-none absolute left-0 top-0 h-96 w-full bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-emerald-500/10 via-[#0F172A]/5 to-transparent" />
+          )}
+          <div className={`relative z-10 border-b ${dashboardTheme.rowBorder} ${sidebarCollapsed ? 'px-2 py-4' : 'px-5 py-5'}`}>
             <div className="flex flex-col items-center">
               <div className={`grid place-items-center rounded-full shadow-sm ${dashboardTheme.avatarBg} ${sidebarCollapsed ? 'h-12 w-12' : 'h-16 w-16'}`}>
                 <div className={`grid place-items-center rounded-full border-2 border-[#10B981] font-black text-[#10B981] ${sidebarCollapsed ? 'h-8 w-8 text-sm' : 'h-12 w-12 text-base'}`}>CC</div>
@@ -644,7 +650,7 @@ const greetingName = formatDisplayName(activeUsername)
               ) : null}
             </div>
           </div>
-          <nav className="flex-1 overflow-y-auto py-5 text-sm">
+          <nav className="relative z-10 flex-1 overflow-y-auto py-5 text-sm">
                 {/* Top Section - Dashboard */}
                 <div className="px-4 mt-4">
                    {(() => {
@@ -762,9 +768,9 @@ const greetingName = formatDisplayName(activeUsername)
                   </div>
                 </div>
           </nav>
-          <div className={`border-t ${dashboardTheme.rowBorder} ${sidebarCollapsed ? 'p-2' : 'p-4'}`}>
+          <div className={`relative z-10 border-t ${dashboardTheme.rowBorder} ${sidebarCollapsed ? 'p-2' : 'p-4'}`}>
             {!sidebarCollapsed ? (
-              <div className={`rounded-xl border p-3 ${dashboardTheme.cardPanel}`}>
+              <div className={`rounded-xl p-3 ${dashboardTheme.profileCard}`}>
                 <p className={`text-sm font-semibold ${dashboardTheme.cardTitle}`}>Admin User</p>
                 <p className={`text-xs ${dashboardTheme.cardMuted}`}>Librarian</p>
               </div>
