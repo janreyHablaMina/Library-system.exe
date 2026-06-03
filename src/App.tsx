@@ -574,11 +574,11 @@ const greetingName = formatDisplayName(activeUsername)
         main: 'bg-[#181818] text-[#cccccc]',
         frame: 'border-[#2b2b2b] bg-[#181818]',
         aside: 'border-[#27272A] bg-[#18181B] relative overflow-hidden shadow-[4px_0_24px_-12px_rgba(0,0,0,0.5)] z-20',
-        asideTitle: 'text-[#F4F4F5]',
-        asideSub: 'text-[#A1A1AA]',
-        asideHover: 'hover:bg-gradient-to-r hover:from-[#27272A]/80 hover:to-transparent hover:text-[#F4F4F5] hover:translate-x-1',
+        asideTitle: 'text-white',
+        asideSub: 'text-[#D4D4D8]',
+        asideHover: 'hover:bg-gradient-to-r hover:from-[#27272A]/80 hover:to-transparent hover:text-white hover:translate-x-1',
         asideActive: 'bg-gradient-to-r from-emerald-500/15 to-transparent border-l-[3px] border-[#10B981] text-[#34D399] drop-shadow-[0_2px_4px_rgba(16,185,129,0.2)]',
-        asideIdle: 'border-l-[3px] border-transparent text-[#A1A1AA]',
+        asideIdle: 'border-l-[3px] border-transparent text-[#D4D4D8]',
         profileCard: 'backdrop-blur-xl bg-[#27272A]/40 border border-[#3F3F46]/50 shadow-lg',
         avatarBg: 'bg-[#27272A] border-[#3F3F46]/50',
         rowBorder: 'border-[#27272A]',
@@ -605,11 +605,11 @@ const greetingName = formatDisplayName(activeUsername)
         main: 'bg-white text-slate-800',
         frame: 'border-slate-200 bg-white',
         aside: 'border-[#27272A] bg-[#18181B] relative overflow-hidden shadow-[4px_0_24px_-12px_rgba(0,0,0,0.5)] z-20',
-        asideTitle: 'text-[#F4F4F5]',
-        asideSub: 'text-[#A1A1AA]',
-        asideHover: 'hover:bg-gradient-to-r hover:from-[#27272A]/80 hover:to-transparent hover:text-[#F4F4F5] hover:translate-x-1',
+        asideTitle: 'text-white',
+        asideSub: 'text-[#D4D4D8]',
+        asideHover: 'hover:bg-gradient-to-r hover:from-[#27272A]/80 hover:to-transparent hover:text-white hover:translate-x-1',
         asideActive: 'bg-gradient-to-r from-emerald-500/15 to-transparent border-l-[3px] border-[#10B981] text-[#34D399] drop-shadow-[0_2px_4px_rgba(16,185,129,0.2)]',
-        asideIdle: 'border-l-[3px] border-transparent text-[#A1A1AA]',
+        asideIdle: 'border-l-[3px] border-transparent text-[#D4D4D8]',
         profileCard: 'backdrop-blur-xl bg-[#27272A]/40 border border-[#3F3F46]/50 shadow-lg',
         avatarBg: 'bg-[#27272A] border-[#3F3F46]/50',
         rowBorder: 'border-[#27272A]',
@@ -669,7 +669,7 @@ const greetingName = formatDisplayName(activeUsername)
                             : `${dashboardTheme.asideIdle} ${dashboardTheme.asideHover}`
                         }`}
                       >
-                        <DashIcon size={18} className={activePage === navItems[0].id ? '' : 'opacity-80'} />
+                        <DashIcon size={18} className="" />
                         {!sidebarCollapsed ? <span className="flex-1 text-left font-semibold">{navItems[0].label}</span> : null}
                       </button>
                      )
@@ -693,9 +693,9 @@ const greetingName = formatDisplayName(activeUsername)
                             : `${dashboardTheme.asideIdle} ${dashboardTheme.asideHover}`
                         }`}
                       >
-                        <item.icon size={18} className={activePage === item.id ? '' : 'opacity-80'} />
+                        <item.icon size={18} className="" />
                         {!sidebarCollapsed ? <span className="flex-1 text-left font-semibold">{item.label}</span> : null}
-                        {!sidebarCollapsed ? <ChevronRight size={14} className={`transition-transform duration-300 ${activePage === item.id ? 'rotate-90' : 'opacity-50'}`} /> : null}
+                        {!sidebarCollapsed ? <ChevronRight size={14} className={`transition-transform duration-300 ${activePage === item.id ? 'rotate-90' : 'opacity-70'}`} /> : null}
                       </button>
                     ))}
                   </div>
@@ -718,9 +718,9 @@ const greetingName = formatDisplayName(activeUsername)
                             : `${dashboardTheme.asideIdle} ${dashboardTheme.asideHover}`
                         }`}
                       >
-                        <item.icon size={18} className={activePage === item.id ? '' : 'opacity-80'} />
+                        <item.icon size={18} className="" />
                         {!sidebarCollapsed ? <span className="flex-1 text-left font-semibold">{item.label}</span> : null}
-                        {!sidebarCollapsed ? <ChevronRight size={14} className={`transition-transform duration-300 ${activePage === item.id ? 'rotate-90' : 'opacity-50'}`} /> : null}
+                        {!sidebarCollapsed ? <ChevronRight size={14} className={`transition-transform duration-300 ${activePage === item.id ? 'rotate-90' : 'opacity-70'}`} /> : null}
                       </button>
                     ))}
                   </div>
@@ -743,9 +743,9 @@ const greetingName = formatDisplayName(activeUsername)
                             : `${dashboardTheme.asideIdle} ${dashboardTheme.asideHover}`
                         }`}
                       >
-                        <item.icon size={18} className={activePage === item.id ? '' : 'opacity-80'} />
+                        <item.icon size={18} className="" />
                         {!sidebarCollapsed ? <span className="flex-1 text-left font-semibold">{item.label}</span> : null}
-                        {!sidebarCollapsed ? <ChevronRight size={14} className={`transition-transform duration-300 ${activePage === item.id ? 'rotate-90' : 'opacity-50'}`} /> : null}
+                        {!sidebarCollapsed ? <ChevronRight size={14} className={`transition-transform duration-300 ${activePage === item.id ? 'rotate-90' : 'opacity-70'}`} /> : null}
                       </button>
                     ))}
                   </div>
@@ -766,7 +766,7 @@ const greetingName = formatDisplayName(activeUsername)
                           : `${dashboardTheme.asideIdle} ${dashboardTheme.asideHover}`
                       }`}
                     >
-                      <Settings2 size={18} className={activePage === 'Settings' ? '' : 'opacity-80'} />
+                      <Settings2 size={18} className="" />
                       <span className="flex-1 text-left font-semibold">{!sidebarCollapsed ? 'Settings' : ''}</span>
                     </button>
                   </div>
