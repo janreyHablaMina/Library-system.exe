@@ -601,7 +601,7 @@ const greetingName = formatDisplayName(activeUsername)
     : {
         main: 'bg-white text-slate-800',
         frame: 'border-slate-200 bg-white',
-        aside: 'border-[#E5E7EB] bg-[#FAFBFC]',
+        aside: 'border-[#E5E7EB] bg-white',
         asideTitle: 'text-[#111827]',
         asideSub: 'text-[#6B7280]',
         asideHover: 'hover:bg-[#F3F4F6] hover:text-[#111827]',
