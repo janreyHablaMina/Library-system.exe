@@ -1269,11 +1269,6 @@ const greetingName = formatDisplayName(activeUsername)
                   <p className="text-sm font-semibold text-slate-600">Total Books</p>
                 </div>
                 <p className="text-3xl font-extrabold text-slate-900">{dashboardStats.totalBooks.toLocaleString('en-US')}</p>
-                <p className="mt-1 text-sm font-semibold text-emerald-600">↑ 12 this month</p>
-                <svg viewBox="0 0 100 16" aria-hidden="true" className="mt-3 -mx-4 h-5 w-[calc(100%+2rem)]">
-                  <path d="M0 10 L12 11 L22 8 L32 9 L42 7 L52 10 L62 8 L72 9 L82 6 L100 5" fill="none" stroke="#2563eb" strokeOpacity="0.22" strokeWidth="4.2" strokeLinecap="round" />
-                  <path d="M0 10 L12 11 L22 8 L32 9 L42 7 L52 10 L62 8 L72 9 L82 6 L100 5" fill="none" stroke="#2563eb" strokeWidth="1.8" strokeLinecap="round" />
-                </svg>
               </article>
               <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-2 flex items-center gap-3">
@@ -1281,11 +1276,6 @@ const greetingName = formatDisplayName(activeUsername)
                   <p className="text-sm font-semibold text-slate-600">Available Books</p>
                 </div>
                 <p className="text-3xl font-extrabold text-slate-900">{dashboardStats.availableBooks.toLocaleString('en-US')}</p>
-                <p className="mt-1 text-sm font-semibold text-emerald-600">↑ 18 this month</p>
-                <svg viewBox="0 0 100 16" aria-hidden="true" className="mt-3 -mx-4 h-5 w-[calc(100%+2rem)]">
-                  <path d="M0 9 L12 8 L22 10 L32 7 L42 9 L52 6 L62 8 L72 5 L82 7 L100 4" fill="none" stroke="#22c55e" strokeOpacity="0.22" strokeWidth="4.2" strokeLinecap="round" />
-                  <path d="M0 9 L12 8 L22 10 L32 7 L42 9 L52 6 L62 8 L72 5 L82 7 L100 4" fill="none" stroke="#22c55e" strokeWidth="1.8" strokeLinecap="round" />
-                </svg>
               </article>
               <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-2 flex items-center gap-3">
@@ -1293,11 +1283,6 @@ const greetingName = formatDisplayName(activeUsername)
                   <p className="text-sm font-semibold text-slate-600">Borrowed Books</p>
                 </div>
                 <p className="text-3xl font-extrabold text-slate-900">{dashboardStats.borrowedBooks.toLocaleString('en-US')}</p>
-                <p className="mt-1 text-sm font-semibold text-amber-500">+ 8 this month</p>
-                <svg viewBox="0 0 100 16" aria-hidden="true" className="mt-3 -mx-4 h-5 w-[calc(100%+2rem)]">
-                  <path d="M0 10 L12 9 L22 11 L32 8 L42 10 L52 7 L62 9 L72 8 L82 6 L100 7" fill="none" stroke="#f59e0b" strokeOpacity="0.22" strokeWidth="4.2" strokeLinecap="round" />
-                  <path d="M0 10 L12 9 L22 11 L32 8 L42 10 L52 7 L62 9 L72 8 L82 6 L100 7" fill="none" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" />
-                </svg>
               </article>
               <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-2 flex items-center gap-3">
@@ -1305,11 +1290,6 @@ const greetingName = formatDisplayName(activeUsername)
                   <p className="text-sm font-semibold text-slate-600">Overdue Books</p>
                 </div>
                 <p className="text-3xl font-extrabold text-slate-900">{dashboardStats.overdueBooks.toLocaleString('en-US')}</p>
-                <p className="mt-1 text-sm font-semibold text-rose-500">+ 5 from yesterday</p>
-                <svg viewBox="0 0 100 16" aria-hidden="true" className="mt-3 -mx-4 h-5 w-[calc(100%+2rem)]">
-                  <path d="M0 11 L12 8 L22 10 L32 6 L42 9 L52 7 L62 10 L72 6 L82 8 L100 7" fill="none" stroke="#ef4444" strokeOpacity="0.22" strokeWidth="4.2" strokeLinecap="round" />
-                  <path d="M0 11 L12 8 L22 10 L32 6 L42 9 L52 7 L62 10 L72 6 L82 8 L100 7" fill="none" stroke="#ef4444" strokeWidth="1.8" strokeLinecap="round" />
-                </svg>
               </article>
               <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-2 flex items-center gap-3">
@@ -1317,11 +1297,6 @@ const greetingName = formatDisplayName(activeUsername)
                   <p className="text-sm font-semibold text-slate-600">Total Members</p>
                 </div>
                 <p className="text-3xl font-extrabold text-slate-900">{dashboardStats.totalMembers.toLocaleString('en-US')}</p>
-                <p className="mt-1 text-sm font-semibold text-emerald-600">↑ 25 this month</p>
-                <svg viewBox="0 0 100 16" aria-hidden="true" className="mt-3 -mx-4 h-5 w-[calc(100%+2rem)]">
-                  <path d="M0 10 L12 7 L22 9 L32 6 L42 8 L52 7 L62 9 L72 6 L82 8 L100 5" fill="none" stroke="#8b5cf6" strokeOpacity="0.22" strokeWidth="4.2" strokeLinecap="round" />
-                  <path d="M0 10 L12 7 L22 9 L32 6 L42 8 L52 7 L62 9 L72 6 L82 8 L100 5" fill="none" stroke="#8b5cf6" strokeWidth="1.8" strokeLinecap="round" />
-                </svg>
               </article>
               <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-2 flex items-center gap-3">
@@ -1329,11 +1304,6 @@ const greetingName = formatDisplayName(activeUsername)
                   <p className="text-sm font-semibold text-slate-600">Total Authors</p>
                 </div>
                 <p className="text-3xl font-extrabold text-slate-900">{dashboardStats.totalAuthors.toLocaleString('en-US')}</p>
-                <p className="mt-1 text-sm font-semibold text-emerald-600">↑ 12 this month</p>
-                <svg viewBox="0 0 100 16" aria-hidden="true" className="mt-3 -mx-4 h-5 w-[calc(100%+2rem)]">
-                  <path d="M0 11 L12 9 L22 10 L32 8 L42 9 L52 7 L62 8 L72 6 L82 7 L100 5" fill="none" stroke="#14b8a6" strokeOpacity="0.22" strokeWidth="4.2" strokeLinecap="round" />
-                  <path d="M0 11 L12 9 L22 10 L32 8 L42 9 L52 7 L62 8 L72 6 L82 7 L100 5" fill="none" stroke="#14b8a6" strokeWidth="1.8" strokeLinecap="round" />
-                </svg>
               </article>
               </div>
             </section>
