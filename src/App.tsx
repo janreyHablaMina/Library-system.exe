@@ -660,13 +660,13 @@ const greetingName = formatDisplayName(activeUsername)
                 <div className={`flex items-center gap-3 rounded-lg p-2 ${dashboardTheme.profileCard}`}>
                   <div className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border text-xs font-bold ${dashboardTheme.avatarBg}`}>AU</div>
                   <div className="flex flex-col">
-                    <p className={`text-xs font-semibold ${dashboardTheme.cardTitle}`}>Admin User</p>
-                    <p className={`text-[10px] ${dashboardTheme.cardMuted}`}>Librarian</p>
+                    <p className="text-xs font-semibold text-white">Admin User</p>
+                    <p className="text-[10px] text-[#A1A1AA]">Librarian</p>
                   </div>
                 </div>
-                <div className={`flex items-center gap-2 rounded-md border px-3 py-1.5 ${dashboardTheme.search} border-opacity-20`}>
+                <div className="flex items-center gap-2 rounded-md border border-[#3F3F46] bg-[#27272A] px-3 py-1.5">
                   <Search size={14} className="text-[#A1A1AA]" />
-                  <input type="text" placeholder="Quick search..." className={`w-full bg-transparent text-xs outline-none placeholder:text-[#A1A1AA] ${dashboardTheme.searchInput}`} />
+                  <input type="text" placeholder="Quick search..." className="w-full bg-transparent text-xs text-white outline-none placeholder:text-[#A1A1AA]" />
                 </div>
               </div>
             ) : null}
@@ -695,8 +695,8 @@ const greetingName = formatDisplayName(activeUsername)
                 </div>
 
                 {/* LIBRARY Section */}
-                <div>
-                  {!sidebarCollapsed ? <div className="mb-2 px-3 flex items-center gap-2"><div className="h-[1px] flex-1 bg-slate-700/50"></div><span className="text-[9px] font-bold uppercase tracking-wider text-[#A1A1AA]">Library</span><div className="h-[1px] flex-1 bg-slate-700/50"></div></div> : null}
+                <div className="pt-2">
+                  {!sidebarCollapsed ? <div className="mb-1.5 px-3"><span className="text-[10px] font-bold uppercase tracking-wider text-[#71717A]">Library</span></div> : null}
                   <div className="space-y-0.5">
                     {navItems.slice(1, 5).map((item) => (
                       <button
@@ -719,8 +719,8 @@ const greetingName = formatDisplayName(activeUsername)
                 </div>
 
                 {/* CIRCULATION Section */}
-                <div>
-                  {!sidebarCollapsed ? <div className="mb-2 px-3 flex items-center gap-2"><div className="h-[1px] flex-1 bg-slate-700/50"></div><span className="text-[9px] font-bold uppercase tracking-wider text-[#A1A1AA]">Circulation</span><div className="h-[1px] flex-1 bg-slate-700/50"></div></div> : null}
+                <div className="pt-2">
+                  {!sidebarCollapsed ? <div className="mb-1.5 px-3"><span className="text-[10px] font-bold uppercase tracking-wider text-[#71717A]">Circulation</span></div> : null}
                   <div className="space-y-0.5">
                     {navItems.slice(5, 7).map((item) => (
                       <button
@@ -743,8 +743,8 @@ const greetingName = formatDisplayName(activeUsername)
                 </div>
 
                 {/* MANAGEMENT Section */}
-                <div>
-                  {!sidebarCollapsed ? <div className="mb-2 px-3 flex items-center gap-2"><div className="h-[1px] flex-1 bg-slate-700/50"></div><span className="text-[9px] font-bold uppercase tracking-wider text-[#A1A1AA]">Management</span><div className="h-[1px] flex-1 bg-slate-700/50"></div></div> : null}
+                <div className="pt-2">
+                  {!sidebarCollapsed ? <div className="mb-1.5 px-3"><span className="text-[10px] font-bold uppercase tracking-wider text-[#71717A]">Management</span></div> : null}
                   <div className="space-y-0.5">
                     {navItems.slice(7, 9).map((item) => (
                       <button
