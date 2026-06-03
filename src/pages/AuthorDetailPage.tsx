@@ -176,7 +176,7 @@ export function AuthorDetailPage({ isDarkMode, onBack, authorId }: Props) {
   }
 
   const cardClass = isDarkMode
-    ? 'rounded-2xl border border-zinc-800 bg-[#0f172a]/80'
+    ? 'rounded-2xl border border-zinc-800 bg-[#18181B]/80'
     : 'rounded-2xl border border-zinc-200 bg-white'
 
   return (
@@ -462,7 +462,7 @@ function BookActionsMenu({ isDarkMode, onViewDetails, onEdit, onDelete, onArchiv
   }
 
   const surface = isDarkMode
-    ? 'bg-[#0f172a] border-zinc-700 shadow-[0_8px_32px_rgba(0,0,0,0.6)]'
+    ? 'bg-[#18181B] border-zinc-700 shadow-[0_8px_32px_rgba(0,0,0,0.6)]'
     : 'bg-white border-zinc-200 shadow-[0_8px_32px_rgba(0,0,0,0.12)]'
 
   const itemBase =

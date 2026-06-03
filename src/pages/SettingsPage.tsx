@@ -130,7 +130,7 @@ function UserRowActionsMenu({
   }
 
   const surface = isDarkMode
-    ? 'bg-[#0f172a] border-zinc-700 text-zinc-200 shadow-[0_8px_32px_rgba(0,0,0,0.6)]'
+    ? 'bg-[#18181B] border-zinc-700 text-zinc-200 shadow-[0_8px_32px_rgba(0,0,0,0.6)]'
     : 'bg-white border-zinc-200 text-zinc-700 shadow-[0_8px_32px_rgba(0,0,0,0.12)]'
 
   const item = `flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium ${

@@ -273,7 +273,7 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
   }
 
   const cardClass = isDarkMode
-    ? 'rounded-2xl border border-zinc-800 bg-[#0f172a]/80'
+    ? 'rounded-2xl border border-zinc-800 bg-[#18181B]/80'
     : 'rounded-2xl border border-zinc-200 bg-white'
 
   return (

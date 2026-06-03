@@ -164,7 +164,7 @@ function TransactionActionsMenu({
   }
 
   const surface = isDarkMode
-    ? 'bg-[#0f172a] border-zinc-700 shadow-[0_8px_32px_rgba(0,0,0,0.6)] text-zinc-200'
+    ? 'bg-[#18181B] border-zinc-700 shadow-[0_8px_32px_rgba(0,0,0,0.6)] text-zinc-200'
     : 'bg-white border-zinc-200 shadow-[0_8px_32px_rgba(0,0,0,0.12)] text-zinc-700'
 
   const itemBase =

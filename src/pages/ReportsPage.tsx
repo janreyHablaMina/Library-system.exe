@@ -284,7 +284,7 @@ export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMember
             <div className="h-[240px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={computed.activityData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? '#1e293b' : '#f1f5f9'} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? '#27272A' : '#f1f5f9'} />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: isDarkMode ? '#64748b' : '#94a3b8' }} />
                   <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: isDarkMode ? '#64748b' : '#94a3b8' }} />
                   <Tooltip />

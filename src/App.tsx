@@ -639,7 +639,7 @@ const greetingName = formatDisplayName(activeUsername)
         <aside className={`hidden h-full shrink-0 border-r transition-all duration-200 lg:flex lg:flex-col ${dashboardTheme.aside} ${sidebarCollapsed ? 'w-20' : 'w-64'}`}>
           {/* Subtle glow for dark mode */}
           {isDarkMode && (
-            <div className="pointer-events-none absolute left-0 top-0 h-96 w-full bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-emerald-500/10 via-[#0F172A]/5 to-transparent" />
+            <div className="pointer-events-none absolute left-0 top-0 h-96 w-full bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-emerald-500/10 via-[#18181B]/5 to-transparent" />
           )}
           <div className={`relative z-10 flex flex-col gap-6 px-4 pt-12 pb-6`}>
             <div className="flex items-center gap-3">
