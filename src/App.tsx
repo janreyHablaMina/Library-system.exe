@@ -450,8 +450,8 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
           const row = byTitle.get(key) ?? { title: book.title, coverData: book.coverData ?? fallbackCover, available: 0, total: 0 }
           if (!row.coverData && book.coverData) row.coverData = book.coverData
           if (!row.coverData && fallbackCover) row.coverData = fallbackCover
-          row.total += 1
-          if (book.available) row.available += 1
+          row.total += book.totalCopies
+          row.available += book.available
           byTitle.set(key, row)
         }
         setLowStockItems(
