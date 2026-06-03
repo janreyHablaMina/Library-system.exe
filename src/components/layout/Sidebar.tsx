@@ -36,7 +36,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             className={`group flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200 ${
               activePage === 'Dashboard'
                 ? 'bg-emerald-600/20 text-emerald-400 shadow-[inset_0_0_12px_rgba(16,185,129,0.1)]'
-                : 'text-slate-400 hover:bg-slate-800/50 hover:text-emerald-300'
+                : 'text-zinc-400 hover:bg-zinc-800/50 hover:text-emerald-300'
             }`}
           >
             {React.createElement(navItems[0].icon, { 
@@ -55,7 +55,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           { label: 'Management', range: [7, 9] },
         ].map((section) => (
           <div key={section.label} className="mt-6 px-4">
-            {!sidebarCollapsed && <p className="px-4 text-[11px] font-bold uppercase tracking-[2px] text-slate-500">{section.label}</p>}
+            {!sidebarCollapsed && <p className="px-4 text-[11px] font-bold uppercase tracking-[2px] text-zinc-500">{section.label}</p>}
             <div className="mt-4 space-y-1">
               {navItems.slice(section.range[0], section.range[1]).map((item) => (
                 <button
@@ -64,7 +64,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   className={`group flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200 ${
                     activePage === item.id
                       ? 'bg-emerald-600/20 text-emerald-400 shadow-[inset_0_0_12px_rgba(16,185,129,0.1)]'
-                      : 'text-slate-400 hover:bg-slate-800/50 hover:text-emerald-300'
+                      : 'text-zinc-400 hover:bg-zinc-800/50 hover:text-emerald-300'
                   }`}
                 >
                   <item.icon size={20} className={activePage === item.id ? 'text-emerald-400' : ''} />
@@ -80,7 +80,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* System */}
         <div className="mt-6 px-4 pb-4">
-          {!sidebarCollapsed && <p className="px-4 text-[11px] font-bold uppercase tracking-[2px] text-slate-500">System</p>}
+          {!sidebarCollapsed && <p className="px-4 text-[11px] font-bold uppercase tracking-[2px] text-zinc-500">System</p>}
           <div className="mt-4 space-y-1">
             <button
               onClick={() => {
@@ -90,7 +90,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               className={`group flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200 ${
                 activePage === 'Settings'
                   ? 'bg-emerald-600/20 text-emerald-400 shadow-[inset_0_0_12px_rgba(16,185,129,0.1)]'
-                  : 'text-slate-400 hover:bg-slate-800/50 hover:text-emerald-300'
+                  : 'text-zinc-400 hover:bg-zinc-800/50 hover:text-emerald-300'
               }`}
             >
               <Settings2 size={20} className={activePage === 'Settings' ? 'text-emerald-400' : ''} />

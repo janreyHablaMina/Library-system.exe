@@ -164,13 +164,13 @@ function TransactionActionsMenu({
   }
 
   const surface = isDarkMode
-    ? 'bg-[#0f172a] border-slate-700 shadow-[0_8px_32px_rgba(0,0,0,0.6)] text-slate-200'
-    : 'bg-white border-slate-200 shadow-[0_8px_32px_rgba(0,0,0,0.12)] text-slate-700'
+    ? 'bg-[#0f172a] border-zinc-700 shadow-[0_8px_32px_rgba(0,0,0,0.6)] text-zinc-200'
+    : 'bg-white border-zinc-200 shadow-[0_8px_32px_rgba(0,0,0,0.12)] text-zinc-700'
 
   const itemBase =
     'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-100 text-left'
-  const itemNormal = isDarkMode ? 'text-slate-200 hover:bg-slate-800' : 'text-slate-700 hover:bg-slate-50'
-  const divider = isDarkMode ? 'border-slate-700/60' : 'border-slate-100'
+  const itemNormal = isDarkMode ? 'text-zinc-200 hover:bg-zinc-800' : 'text-zinc-700 hover:bg-zinc-50'
+  const divider = isDarkMode ? 'border-zinc-700/60' : 'border-zinc-100'
 
   return (
     <div ref={ref} className="relative inline-block" onClick={(e) => e.stopPropagation()}>
@@ -180,11 +180,11 @@ function TransactionActionsMenu({
         className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border transition-all duration-150 ${
           open
             ? isDarkMode
-              ? 'border-slate-500 bg-slate-700 text-slate-100'
+              ? 'border-zinc-500 bg-zinc-700 text-zinc-100'
               : 'border-emerald-300 bg-emerald-50 text-emerald-700 shadow-md shadow-emerald-500/5'
             : isDarkMode
-              ? 'border-slate-700 text-slate-300 hover:bg-slate-800'
-              : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+              ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'
+              : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'
         }`}
       >
         <MoreHorizontal size={14} />
@@ -260,7 +260,7 @@ function TransactionActionsMenu({
               onPrintReceipt()
             }}
           >
-            <Printer size={15} className="shrink-0 text-slate-400" />
+            <Printer size={15} className="shrink-0 text-zinc-400" />
             Print Receipt
           </button>
         </div>
@@ -369,45 +369,45 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
   const paginatedTransactions = filteredTransactions.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   return (
-    <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
+    <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[transparent] text-zinc-100' : 'bg-[#f8fafc] text-zinc-900'}`}>
       <section className="p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-2">
-            <button type="button" onClick={onBack} className={`grid h-8 w-8 place-items-center rounded-md ${isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-100'}`}>
+            <button type="button" onClick={onBack} className={`grid h-8 w-8 place-items-center rounded-md ${isDarkMode ? 'text-zinc-300 hover:bg-zinc-800' : 'text-zinc-600 hover:bg-zinc-100'}`}>
               <ArrowLeft size={16} />
             </button>
-            <nav aria-label="Breadcrumb" className={`text-sm font-semibold ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-              <button type="button" onClick={onBack} className={`transition-colors hover:underline ${isDarkMode ? 'hover:text-slate-200' : 'hover:text-slate-700'}`}>
+            <nav aria-label="Breadcrumb" className={`text-sm font-semibold ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
+              <button type="button" onClick={onBack} className={`transition-colors hover:underline ${isDarkMode ? 'hover:text-zinc-200' : 'hover:text-zinc-700'}`}>
                 Borrow / Return
               </button>
               <span className="mx-1">/</span>
-              <span className={isDarkMode ? 'text-slate-300' : 'text-slate-700'}>All Transactions</span>
+              <span className={isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}>All Transactions</span>
             </nav>
           </div>
-          <button type="button" className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
+          <button type="button" className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-semibold ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
             <Download size={15} />
             Export
           </button>
         </div>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <article className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+          <article className={`rounded-xl border p-4 ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
             <div className="flex items-center gap-4">
               <span className={`grid h-11 w-11 place-items-center rounded-full ${isDarkMode ? 'bg-blue-500/15 text-blue-300' : 'bg-blue-50 text-blue-600'}`}><ClipboardList size={18} /></span>
               <div>
-                <p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Total Transactions</p>
-                <p className={`text-4xl font-black leading-tight ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{counts.all}</p>
-                <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Live from database</p>
+                <p className={`text-sm font-semibold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>Total Transactions</p>
+                <p className={`text-4xl font-black leading-tight ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{counts.all}</p>
+                <p className={`text-sm ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Live from database</p>
               </div>
             </div>
           </article>
-          <article className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}><div className="flex items-center gap-4"><span className={`grid h-11 w-11 place-items-center rounded-full ${isDarkMode ? 'bg-emerald-500/15 text-emerald-300' : 'bg-emerald-50 text-emerald-600'}`}><ArrowDownToLine size={18} /></span><div><p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Borrowed</p><p className={`text-4xl font-black leading-tight ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{counts.borrowed}</p><p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{counts.all ? ((counts.borrowed / counts.all) * 100).toFixed(2) : '0.00'}%</p></div></div></article>
-          <article className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}><div className="flex items-center gap-4"><span className={`grid h-11 w-11 place-items-center rounded-full ${isDarkMode ? 'bg-blue-500/15 text-blue-300' : 'bg-blue-50 text-blue-600'}`}><ArrowUpFromLine size={18} /></span><div><p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Returned</p><p className={`text-4xl font-black leading-tight ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{counts.returned}</p><p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{counts.all ? ((counts.returned / counts.all) * 100).toFixed(2) : '0.00'}%</p></div></div></article>
-          <article className={`rounded-xl border p-4 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}><div className="flex items-center gap-4"><span className={`grid h-11 w-11 place-items-center rounded-full ${isDarkMode ? 'bg-rose-500/15 text-rose-300' : 'bg-rose-50 text-rose-600'}`}><AlertTriangle size={18} /></span><div><p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Overdue</p><p className={`text-4xl font-black leading-tight ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{counts.overdue}</p><p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{counts.all ? ((counts.overdue / counts.all) * 100).toFixed(2) : '0.00'}%</p></div></div></article>
+          <article className={`rounded-xl border p-4 ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}><div className="flex items-center gap-4"><span className={`grid h-11 w-11 place-items-center rounded-full ${isDarkMode ? 'bg-emerald-500/15 text-emerald-300' : 'bg-emerald-50 text-emerald-600'}`}><ArrowDownToLine size={18} /></span><div><p className={`text-sm font-semibold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>Borrowed</p><p className={`text-4xl font-black leading-tight ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{counts.borrowed}</p><p className={`text-sm ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{counts.all ? ((counts.borrowed / counts.all) * 100).toFixed(2) : '0.00'}%</p></div></div></article>
+          <article className={`rounded-xl border p-4 ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}><div className="flex items-center gap-4"><span className={`grid h-11 w-11 place-items-center rounded-full ${isDarkMode ? 'bg-blue-500/15 text-blue-300' : 'bg-blue-50 text-blue-600'}`}><ArrowUpFromLine size={18} /></span><div><p className={`text-sm font-semibold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>Returned</p><p className={`text-4xl font-black leading-tight ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{counts.returned}</p><p className={`text-sm ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{counts.all ? ((counts.returned / counts.all) * 100).toFixed(2) : '0.00'}%</p></div></div></article>
+          <article className={`rounded-xl border p-4 ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}><div className="flex items-center gap-4"><span className={`grid h-11 w-11 place-items-center rounded-full ${isDarkMode ? 'bg-rose-500/15 text-rose-300' : 'bg-rose-50 text-rose-600'}`}><AlertTriangle size={18} /></span><div><p className={`text-sm font-semibold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>Overdue</p><p className={`text-4xl font-black leading-tight ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{counts.overdue}</p><p className={`text-sm ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{counts.all ? ((counts.overdue / counts.all) * 100).toFixed(2) : '0.00'}%</p></div></div></article>
         </div>
 
-        <div className={`mt-4 overflow-x-auto rounded-xl border ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
-          <div className={`flex min-w-[760px] items-center gap-2 px-3 py-3 ${isDarkMode ? 'bg-[#0b1738]' : 'bg-white'}`}>
+        <div className={`mt-4 overflow-x-auto rounded-xl border ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
+          <div className={`flex min-w-[760px] items-center gap-2 px-3 py-3 ${isDarkMode ? 'bg-[#18181B]' : 'bg-white'}`}>
             {[
               { key: 'all', label: 'All Transactions', value: counts.all },
               { key: 'borrowed', label: 'Borrowed', value: counts.borrowed },
@@ -422,12 +422,12 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
                   activeTab === chip.key
                     ? 'border border-emerald-600 bg-emerald-600 text-white'
                     : isDarkMode
-                      ? 'border border-slate-700 bg-[#0f1f49] text-slate-300 hover:bg-slate-800'
-                      : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                      ? 'border border-zinc-700 bg-[#27272A] text-zinc-300 hover:bg-zinc-800'
+                      : 'border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50'
                 }`}
               >
                 {chip.label}
-                <span className={`rounded-full px-2 py-0.5 text-xs ${activeTab === chip.key ? 'bg-emerald-500 text-white' : isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
+                <span className={`rounded-full px-2 py-0.5 text-xs ${activeTab === chip.key ? 'bg-emerald-500 text-white' : isDarkMode ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-100 text-zinc-600'}`}>
                   {chip.value}
                 </span>
               </button>
@@ -435,23 +435,23 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
           </div>
         </div>
 
-        <div className={`mt-4 lg:overflow-visible overflow-hidden rounded-xl border ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
-          <div className={`flex flex-wrap items-center gap-3 border-b p-3 rounded-t-xl ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
-            <label className={`group flex h-11 min-w-[280px] flex-1 items-center rounded-xl border px-3 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
-              <Search size={16} className={`mr-2 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
-              <input placeholder="Search by member name, book title or copy ID..." className={`w-full bg-transparent text-sm outline-none ${isDarkMode ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400'}`} />
+        <div className={`mt-4 lg:overflow-visible overflow-hidden rounded-xl border ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
+          <div className={`flex flex-wrap items-center gap-3 border-b p-3 rounded-t-xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
+            <label className={`group flex h-11 min-w-[280px] flex-1 items-center rounded-xl border px-3 ${isDarkMode ? 'border-zinc-700' : 'border-zinc-200'}`}>
+              <Search size={16} className={`mr-2 ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`} />
+              <input placeholder="Search by member name, book title or copy ID..." className={`w-full bg-transparent text-sm outline-none ${isDarkMode ? 'text-zinc-200 placeholder:text-zinc-500' : 'text-zinc-700 placeholder:text-zinc-400'}`} />
             </label>
             
             
-            <button type="button" onClick={() => void loadTransactions()} className={`inline-flex h-11 items-center gap-2 rounded-xl border px-4 text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
+            <button type="button" onClick={() => void loadTransactions()} className={`inline-flex h-11 items-center gap-2 rounded-xl border px-4 text-sm font-semibold ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
               <RotateCcw size={15} />
               Reset
             </button>
           </div>
 
-          <div className={`relative z-10 ${isDarkMode ? 'overflow-x-auto lg:overflow-visible bg-[#0b1738]' : 'overflow-x-auto lg:overflow-visible bg-white'}`}>
+          <div className={`relative z-10 ${isDarkMode ? 'overflow-x-auto lg:overflow-visible bg-[#18181B]' : 'overflow-x-auto lg:overflow-visible bg-white'}`}>
             <table className="w-full min-w-[800px] text-left text-sm">
-              <thead className={isDarkMode ? 'bg-[#0f1f49] text-slate-300' : 'bg-slate-50 text-slate-600'}>
+              <thead className={isDarkMode ? 'bg-[#27272A] text-zinc-300' : 'bg-zinc-50 text-zinc-600'}>
                 <tr>
                   <th className="px-3 py-3 font-semibold">Member</th>
                   <th className="px-3 py-3 font-semibold">Book</th>
@@ -463,10 +463,10 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
               </thead>
               <tbody>
                 {paginatedTransactions.map((row) => (
-                  <tr key={row.id} onClick={() => onOpenTransactionDetail(row.id)} className={`border-t cursor-pointer transition-colors ${isDarkMode ? 'border-slate-700 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}>
+                  <tr key={row.id} onClick={() => onOpenTransactionDetail(row.id)} className={`border-t cursor-pointer transition-colors ${isDarkMode ? 'border-zinc-700 hover:bg-[#3F3F46]' : 'border-zinc-100 hover:bg-zinc-50'}`}>
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-2">
-                        <span className={`grid h-9 w-9 place-items-center overflow-hidden rounded-full text-base ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                        <span className={`grid h-9 w-9 place-items-center overflow-hidden rounded-full text-base ${isDarkMode ? 'bg-zinc-800' : 'bg-zinc-100'}`}>
                           {row.memberPhotoData ? (
                             <img src={row.memberPhotoData} alt={`${row.member} avatar`} className="h-full w-full object-cover" />
                           ) : (
@@ -474,14 +474,14 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
                           )}
                         </span>
                         <div>
-                          <p className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{row.member}</p>
-                          <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{row.memberId}</p>
+                          <p className={`font-semibold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{row.member}</p>
+                          <p className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{row.memberId}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-3 py-3"><p className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{row.book}</p><p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{row.author}</p></td>
-                    <td className={`px-3 py-3 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{row.borrowDate}</td>
-                    <td className={`px-3 py-3 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{row.dueDate}</td>
+                    <td className="px-3 py-3"><p className={`font-semibold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{row.book}</p><p className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{row.author}</p></td>
+                    <td className={`px-3 py-3 ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>{row.borrowDate}</td>
+                    <td className={`px-3 py-3 ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>{row.dueDate}</td>
                     <td className="px-3 py-3"><span className={`rounded-md px-2 py-1 text-xs font-semibold ${getStatusClass(row.status)}`}>{row.status}</span></td>
                     <td className="px-3 py-3 text-right">
                       <TransactionActionsMenu
@@ -499,7 +499,7 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
                 ))}
                 {!loading && filteredTransactions.length === 0 && (
                   <tr>
-                    <td colSpan={6} className={`px-4 py-8 text-center text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                    <td colSpan={6} className={`px-4 py-8 text-center text-sm ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
                       No transactions found.
                     </td>
                   </tr>
@@ -508,25 +508,25 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
             </table>
           </div>
 
-          <div className={`flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm rounded-b-xl ${isDarkMode ? 'border-slate-700 text-slate-300' : 'border-slate-200 text-slate-600'}`}>
+          <div className={`flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm rounded-b-xl ${isDarkMode ? 'border-zinc-700 text-zinc-300' : 'border-zinc-200 text-zinc-600'}`}>
             <p>Showing {filteredTransactions.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to {Math.min(currentPage * itemsPerPage, filteredTransactions.length)} of {filteredTransactions.length} transactions</p>
             <div className="flex items-center gap-2">
-              <select value={itemsPerPage} onChange={(e) => setItemsPerPage(Number(e.target.value))} className={`h-9 rounded-lg border px-3 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
+              <select value={itemsPerPage} onChange={(e) => setItemsPerPage(Number(e.target.value))} className={`h-9 rounded-lg border px-3 text-sm outline-none ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'}`}>
                 <option value={10}>10 per page</option>
                 <option value={20}>20 per page</option>
                 <option value={50}>50 per page</option>
               </select>
-              <button type="button" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className={`grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 hover:bg-slate-800 disabled:opacity-50' : 'border-slate-200 hover:bg-slate-50 disabled:opacity-50'}`}>{'<'}</button>
+              <button type="button" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className={`grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800 disabled:opacity-50' : 'border-zinc-200 hover:bg-zinc-50 disabled:opacity-50'}`}>{'<'}</button>
               
               <div className="flex items-center gap-1">
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                  <button key={page} type="button" onClick={() => setCurrentPage(page)} className={page === currentPage ? "grid h-9 w-9 place-items-center rounded-lg bg-emerald-50 font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" : `grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}>
+                  <button key={page} type="button" onClick={() => setCurrentPage(page)} className={page === currentPage ? "grid h-9 w-9 place-items-center rounded-lg bg-emerald-50 font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" : `grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800' : 'border-zinc-200 hover:bg-zinc-50'}`}>
                     {page}
                   </button>
                 ))}
               </div>
 
-              <button type="button" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0} className={`grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 hover:bg-slate-800 disabled:opacity-50' : 'border-slate-200 hover:bg-slate-50 disabled:opacity-50'}`}>{'>'}</button>
+              <button type="button" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0} className={`grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800 disabled:opacity-50' : 'border-zinc-200 hover:bg-zinc-50 disabled:opacity-50'}`}>{'>'}</button>
             </div>
           </div>
         </div>

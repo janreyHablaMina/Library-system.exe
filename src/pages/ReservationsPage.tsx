@@ -173,14 +173,14 @@ function ReservationActionsMenu({ isDarkMode, onViewDetails, onEdit, onComplete,
   }
 
   const surface = isDarkMode
-    ? 'bg-[#0f172a] border-slate-700 shadow-[0_8px_32px_rgba(0,0,0,0.6)] text-slate-200'
-    : 'bg-white border-slate-200 shadow-[0_8px_32px_rgba(0,0,0,0.12)] text-slate-700'
+    ? 'bg-[#0f172a] border-zinc-700 shadow-[0_8px_32px_rgba(0,0,0,0.6)] text-zinc-200'
+    : 'bg-white border-zinc-200 shadow-[0_8px_32px_rgba(0,0,0,0.12)] text-zinc-700'
 
   const itemBase =
     'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-100 text-left'
   const itemNormal = isDarkMode
-    ? 'text-slate-200 hover:bg-slate-800'
-    : 'text-slate-700 hover:bg-slate-50'
+    ? 'text-zinc-200 hover:bg-zinc-800'
+    : 'text-zinc-700 hover:bg-zinc-50'
   const itemDanger = isDarkMode
     ? 'text-rose-400 hover:bg-rose-500/10'
     : 'text-rose-600 hover:bg-rose-50'
@@ -193,11 +193,11 @@ function ReservationActionsMenu({ isDarkMode, onViewDetails, onEdit, onComplete,
         className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border transition-colors duration-150 ${
           open
             ? isDarkMode
-              ? 'border-slate-500 bg-slate-700 text-slate-100'
+              ? 'border-zinc-500 bg-zinc-700 text-zinc-100'
               : 'border-emerald-300 bg-emerald-50 text-emerald-700'
             : isDarkMode
-              ? 'border-slate-700 text-slate-300 hover:bg-slate-800'
-              : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+              ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'
+              : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'
         }`}
       >
         <MoreHorizontal size={16} />
@@ -299,9 +299,9 @@ function ReservationDetailsViewNew({ reservation, isDarkMode, onBack, onCheckOut
     }
   }
 
-  const sectionSurface = isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'
-  const sectionBorder = isDarkMode ? 'border-slate-700' : 'border-slate-100'
-  const primaryText = isDarkMode ? 'text-slate-100' : 'text-slate-900'
+  const sectionSurface = isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'
+  const sectionBorder = isDarkMode ? 'border-zinc-700' : 'border-zinc-100'
+  const primaryText = isDarkMode ? 'text-zinc-100' : 'text-zinc-900'
 
   return (
     <section className="mx-auto w-full max-w-[1400px] px-2 pt-6 pb-6">
@@ -312,14 +312,14 @@ function ReservationDetailsViewNew({ reservation, isDarkMode, onBack, onCheckOut
             type="button"
             onClick={onBack}
             className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl border transition-colors ${
-              isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+              isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'
             }`}
           >
             <ArrowLeft size={18} />
           </button>
           <div>
-            <h2 className={`text-2xl font-bold tracking-tight ${isDarkMode ? 'text-slate-100' : 'text-[#0a1b4f]'}`}>Reservation Details</h2>
-            <div className="mt-0.5 flex items-center gap-1.5 text-xs font-semibold text-slate-400">
+            <h2 className={`text-2xl font-bold tracking-tight ${isDarkMode ? 'text-zinc-100' : 'text-[#0a1b4f]'}`}>Reservation Details</h2>
+            <div className="mt-0.5 flex items-center gap-1.5 text-xs font-semibold text-zinc-400">
               <button type="button" className="hover:underline" onClick={onBack}>Reservations</button>
               <ChevronRight size={12} />
               <span>{reservation.id}</span>
@@ -345,11 +345,11 @@ function ReservationDetailsViewNew({ reservation, isDarkMode, onBack, onCheckOut
           <div className={`hidden h-10 w-px lg:block ${sectionBorder}`} />
           
           <div className="flex items-start gap-3">
-             <Calendar size={18} className="mt-0.5 shrink-0 text-slate-400" />
+             <Calendar size={18} className="mt-0.5 shrink-0 text-zinc-400" />
              <div>
-                <p className="text-[11px] font-bold text-slate-400">Reserved On</p>
+                <p className="text-[11px] font-bold text-zinc-400">Reserved On</p>
                 <p className={`mt-0.5 text-sm font-bold ${primaryText}`}>{reservation.reservedOn}</p>
-                <p className="text-xs font-semibold text-slate-500">{reservation.reservedTime}</p>
+                <p className="text-xs font-semibold text-zinc-500">{reservation.reservedTime}</p>
              </div>
           </div>
           
@@ -358,9 +358,9 @@ function ReservationDetailsViewNew({ reservation, isDarkMode, onBack, onCheckOut
           <div className="flex items-start gap-3">
              <Calendar size={18} className="mt-0.5 shrink-0 text-amber-500" />
              <div>
-                <p className="text-[11px] font-bold text-slate-400">Expires On</p>
+                <p className="text-[11px] font-bold text-zinc-400">Expires On</p>
                 <p className={`mt-0.5 text-sm font-bold ${primaryText}`}>{reservation.expiresOn}</p>
-                <p className="text-xs font-semibold text-slate-500">{reservation.expiresTime}</p>
+                <p className="text-xs font-semibold text-zinc-500">{reservation.expiresTime}</p>
              </div>
           </div>
 
@@ -369,7 +369,7 @@ function ReservationDetailsViewNew({ reservation, isDarkMode, onBack, onCheckOut
           <div className="flex items-start gap-3">
              <MapPin size={18} className="mt-0.5 shrink-0 text-emerald-500" />
              <div>
-                <p className="text-[11px] font-bold text-slate-400">Pickup Branch</p>
+                <p className="text-[11px] font-bold text-zinc-400">Pickup Branch</p>
                 <p className={`mt-0.5 text-sm font-bold ${primaryText}`}>{reservation.pickupBranch}</p>
              </div>
           </div>
@@ -396,23 +396,23 @@ function ReservationDetailsViewNew({ reservation, isDarkMode, onBack, onCheckOut
               
               <div className="mt-6 space-y-3 text-sm">
                 <div className="flex justify-between pb-1">
-                  <span className="font-medium text-slate-500">Category</span>
+                  <span className="font-medium text-zinc-500">Category</span>
                   <span className={`font-semibold ${primaryText}`}>Fiction</span>
                 </div>
                 <div className="flex justify-between pb-1">
-                  <span className="font-medium text-slate-500">ISBN</span>
+                  <span className="font-medium text-zinc-500">ISBN</span>
                   <span className={`font-semibold ${primaryText}`}>978-0061122415</span>
                 </div>
                 <div className="flex justify-between pb-1">
-                  <span className="font-medium text-slate-500">Available Copies</span>
+                  <span className="font-medium text-zinc-500">Available Copies</span>
                   <span className={`font-bold text-emerald-600`}>1 copy</span>
                 </div>
                 <div className="flex justify-between pb-1">
-                  <span className="font-medium text-slate-500">Total Copies</span>
+                  <span className="font-medium text-zinc-500">Total Copies</span>
                   <span className={`font-semibold ${primaryText}`}>4 copies</span>
                 </div>
                 <div className="flex justify-between pb-1">
-                  <span className="font-medium text-slate-500">Reservations / Queue</span>
+                  <span className="font-medium text-zinc-500">Reservations / Queue</span>
                   <span className={`font-semibold ${primaryText}`}>2 people</span>
                 </div>
               </div>
@@ -433,7 +433,7 @@ function ReservationDetailsViewNew({ reservation, isDarkMode, onBack, onCheckOut
             <img
               src={member.profilePhotoData || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80"}
               alt={member.name}
-              className={`h-24 w-24 rounded-full border-4 object-cover shadow-sm ${isDarkMode ? 'border-slate-800' : 'border-white'}`}
+              className={`h-24 w-24 rounded-full border-4 object-cover shadow-sm ${isDarkMode ? 'border-zinc-800' : 'border-white'}`}
             />
             <div>
               <h4 className={`text-xl font-bold leading-tight ${primaryText}`}>{member.name}</h4>
@@ -445,22 +445,22 @@ function ReservationDetailsViewNew({ reservation, isDarkMode, onBack, onCheckOut
 
           <div className="mt-8 space-y-4 text-sm">
             <div className="flex justify-between">
-              <span className="font-medium text-slate-500">Member ID</span>
+              <span className="font-medium text-zinc-500">Member ID</span>
               <span className={`font-semibold ${primaryText}`}>{member.id}</span>
             </div>
             <div className="flex justify-between">
-              <span className="font-medium text-slate-500">Member since</span>
+              <span className="font-medium text-zinc-500">Member since</span>
               <span className={`font-semibold ${primaryText}`}>Jan 15, 2023</span>
             </div>
           </div>
 
           <div className={`mt-6 space-y-3 border-t pt-5 ${sectionBorder}`}>
-            <div className={`flex items-center gap-3 text-sm font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-              <Smartphone size={16} className="text-slate-400" />
+            <div className={`flex items-center gap-3 text-sm font-semibold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>
+              <Smartphone size={16} className="text-zinc-400" />
               <span>0917 123 4567</span>
             </div>
-            <div className={`flex items-center gap-3 text-sm font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-              <Mail size={16} className="text-slate-400" />
+            <div className={`flex items-center gap-3 text-sm font-semibold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>
+              <Mail size={16} className="text-zinc-400" />
               <span>{member.name.toLowerCase().replace(' ', '.')}@example.com</span>
             </div>
           </div>
@@ -931,17 +931,17 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
   }
 
   return (
-    <div className={`min-h-0 flex-1 overflow-auto ${isAddModalOpen || activeViewReservationId ? 'px-4 pt-4 pb-0' : 'p-4'} ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
+    <div className={`min-h-0 flex-1 overflow-auto ${isAddModalOpen || activeViewReservationId ? 'px-4 pt-4 pb-0' : 'p-4'} ${isDarkMode ? 'bg-[transparent] text-zinc-100' : 'bg-[#f8fafc] text-zinc-900'}`}>
       {reservationToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
-          <div className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/60 p-4 backdrop-blur-sm">
+          <div className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
             <div className="flex items-start gap-4">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-rose-500/10 text-rose-500">
                 <AlertTriangle size={24} />
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-bold leading-6">Delete Reservation</h3>
-                <p className={`mt-2 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                <p className={`mt-2 text-sm ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
                   Are you sure you want to delete <span className="font-semibold text-rose-500">"{reservationToDelete.id}"</span>? This action cannot be undone.
                 </p>
               </div>
@@ -951,7 +951,7 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                 type="button"
                 onClick={() => setReservationToDelete(null)}
                 className={`rounded-xl border px-4 py-2 text-sm font-semibold ${
-                  isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'
+                  isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'
                 }`}
               >
                 Cancel
@@ -986,11 +986,11 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
         <section className="p-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <h2 className={`text-4xl font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Reservations</h2>
-              <p className={`mt-1 text-base font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>View and manage all book reservations.</p>
+              <h2 className={`text-4xl font-black ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Reservations</h2>
+              <p className={`mt-1 text-base font-medium ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>View and manage all book reservations.</p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <button type="button" className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-bold transition-all ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
+              <button type="button" className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-bold transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
                 <Download size={16} />
                 Export
               </button>
@@ -1005,17 +1005,17 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
             {stats.map((stat) => {
               const Icon = stat.icon
               return (
-                <article key={stat.label} className={`rounded-xl border p-5 transition-all duration-200 hover:-translate-y-0.5 ${isDarkMode ? 'border-slate-700 bg-[#0b1738] hover:border-emerald-500/60 hover:shadow-[0_12px_24px_-16px_rgba(16,185,129,0.45)]' : 'border-slate-200 bg-white hover:border-emerald-200 hover:shadow-[0_12px_24px_-16px_rgba(15,23,42,0.35)]'}`}>
+                <article key={stat.label} className={`rounded-xl border p-5 transition-all duration-200 hover:-tranzinc-y-0.5 ${isDarkMode ? 'border-zinc-700 bg-[#18181B] hover:border-emerald-500/60 hover:shadow-[0_12px_24px_-16px_rgba(16,185,129,0.45)]' : 'border-zinc-200 bg-white hover:border-emerald-200 hover:shadow-[0_12px_24px_-16px_rgba(15,23,42,0.35)]'}`}>
                   <div className="flex items-center gap-4">
                     <div className={`grid h-12 w-12 place-items-center rounded-2xl ${stat.bg} ${stat.color}`}>
                       <Icon size={22} />
                     </div>
                     <div className="flex flex-col">
-                      <p className={`text-xs font-bold text-slate-500 dark:text-slate-400`}>{stat.label}</p>
-                      <p className={`text-2xl font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{stat.value}</p>
+                      <p className={`text-xs font-bold text-zinc-500 dark:text-zinc-400`}>{stat.label}</p>
+                      <p className={`text-2xl font-black ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{stat.value}</p>
                     </div>
                   </div>
-                  <p className={`mt-3 text-[11px] font-bold ${stat.color === 'text-rose-600' || stat.color === 'text-violet-600' ? 'text-slate-500 dark:text-slate-400' : stat.color}`}>
+                  <p className={`mt-3 text-[11px] font-bold ${stat.color === 'text-rose-600' || stat.color === 'text-violet-600' ? 'text-zinc-500 dark:text-zinc-400' : stat.color}`}>
                     {stat.subValue}
                   </p>
                 </article>
@@ -1023,26 +1023,26 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
             })}
           </section>
 
-          <div className={`mt-5 overflow-hidden lg:overflow-visible rounded-xl border ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
-            <div className={`flex flex-wrap items-center gap-3 border-b p-3 rounded-t-xl ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
-              <label className={`group flex h-12 min-w-[320px] flex-1 items-center rounded-xl border px-3 transition-all ${isDarkMode ? 'border-slate-700 focus-within:border-emerald-500 bg-[#0f1f49]' : 'border-slate-200 focus-within:border-emerald-500 bg-slate-50'}`}>
-                <Search size={18} className={`mr-2 transition-colors ${isDarkMode ? 'text-slate-500 group-focus-within:text-emerald-400' : 'text-slate-400 group-focus-within:text-emerald-600'}`} />
+          <div className={`mt-5 overflow-hidden lg:overflow-visible rounded-xl border ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
+            <div className={`flex flex-wrap items-center gap-3 border-b p-3 rounded-t-xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
+              <label className={`group flex h-12 min-w-[320px] flex-1 items-center rounded-xl border px-3 transition-all ${isDarkMode ? 'border-zinc-700 focus-within:border-emerald-500 bg-[#27272A]' : 'border-zinc-200 focus-within:border-emerald-500 bg-zinc-50'}`}>
+                <Search size={18} className={`mr-2 transition-colors ${isDarkMode ? 'text-zinc-500 group-focus-within:text-emerald-400' : 'text-zinc-400 group-focus-within:text-emerald-600'}`} />
                 <input
                   value={reservationSearch}
                   onChange={(event) => setReservationSearch(event.target.value)}
-                  className={`w-full bg-transparent text-sm font-medium outline-none ${isDarkMode ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400'}`}
+                  className={`w-full bg-transparent text-sm font-medium outline-none ${isDarkMode ? 'text-zinc-200 placeholder:text-zinc-500' : 'text-zinc-700 placeholder:text-zinc-400'}`}
                   placeholder="Search by book title, member name..."
                 />
               </label>
               
               <div className="flex flex-wrap items-center gap-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-slate-500">Status</span>
+                  <span className="text-xs font-bold text-zinc-500">Status</span>
                   <div className="relative">
                     <select
                       value={statusFilter}
                       onChange={(event) => setStatusFilter(event.target.value as 'All' | ReservationStatus)}
-                      className={`h-11 min-w-[120px] appearance-none rounded-xl border py-2 pl-4 pr-10 text-xs font-bold outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}
+                      className={`h-11 min-w-[120px] appearance-none rounded-xl border py-2 pl-4 pr-10 text-xs font-bold outline-none ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'}`}
                     >
                       <option value="All">All</option>
                       <option value="Reserved">Reserved</option>
@@ -1050,7 +1050,7 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                       <option value="Expired">Expired</option>
                       <option value="Cancelled">Cancelled</option>
                     </select>
-                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -tranzinc-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
                   </div>
                 </div>
 
@@ -1063,7 +1063,7 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                     setStatusFilter('All')
                     setBranchFilter('All Branches')
                   }}
-                  className={`inline-flex h-11 items-center gap-2 rounded-xl border px-4 text-xs font-bold transition-all ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-white'}`}
+                  className={`inline-flex h-11 items-center gap-2 rounded-xl border px-4 text-xs font-bold transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-white'}`}
                 >
                   <Filter size={16} />
                   Reset
@@ -1071,14 +1071,14 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
               </div>
             </div>
             {actionError ? (
-              <div className={`border-b px-4 py-2 text-xs font-semibold ${isDarkMode ? 'border-slate-700 bg-rose-500/10 text-rose-300' : 'border-slate-200 bg-rose-50 text-rose-600'}`}>
+              <div className={`border-b px-4 py-2 text-xs font-semibold ${isDarkMode ? 'border-zinc-700 bg-rose-500/10 text-rose-300' : 'border-zinc-200 bg-rose-50 text-rose-600'}`}>
                 {actionError}
               </div>
             ) : null}
 
             <div className="overflow-x-auto lg:overflow-visible relative z-10">
               <table className="w-full text-left text-sm border-collapse">
-                <thead className={isDarkMode ? 'bg-[#0f1f49]/50 text-slate-400' : 'bg-slate-50/50 text-slate-500'}>
+                <thead className={isDarkMode ? 'bg-[#27272A]/50 text-zinc-400' : 'bg-zinc-50/50 text-zinc-500'}>
                   <tr>
                     <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">ID</th>
                     <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Book Details</th>
@@ -1092,13 +1092,13 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                 </thead>
                 <tbody>
                   {paginatedReservations.map((res) => (
-                    <tr key={res.id} onClick={() => setActiveViewReservationId(res.id)} className={`cursor-pointer border-t transition-colors duration-150 ${isDarkMode ? 'border-slate-800 hover:bg-slate-800/30' : 'border-slate-100 hover:bg-slate-50'}`}>
+                    <tr key={res.id} onClick={() => setActiveViewReservationId(res.id)} className={`cursor-pointer border-t transition-colors duration-150 ${isDarkMode ? 'border-zinc-800 hover:bg-zinc-800/30' : 'border-zinc-100 hover:bg-zinc-50'}`}>
                       <td className="px-6 py-4">
-                        <span className={`text-xs font-bold ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{res.id}</span>
+                        <span className={`text-xs font-bold ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{res.id}</span>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <span className={`grid h-12 w-9 place-items-center overflow-hidden rounded border bg-slate-100 text-base dark:border-slate-700 dark:bg-slate-800`}>
+                          <span className={`grid h-12 w-9 place-items-center overflow-hidden rounded border bg-zinc-100 text-base dark:border-zinc-700 dark:bg-zinc-800`}>
                             {res.book.coverUrl ? (
                               <img src={res.book.coverUrl} alt={`${res.book.title} cover`} className="h-full w-full object-cover" />
                             ) : (
@@ -1106,14 +1106,14 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                             )}
                           </span>
                           <div>
-                            <p className={`font-semibold text-sm ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{res.book.title}</p>
-                            <p className={`text-[11px] font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{res.book.author}</p>
+                            <p className={`font-semibold text-sm ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{res.book.title}</p>
+                            <p className={`text-[11px] font-medium ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{res.book.author}</p>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <span className={`grid h-9 w-9 place-items-center overflow-hidden rounded-full text-xs font-bold ${isDarkMode ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-700'}`}>
+                          <span className={`grid h-9 w-9 place-items-center overflow-hidden rounded-full text-xs font-bold ${isDarkMode ? 'bg-zinc-800 text-zinc-200' : 'bg-zinc-100 text-zinc-700'}`}>
                             {res.member.profilePhotoData ? (
                               <img src={res.member.profilePhotoData} alt={`${res.member.name} profile`} className="h-full w-full object-cover" />
                             ) : (
@@ -1121,15 +1121,15 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                             )}
                           </span>
                           <div>
-                            <p className={`font-semibold text-sm ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{res.member.name}</p>
-                            <p className={`text-[11px] font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{res.member.id}</p>
+                            <p className={`font-semibold text-sm ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{res.member.name}</p>
+                            <p className={`text-[11px] font-medium ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{res.member.id}</p>
                           </div>
                         </div>
                       </td>
-                      <td className={`px-6 py-4 text-xs font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{res.pickupBranch}</td>
+                      <td className={`px-6 py-4 text-xs font-medium ${isDarkMode ? 'text-zinc-300' : 'text-zinc-600'}`}>{res.pickupBranch}</td>
                       <td className="px-6 py-4">
-                        <p className={`text-[11px] font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{res.reservedOn}</p>
-                        <p className={`text-[10px] font-medium ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{res.reservedTime}</p>
+                        <p className={`text-[11px] font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>{res.reservedOn}</p>
+                        <p className={`text-[10px] font-medium ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>{res.reservedTime}</p>
                       </td>
                       <td className="px-6 py-4">
                         <span className={`rounded-md px-3 py-1 text-[11px] font-semibold tracking-wide ${getStatusStyle(res.status)}`}>
@@ -1137,8 +1137,8 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <p className={`text-[11px] font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{res.expiresOn}</p>
-                        <p className={`text-[10px] font-medium ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{res.expiresTime}</p>
+                        <p className={`text-[11px] font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>{res.expiresOn}</p>
+                        <p className={`text-[10px] font-medium ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>{res.expiresTime}</p>
                       </td>
                       <td className="px-6 py-4 text-center">
                         <ReservationActionsMenu
@@ -1154,7 +1154,7 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                   ))}
                   {filteredReservations.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className={`px-6 py-12 text-center text-sm font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                      <td colSpan={8} className={`px-6 py-12 text-center text-sm font-medium ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
                         No reservations match your current filters.
                       </td>
                     </tr>
@@ -1163,25 +1163,25 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
               </table>
             </div>
 
-            <div className={`relative z-0 flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm rounded-b-xl ${isDarkMode ? 'border-slate-700 bg-[#0b1738] text-slate-300' : 'border-slate-200 bg-white text-slate-600'}`}>
+            <div className={`relative z-0 flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm rounded-b-xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B] text-zinc-300' : 'border-zinc-200 bg-white text-zinc-600'}`}>
             <p>Showing {filteredReservations.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to {Math.min(currentPage * itemsPerPage, filteredReservations.length)} of {filteredReservations.length} reservations</p>
             <div className="flex items-center gap-2">
-              <select value={itemsPerPage} onChange={(e) => setItemsPerPage(Number(e.target.value))} className={`h-9 rounded-lg border px-3 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
+              <select value={itemsPerPage} onChange={(e) => setItemsPerPage(Number(e.target.value))} className={`h-9 rounded-lg border px-3 text-sm outline-none ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'}`}>
                 <option value={10}>10 per page</option>
                 <option value={20}>20 per page</option>
                 <option value={50}>50 per page</option>
               </select>
-              <button type="button" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className={`grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 hover:bg-slate-800 disabled:opacity-50' : 'border-slate-200 hover:bg-slate-50 disabled:opacity-50'}`}>{'<'}</button>
+              <button type="button" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className={`grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800 disabled:opacity-50' : 'border-zinc-200 hover:bg-zinc-50 disabled:opacity-50'}`}>{'<'}</button>
               
               <div className="flex items-center gap-1">
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                  <button key={page} type="button" onClick={() => setCurrentPage(page)} className={page === currentPage ? "grid h-9 w-9 place-items-center rounded-lg bg-emerald-50 font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" : `grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}>
+                  <button key={page} type="button" onClick={() => setCurrentPage(page)} className={page === currentPage ? "grid h-9 w-9 place-items-center rounded-lg bg-emerald-50 font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" : `grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800' : 'border-zinc-200 hover:bg-zinc-50'}`}>
                     {page}
                   </button>
                 ))}
               </div>
 
-              <button type="button" onClick={() => setCurrentPage(p => Math.min(totalPages, p - -1))} disabled={currentPage === totalPages || totalPages === 0} className={`grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 hover:bg-slate-800 disabled:opacity-50' : 'border-slate-200 hover:bg-slate-50 disabled:opacity-50'}`}>{'>'}</button>
+              <button type="button" onClick={() => setCurrentPage(p => Math.min(totalPages, p - -1))} disabled={currentPage === totalPages || totalPages === 0} className={`grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800 disabled:opacity-50' : 'border-zinc-200 hover:bg-zinc-50 disabled:opacity-50'}`}>{'>'}</button>
             </div>
           </div>
           </div>
@@ -1194,14 +1194,14 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
               type="button"
               onClick={() => { setIsAddModalOpen(false); setEditingReservation(null) }}
               className={`grid h-10 w-10 place-items-center rounded-xl border transition-all ${
-                isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'
               }`}
             >
               <ArrowLeft size={18} />
             </button>
             <div>
-              <h2 className={`text-xl font-bold tracking-tight ${isDarkMode ? 'text-slate-100' : 'text-[#0a1b4f]'}`}>{editingReservation ? 'Edit Reservation' : 'Add New Reservation'}</h2>
-              <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'} mt-0.5`}>{editingReservation ? `Update reservation ${editingReservation.id}` : 'Create a reservation for a book'}</p>
+              <h2 className={`text-xl font-bold tracking-tight ${isDarkMode ? 'text-zinc-100' : 'text-[#0a1b4f]'}`}>{editingReservation ? 'Edit Reservation' : 'Add New Reservation'}</h2>
+              <p className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} mt-0.5`}>{editingReservation ? `Update reservation ${editingReservation.id}` : 'Create a reservation for a book'}</p>
             </div>
           </div>
 
@@ -1209,23 +1209,23 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
             {/* 60 / 40 Responsive Desktop Grid */}
             <div className="grid gap-6 xl:grid-cols-[3fr_2fr]">
               <div className="space-y-4">
-                <article className={`rounded-2xl border p-5 sm:p-6 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+                <article className={`rounded-2xl border p-5 sm:p-6 ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
                   
                   {/* 1. Select Book */}
                   <div className="relative space-y-2" ref={bookDropdownRef}>
-                    <h3 className={`text-base font-bold ${isDarkMode ? 'text-slate-100' : 'text-[#0a1b4f]'}`}>1. Select Book</h3>
-                    <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'} mt-0.5`}>Search and select a book to reserve.</p>
+                    <h3 className={`text-base font-bold ${isDarkMode ? 'text-zinc-100' : 'text-[#0a1b4f]'}`}>1. Select Book</h3>
+                    <p className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} mt-0.5`}>Search and select a book to reserve.</p>
                     
                     <div className="mt-3.5">
                       <label className={`group flex h-11 items-center rounded-xl border px-3 transition-all ${
                         selectedBook 
                           ? (isDarkMode ? 'border-emerald-500/60 bg-emerald-950/20' : 'border-emerald-500 bg-emerald-50/50')
-                          : (isDarkMode ? 'border-slate-700 focus-within:border-emerald-500 bg-[#0f1f49]/30' : 'border-slate-200 focus-within:border-emerald-500 bg-white')
+                          : (isDarkMode ? 'border-zinc-700 focus-within:border-emerald-500 bg-[#27272A]/30' : 'border-zinc-200 focus-within:border-emerald-500 bg-white')
                       }`}>
                         {selectedBook ? (
                           <Check size={16} className="mr-2 text-emerald-500 animate-[scaleIn_0.2s_ease-out]" />
                         ) : (
-                          <Search size={16} className={`mr-2 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+                          <Search size={16} className={`mr-2 ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`} />
                         )}
                         <input
                           value={selectedBook ? selectedBook.title : bookSearchQuery}
@@ -1238,19 +1238,19 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                           }}
                           onFocus={() => setShowBookDropdown(true)}
                           placeholder="Search by title, author, or ISBN..."
-                          className={`w-full bg-transparent text-xs outline-none ${selectedBook ? 'font-semibold text-emerald-600 dark:text-emerald-400' : (isDarkMode ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400')}`}
+                          className={`w-full bg-transparent text-xs outline-none ${selectedBook ? 'font-semibold text-emerald-600 dark:text-emerald-400' : (isDarkMode ? 'text-zinc-200 placeholder:text-zinc-500' : 'text-zinc-700 placeholder:text-zinc-400')}`}
                         />
                         {selectedBook && (
                           <span className="mr-2 shrink-0 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 animate-[fadeIn_0.15s_ease-out]">
                             Selected
                           </span>
                         )}
-                        <ChevronDown size={16} className={selectedBook ? 'text-emerald-500' : (isDarkMode ? 'text-slate-400' : 'text-slate-500')} />
+                        <ChevronDown size={16} className={selectedBook ? 'text-emerald-500' : (isDarkMode ? 'text-zinc-400' : 'text-zinc-500')} />
                       </label>
                     </div>
 
                     {showBookDropdown && (
-                      <div className={`absolute left-0 right-0 z-50 mt-1 max-h-60 overflow-y-auto rounded-xl border p-1.5 shadow-xl ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
+                      <div className={`absolute left-0 right-0 z-50 mt-1 max-h-60 overflow-y-auto rounded-xl border p-1.5 shadow-xl ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'}`}>
                         {filteredBooksList.length > 0 ? (
                           filteredBooksList.map((b) => (
                             <button
@@ -1261,41 +1261,41 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                                 setShowBookDropdown(false)
                                 setBookSearchQuery('')
                               }}
-                              className={`flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left text-xs font-semibold transition-colors ${isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50'}`}
+                              className={`flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left text-xs font-semibold transition-colors ${isDarkMode ? 'hover:bg-zinc-800' : 'hover:bg-zinc-50'}`}
                             >
                               <img src={b.coverUrl} alt={b.title} className="w-8 h-11 rounded object-cover border shrink-0" />
                               <div className="flex-1">
-                                <p className={isDarkMode ? 'text-slate-100' : 'text-slate-900'}>{b.title}</p>
-                                <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{b.author} • {b.isbn}</p>
+                                <p className={isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}>{b.title}</p>
+                                <p className={`text-[10px] ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{b.author} • {b.isbn}</p>
                               </div>
                             </button>
                           ))
                         ) : (
-                          <p className={`p-3 text-center text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>No books found</p>
+                          <p className={`p-3 text-center text-xs ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>No books found</p>
                         )}
                       </div>
                     )}
 
                     {selectedBook && (
-                      <div className={`relative rounded-xl border p-3 animate-[fadeIn_0.15s_ease-out] ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-slate-50/40'}`}>
+                      <div className={`relative rounded-xl border p-3 animate-[fadeIn_0.15s_ease-out] ${isDarkMode ? 'border-zinc-700 bg-[#27272A]' : 'border-zinc-200 bg-zinc-50/40'}`}>
                         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                           <div className="flex items-center gap-3">
-                            <img src={selectedBook.coverUrl} alt={selectedBook.title} className="w-11 h-16 rounded object-cover border border-slate-200 dark:border-slate-800 shrink-0" />
+                            <img src={selectedBook.coverUrl} alt={selectedBook.title} className="w-11 h-16 rounded object-cover border border-zinc-200 dark:border-zinc-800 shrink-0" />
                             <div>
-                              <p className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{selectedBook.title}</p>
-                              <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Author: {selectedBook.author}</p>
-                              <p className={`mt-1 text-xs ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>ISBN: {selectedBook.isbn} • Copy ID: {selectedBook.copyId}</p>
+                              <p className={`font-semibold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{selectedBook.title}</p>
+                              <p className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Author: {selectedBook.author}</p>
+                              <p className={`mt-1 text-xs ${isDarkMode ? 'text-zinc-300' : 'text-zinc-600'}`}>ISBN: {selectedBook.isbn} • Copy ID: {selectedBook.copyId}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-4 md:gap-6">
                             <div className="text-right text-xs">
-                              <p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Available Copies</p>
-                              <p className={`text-xl font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>{selectedBook.availableCopies}</p>
+                              <p className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}>Available Copies</p>
+                              <p className={`text-xl font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-800'}`}>{selectedBook.availableCopies}</p>
                             </div>
                             <button
                               type="button"
                               onClick={() => setSelectedBook(null)}
-                              className={`grid h-8 w-8 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-slate-200' : 'border-slate-200 text-slate-500 hover:bg-slate-100 hover:text-slate-700'}`}
+                              className={`grid h-8 w-8 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200' : 'border-zinc-200 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700'}`}
                             >
                               <X size={14} />
                             </button>
@@ -1305,23 +1305,23 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                     )}
                   </div>
 
-                  <hr className={`my-5 border-t ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`} />
+                  <hr className={`my-5 border-t ${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'}`} />
 
                   {/* 2. Select Member */}
                   <div className="relative space-y-2" ref={memberDropdownRef}>
-                    <h3 className={`text-base font-bold ${isDarkMode ? 'text-slate-100' : 'text-[#0a1b4f]'}`}>2. Select Member</h3>
-                    <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'} mt-0.5`}>Search and select a member.</p>
+                    <h3 className={`text-base font-bold ${isDarkMode ? 'text-zinc-100' : 'text-[#0a1b4f]'}`}>2. Select Member</h3>
+                    <p className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} mt-0.5`}>Search and select a member.</p>
                     
                     <div className="mt-3.5">
                       <label className={`group flex h-11 items-center rounded-xl border px-3 transition-all ${
                         selectedMember 
                           ? (isDarkMode ? 'border-emerald-500/60 bg-emerald-950/20' : 'border-emerald-500 bg-emerald-50/50')
-                          : (isDarkMode ? 'border-slate-700 focus-within:border-emerald-500 bg-[#0f1f49]/30' : 'border-slate-200 focus-within:border-emerald-500 bg-white')
+                          : (isDarkMode ? 'border-zinc-700 focus-within:border-emerald-500 bg-[#27272A]/30' : 'border-zinc-200 focus-within:border-emerald-500 bg-white')
                       }`}>
                         {selectedMember ? (
                           <Check size={16} className="mr-2 text-emerald-500 animate-[scaleIn_0.2s_ease-out]" />
                         ) : (
-                          <Search size={16} className={`mr-2 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+                          <Search size={16} className={`mr-2 ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`} />
                         )}
                         <input
                           value={selectedMember ? selectedMember.name : memberSearchQuery}
@@ -1334,19 +1334,19 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                           }}
                           onFocus={() => setShowMemberDropdown(true)}
                           placeholder="Search by name or member ID..."
-                          className={`w-full bg-transparent text-xs outline-none ${selectedMember ? 'font-semibold text-emerald-600 dark:text-emerald-400' : (isDarkMode ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400')}`}
+                          className={`w-full bg-transparent text-xs outline-none ${selectedMember ? 'font-semibold text-emerald-600 dark:text-emerald-400' : (isDarkMode ? 'text-zinc-200 placeholder:text-zinc-500' : 'text-zinc-700 placeholder:text-zinc-400')}`}
                         />
                         {selectedMember && (
                           <span className="mr-2 shrink-0 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 animate-[fadeIn_0.15s_ease-out]">
                             Selected
                           </span>
                         )}
-                        <ChevronDown size={16} className={selectedMember ? 'text-emerald-500' : (isDarkMode ? 'text-slate-400' : 'text-slate-500')} />
+                        <ChevronDown size={16} className={selectedMember ? 'text-emerald-500' : (isDarkMode ? 'text-zinc-400' : 'text-zinc-500')} />
                       </label>
                     </div>
 
                     {showMemberDropdown && (
-                      <div className={`absolute left-0 right-0 z-50 mt-1 max-h-60 overflow-y-auto rounded-xl border p-1.5 shadow-xl ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
+                      <div className={`absolute left-0 right-0 z-50 mt-1 max-h-60 overflow-y-auto rounded-xl border p-1.5 shadow-xl ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'}`}>
                         {filteredMembersList.length > 0 ? (
                           filteredMembersList.map((m) => (
                             <button
@@ -1357,9 +1357,9 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                                 setShowMemberDropdown(false)
                                 setMemberSearchQuery('')
                               }}
-                              className={`flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left text-xs font-semibold transition-colors ${isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50'}`}
+                              className={`flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left text-xs font-semibold transition-colors ${isDarkMode ? 'hover:bg-zinc-800' : 'hover:bg-zinc-50'}`}
                             >
-                              <span className={`grid h-8 w-8 place-items-center overflow-hidden rounded-full text-[11px] font-bold ${isDarkMode ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-700'}`}>
+                              <span className={`grid h-8 w-8 place-items-center overflow-hidden rounded-full text-[11px] font-bold ${isDarkMode ? 'bg-zinc-800 text-zinc-200' : 'bg-zinc-100 text-zinc-700'}`}>
                                 {m.profilePhotoData ? (
                                   <img src={m.profilePhotoData} alt={`${m.name} profile`} className="h-full w-full object-cover" />
                                 ) : (
@@ -1367,22 +1367,22 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                                 )}
                               </span>
                               <div className="flex-1">
-                                <p className={isDarkMode ? 'text-slate-100' : 'text-slate-900'}>{m.name}</p>
-                                <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{m.memberId} • {m.type}</p>
+                                <p className={isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}>{m.name}</p>
+                                <p className={`text-[10px] ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{m.memberId} • {m.type}</p>
                               </div>
                             </button>
                           ))
                         ) : (
-                          <p className={`p-3 text-center text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>No members found</p>
+                          <p className={`p-3 text-center text-xs ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>No members found</p>
                         )}
                       </div>
                     )}
 
                     {selectedMember && (
-                      <div className={`relative rounded-xl border p-3 animate-[fadeIn_0.15s_ease-out] ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-slate-50/40'}`}>
+                      <div className={`relative rounded-xl border p-3 animate-[fadeIn_0.15s_ease-out] ${isDarkMode ? 'border-zinc-700 bg-[#27272A]' : 'border-zinc-200 bg-zinc-50/40'}`}>
                         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                           <div className="flex min-w-0 items-center gap-3">
-                            <span className={`grid h-10 w-10 place-items-center overflow-hidden rounded-full text-base ${isDarkMode ? 'bg-slate-800' : 'bg-white border'}`}>
+                            <span className={`grid h-10 w-10 place-items-center overflow-hidden rounded-full text-base ${isDarkMode ? 'bg-zinc-800' : 'bg-white border'}`}>
                               {selectedMember.profilePhotoData ? (
                                 <img src={selectedMember.profilePhotoData} alt={`${selectedMember.name} profile`} className="h-full w-full object-cover" />
                               ) : (
@@ -1390,23 +1390,23 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                               )}
                             </span>
                             <div className="min-w-0">
-                              <p className={`truncate font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{selectedMember.name}</p>
-                              <p className={`truncate text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{selectedMember.memberId} • {selectedMember.type}</p>
+                              <p className={`truncate font-semibold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{selectedMember.name}</p>
+                              <p className={`truncate text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{selectedMember.memberId} • {selectedMember.type}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-4 md:gap-6">
                             <div className="text-xs md:text-center">
-                              <p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Borrowed Books</p>
-                              <p className={`text-base font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>{selectedMember.borrowedCount}</p>
+                              <p className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}>Borrowed Books</p>
+                              <p className={`text-base font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-800'}`}>{selectedMember.borrowedCount}</p>
                             </div>
                             <div className="text-xs md:text-center">
-                              <p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Available Limit</p>
-                              <p className={`text-base font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>{selectedMember.limit}</p>
+                              <p className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}>Available Limit</p>
+                              <p className={`text-base font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-800'}`}>{selectedMember.limit}</p>
                             </div>
                             <button
                               type="button"
                               onClick={() => setSelectedMember(null)}
-                              className={`grid h-8 w-8 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-slate-200' : 'border-slate-200 text-slate-500 hover:bg-slate-100 hover:text-slate-700'}`}
+                              className={`grid h-8 w-8 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200' : 'border-zinc-200 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700'}`}
                             >
                               <X size={14} />
                             </button>
@@ -1416,34 +1416,34 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                     )}
                   </div>
 
-                  <hr className={`my-5 border-t ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`} />
+                  <hr className={`my-5 border-t ${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'}`} />
 
                   {/* 3. Reservation Details */}
                   <div>
-                    <h3 className={`text-base font-bold ${isDarkMode ? 'text-slate-100' : 'text-[#0a1b4f]'}`}>3. Reservation Details</h3>
-                    <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'} mt-0.5`}>Provide reservation information.</p>
+                    <h3 className={`text-base font-bold ${isDarkMode ? 'text-zinc-100' : 'text-[#0a1b4f]'}`}>3. Reservation Details</h3>
+                    <p className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} mt-0.5`}>Provide reservation information.</p>
                     
                     <div className="mt-4 grid gap-4 md:grid-cols-2">
                       <div>
-                        <label className={`text-[11px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Reservation Date</label>
-                        <div className={`mt-1.5 flex h-11 items-center gap-2 rounded-xl border px-3.5 focus-within:border-emerald-500 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
-                          <Calendar size={16} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />
+                        <label className={`text-[11px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Reservation Date</label>
+                        <div className={`mt-1.5 flex h-11 items-center gap-2 rounded-xl border px-3.5 focus-within:border-emerald-500 ${isDarkMode ? 'border-zinc-700 bg-[#27272A]' : 'border-zinc-200 bg-white'}`}>
+                          <Calendar size={16} className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} />
                           <input 
                             type="date" 
                             value={reservationDate} 
                             onChange={(e) => setReservationDate(e.target.value)} 
-                            className={`w-full bg-transparent outline-none text-xs font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`} 
+                            className={`w-full bg-transparent outline-none text-xs font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`} 
                           />
                         </div>
                       </div>
 
                       <div>
-                        <label className={`text-[11px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Expires On *</label>
-                        <div className={`mt-1.5 flex h-11 items-center gap-2 rounded-xl border px-3.5 focus-within:border-emerald-500 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49]' : 'border-slate-200 bg-white'}`}>
-                          <Calendar size={16} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />
-                          <input type="date" value={expiresOn} onChange={(e) => setExpiresOn(e.target.value)} className={`w-full bg-transparent outline-none text-xs font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`} />
+                        <label className={`text-[11px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Expires On *</label>
+                        <div className={`mt-1.5 flex h-11 items-center gap-2 rounded-xl border px-3.5 focus-within:border-emerald-500 ${isDarkMode ? 'border-zinc-700 bg-[#27272A]' : 'border-zinc-200 bg-white'}`}>
+                          <Calendar size={16} className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} />
+                          <input type="date" value={expiresOn} onChange={(e) => setExpiresOn(e.target.value)} className={`w-full bg-transparent outline-none text-xs font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`} />
                         </div>
-                        <p className={`mt-1 text-[10px] leading-tight ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Member will be notified before this date.</p>
+                        <p className={`mt-1 text-[10px] leading-tight ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>Member will be notified before this date.</p>
                       </div>
 
 
@@ -1451,7 +1451,7 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
 
                     <div className="mt-5 grid gap-5 md:grid-cols-2">
                       <div>
-                        <label className={`text-[11px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Notify Member Via</label>
+                        <label className={`text-[11px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Notify Member Via</label>
                         <div className="mt-3 grid gap-3">
                           {/* Email Notification Card */}
                           <button
@@ -1463,27 +1463,27 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                                   ? 'border-emerald-500/70 bg-emerald-950/20 shadow-[0_4px_20px_rgba(16,185,129,0.15)]'
                                   : 'border-emerald-500 bg-emerald-50/50 shadow-[0_4px_16px_rgba(16,185,129,0.08)]'
                                 : isDarkMode
-                                  ? 'border-slate-700 bg-[#0f1f49]/30 hover:border-slate-500 hover:bg-[#0f1f49]/50'
-                                  : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/30'
+                                  ? 'border-zinc-700 bg-[#27272A]/30 hover:border-zinc-500 hover:bg-[#27272A]/50'
+                                  : 'border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50/30'
                             }`}
                           >
                             <div className="flex items-center gap-3">
                               <div className={`grid h-9 w-9 place-items-center rounded-lg transition-all ${
                                 notifyEmail
                                   ? isDarkMode ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-700'
-                                  : isDarkMode ? 'bg-[#0f1f49] text-slate-400' : 'bg-slate-100 text-slate-500'
+                                  : isDarkMode ? 'bg-[#27272A] text-zinc-400' : 'bg-zinc-100 text-zinc-500'
                               }`}>
                                 <Mail size={16} />
                               </div>
                               <div>
-                                <p className={`text-xs font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>Email Notification</p>
-                                <p className={`text-[10px] font-medium leading-normal mt-0.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Send receipt and updates via email</p>
+                                <p className={`text-xs font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-800'}`}>Email Notification</p>
+                                <p className={`text-[10px] font-medium leading-normal mt-0.5 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Send receipt and updates via email</p>
                               </div>
                             </div>
                             <div className={`grid h-5 w-5 place-items-center rounded-md border transition-all ${
                               notifyEmail
                                 ? 'bg-emerald-600 border-emerald-600 text-white'
-                                : isDarkMode ? 'border-slate-600' : 'border-slate-300'
+                                : isDarkMode ? 'border-zinc-600' : 'border-zinc-300'
                             }`}>
                               {notifyEmail && <Check size={12} strokeWidth={3} />}
                             </div>
@@ -1499,27 +1499,27 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                                   ? 'border-emerald-500/70 bg-emerald-950/20 shadow-[0_4px_20px_rgba(16,185,129,0.15)]'
                                   : 'border-emerald-500 bg-emerald-50/50 shadow-[0_4px_16px_rgba(16,185,129,0.08)]'
                                 : isDarkMode
-                                  ? 'border-slate-700 bg-[#0f1f49]/30 hover:border-slate-500 hover:bg-[#0f1f49]/50'
-                                  : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/30'
+                                  ? 'border-zinc-700 bg-[#27272A]/30 hover:border-zinc-500 hover:bg-[#27272A]/50'
+                                  : 'border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50/30'
                             }`}
                           >
                             <div className="flex items-center gap-3">
                               <div className={`grid h-9 w-9 place-items-center rounded-lg transition-all ${
                                 notifySMS
                                   ? isDarkMode ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-700'
-                                  : isDarkMode ? 'bg-[#0f1f49] text-slate-400' : 'bg-slate-100 text-slate-500'
+                                  : isDarkMode ? 'bg-[#27272A] text-zinc-400' : 'bg-zinc-100 text-zinc-500'
                               }`}>
                                 <Smartphone size={16} />
                               </div>
                               <div>
-                                <p className={`text-xs font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>SMS Notification</p>
-                                <p className={`text-[10px] font-medium leading-normal mt-0.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Send pickup alert via mobile text</p>
+                                <p className={`text-xs font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-800'}`}>SMS Notification</p>
+                                <p className={`text-[10px] font-medium leading-normal mt-0.5 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Send pickup alert via mobile text</p>
                               </div>
                             </div>
                             <div className={`grid h-5 w-5 place-items-center rounded-md border transition-all ${
                               notifySMS
                                 ? 'bg-emerald-600 border-emerald-600 text-white'
-                                : isDarkMode ? 'border-slate-600' : 'border-slate-300'
+                                : isDarkMode ? 'border-zinc-600' : 'border-zinc-300'
                             }`}>
                               {notifySMS && <Check size={12} strokeWidth={3} />}
                             </div>
@@ -1529,11 +1529,11 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
 
                       <div className="flex flex-col h-full">
                         <div className="flex items-center justify-between">
-                          <label className={`text-[11px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Notes (Optional)</label>
+                          <label className={`text-[11px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Notes (Optional)</label>
                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                             notes.length >= 180 
                               ? 'bg-rose-500/10 text-rose-500'
-                              : isDarkMode ? 'bg-[#0f1f49] text-slate-400' : 'bg-slate-100 text-slate-500'
+                              : isDarkMode ? 'bg-[#27272A] text-zinc-400' : 'bg-zinc-100 text-zinc-500'
                           }`}>
                             {notes.length} / 200
                           </span>
@@ -1544,15 +1544,15 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                             onChange={(e) => setNotes(e.target.value.slice(0, 200))} 
                             className={`w-full h-full rounded-xl border pl-10 pr-4 py-3.5 outline-none transition-all duration-200 focus:border-emerald-500 text-xs resize-none leading-relaxed flex-1 ${
                               isDarkMode 
-                                ? 'border-slate-700 bg-[#0f1f49]/30 text-slate-100 placeholder:text-slate-500 focus:bg-[#0f1f49]/50' 
-                                : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400 focus:shadow-[0_4px_16px_rgba(16,185,129,0.05)]'
+                                ? 'border-zinc-700 bg-[#27272A]/30 text-zinc-100 placeholder:text-zinc-500 focus:bg-[#27272A]/50' 
+                                : 'border-zinc-200 bg-white text-zinc-700 placeholder:text-zinc-400 focus:shadow-[0_4px_16px_rgba(16,185,129,0.05)]'
                             }`} 
                             placeholder="Add any internal library staff notes, pickup instructions, or special requests..." 
                           />
                           <BookOpen size={14} className={`absolute left-3.5 top-3.5 transition-colors duration-200 ${
                             notes.length > 0 
                               ? 'text-emerald-500' 
-                              : isDarkMode ? 'text-slate-500' : 'text-slate-400'
+                              : isDarkMode ? 'text-zinc-500' : 'text-zinc-400'
                           }`} />
                         </div>
                       </div>
@@ -1560,14 +1560,14 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                   </div>
 
                   {/* Actions buttons inside the card container at the bottom */}
-                  <div className={`mt-6 pt-5 border-t flex justify-end gap-3 ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
+                  <div className={`mt-6 pt-5 border-t flex justify-end gap-3 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'}`}>
                     {formError ? (
                       <p className="mr-auto self-center text-xs font-semibold text-rose-500">{formError}</p>
                     ) : null}
                     <button
                       type="button"
                       onClick={() => { setIsAddModalOpen(false); setEditingReservation(null) }}
-                      className={`h-10 rounded-xl border px-6 text-xs font-bold transition-all ${isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}
+                      className={`h-10 rounded-xl border px-6 text-xs font-bold transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}
                     >
                       Cancel
                     </button>
@@ -1587,12 +1587,12 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
 
               {/* Right Column Summary (40% width) */}
               <aside className="space-y-4">
-                <article className={`rounded-2xl border p-5 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
-                  <h3 className={`text-base font-bold ${isDarkMode ? 'text-slate-100' : 'text-[#0a1b4f]'}`}>Reservation Summary</h3>
-                  <hr className={`my-4 border-t ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`} />
+                <article className={`rounded-2xl border p-5 ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
+                  <h3 className={`text-base font-bold ${isDarkMode ? 'text-zinc-100' : 'text-[#0a1b4f]'}`}>Reservation Summary</h3>
+                  <hr className={`my-4 border-t ${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'}`} />
                   
                   {/* Book Information Card */}
-                  <div className={`rounded-xl border overflow-hidden ${isDarkMode ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200/80 bg-white'}`}>
+                  <div className={`rounded-xl border overflow-hidden ${isDarkMode ? 'border-zinc-800 bg-zinc-900/40' : 'border-zinc-200/80 bg-white'}`}>
                     <div className={`px-4 py-2.5 flex items-center gap-2 border-b font-bold text-xs ${isDarkMode ? 'bg-emerald-950/30 border-emerald-900/30 text-emerald-400' : 'bg-emerald-50/70 border-emerald-100/80 text-emerald-800'}`}>
                       <BookOpen size={14} className={isDarkMode ? 'text-emerald-400' : 'text-emerald-600'} />
                       <span>Book Information</span>
@@ -1605,35 +1605,35 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                               src={selectedBook?.coverUrl} 
                               alt={`${selectedBook?.title} cover`} 
                               className={`w-full h-full object-cover border transition-transform duration-300 group-hover:scale-[1.03] ${
-                                isDarkMode ? 'border-slate-700/60' : 'border-slate-200'
+                                isDarkMode ? 'border-zinc-700/60' : 'border-zinc-200'
                               }`} 
                             />
                           </div>
                         </div>
                         <div className="col-span-7 min-w-0 flex flex-col justify-between">
                           <div>
-                            <h4 className={`font-bold text-xs sm:text-sm leading-tight truncate ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{selectedBook?.title}</h4>
-                            <p className="text-[11px] font-semibold text-slate-400 mt-0.5">{selectedBook?.author}</p>
+                            <h4 className={`font-bold text-xs sm:text-sm leading-tight truncate ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{selectedBook?.title}</h4>
+                            <p className="text-[11px] font-semibold text-zinc-400 mt-0.5">{selectedBook?.author}</p>
                           </div>
                           <div className="grid grid-cols-2 gap-2 mt-3 text-[11px] leading-tight">
                             <div className={`p-2 rounded-lg border transition-all ${
-                              isDarkMode ? 'bg-slate-900/30 border-slate-800/80 hover:border-slate-700' : 'bg-slate-50/60 border-slate-100 hover:border-slate-200/80'
+                              isDarkMode ? 'bg-zinc-900/30 border-zinc-800/80 hover:border-zinc-700' : 'bg-zinc-50/60 border-zinc-100 hover:border-zinc-200/80'
                             }`}>
-                              <span className="text-slate-400 font-bold block text-[8px] uppercase tracking-wider">Category</span>
-                              <span className={`font-extrabold block mt-0.5 truncate ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{selectedBook?.category}</span>
+                              <span className="text-zinc-400 font-bold block text-[8px] uppercase tracking-wider">Category</span>
+                              <span className={`font-extrabold block mt-0.5 truncate ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>{selectedBook?.category}</span>
                             </div>
                             
                             <div className={`p-2 rounded-lg border transition-all ${
-                              isDarkMode ? 'bg-slate-900/30 border-slate-800/80 hover:border-slate-700' : 'bg-slate-50/60 border-slate-100 hover:border-slate-200/80'
+                              isDarkMode ? 'bg-zinc-900/30 border-zinc-800/80 hover:border-zinc-700' : 'bg-zinc-50/60 border-zinc-100 hover:border-zinc-200/80'
                             }`}>
-                              <span className="text-slate-400 font-bold block text-[8px] uppercase tracking-wider">ISBN</span>
-                              <span className={`font-mono font-extrabold block mt-0.5 truncate ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{selectedBook?.isbn}</span>
+                              <span className="text-zinc-400 font-bold block text-[8px] uppercase tracking-wider">ISBN</span>
+                              <span className={`font-mono font-extrabold block mt-0.5 truncate ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>{selectedBook?.isbn}</span>
                             </div>
                             
                             <div className={`col-span-2 p-2 rounded-lg border transition-all ${
-                              isDarkMode ? 'bg-slate-900/30 border-slate-800/80 hover:border-slate-700' : 'bg-slate-50/60 border-slate-100 hover:border-slate-200/80'
+                              isDarkMode ? 'bg-zinc-900/30 border-zinc-800/80 hover:border-zinc-700' : 'bg-zinc-50/60 border-zinc-100 hover:border-zinc-200/80'
                             }`}>
-                              <span className="text-slate-400 font-bold block text-[8px] uppercase tracking-wider">Reservations</span>
+                              <span className="text-zinc-400 font-bold block text-[8px] uppercase tracking-wider">Reservations</span>
                               <span className="font-extrabold block mt-0.5 text-blue-600 dark:text-blue-400 flex items-center gap-1">
                                 <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse inline-block"></span>
                                 {reservations.filter(r => r.bookId === selectedBook?.id && (r.status === 'Reserved' || r.status === 'Ready for Pickup')).length} waiting
@@ -1647,12 +1647,12 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                     ) : (
                       <div className="p-6 flex flex-col items-center justify-center text-center">
                         <div className={`h-10 w-10 rounded-full grid place-items-center mb-2.5 transition-all ${
-                          isDarkMode ? 'bg-[#0f1f49] text-emerald-400/70' : 'bg-emerald-50 text-emerald-600/70'
+                          isDarkMode ? 'bg-[#27272A] text-emerald-400/70' : 'bg-emerald-50 text-emerald-600/70'
                         }`}>
                           <BookOpen size={16} className="animate-pulse" />
                         </div>
-                        <p className={`text-xs font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>No Book Selected</p>
-                        <p className={`text-[10px] font-semibold mt-1 max-w-[210px] leading-relaxed ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                        <p className={`text-xs font-bold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>No Book Selected</p>
+                        <p className={`text-[10px] font-semibold mt-1 max-w-[210px] leading-relaxed ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>
                           Search and select a book from the list on the left to see details.
                         </p>
                       </div>
@@ -1660,7 +1660,7 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                   </div>
 
                   {/* Member Information Card */}
-                  <div className={`rounded-xl border overflow-hidden mt-4 ${isDarkMode ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200/80 bg-white'}`}>
+                  <div className={`rounded-xl border overflow-hidden mt-4 ${isDarkMode ? 'border-zinc-800 bg-zinc-900/40' : 'border-zinc-200/80 bg-white'}`}>
                     <div className={`px-4 py-2.5 flex items-center gap-2 border-b font-bold text-xs ${isDarkMode ? 'bg-blue-950/30 border-blue-900/30 text-blue-400' : 'bg-blue-50/70 border-blue-100/80 text-blue-800'}`}>
                       <UserRound size={14} className={isDarkMode ? 'text-blue-400' : 'text-blue-600'} />
                       <span>Member Information</span>
@@ -1671,8 +1671,8 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                           <div className="relative group w-full aspect-square max-w-[100px] flex items-center justify-center">
                             <span className={`grid w-full h-full place-items-center overflow-hidden rounded-full text-3xl border transition-all ${
                               isDarkMode 
-                                ? 'bg-slate-900/80 border-slate-700/60 text-slate-100' 
-                                : 'bg-slate-50 border-slate-200/80 text-slate-800'
+                                ? 'bg-zinc-900/80 border-zinc-700/60 text-zinc-100' 
+                                : 'bg-zinc-50 border-zinc-200/80 text-zinc-800'
                             }`}>
                               {selectedMember?.profilePhotoData ? (
                                 <img src={selectedMember.profilePhotoData} alt={`${selectedMember.name} profile`} className="h-full w-full object-cover" />
@@ -1680,7 +1680,7 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                                 selectedMember?.avatar
                               )}
                             </span>
-                            <span className={`absolute -bottom-1.5 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold border whitespace-nowrap ${
+                            <span className={`absolute -bottom-1.5 left-1/2 -tranzinc-x-1/2 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold border whitespace-nowrap ${
                               isDarkMode 
                                 ? 'bg-blue-950/90 border-blue-800 text-blue-400' 
                                 : 'bg-blue-50/90 border-blue-200 text-blue-700'
@@ -1691,47 +1691,47 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                         </div>
                         <div className="col-span-7 min-w-0 flex flex-col justify-between">
                           <div>
-                            <h4 className={`font-bold text-xs sm:text-sm leading-tight truncate ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{selectedMember?.name}</h4>
-                            <p className="text-[10px] font-bold text-slate-400 mt-0.5 font-mono">{selectedMember?.memberId}</p>
+                            <h4 className={`font-bold text-xs sm:text-sm leading-tight truncate ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{selectedMember?.name}</h4>
+                            <p className="text-[10px] font-bold text-zinc-400 mt-0.5 font-mono">{selectedMember?.memberId}</p>
                           </div>
                           
                           <div className="space-y-2 mt-3 text-[11px] leading-tight">
                             <div className="grid grid-cols-2 gap-2">
                               <div className={`p-2 rounded-lg border flex items-center gap-1.5 transition-all ${
-                                isDarkMode ? 'bg-slate-900/30 border-slate-800/80 hover:border-slate-700' : 'bg-slate-50/60 border-slate-100 hover:border-slate-200/80'
+                                isDarkMode ? 'bg-zinc-900/30 border-zinc-800/80 hover:border-zinc-700' : 'bg-zinc-50/60 border-zinc-100 hover:border-zinc-200/80'
                               }`}>
-                                <Smartphone size={12} className="text-slate-400 shrink-0" />
+                                <Smartphone size={12} className="text-zinc-400 shrink-0" />
                                 <div className="min-w-0">
-                                  <span className="text-[7.5px] font-bold text-slate-400 block uppercase tracking-wider">Phone</span>
-                                  <span className={`font-extrabold truncate block text-[10px] ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{selectedMember?.phone}</span>
+                                  <span className="text-[7.5px] font-bold text-zinc-400 block uppercase tracking-wider">Phone</span>
+                                  <span className={`font-extrabold truncate block text-[10px] ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>{selectedMember?.phone}</span>
                                 </div>
                               </div>
 
                               <div className={`p-2 rounded-lg border flex items-center gap-1.5 transition-all ${
-                                isDarkMode ? 'bg-slate-900/30 border-slate-800/80 hover:border-slate-700' : 'bg-slate-50/60 border-slate-100 hover:border-slate-200/80'
+                                isDarkMode ? 'bg-zinc-900/30 border-zinc-800/80 hover:border-zinc-700' : 'bg-zinc-50/60 border-zinc-100 hover:border-zinc-200/80'
                               }`}>
-                                <Mail size={12} className="text-slate-400 shrink-0" />
+                                <Mail size={12} className="text-zinc-400 shrink-0" />
                                 <div className="min-w-0">
-                                  <span className="text-[7.5px] font-bold text-slate-400 block uppercase tracking-wider">Email</span>
-                                  <span className={`font-extrabold truncate block text-[10px] ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`} title={selectedMember?.email}>{selectedMember?.email}</span>
+                                  <span className="text-[7.5px] font-bold text-zinc-400 block uppercase tracking-wider">Email</span>
+                                  <span className={`font-extrabold truncate block text-[10px] ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`} title={selectedMember?.email}>{selectedMember?.email}</span>
                                 </div>
                               </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-2">
                               <div className={`p-2 rounded-lg border transition-all ${
-                                isDarkMode ? 'bg-slate-900/30 border-slate-800/80 hover:border-slate-700' : 'bg-slate-50/60 border-slate-100 hover:border-slate-200/80'
+                                isDarkMode ? 'bg-zinc-900/30 border-zinc-800/80 hover:border-zinc-700' : 'bg-zinc-50/60 border-zinc-100 hover:border-zinc-200/80'
                               }`}>
-                                <span className="text-[7.5px] font-bold text-slate-400 block uppercase tracking-wider">Borrowed Count</span>
-                                <span className={`font-extrabold block mt-0.5 text-[10px] ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                <span className="text-[7.5px] font-bold text-zinc-400 block uppercase tracking-wider">Borrowed Count</span>
+                                <span className={`font-extrabold block mt-0.5 text-[10px] ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>
                                   {selectedMember?.borrowedCount} / 5 books
                                 </span>
                               </div>
 
                               <div className={`p-2 rounded-lg border transition-all ${
-                                isDarkMode ? 'bg-slate-900/30 border-slate-800/80 hover:border-slate-700' : 'bg-slate-50/60 border-slate-100 hover:border-slate-200/80'
+                                isDarkMode ? 'bg-zinc-900/30 border-zinc-800/80 hover:border-zinc-700' : 'bg-zinc-50/60 border-zinc-100 hover:border-zinc-200/80'
                               }`}>
-                                <span className="text-[7.5px] font-bold text-slate-400 block uppercase tracking-wider">Membership Status</span>
+                                <span className="text-[7.5px] font-bold text-zinc-400 block uppercase tracking-wider">Membership Status</span>
                                 <div className="mt-0.5">
                                   <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-1.5 py-0.5 text-[9px] font-extrabold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
                                     <span className="h-1 w-1 rounded-full bg-emerald-500"></span>
@@ -1746,12 +1746,12 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                     ) : (
                       <div className="p-6 flex flex-col items-center justify-center text-center">
                         <div className={`h-10 w-10 rounded-full grid place-items-center mb-2.5 transition-all ${
-                          isDarkMode ? 'bg-[#0f1f49] text-blue-400/70' : 'bg-blue-50 text-blue-600/70'
+                          isDarkMode ? 'bg-[#27272A] text-blue-400/70' : 'bg-blue-50 text-blue-600/70'
                         }`}>
                           <UserRound size={16} className="animate-pulse" />
                         </div>
-                        <p className={`text-xs font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>No Member Selected</p>
-                        <p className={`text-[10px] font-semibold mt-1 max-w-[210px] leading-relaxed ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                        <p className={`text-xs font-bold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>No Member Selected</p>
+                        <p className={`text-[10px] font-semibold mt-1 max-w-[210px] leading-relaxed ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>
                           Search and select a member from the list on the left to see details.
                         </p>
                       </div>
@@ -1759,25 +1759,25 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                   </div>
 
                   {/* Reservation Info Card */}
-                  <div className={`rounded-xl border overflow-hidden mt-4 ${isDarkMode ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200/80 bg-white'}`}>
+                  <div className={`rounded-xl border overflow-hidden mt-4 ${isDarkMode ? 'border-zinc-800 bg-zinc-900/40' : 'border-zinc-200/80 bg-white'}`}>
                     <div className={`px-4 py-2.5 flex items-center gap-2 border-b font-bold text-xs ${isDarkMode ? 'bg-amber-950/35 border-amber-900/30 text-amber-400' : 'bg-amber-50/70 border-amber-100/80 text-amber-800'}`}>
                       <Calendar size={14} className={isDarkMode ? 'text-amber-400' : 'text-amber-600'} />
                       <span>Reservation Overview</span>
                     </div>
                     <div className="p-4 flex flex-col gap-2.5">
                       <div className="flex justify-between items-center text-[11px]">
-                        <span className="text-slate-400 font-bold">Reservation Date</span>
-                        <span className={`font-extrabold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{formatReservationDate(reservationDate)}</span>
+                        <span className="text-zinc-400 font-bold">Reservation Date</span>
+                        <span className={`font-extrabold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>{formatReservationDate(reservationDate)}</span>
                       </div>
                       <div className="flex justify-between items-center text-[11px]">
-                        <span className="text-slate-400 font-bold">Expires On</span>
-                        <span className={`font-extrabold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{formatExpiresDate(expiresOn)}</span>
+                        <span className="text-zinc-400 font-bold">Expires On</span>
+                        <span className={`font-extrabold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>{formatExpiresDate(expiresOn)}</span>
                       </div>
 
 
                       <div className="flex justify-between items-center text-[11px]">
-                        <span className="text-slate-400 font-bold">Estimated Wait Time</span>
-                        <span className={`font-extrabold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                        <span className="text-zinc-400 font-bold">Estimated Wait Time</span>
+                        <span className={`font-extrabold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>
                           {!selectedBook ? '-' : selectedBook.availableCopies > 0 ? 'Available immediately' : `~ ${(reservations.filter(r => r.bookId === selectedBook.id && (r.status === 'Reserved' || r.status === 'Ready for Pickup')).length * 3) + 2} days`}
                         </span>
                       </div>

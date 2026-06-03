@@ -59,19 +59,19 @@ export const Topbar: React.FC<TopbarProps> = ({
             </button>
           </div>
 
-          <div className="flex items-center gap-3 border-l border-slate-700/50 pl-4 group relative">
+          <div className="flex items-center gap-3 border-l border-zinc-700/50 pl-4 group relative">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-600 font-bold text-white shadow-lg cursor-pointer">
               AU
             </div>
             <div className="hidden sm:block">
               <p className={`text-xs font-bold ${theme.profileName}`}>Admin User</p>
-              <p className="text-[10px] font-medium text-slate-500">Librarian</p>
+              <p className="text-[10px] font-medium text-zinc-500">Librarian</p>
             </div>
             
             {/* Logout Tooltip/Menu */}
             <button 
               onClick={onLogout}
-              className="absolute -bottom-10 right-0 hidden rounded-md bg-white p-2 text-xs font-bold text-rose-600 shadow-xl border border-slate-100 group-hover:block dark:bg-slate-800 dark:border-slate-700"
+              className="absolute -bottom-10 right-0 hidden rounded-md bg-white p-2 text-xs font-bold text-rose-600 shadow-xl border border-zinc-100 group-hover:block dark:bg-zinc-800 dark:border-zinc-700"
             >
               Logout
             </button>

@@ -31,11 +31,11 @@ export const Button: React.FC<ButtonProps> = ({
   const variants = {
     primary: 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm',
     outline: isDarkMode 
-      ? 'border border-slate-800 bg-[#0f1f49] text-slate-200 hover:bg-slate-800/50' 
-      : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50',
+      ? 'border border-zinc-800 bg-[#27272A] text-zinc-200 hover:bg-zinc-800/50' 
+      : 'border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50',
     ghost: isDarkMode
-      ? 'text-slate-400 hover:bg-slate-800/50 hover:text-emerald-300'
-      : 'text-slate-600 hover:bg-slate-50 hover:text-emerald-600',
+      ? 'text-zinc-400 hover:bg-zinc-800/50 hover:text-emerald-300'
+      : 'text-zinc-600 hover:bg-zinc-50 hover:text-emerald-600',
     danger: isDarkMode
       ? 'border border-rose-900/20 text-rose-500 hover:bg-rose-900/40'
       : 'border border-rose-100 text-rose-500 hover:bg-rose-50',

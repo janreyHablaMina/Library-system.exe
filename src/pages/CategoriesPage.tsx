@@ -48,7 +48,7 @@ const categoriesData: CategoryRow[] = [
   { id: 4, name: 'History', icon: Library, description: 'Historical events and civilizations', books: 794, status: 'Active', createdOn: 'May 6, 2026', createdTime: '09:45 AM', color: 'text-violet-600' },
   { id: 5, name: 'Education', icon: GraduationCap, description: 'Teaching, learning and educational resources', books: 1125, status: 'Active', createdOn: 'May 5, 2026', createdTime: '03:10 PM', color: 'text-emerald-500' },
   { id: 6, name: 'Language', icon: Globe, description: 'Languages, dictionaries and reference', books: 533, status: 'Active', createdOn: 'May 2, 2026', createdTime: '10:50 AM', color: 'text-amber-500' },
-  { id: 7, name: 'Arts & Recreation', icon: Palette, description: 'Art, music, sports and hobbies', books: 410, status: 'Inactive', createdOn: 'Apr 30, 2026', createdTime: '01:25 PM', color: 'text-slate-600' },
+  { id: 7, name: 'Arts & Recreation', icon: Palette, description: 'Art, music, sports and hobbies', books: 410, status: 'Inactive', createdOn: 'Apr 30, 2026', createdTime: '01:25 PM', color: 'text-zinc-600' },
   { id: 8, name: 'Business', icon: Briefcase, description: 'Business, management and finance', books: 345, status: 'Active', createdOn: 'Apr 28, 2026', createdTime: '09:05 AM', color: 'text-rose-500' },
 ]
 
@@ -90,8 +90,8 @@ function CategoryActionsMenu({ category, onEdit, onDelete, isDarkMode }: Categor
         type="button"
         className={`grid h-8 w-8 place-items-center rounded-lg border transition-all ${
           isDarkMode
-            ? 'border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-slate-200'
-            : 'border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+            ? 'border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
+            : 'border-zinc-200 text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700'
         }`}
       >
         <MoreHorizontal size={16} />
@@ -101,28 +101,28 @@ function CategoryActionsMenu({ category, onEdit, onDelete, isDarkMode }: Categor
         <div
           className={`absolute right-0 top-full z-50 mt-1.5 w-44 animate-fadeIn rounded-xl border p-1.5 shadow-xl transition-all duration-150 ${
             isDarkMode
-              ? 'border-slate-700 bg-[#0f1f49] text-slate-200'
-              : 'border-slate-200 bg-white text-slate-700'
+              ? 'border-zinc-700 bg-[#27272A] text-zinc-200'
+              : 'border-zinc-200 bg-white text-zinc-700'
           }`}
         >
           <button
             onClick={() => { setIsOpen(false); onEdit(category) }}
             type="button"
             className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors ${
-              isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50'
+              isDarkMode ? 'hover:bg-zinc-800' : 'hover:bg-zinc-50'
             }`}
           >
             <Pencil size={13} className="text-emerald-500" />
             Edit Info
           </button>
 
-          <div className={`my-1 border-t ${isDarkMode ? 'border-slate-700' : 'border-slate-100'}`} />
+          <div className={`my-1 border-t ${isDarkMode ? 'border-zinc-700' : 'border-zinc-100'}`} />
 
           <button
             onClick={() => { setIsOpen(false); onDelete(category) }}
             type="button"
             className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors ${
-              isDarkMode ? 'hover:bg-slate-800/80 text-rose-400' : 'hover:bg-rose-50 text-rose-600'
+              isDarkMode ? 'hover:bg-zinc-800/80 text-rose-400' : 'hover:bg-rose-50 text-rose-600'
             }`}
           >
             <Trash2 size={13} className="text-rose-500" />
@@ -276,12 +276,12 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
   }, [categoriesList, booksCount])
 
   return (
-    <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
+    <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[transparent] text-zinc-100' : 'bg-[#f8fafc] text-zinc-900'}`}>
       <section className="p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h2 className={`text-4xl font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Categories</h2>
-            <p className={`mt-1 text-base font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Manage and organize all book categories in your library.</p>
+            <h2 className={`text-4xl font-black ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Categories</h2>
+            <p className={`mt-1 text-base font-medium ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Manage and organize all book categories in your library.</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <button type="button" onClick={() => setIsAddModalOpen(true)} className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white hover:bg-emerald-700 transition-all shadow-sm">
@@ -295,17 +295,17 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
           {stats.map((stat) => {
             const Icon = stat.icon
             return (
-              <article key={stat.label} className={`rounded-xl border p-5 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+              <article key={stat.label} className={`rounded-xl border p-5 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-tranzinc-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
                 <div className="flex items-center gap-4">
                   <div className={`grid h-12 w-12 place-items-center rounded-2xl ${stat.bg} ${stat.color}`}>
                     <Icon size={22} />
                   </div>
                   <div className="flex flex-col">
-                    <p className={`text-xs font-bold text-slate-500 dark:text-slate-400`}>{stat.label}</p>
-                    <p className={`text-2xl font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{stat.value}</p>
+                    <p className={`text-xs font-bold text-zinc-500 dark:text-zinc-400`}>{stat.label}</p>
+                    <p className={`text-2xl font-black ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{stat.value}</p>
                   </div>
                 </div>
-                <p className={`mt-3 text-[11px] font-bold ${stat.color === 'text-rose-600' || stat.color === 'text-violet-600' ? 'text-slate-500 dark:text-slate-400' : stat.color}`}>
+                <p className={`mt-3 text-[11px] font-bold ${stat.color === 'text-rose-600' || stat.color === 'text-violet-600' ? 'text-zinc-500 dark:text-zinc-400' : stat.color}`}>
                   {stat.subValue}
                 </p>
               </article>
@@ -313,23 +313,23 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
           })}
         </section>
 
-        <div className={`mt-8 rounded-xl border ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
-          <div className={`flex flex-wrap items-center gap-4 p-4 rounded-t-xl border-b ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-100 bg-white'}`}>
-            <label className={`group flex h-12 min-w-[320px] flex-1 items-center rounded-xl border px-3 transition-all ${isDarkMode ? 'border-slate-700 focus-within:border-emerald-500 bg-[#0f1f49]' : 'border-slate-200 focus-within:border-emerald-500 bg-slate-50'}`}>
-              <Search size={18} className={`mr-2 transition-colors ${isDarkMode ? 'text-slate-500 group-focus-within:text-emerald-400' : 'text-slate-400 group-focus-within:text-emerald-600'}`} />
-              <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className={`w-full bg-transparent text-sm font-medium outline-none ${isDarkMode ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400'}`} placeholder="Search categories by name..." />
+        <div className={`mt-8 rounded-xl border ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
+          <div className={`flex flex-wrap items-center gap-4 p-4 rounded-t-xl border-b ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-100 bg-white'}`}>
+            <label className={`group flex h-12 min-w-[320px] flex-1 items-center rounded-xl border px-3 transition-all ${isDarkMode ? 'border-zinc-700 focus-within:border-emerald-500 bg-[#27272A]' : 'border-zinc-200 focus-within:border-emerald-500 bg-zinc-50'}`}>
+              <Search size={18} className={`mr-2 transition-colors ${isDarkMode ? 'text-zinc-500 group-focus-within:text-emerald-400' : 'text-zinc-400 group-focus-within:text-emerald-600'}`} />
+              <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className={`w-full bg-transparent text-sm font-medium outline-none ${isDarkMode ? 'text-zinc-200 placeholder:text-zinc-500' : 'text-zinc-700 placeholder:text-zinc-400'}`} placeholder="Search categories by name..." />
             </label>
             
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-slate-500">Status</span>
+                <span className="text-xs font-bold text-zinc-500">Status</span>
                 <div className="relative">
-                  <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={`h-11 min-w-[120px] appearance-none rounded-xl border py-2 pl-4 pr-10 text-xs font-bold outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
+                  <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={`h-11 min-w-[120px] appearance-none rounded-xl border py-2 pl-4 pr-10 text-xs font-bold outline-none ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'}`}>
                     <option value="All">All</option>
                     <option value="Active">Active</option>
                     <option value="Inactive">Inactive</option>
                   </select>
-                  <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                  <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -tranzinc-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
                 </div>
               </div>
 
@@ -339,7 +339,7 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
 
           <div className="relative z-10 overflow-x-auto lg:overflow-visible">
             <table className="w-full text-left text-sm border-collapse">
-              <thead className={isDarkMode ? 'bg-[#0f1f49]/50 text-slate-400' : 'bg-slate-50/50 text-slate-500'}>
+              <thead className={isDarkMode ? 'bg-[#27272A]/50 text-zinc-400' : 'bg-zinc-50/50 text-zinc-500'}>
                 <tr>
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Category Name</th>
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Description</th>
@@ -352,18 +352,18 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
                 {paginatedCategories.map((cat) => {
                    const CatIcon = cat.icon
                    return (
-                    <tr key={cat.id} className={`border-t transition-colors duration-150 ${isDarkMode ? 'border-slate-700 hover:bg-slate-800/30' : 'border-slate-100 hover:bg-slate-50'}`}>
+                    <tr key={cat.id} className={`border-t transition-colors duration-150 ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800/30' : 'border-zinc-100 hover:bg-zinc-50'}`}>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className={`grid h-9 w-9 place-items-center rounded-lg ${isDarkMode ? 'bg-slate-800/40' : 'bg-slate-100/50'} ${cat.color}`}>
+                          <div className={`grid h-9 w-9 place-items-center rounded-lg ${isDarkMode ? 'bg-zinc-800/40' : 'bg-zinc-100/50'} ${cat.color}`}>
                              <CatIcon size={18} />
                           </div>
-                          <p className={`font-semibold text-sm ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{cat.name}</p>
+                          <p className={`font-semibold text-sm ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{cat.name}</p>
                         </div>
                       </td>
-                      <td className={`px-6 py-4 text-xs font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>{cat.description}</td>
+                      <td className={`px-6 py-4 text-xs font-medium ${isDarkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>{cat.description}</td>
                       <td className="px-6 py-4 text-center">
-                        <span className={`text-xs font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{cat.books.toLocaleString()}</span>
+                        <span className={`text-xs font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>{cat.books.toLocaleString()}</span>
                       </td>
                       <td className="px-6 py-4">
                         <span className={`rounded-md px-3 py-1 text-[11px] font-semibold tracking-wide ${
@@ -390,39 +390,39 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
             </table>
           </div>
 
-          <div className={`relative z-0 flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm rounded-b-xl ${isDarkMode ? 'border-slate-700 bg-[#0b1738] text-slate-300' : 'border-slate-200 bg-white text-slate-600'}`}>
+          <div className={`relative z-0 flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm rounded-b-xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B] text-zinc-300' : 'border-zinc-200 bg-white text-zinc-600'}`}>
             <p>Showing {filteredCategories.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to {Math.min(currentPage * itemsPerPage, filteredCategories.length)} of {filteredCategories.length} categories</p>
             <div className="flex items-center gap-2">
-              <select value={itemsPerPage} onChange={(e) => setItemsPerPage(Number(e.target.value))} className={`h-9 rounded-lg border px-3 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
+              <select value={itemsPerPage} onChange={(e) => setItemsPerPage(Number(e.target.value))} className={`h-9 rounded-lg border px-3 text-sm outline-none ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'}`}>
                 <option value={10}>10 per page</option>
                 <option value={20}>20 per page</option>
                 <option value={50}>50 per page</option>
               </select>
-              <button type="button" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className={`grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 hover:bg-slate-800 disabled:opacity-50' : 'border-slate-200 hover:bg-slate-50 disabled:opacity-50'}`}>{'<'}</button>
+              <button type="button" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className={`grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800 disabled:opacity-50' : 'border-zinc-200 hover:bg-zinc-50 disabled:opacity-50'}`}>{'<'}</button>
               
               <div className="flex items-center gap-1">
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                  <button key={page} type="button" onClick={() => setCurrentPage(page)} className={page === currentPage ? "grid h-9 w-9 place-items-center rounded-lg bg-emerald-50 font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" : `grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}>
+                  <button key={page} type="button" onClick={() => setCurrentPage(page)} className={page === currentPage ? "grid h-9 w-9 place-items-center rounded-lg bg-emerald-50 font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" : `grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800' : 'border-zinc-200 hover:bg-zinc-50'}`}>
                     {page}
                   </button>
                 ))}
               </div>
 
-              <button type="button" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0} className={`grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 hover:bg-slate-800 disabled:opacity-50' : 'border-slate-200 hover:bg-slate-50 disabled:opacity-50'}`}>{'>'}</button>
+              <button type="button" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0} className={`grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800 disabled:opacity-50' : 'border-zinc-200 hover:bg-zinc-50 disabled:opacity-50'}`}>{'>'}</button>
             </div>
           </div>
         </div>
       </section>
 
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/45 p-4 backdrop-blur-[1px]">
-          <section className={`w-full max-w-4xl rounded-2xl border shadow-2xl ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
-            <div className={`flex items-start justify-between border-b px-6 py-5 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-zinc-900/45 p-4 backdrop-blur-[1px]">
+          <section className={`w-full max-w-4xl rounded-2xl border shadow-2xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
+            <div className={`flex items-start justify-between border-b px-6 py-5 ${isDarkMode ? 'border-zinc-700' : 'border-zinc-200'}`}>
               <div>
-                <h3 className={`text-3xl font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{categoryToEdit ? 'Edit Category' : 'Add Category'}</h3>
-                <p className={`mt-1 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{categoryToEdit ? 'Update book category details below.' : 'Define a new book category for the library system.'}</p>
+                <h3 className={`text-3xl font-black ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{categoryToEdit ? 'Edit Category' : 'Add Category'}</h3>
+                <p className={`mt-1 text-sm ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{categoryToEdit ? 'Update book category details below.' : 'Define a new book category for the library system.'}</p>
               </div>
-              <button type="button" onClick={closeAddModal} className={`grid h-10 w-10 place-items-center rounded-xl border ${isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
+              <button type="button" onClick={closeAddModal} className={`grid h-10 w-10 place-items-center rounded-xl border ${isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'}`}>
                 <X size={18} />
               </button>
             </div>
@@ -430,53 +430,53 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
             <form onSubmit={handleSave} className="space-y-5 px-6 py-5">
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Category Name <span className="text-rose-500">*</span></label>
+                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Category Name <span className="text-rose-500">*</span></label>
                   <input
                     value={categoryForm.name}
                     onChange={(e) => handleFormChange('name', e.target.value)}
                     placeholder="e.g. Science Fiction"
                     className={`h-11 w-full rounded-xl border px-3 text-sm outline-none ${
                       isDarkMode
-                        ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500 focus:border-emerald-500'
-                        : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400 focus:border-emerald-500'
+                        ? 'border-zinc-700 bg-[#27272A] text-zinc-100 placeholder:text-zinc-500 focus:border-emerald-500'
+                        : 'border-zinc-200 bg-white text-zinc-700 placeholder:text-zinc-400 focus:border-emerald-500'
                     }`}
                     required
                   />
                 </div>
 
                 <div>
-                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Status <span className="text-rose-500">*</span></label>
+                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Status <span className="text-rose-500">*</span></label>
                   <div className="relative">
                     <select
                       value={categoryForm.status}
                       onChange={(e) => handleFormChange('status', e.target.value)}
                       className={`h-11 w-full appearance-none rounded-xl border pl-3 pr-10 text-sm outline-none ${
                         isDarkMode
-                          ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500'
-                          : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'
+                          ? 'border-zinc-700 bg-[#27272A] text-zinc-100 focus:border-emerald-500'
+                          : 'border-zinc-200 bg-white text-zinc-700 focus:border-emerald-500'
                       }`}
                     >
                       <option value="Active">Active</option>
                       <option value="Inactive">Inactive</option>
                     </select>
-                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -tranzinc-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
                   </div>
                 </div>
               </div>
 
               <div>
-                <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Description</label>
+                <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Description</label>
                 <textarea
                   value={categoryForm.description}
                   onChange={(e) => handleFormChange('description', e.target.value.slice(0, 400))}
                   placeholder="Briefly describe the category..."
                   className={`min-h-24 w-full rounded-xl border px-3 py-2 text-sm outline-none ${
                     isDarkMode
-                      ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500 focus:border-emerald-500'
-                      : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400 focus:border-emerald-500'
+                      ? 'border-zinc-700 bg-[#27272A] text-zinc-100 placeholder:text-zinc-500 focus:border-emerald-500'
+                      : 'border-zinc-200 bg-white text-zinc-700 placeholder:text-zinc-400 focus:border-emerald-500'
                   }`}
                 />
-                <p className={`mt-1 text-right text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{categoryForm.description.length} / 400</p>
+                <p className={`mt-1 text-right text-xs ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>{categoryForm.description.length} / 400</p>
               </div>
 
               <div className="grid gap-3 pt-1 sm:grid-cols-2">
@@ -484,7 +484,7 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
                   type="button"
                   onClick={closeAddModal}
                   className={`h-11 rounded-xl border text-sm font-semibold ${
-                    isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'
+                    isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'
                   }`}
                 >
                   Cancel
@@ -506,19 +506,19 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
 
       {/* Delete Confirmation Warning Modal */}
       {categoryToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
-          <section className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl animate-in zoom-in-95 duration-200 ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/60 p-4 backdrop-blur-sm">
+          <section className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl animate-in zoom-in-95 duration-200 ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
             <div className="flex flex-col items-center text-center">
               <div className="grid h-12 w-12 place-items-center rounded-full bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400">
                 <AlertTriangle size={24} />
               </div>
-              <h3 className={`mt-4 text-lg font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Delete Category</h3>
-              <p className={`mt-2 text-xs font-medium leading-relaxed ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+              <h3 className={`mt-4 text-lg font-black ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Delete Category</h3>
+              <p className={`mt-2 text-xs font-medium leading-relaxed ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
                 Are you sure you want to delete <strong className="font-bold">{categoryToDelete.name}</strong>? This action cannot be undone and all categorized books will be affected.
               </p>
             </div>
             <div className="mt-6 flex gap-3">
-              <button type="button" onClick={() => setCategoryToDelete(null)} className={`h-10 flex-1 rounded-xl border text-xs font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>Cancel</button>
+              <button type="button" onClick={() => setCategoryToDelete(null)} className={`h-10 flex-1 rounded-xl border text-xs font-semibold ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>Cancel</button>
               <button type="button" onClick={handleDeleteCategory} className="h-10 flex-1 rounded-xl bg-rose-600 text-xs font-semibold text-white hover:bg-rose-700 shadow-lg shadow-rose-600/20">Delete Category</button>
             </div>
           </section>

@@ -35,8 +35,8 @@ type ReportsPageProps = {
 }
 
 export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMembers }: ReportsPageProps) {
-  const cardClass = isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'
-  const labelClass = isDarkMode ? 'text-slate-400' : 'text-slate-500'
+  const cardClass = isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'
+  const labelClass = isDarkMode ? 'text-zinc-400' : 'text-zinc-500'
   const [books, setBooks] = useState<Book[]>([])
   const [members, setMembers] = useState<Member[]>([])
   const [transactions, setTransactions] = useState<BorrowTransaction[]>([])
@@ -156,7 +156,7 @@ export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMember
   }, [books, members, transactions])
 
   return (
-    <div className={`min-h-0 flex-1 overflow-auto p-6 ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
+    <div className={`min-h-0 flex-1 overflow-auto p-6 ${isDarkMode ? 'bg-[transparent] text-zinc-100' : 'bg-[#f8fafc] text-zinc-900'}`}>
       <div className="space-y-8 pb-10">
         
         {/* HEADER */}
@@ -175,7 +175,7 @@ export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMember
               <Calendar size={18} className="opacity-40" />
               <span>Last 7 Days</span>
             </div>
-            <button className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-bold transition-all hover:bg-slate-50 dark:hover:bg-slate-800 ${cardClass}`}>
+            <button className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-bold transition-all hover:bg-zinc-50 dark:hover:bg-zinc-800 ${cardClass}`}>
               <Download size={15} />
               Export
             </button>
@@ -277,7 +277,7 @@ export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMember
                    </div>
                 </div>
               </div>
-              <select className={`rounded-lg border px-3 py-1.5 text-[10px] font-bold ${isDarkMode ? 'bg-[#0f1f49] border-slate-700' : 'bg-white border-slate-200'}`}>
+              <select className={`rounded-lg border px-3 py-1.5 text-[10px] font-bold ${isDarkMode ? 'bg-[#27272A] border-zinc-700' : 'bg-white border-zinc-200'}`}>
                 <option>Daily</option>
               </select>
             </div>
@@ -359,7 +359,7 @@ export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMember
               </div>
               <div className="flex-1 overflow-x-auto">
                 <table className="w-full text-left text-sm">
-                  <thead className={`border-b ${isDarkMode ? 'text-slate-300 border-slate-700' : 'text-slate-800 border-slate-200'}`}>
+                  <thead className={`border-b ${isDarkMode ? 'text-zinc-300 border-zinc-700' : 'text-zinc-800 border-zinc-200'}`}>
                     <tr className="text-xs font-bold">
                       <th className="px-6 py-4">Member</th>
                       <th className="px-6 py-4">Book</th>
@@ -370,10 +370,10 @@ export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMember
                   </thead>
                   <tbody className="">
                     {computed.overdueRows.map((row) => (
-                      <tr key={row.id} className={`border-t transition-colors ${isDarkMode ? 'border-slate-700 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}>
+                      <tr key={row.id} className={`border-t transition-colors ${isDarkMode ? 'border-zinc-700 hover:bg-[#3F3F46]' : 'border-zinc-100 hover:bg-zinc-50'}`}>
                         <td className="px-6 py-4">
                            <div className="flex items-center gap-3">
-                              <span className={`grid h-11 w-11 place-items-center overflow-hidden rounded-full text-sm font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                              <span className={`grid h-11 w-11 place-items-center overflow-hidden rounded-full text-sm font-bold ${isDarkMode ? 'bg-zinc-800' : 'bg-zinc-100'}`}>
                                 {row.profilePhotoData ? (
                                   <img src={row.profilePhotoData} alt={`${row.name} profile`} className="h-full w-full object-cover" />
                                 ) : (
@@ -403,7 +403,7 @@ export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMember
                   </tbody>
                 </table>
               </div>
-              <div className={`p-4 flex justify-between items-center text-[11px] font-bold border-t ${isDarkMode ? 'border-slate-700' : 'border-slate-200'} ${labelClass}`}>
+              <div className={`p-4 flex justify-between items-center text-[11px] font-bold border-t ${isDarkMode ? 'border-zinc-700' : 'border-zinc-200'} ${labelClass}`}>
                  <span>Showing 1 to {computed.overdueRows.length} of {computed.overdueTotal}</span>
               </div>
            </div>
@@ -424,7 +424,7 @@ export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMember
               </div>
               <div className="flex-1 overflow-x-auto">
                 <table className="w-full text-left text-sm">
-                  <thead className={`border-b ${isDarkMode ? 'text-slate-300 border-slate-700' : 'text-slate-800 border-slate-200'}`}>
+                  <thead className={`border-b ${isDarkMode ? 'text-zinc-300 border-zinc-700' : 'text-zinc-800 border-zinc-200'}`}>
                     <tr className="text-xs font-bold">
                       <th className="px-6 py-4">Member</th>
                       <th className="px-6 py-4 text-center">Books Borrowed</th>
@@ -434,10 +434,10 @@ export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMember
                   </thead>
                   <tbody className="">
                     {computed.topMembers.map((row) => (
-                      <tr key={row.id} className={`border-t transition-colors ${isDarkMode ? 'border-slate-700 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}>
+                      <tr key={row.id} className={`border-t transition-colors ${isDarkMode ? 'border-zinc-700 hover:bg-[#3F3F46]' : 'border-zinc-100 hover:bg-zinc-50'}`}>
                         <td className="px-6 py-4">
                            <div className="flex items-center gap-3">
-                              <span className={`grid h-11 w-11 place-items-center overflow-hidden rounded-full text-sm font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                              <span className={`grid h-11 w-11 place-items-center overflow-hidden rounded-full text-sm font-bold ${isDarkMode ? 'bg-zinc-800' : 'bg-zinc-100'}`}>
                                 {row.profilePhotoData ? (
                                   <img src={row.profilePhotoData} alt={`${row.name} profile`} className="h-full w-full object-cover" />
                                 ) : (
@@ -458,7 +458,7 @@ export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMember
                   </tbody>
                 </table>
               </div>
-              <div className={`p-4 flex justify-between items-center text-[11px] font-bold border-t ${isDarkMode ? 'border-slate-700' : 'border-slate-200'} ${labelClass}`}>
+              <div className={`p-4 flex justify-between items-center text-[11px] font-bold border-t ${isDarkMode ? 'border-zinc-700' : 'border-zinc-200'} ${labelClass}`}>
                  <span>Showing 1 to {computed.topMembers.length} of {computed.activeMembers}</span>
               </div>
            </div>

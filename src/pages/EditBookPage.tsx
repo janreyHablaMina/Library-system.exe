@@ -50,7 +50,7 @@ const categories = [
 // ─── Realtime Simulated High-Fidelity Book Cover Component ───────────────────
 function HighFidelityBookCover({ title, author }: { title: string; author: string }) {
   return (
-    <div className="w-[145px] h-[195px] rounded-lg shadow-md relative overflow-hidden flex flex-col justify-between p-3 text-slate-800 bg-[#fdecdb] border border-orange-200/60 shrink-0 select-none">
+    <div className="w-[145px] h-[195px] rounded-lg shadow-md relative overflow-hidden flex flex-col justify-between p-3 text-zinc-800 bg-[#fdecdb] border border-orange-200/60 shrink-0 select-none">
       {/* 3D Spine shading */}
       <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-r from-black/10 to-transparent rounded-l" />
       <div className="absolute top-0 left-2 w-[1px] h-full bg-white/30" />
@@ -181,34 +181,34 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
     })
   }
 
-  const cardClass = isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'
-  const labelClass = isDarkMode ? 'text-slate-300' : 'text-slate-700'
+  const cardClass = isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'
+  const labelClass = isDarkMode ? 'text-zinc-300' : 'text-zinc-700'
   const inputClass = isDarkMode
-    ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500 focus:border-emerald-500'
-    : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400 focus:border-emerald-500'
+    ? 'border-zinc-700 bg-[#27272A] text-zinc-100 placeholder:text-zinc-500 focus:border-emerald-500'
+    : 'border-zinc-200 bg-white text-zinc-700 placeholder:text-zinc-400 focus:border-emerald-500'
 
   const tabItemClass = (tab: 'basic' | 'catalog' | 'inventory' | 'notes') => {
     const isActive = activeTab === tab
     return `flex items-center gap-2 px-1 py-3 text-sm font-semibold border-b-2 transition-all duration-150 ${
       isActive
         ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400 dark:border-emerald-400'
-        : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+        : 'border-transparent text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300'
     }`
   }
 
   return (
-    <div className={`p-4 ${isDarkMode ? 'bg-[#020617]' : 'bg-[#f8fafc]'} h-[calc(100vh-64px)] max-h-[calc(100vh-64px)] min-h-0 flex-1 flex flex-col`}>
+    <div className={`p-4 ${isDarkMode ? 'bg-[transparent]' : 'bg-[#f8fafc]'} h-[calc(100vh-64px)] max-h-[calc(100vh-64px)] min-h-0 flex-1 flex flex-col`}>
       <form onSubmit={handleSubmit} className={`mx-auto w-full max-w-[1650px] h-full max-h-full rounded-2xl border flex flex-col shadow-sm overflow-hidden ${cardClass}`}>
         
         {/* Header Block (Unified exactly like screenshot) */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200/10">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-zinc-200/10">
           <div className="flex items-center gap-4">
             <div className="grid h-12 w-12 place-items-center rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 shrink-0">
               <NotebookPen size={22} />
             </div>
             <div>
               <h2 className="text-xl font-bold leading-tight">Edit Book Details</h2>
-              <p className={`text-xs mt-0.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+              <p className={`text-xs mt-0.5 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
                 Update catalog information and inventory details.
               </p>
             </div>
@@ -217,7 +217,7 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
             type="button"
             onClick={onBack}
             className={`grid h-9 w-9 place-items-center rounded-lg transition ${
-              isDarkMode ? 'hover:bg-slate-800 text-slate-400 hover:text-slate-200' : 'hover:bg-slate-100 text-slate-500 hover:text-slate-700'
+              isDarkMode ? 'hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200' : 'hover:bg-zinc-100 text-zinc-500 hover:text-zinc-700'
             }`}
           >
             <X size={20} />
@@ -225,7 +225,7 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
         </div>
 
         {/* Tab Bar (Directly below header divider) */}
-        <div className="px-6 border-b border-slate-200/10 flex gap-8">
+        <div className="px-6 border-b border-zinc-200/10 flex gap-8">
           <button type="button" onClick={() => setActiveTab('basic')} className={tabItemClass('basic')}>
             <BookOpen size={16} />
             Basic Information
@@ -248,13 +248,13 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
             
             {activeTab === 'basic' && (
               <article className={`rounded-2xl border p-6 ${cardClass}`}>
-                <div className="mb-5 flex items-start gap-3 border-b border-slate-200/10 pb-4">
+                <div className="mb-5 flex items-start gap-3 border-b border-zinc-200/10 pb-4">
                   <div className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-500/10 text-emerald-500 shrink-0">
                     <BookOpen size={16} className="text-emerald-600 dark:text-emerald-400" />
                   </div>
                   <div>
                     <h3 className="text-sm font-bold">Basic Information</h3>
-                    <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Provide the essential details about the book.</p>
+                    <p className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Provide the essential details about the book.</p>
                   </div>
                 </div>
 
@@ -306,7 +306,7 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
                             <option key={cat} value={cat}>{cat}</option>
                           ))}
                         </select>
-                        <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                        <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -tranzinc-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
                       </div>
                     </div>
                     <div>
@@ -322,12 +322,12 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
                           <option value="Overdue">Overdue</option>
                           <option value="Archived">Archived</option>
                         </select>
-                        <span className={`pointer-events-none absolute left-4 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full ${
+                        <span className={`pointer-events-none absolute left-4 top-1/2 h-2.5 w-2.5 -tranzinc-y-1/2 rounded-full ${
                           status === 'Available' ? 'bg-emerald-500'
                           : status === 'Borrowed' ? 'bg-amber-500'
                           : 'bg-rose-500'
                         }`} />
-                        <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                        <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -tranzinc-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
                       </div>
                     </div>
                   </div>
@@ -351,7 +351,7 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
                           onChange={(e) => setPublicationDate(e.target.value)}
                           className="w-full bg-transparent outline-none"
                         />
-                        <CalendarDays size={16} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />
+                        <CalendarDays size={16} className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} />
                       </div>
                     </div>
                   </div>
@@ -373,7 +373,7 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
                       onChange={(e) => setDescription(e.target.value.slice(0, 1000))}
                       className={`mt-1.5 min-h-[116px] w-full rounded-xl border px-4 py-3 outline-none ${inputClass}`}
                     />
-                    <p className={`mt-1 text-right text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{description.length} / 1000</p>
+                    <p className={`mt-1 text-right text-xs ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>{description.length} / 1000</p>
                   </div>
                 </div>
               </article>
@@ -381,13 +381,13 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
 
             {activeTab === 'catalog' && (
               <article className={`rounded-2xl border p-6 ${cardClass}`}>
-                <div className="mb-5 flex items-start gap-3 border-b border-slate-200/10 pb-4">
+                <div className="mb-5 flex items-start gap-3 border-b border-zinc-200/10 pb-4">
                   <div className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-500/10 text-emerald-500 shrink-0">
                     <Files size={16} className="text-emerald-600 dark:text-emerald-400" />
                   </div>
                   <div>
                     <h3 className="text-sm font-bold">Library Cataloging</h3>
-                    <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Detailed library cataloging information.</p>
+                    <p className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Detailed library cataloging information.</p>
                   </div>
                 </div>
 
@@ -480,13 +480,13 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
 
             {activeTab === 'inventory' && (
               <article className={`rounded-2xl border p-6 ${cardClass}`}>
-                <div className="mb-5 flex items-start gap-3 border-b border-slate-200/10 pb-4">
+                <div className="mb-5 flex items-start gap-3 border-b border-zinc-200/10 pb-4">
                   <div className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-500/10 text-emerald-500 shrink-0">
                     <Package size={16} className="text-emerald-600 dark:text-emerald-400" />
                   </div>
                   <div>
                     <h3 className="text-sm font-bold">Inventory Information</h3>
-                    <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Inventory and location parameters.</p>
+                    <p className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Inventory and location parameters.</p>
                   </div>
                 </div>
 
@@ -494,7 +494,7 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
                   <div>
                     <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider">
                       <label className={labelClass}>Number of Copies *</label>
-                      <span className="text-slate-400 dark:text-slate-500 font-semibold normal-case">Available / Total</span>
+                      <span className="text-zinc-400 dark:text-zinc-500 font-semibold normal-case">Available / Total</span>
                     </div>
                     <div className="grid grid-cols-2 gap-4 mt-1.5">
                       <input
@@ -542,13 +542,13 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
 
             {activeTab === 'notes' && (
               <article className={`rounded-2xl border p-6 ${cardClass}`}>
-                <div className="mb-5 flex items-start gap-3 border-b border-slate-200/10 pb-4">
+                <div className="mb-5 flex items-start gap-3 border-b border-zinc-200/10 pb-4">
                   <div className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-500/10 text-emerald-500 shrink-0">
                     <StickyNote size={16} className="text-emerald-600 dark:text-emerald-400" />
                   </div>
                   <div>
                     <h3 className="text-sm font-bold">Additional Notes</h3>
-                    <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Add any other notes or annotations.</p>
+                    <p className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Add any other notes or annotations.</p>
                   </div>
                 </div>
 
@@ -559,7 +559,7 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
                     onChange={(e) => setNotes(e.target.value.slice(0, 2000))}
                     className={`mt-1.5 min-h-[120px] w-full rounded-xl border px-4 py-3 outline-none ${inputClass}`}
                   />
-                  <p className={`mt-1 text-right text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{notes.length} / 2000</p>
+                  <p className={`mt-1 text-right text-xs ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>{notes.length} / 2000</p>
                 </div>
               </article>
             )}
@@ -577,14 +577,14 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
                 </div>
                 <div>
                   <h3 className="text-sm font-bold">Book Cover</h3>
-                  <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Upload or update the book cover image.</p>
+                  <p className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Upload or update the book cover image.</p>
                 </div>
               </div>
 
               <div className="flex gap-4">
                 {/* Visual Cover Preview (High Fidelity rendering or uploaded image) */}
                 {coverPreviewUrl ? (
-                  <div className="relative w-[145px] h-[195px] rounded-lg shadow-md overflow-hidden shrink-0 border border-slate-200/10">
+                  <div className="relative w-[145px] h-[195px] rounded-lg shadow-md overflow-hidden shrink-0 border border-zinc-200/10">
                     <img src={coverPreviewUrl} alt="Cover preview" className="w-full h-full object-cover" />
                   </div>
                 ) : (
@@ -595,16 +595,16 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
                 <div
                   onClick={handleChooseFile}
                   className={`flex-1 rounded-xl border-2 border-dashed p-4 text-center flex flex-col justify-center items-center cursor-pointer transition ${
-                    isDarkMode ? 'border-slate-700 hover:border-slate-500 bg-[#0f1f49]/50 hover:bg-[#0f1f49]/70' : 'border-slate-200 hover:border-emerald-500 bg-slate-50/40 hover:bg-emerald-50/20'
+                    isDarkMode ? 'border-zinc-700 hover:border-zinc-500 bg-[#27272A]/50 hover:bg-[#27272A]/70' : 'border-zinc-200 hover:border-emerald-500 bg-zinc-50/40 hover:bg-emerald-50/20'
                   }`}
                 >
-                  <CloudUpload size={28} className={`mb-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
-                  <p className={`text-xs font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Drag and drop image here</p>
-                  <p className={`text-[10px] my-1 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>or</p>
+                  <CloudUpload size={28} className={`mb-2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+                  <p className={`text-xs font-semibold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-600'}`}>Drag and drop image here</p>
+                  <p className={`text-[10px] my-1 ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>or</p>
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); handleChooseFile(); }}
-                    className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${isDarkMode ? 'border-slate-600 text-slate-200 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-100'}`}
+                    className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${isDarkMode ? 'border-zinc-600 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-300 text-zinc-700 hover:bg-zinc-100'}`}
                   >
                     Choose File
                   </button>
@@ -615,7 +615,7 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
                     onChange={handleFileChange}
                     className="hidden"
                   />
-                  <p className={`text-[9px] mt-2 leading-tight ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                  <p className={`text-[9px] mt-2 leading-tight ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>
                     Recommended: 600 x 800px (JPG, PNG)<br />Max file size: 2MB
                   </p>
                 </div>
@@ -640,7 +640,7 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
                 </div>
                 <div>
                   <h3 className="text-sm font-bold">Inventory Information</h3>
-                  <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Provide inventory and availability details.</p>
+                  <p className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Provide inventory and availability details.</p>
                 </div>
               </div>
 
@@ -648,7 +648,7 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
                 <div>
                   <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider">
                     <label className={labelClass}>Number of Copies *</label>
-                    <span className="text-slate-400 dark:text-slate-500 font-semibold normal-case">Available / Total</span>
+                    <span className="text-zinc-400 dark:text-zinc-500 font-semibold normal-case">Available / Total</span>
                   </div>
                   <input
                     type="number"
@@ -694,12 +694,12 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
                       <option value="Archived">Archived</option>
                     </select>
                     {/* Status dot indicator */}
-                    <span className={`pointer-events-none absolute left-4 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full ${
+                    <span className={`pointer-events-none absolute left-4 top-1/2 h-2.5 w-2.5 -tranzinc-y-1/2 rounded-full ${
                       status === 'Available' ? 'bg-emerald-500'
                       : status === 'Borrowed' ? 'bg-amber-500'
                       : 'bg-rose-500'
                     }`} />
-                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -tranzinc-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
                   </div>
                 </div>
               </div>
@@ -710,13 +710,13 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
 
         {/* Footer Actions (Unified sticky inside card) */}
         <div className={`px-6 py-4 flex justify-between items-center border-t ${
-          isDarkMode ? 'border-slate-800 bg-[#0b1738]/40' : 'border-slate-200 bg-slate-50/50'
+          isDarkMode ? 'border-zinc-800 bg-[#18181B]/40' : 'border-zinc-200 bg-zinc-50/50'
         }`}>
           <button
             type="button"
             onClick={onBack}
             className={`h-11 rounded-xl border px-6 text-sm font-semibold transition ${
-              isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-100'
+              isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-300 text-zinc-700 hover:bg-zinc-100'
             }`}
           >
             Cancel

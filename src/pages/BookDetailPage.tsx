@@ -47,7 +47,7 @@ export function BookDetailPage({ isDarkMode, onBack, book, onViewAllTransactions
     }
   }, [book?.id])
 
-  const cardClass = isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'
+  const cardClass = isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'
   
   const coverSrc = book && (book.cover.startsWith('data:') || book.cover.startsWith('http') || book.cover.startsWith('blob:'))
     ? book.cover
@@ -59,20 +59,20 @@ export function BookDetailPage({ isDarkMode, onBack, book, onViewAllTransactions
   const borrowedCount = totalCount - availableCount
 
   return (
-    <div className={`min-h-0 flex-1 overflow-auto p-4 md:p-6 lg:p-8 ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-slate-50/50 text-[#161a2d]'}`}>
+    <div className={`min-h-0 flex-1 overflow-auto p-4 md:p-6 lg:p-8 ${isDarkMode ? 'bg-[transparent] text-zinc-100' : 'bg-zinc-50/50 text-[#161a2d]'}`}>
       <div className="mx-auto max-w-6xl space-y-6">
         
         {/* Breadcrumbs */}
         <nav className="flex items-center gap-2 text-sm font-medium">
-          <button type="button" onClick={onBack} className={`flex items-center gap-1.5 transition-colors ${isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-900'}`}>
+          <button type="button" onClick={onBack} className={`flex items-center gap-1.5 transition-colors ${isDarkMode ? 'text-zinc-400 hover:text-zinc-200' : 'text-zinc-500 hover:text-zinc-900'}`}>
             <Home size={16} />
           </button>
-          <ChevronRight size={14} className={isDarkMode ? 'text-slate-600' : 'text-slate-300'} />
-          <button type="button" onClick={onBack} className={`transition-colors ${isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-900'}`}>
+          <ChevronRight size={14} className={isDarkMode ? 'text-zinc-600' : 'text-zinc-300'} />
+          <button type="button" onClick={onBack} className={`transition-colors ${isDarkMode ? 'text-zinc-400 hover:text-zinc-200' : 'text-zinc-500 hover:text-zinc-900'}`}>
             Books
           </button>
-          <ChevronRight size={14} className={isDarkMode ? 'text-slate-600' : 'text-slate-300'} />
-          <span className={isDarkMode ? 'text-slate-200' : 'text-slate-900'}>{bookTitle}</span>
+          <ChevronRight size={14} className={isDarkMode ? 'text-zinc-600' : 'text-zinc-300'} />
+          <span className={isDarkMode ? 'text-zinc-200' : 'text-zinc-900'}>{bookTitle}</span>
         </nav>
 
         {/* Top Hero Section */}
@@ -92,15 +92,15 @@ export function BookDetailPage({ isDarkMode, onBack, book, onViewAllTransactions
               <div>
                 <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{bookTitle}</h1>
                 <div className="mt-4 flex items-center gap-2 text-base font-medium">
-                  <User size={18} className={isDarkMode ? 'text-slate-400' : 'text-slate-400'} />
-                  <span className={isDarkMode ? 'text-slate-300' : 'text-slate-700'}>{book?.author ?? 'Unknown Author'}</span>
+                  <User size={18} className={isDarkMode ? 'text-zinc-400' : 'text-zinc-400'} />
+                  <span className={isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}>{book?.author ?? 'Unknown Author'}</span>
                 </div>
               </div>
 
               <div className="grid grid-cols-[auto_1fr] items-center gap-x-6 gap-y-4 text-sm">
                 <div className="flex items-center gap-2 font-medium">
-                  <Tag size={16} className={isDarkMode ? 'text-slate-400' : 'text-slate-400'} />
-                  <span className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>Category</span>
+                  <Tag size={16} className={isDarkMode ? 'text-zinc-400' : 'text-zinc-400'} />
+                  <span className={isDarkMode ? 'text-zinc-400' : 'text-zinc-600'}>Category</span>
                 </div>
                 <div>
                   <span className={`inline-flex rounded-md px-2.5 py-1 text-xs font-semibold ${isDarkMode ? 'bg-indigo-500/15 text-indigo-300' : 'bg-indigo-50 text-indigo-600'}`}>
@@ -109,16 +109,16 @@ export function BookDetailPage({ isDarkMode, onBack, book, onViewAllTransactions
                 </div>
 
                 <div className="flex items-center gap-2 font-medium">
-                  <Hash size={16} className={isDarkMode ? 'text-slate-400' : 'text-slate-400'} />
-                  <span className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>ISBN</span>
+                  <Hash size={16} className={isDarkMode ? 'text-zinc-400' : 'text-zinc-400'} />
+                  <span className={isDarkMode ? 'text-zinc-400' : 'text-zinc-600'}>ISBN</span>
                 </div>
-                <div className={`font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-900'}`}>
+                <div className={`font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-900'}`}>
                   {book?.isbn || '-'}
                 </div>
 
                 <div className="flex items-center gap-2 font-medium">
-                  <MapPin size={16} className={isDarkMode ? 'text-slate-400' : 'text-slate-400'} />
-                  <span className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>Shelf Location</span>
+                  <MapPin size={16} className={isDarkMode ? 'text-zinc-400' : 'text-zinc-400'} />
+                  <span className={isDarkMode ? 'text-zinc-400' : 'text-zinc-600'}>Shelf Location</span>
                 </div>
                 <div>
                   <span className={`inline-flex rounded-md px-2.5 py-1 text-xs font-semibold ${isDarkMode ? 'bg-emerald-500/15 text-emerald-300' : 'bg-emerald-50 text-emerald-600'}`}>
@@ -127,13 +127,13 @@ export function BookDetailPage({ isDarkMode, onBack, book, onViewAllTransactions
                 </div>
 
                 <div className="flex items-center gap-2 font-medium">
-                  <Clock3 size={16} className={isDarkMode ? 'text-slate-400' : 'text-slate-400'} />
-                  <span className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>Status</span>
+                  <Clock3 size={16} className={isDarkMode ? 'text-zinc-400' : 'text-zinc-400'} />
+                  <span className={isDarkMode ? 'text-zinc-400' : 'text-zinc-600'}>Status</span>
                 </div>
                 <div>
                   <span className={`inline-flex rounded-md px-2.5 py-1 text-xs font-semibold ${
                     book?.isArchived
-                    ? (isDarkMode ? 'bg-slate-500/30 text-slate-100' : 'bg-slate-200 text-slate-800')
+                    ? (isDarkMode ? 'bg-zinc-500/30 text-zinc-100' : 'bg-zinc-200 text-zinc-800')
                     : availableCount > 0 
                     ? (isDarkMode ? 'bg-emerald-500/25 text-emerald-100' : 'bg-emerald-100 text-emerald-800')
                     : (isDarkMode ? 'bg-rose-500/25 text-rose-100' : 'bg-rose-100 text-rose-800')
@@ -146,19 +146,19 @@ export function BookDetailPage({ isDarkMode, onBack, book, onViewAllTransactions
 
             {/* Copies Overview */}
             <div className="flex flex-col justify-center">
-              <div className={`rounded-2xl border p-5 ${isDarkMode ? 'border-slate-700 bg-slate-900/50' : 'border-slate-100 bg-white shadow-sm'}`}>
+              <div className={`rounded-2xl border p-5 ${isDarkMode ? 'border-zinc-700 bg-zinc-900/50' : 'border-zinc-100 bg-white shadow-sm'}`}>
                 <h3 className="mb-4 text-base font-bold">Copies Overview</h3>
                 <div className="flex gap-4">
-                  <div className={`flex flex-col items-center justify-center rounded-xl border p-4 min-w-[90px] ${isDarkMode ? 'border-slate-700' : 'border-slate-100'}`}>
-                    <span className={`text-xs font-semibold ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Total Copies</span>
+                  <div className={`flex flex-col items-center justify-center rounded-xl border p-4 min-w-[90px] ${isDarkMode ? 'border-zinc-700' : 'border-zinc-100'}`}>
+                    <span className={`text-xs font-semibold ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Total Copies</span>
                     <span className={`mt-2 text-2xl font-black ${isDarkMode ? 'text-indigo-400' : 'text-indigo-500'}`}>{totalCount}</span>
                   </div>
-                  <div className={`flex flex-col items-center justify-center rounded-xl border p-4 min-w-[90px] ${isDarkMode ? 'border-slate-700' : 'border-slate-100'}`}>
-                    <span className={`text-xs font-semibold ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Available</span>
+                  <div className={`flex flex-col items-center justify-center rounded-xl border p-4 min-w-[90px] ${isDarkMode ? 'border-zinc-700' : 'border-zinc-100'}`}>
+                    <span className={`text-xs font-semibold ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Available</span>
                     <span className={`mt-2 text-2xl font-black ${isDarkMode ? 'text-emerald-400' : 'text-emerald-500'}`}>{availableCount}</span>
                   </div>
-                  <div className={`flex flex-col items-center justify-center rounded-xl border p-4 min-w-[90px] ${isDarkMode ? 'border-slate-700' : 'border-slate-100'}`}>
-                    <span className={`text-xs font-semibold ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Borrowed</span>
+                  <div className={`flex flex-col items-center justify-center rounded-xl border p-4 min-w-[90px] ${isDarkMode ? 'border-zinc-700' : 'border-zinc-100'}`}>
+                    <span className={`text-xs font-semibold ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Borrowed</span>
                     <span className={`mt-2 text-2xl font-black ${isDarkMode ? 'text-amber-400' : 'text-amber-500'}`}>{borrowedCount}</span>
                   </div>
                 </div>
@@ -174,19 +174,19 @@ export function BookDetailPage({ isDarkMode, onBack, book, onViewAllTransactions
             {/* Description */}
             <section className={`rounded-xl border p-6 sm:p-8 ${cardClass}`}>
               <div className="mb-4 flex items-center gap-2">
-                <FileText size={20} className={isDarkMode ? 'text-slate-400' : 'text-emerald-600'} />
+                <FileText size={20} className={isDarkMode ? 'text-zinc-400' : 'text-emerald-600'} />
                 <h2 className="text-lg font-bold">Description</h2>
               </div>
-              <p className={`text-sm leading-relaxed ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+              <p className={`text-sm leading-relaxed ${isDarkMode ? 'text-zinc-300' : 'text-zinc-600'}`}>
                 {bookTitle} is a young wizard who discovers his magical heritage on his eleventh birthday when he receives a letter of acceptance to Hogwarts School of Witchcraft and Wizardry. He then embarks on an incredible adventure with his friends, learns about the wizarding world, and faces the dark wizard who killed his parents.
               </p>
             </section>
 
             {/* Borrow History */}
             <section className={`rounded-xl border overflow-hidden ${cardClass}`}>
-              <div className="flex items-center justify-between border-b p-6 sm:px-8 sm:py-6 text-sm font-semibold border-slate-200 dark:border-slate-700">
+              <div className="flex items-center justify-between border-b p-6 sm:px-8 sm:py-6 text-sm font-semibold border-zinc-200 dark:border-zinc-700">
                 <div className="flex items-center gap-2">
-                  <Clock3 size={20} className={isDarkMode ? 'text-slate-400' : 'text-emerald-600'} />
+                  <Clock3 size={20} className={isDarkMode ? 'text-zinc-400' : 'text-emerald-600'} />
                   <h2 className="text-lg font-bold">Borrow History</h2>
                 </div>
                 <button type="button" onClick={onViewAllTransactions} className={`text-[13px] font-bold transition-colors hover:underline ${isDarkMode ? 'text-emerald-400 hover:text-emerald-300' : 'text-emerald-600 hover:text-emerald-700'}`}>
@@ -195,7 +195,7 @@ export function BookDetailPage({ isDarkMode, onBack, book, onViewAllTransactions
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[600px] text-left text-sm">
-                  <thead className={isDarkMode ? 'bg-[#0f1f49] text-slate-300' : 'bg-slate-50 text-slate-600'}>
+                  <thead className={isDarkMode ? 'bg-[#27272A] text-zinc-300' : 'bg-zinc-50 text-zinc-600'}>
                     <tr>
                       <th className="px-4 py-3 font-semibold">Borrower</th>
                       <th className="px-4 py-3 font-semibold">Borrowed On</th>
@@ -208,7 +208,7 @@ export function BookDetailPage({ isDarkMode, onBack, book, onViewAllTransactions
                       {history.length > 0 ? history.map((log) => {
                         const initials = log.memberName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
                         return (
-                          <tr key={log.id} className={`border-t transition-colors duration-150 ${isDarkMode ? 'border-slate-700 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}>
+                          <tr key={log.id} className={`border-t transition-colors duration-150 ${isDarkMode ? 'border-zinc-700 hover:bg-[#3F3F46]' : 'border-zinc-100 hover:bg-zinc-50'}`}>
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-3">
                                 {log.memberProfilePhotoData ? (
@@ -239,7 +239,7 @@ export function BookDetailPage({ isDarkMode, onBack, book, onViewAllTransactions
                         )
                       }) : (
                         <tr>
-                          <td colSpan={5} className="px-4 py-8 text-center text-sm text-slate-500">
+                          <td colSpan={5} className="px-4 py-8 text-center text-sm text-zinc-500">
                             No borrow history found for this book.
                           </td>
                         </tr>
@@ -254,7 +254,7 @@ export function BookDetailPage({ isDarkMode, onBack, book, onViewAllTransactions
           <aside className="space-y-6">
             <section className={`rounded-xl border p-6 sm:p-8 ${cardClass}`}>
               <div className="mb-6 flex items-center gap-2">
-                <Zap size={20} className={isDarkMode ? 'text-slate-400' : 'text-emerald-600'} />
+                <Zap size={20} className={isDarkMode ? 'text-zinc-400' : 'text-emerald-600'} />
                 <h2 className="text-lg font-bold">Quick Actions</h2>
               </div>
               <div className="flex flex-col gap-3">
@@ -262,11 +262,11 @@ export function BookDetailPage({ isDarkMode, onBack, book, onViewAllTransactions
                   <BookOpen size={18} />
                   Borrow Book
                 </button>
-                <button type="button" className={`inline-flex h-12 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-semibold transition-colors ${isDarkMode ? 'border-slate-700 bg-transparent hover:bg-slate-800 text-slate-200' : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'}`}>
+                <button type="button" className={`inline-flex h-12 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-semibold transition-colors ${isDarkMode ? 'border-zinc-700 bg-transparent hover:bg-zinc-800 text-zinc-200' : 'border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700'}`}>
                   <Edit2 size={16} />
                   Edit Book
                 </button>
-                <button type="button" className={`inline-flex h-12 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-semibold transition-colors ${isDarkMode ? 'border-slate-700 bg-transparent hover:bg-slate-800 text-slate-200' : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'}`}>
+                <button type="button" className={`inline-flex h-12 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-semibold transition-colors ${isDarkMode ? 'border-zinc-700 bg-transparent hover:bg-zinc-800 text-zinc-200' : 'border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700'}`}>
                   <Archive size={16} />
                   Archive Book
                 </button>

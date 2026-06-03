@@ -130,11 +130,11 @@ function UserRowActionsMenu({
   }
 
   const surface = isDarkMode
-    ? 'bg-[#0f172a] border-slate-700 text-slate-200 shadow-[0_8px_32px_rgba(0,0,0,0.6)]'
-    : 'bg-white border-slate-200 text-slate-700 shadow-[0_8px_32px_rgba(0,0,0,0.12)]'
+    ? 'bg-[#0f172a] border-zinc-700 text-zinc-200 shadow-[0_8px_32px_rgba(0,0,0,0.6)]'
+    : 'bg-white border-zinc-200 text-zinc-700 shadow-[0_8px_32px_rgba(0,0,0,0.12)]'
 
   const item = `flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium ${
-    isDarkMode ? 'text-slate-200 hover:bg-slate-800' : 'text-slate-700 hover:bg-slate-50'
+    isDarkMode ? 'text-zinc-200 hover:bg-zinc-800' : 'text-zinc-700 hover:bg-zinc-50'
   }`
 
   return (
@@ -145,11 +145,11 @@ function UserRowActionsMenu({
         className={`grid h-9 w-9 place-items-center rounded-xl border transition-colors ${
           open
             ? isDarkMode
-              ? 'border-slate-500 bg-slate-700 text-slate-100'
+              ? 'border-zinc-500 bg-zinc-700 text-zinc-100'
               : 'border-emerald-300 bg-emerald-50 text-emerald-700'
             : isDarkMode
-              ? 'border-slate-700 text-slate-300 hover:bg-slate-800'
-              : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+              ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'
+              : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'
         }`}
       >
         <MoreHorizontal size={16} />
@@ -230,19 +230,19 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
   const [emailLogSearch, setEmailLogSearch] = useState('')
   const [emailLogStatus, setEmailLogStatus] = useState('')
 
-  const cardClass = isDarkMode ? 'border-slate-800 bg-[#0a1633]' : 'border-slate-200 bg-white'
+  const cardClass = isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-200 bg-white'
   const iconBoxBg = isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-[#f0fdf4] text-emerald-600'
-  const labelClass = isDarkMode ? 'text-slate-200' : 'text-slate-700'
-  const subLabelClass = isDarkMode ? 'text-slate-400' : 'text-slate-500'
+  const labelClass = isDarkMode ? 'text-zinc-200' : 'text-zinc-700'
+  const subLabelClass = isDarkMode ? 'text-zinc-400' : 'text-zinc-500'
   const inputClass = isDarkMode
-    ? 'border-slate-800 bg-[#0f1f49] text-slate-200'
-    : 'border-slate-200 bg-white text-slate-700'
+    ? 'border-zinc-800 bg-[#27272A] text-zinc-200'
+    : 'border-zinc-200 bg-white text-zinc-700'
 
   const roleColor = (role: string) => {
     switch (role) {
       case 'Librarian': return 'bg-emerald-50 text-emerald-600'
       case 'Assistant': return 'bg-blue-50 text-blue-600'
-      default: return 'bg-slate-50 text-slate-600'
+      default: return 'bg-zinc-50 text-zinc-600'
     }
   }
 
@@ -580,11 +580,11 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
               </div>
               <div>
                 <p className={`text-[13px] font-bold ${subLabelClass}`}>{stat.label}</p>
-                <h3 className={`text-2xl font-black ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{stat.value}</h3>
+                <h3 className={`text-2xl font-black ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>{stat.value}</h3>
                 <p className={`text-[11px] font-medium ${subLabelClass}`}>{stat.sub}</p>
               </div>
             </div>
-            <ChevronRight size={18} className="text-slate-300 transition-transform group-hover:translate-x-1" />
+            <ChevronRight size={18} className="text-zinc-300 transition-transform group-hover:tranzinc-x-1" />
           </div>
         ))}
       </div>
@@ -594,12 +594,12 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
         <section className={`rounded-2xl border ${cardClass}`}>
           <div className="px-8 pt-8 pb-8 flex flex-wrap items-center justify-between gap-6">
             <div>
-              <h4 className={`text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Users</h4>
+              <h4 className={`text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Users</h4>
               <p className={`text-[13px] font-medium ${subLabelClass}`}>View and manage all system users.</p>
             </div>
             <div className="flex items-center gap-3">
               <div className={`flex h-11 w-72 items-center gap-3 rounded-xl border px-4 ${inputClass}`}>
-                <Search size={18} className="text-slate-400" />
+                <Search size={18} className="text-zinc-400" />
                 <input className="w-full bg-transparent text-[13px] font-medium outline-none" placeholder="Search users..." />
               </div>
               <button className={`flex h-11 items-center gap-2 rounded-xl border px-4 text-[13px] font-bold ${inputClass}`}>
@@ -611,9 +611,9 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
             </div>
           </div>
 
-          <div className={`relative z-10 ${isDarkMode ? 'overflow-x-auto lg:overflow-visible bg-[#0b1738]' : 'overflow-x-auto lg:overflow-visible bg-white'}`}>
+          <div className={`relative z-10 ${isDarkMode ? 'overflow-x-auto lg:overflow-visible bg-[#18181B]' : 'overflow-x-auto lg:overflow-visible bg-white'}`}>
             <table className="w-full text-left">
-              <thead className={`text-[11px] font-bold uppercase tracking-wider ${isDarkMode ? 'bg-[#0f1f49] text-slate-300 border-y border-slate-800/50' : 'bg-slate-50 text-slate-600 border-y border-slate-100'}`}>
+              <thead className={`text-[11px] font-bold uppercase tracking-wider ${isDarkMode ? 'bg-[#27272A] text-zinc-300 border-y border-zinc-800/50' : 'bg-zinc-50 text-zinc-600 border-y border-zinc-100'}`}>
                 <tr>
                   <th className="px-8 py-4">User</th>
                   <th className="px-8 py-4">Role</th>
@@ -622,12 +622,12 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                   <th className="px-8 py-4">Actions</th>
                 </tr>
               </thead>
-              <tbody className={isDarkMode ? 'bg-[#0b1738]' : 'bg-white'}>
+              <tbody className={isDarkMode ? 'bg-[#18181B]' : 'bg-white'}>
                 {users.map((user) => (
-                  <tr key={user.id} className={`border-b last:border-0 transition-colors ${isDarkMode ? 'border-slate-800/50 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}>
+                  <tr key={user.id} className={`border-b last:border-0 transition-colors ${isDarkMode ? 'border-zinc-800/50 hover:bg-[#3F3F46]' : 'border-zinc-100 hover:bg-zinc-50'}`}>
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-4">
-                        <div className={`grid h-10 w-10 place-items-center overflow-hidden rounded-full text-white text-xs font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200'}`}>
+                        <div className={`grid h-10 w-10 place-items-center overflow-hidden rounded-full text-white text-xs font-bold ${isDarkMode ? 'bg-zinc-800' : 'bg-zinc-200'}`}>
                           {user.profilePhotoData ? (
                             <img src={user.profilePhotoData} alt={`${user.name} profile`} className="h-full w-full object-cover" />
                           ) : (
@@ -635,7 +635,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                           )}
                         </div>
                         <div>
-                          <p className={`text-[13px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{user.name}</p>
+                          <p className={`text-[13px] font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>{user.name}</p>
                           <p className={`text-[11px] font-medium ${subLabelClass}`}>{user.email}</p>
                         </div>
                       </div>
@@ -648,10 +648,10 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-2">
                         <div className={`h-2 w-2 rounded-full ${user.status === 'Active' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]'}`} />
-                        <span className={`text-[12px] font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{user.status}</span>
+                        <span className={`text-[12px] font-bold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>{user.status}</span>
                       </div>
                     </td>
-                    <td className="px-8 py-5 text-[12px] font-semibold text-slate-500">{user.login}</td>
+                    <td className="px-8 py-5 text-[12px] font-semibold text-zinc-500">{user.login}</td>
                     <td className="px-8 py-5 text-right align-top">
                       <UserRowActionsMenu
                         isDarkMode={isDarkMode}
@@ -683,13 +683,13 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
             </table>
           </div>
 
-          <div className="px-8 py-6 flex items-center justify-between border-t border-slate-100 dark:border-slate-800">
+          <div className="px-8 py-6 flex items-center justify-between border-t border-zinc-100 dark:border-zinc-800">
             <p className={`text-[12px] font-bold ${subLabelClass}`}>Showing 1 to {users.length} of {users.length} users</p>
             <div className="flex items-center gap-2">
               <button className={`grid h-10 w-10 place-items-center rounded-xl border ${inputClass}`}><ChevronLeft size={16} /></button>
               <button className="h-10 w-10 rounded-xl bg-emerald-600 text-[13px] font-bold text-white">1</button>
-              <button className={`h-10 w-10 rounded-xl border text-[13px] font-bold transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 ${inputClass}`}>2</button>
-              <button className={`h-10 w-10 rounded-xl border text-[13px] font-bold transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 ${inputClass}`}>3</button>
+              <button className={`h-10 w-10 rounded-xl border text-[13px] font-bold transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800 ${inputClass}`}>2</button>
+              <button className={`h-10 w-10 rounded-xl border text-[13px] font-bold transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800 ${inputClass}`}>3</button>
               <button className={`grid h-10 w-10 place-items-center rounded-xl border ${inputClass}`}><ChevronRight size={16} /></button>
             </div>
           </div>
@@ -698,7 +698,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
         {/* Roles Sidebar Column */}
         <div className="space-y-6">
           <section className={`rounded-2xl border p-8 ${cardClass}`}>
-            <h4 className={`text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Roles</h4>
+            <h4 className={`text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Roles</h4>
             <p className={`mb-8 text-[13px] font-medium ${subLabelClass}`}>System roles and their permissions.</p>
 
             <div className="space-y-4">
@@ -707,19 +707,19 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                 { title: 'Assistant', desc: 'Manage circulation, members, and catalog only.', users: '6 users', icon: UserCircle, color: 'bg-blue-50 text-blue-600' },
                 { title: 'Viewer', desc: 'View only access to selected modules.', users: '2 users', icon: Eye, color: 'bg-orange-50 text-orange-600' },
               ].map((role) => (
-                <div key={role.title} className={`group flex cursor-pointer items-center justify-between rounded-2xl border p-4 transition-all hover:border-emerald-500/50 ${isDarkMode ? 'border-slate-800 hover:bg-[#0f1f49]/30' : 'border-slate-100 hover:bg-slate-50'}`}>
+                <div key={role.title} className={`group flex cursor-pointer items-center justify-between rounded-2xl border p-4 transition-all hover:border-emerald-500/50 ${isDarkMode ? 'border-zinc-800 hover:bg-[#27272A]/30' : 'border-zinc-100 hover:bg-zinc-50'}`}>
                   <div className="flex items-center gap-4">
-                    <div className={`grid h-10 w-10 place-items-center rounded-xl ${isDarkMode ? 'bg-slate-800 text-slate-400' : role.color}`}>
+                    <div className={`grid h-10 w-10 place-items-center rounded-xl ${isDarkMode ? 'bg-zinc-800 text-zinc-400' : role.color}`}>
                       <role.icon size={20} />
                     </div>
                     <div>
-                      <p className={`text-[13px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{role.title}</p>
+                      <p className={`text-[13px] font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>{role.title}</p>
                       <p className={`text-[11px] font-medium leading-relaxed ${subLabelClass}`}>{role.desc}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600'}`}>{role.users}</span>
-                    <ChevronRight size={14} className="text-slate-300" />
+                    <ChevronRight size={14} className="text-zinc-300" />
                   </div>
                 </div>
               ))}
@@ -727,23 +727,23 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
           </section>
 
           <section className={`rounded-2xl border p-8 ${cardClass}`}>
-            <h4 className={`mb-8 text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Quick Actions</h4>
+            <h4 className={`mb-8 text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Quick Actions</h4>
             <div className="space-y-3">
               {[
                 { label: 'Add New User', sub: 'Create a new user account', icon: UserPlus },
                 { label: 'Manage Roles', sub: 'Edit roles and permissions', icon: ShieldCheck },
               ].map((action) => (
-                <button key={action.label} className={`flex w-full items-center justify-between rounded-2xl border p-4 transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 ${inputClass}`}>
+                <button key={action.label} className={`flex w-full items-center justify-between rounded-2xl border p-4 transition-all hover:bg-zinc-50 dark:hover:bg-zinc-800/50 ${inputClass}`}>
                   <div className="flex items-center gap-4">
                     <div className="text-emerald-600 dark:text-emerald-400">
                       <action.icon size={20} />
                     </div>
                     <div className="text-left">
-                      <p className={`text-[13px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{action.label}</p>
+                      <p className={`text-[13px] font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>{action.label}</p>
                       <p className={`text-[11px] font-medium ${subLabelClass}`}>{action.sub}</p>
                     </div>
                   </div>
-                  <ChevronRight size={14} className="text-slate-300" />
+                  <ChevronRight size={14} className="text-zinc-300" />
                 </button>
               ))}
             </div>
@@ -763,13 +763,13 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
               <Image size={24} strokeWidth={2} />
             </div>
             <div>
-              <h4 className={`text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Library Logo</h4>
+              <h4 className={`text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Library Logo</h4>
               <p className={`text-[12px] font-medium ${subLabelClass}`}>Recommended: 512x512px</p>
             </div>
           </div>
 
           <div className="flex flex-col items-center">
-            <div className={`h-36 w-36 rounded-full border-2 p-2 ${isDarkMode ? 'border-slate-800 bg-slate-900/50' : 'border-slate-100 bg-white shadow-sm'}`}>
+            <div className={`h-36 w-36 rounded-full border-2 p-2 ${isDarkMode ? 'border-zinc-800 bg-zinc-900/50' : 'border-zinc-100 bg-white shadow-sm'}`}>
               {libraryLogoData ? (
                 <img
                   src={libraryLogoData}
@@ -792,7 +792,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
               />
               <button
                 onClick={() => logoInputRef.current?.click()}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 py-3 text-[13px] font-bold text-slate-700 transition-all hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800/50"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-200 py-3 text-[13px] font-bold text-zinc-700 transition-all hover:bg-zinc-50 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800/50"
               >
                 <Upload size={16} /> Change Logo
               </button>
@@ -845,7 +845,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
             <Library size={24} strokeWidth={2} />
           </div>
           <div>
-            <h4 className={`text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Library Information</h4>
+            <h4 className={`text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Library Information</h4>
             <p className={`text-[13px] font-medium ${subLabelClass}`}>Update your library's details and contact information.</p>
           </div>
         </div>
@@ -925,7 +925,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
             <Calendar size={24} strokeWidth={2} />
           </div>
           <div>
-            <h4 className={`text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Circulation Rules</h4>
+            <h4 className={`text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Circulation Rules</h4>
             <p className={`text-[13px] font-medium ${subLabelClass}`}>Set rules for borrowing and returning library materials.</p>
           </div>
         </div>
@@ -955,9 +955,9 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                   onChange={(event) => item.onChange(event.target.value)}
                   onBlur={() => saveGeneralSetting(item.dbKey, item.value)}
                 />
-                <div className="flex flex-col border-l border-slate-200 pl-3 dark:border-slate-800">
-                  <button className="text-slate-400 hover:text-emerald-500 transition-colors"><ChevronDown size={14} className="rotate-180" /></button>
-                  <button className="text-slate-400 hover:text-emerald-500 transition-colors"><ChevronDown size={14} /></button>
+                <div className="flex flex-col border-l border-zinc-200 pl-3 dark:border-zinc-800">
+                  <button className="text-zinc-400 hover:text-emerald-500 transition-colors"><ChevronDown size={14} className="rotate-180" /></button>
+                  <button className="text-zinc-400 hover:text-emerald-500 transition-colors"><ChevronDown size={14} /></button>
                 </div>
               </div>
               <p className={`text-[11px] font-medium leading-relaxed ${subLabelClass}`}>{item.desc}</p>
@@ -973,21 +973,21 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
             <Bell size={24} strokeWidth={2} />
           </div>
           <div>
-            <h4 className={`text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Notifications & Behavior</h4>
+            <h4 className={`text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Notifications & Behavior</h4>
             <p className={`text-[13px] font-medium ${subLabelClass}`}>Configure notification settings and reservation behavior.</p>
           </div>
         </div>
 
         <div className="space-y-4">
           {/* Email Notifications */}
-          <div className={`rounded-2xl border p-6 transition-all hover:border-emerald-500/30 ${isDarkMode ? 'border-slate-800 bg-[#0f1f49]/30' : 'border-slate-100 bg-slate-50/50'}`}>
+          <div className={`rounded-2xl border p-6 transition-all hover:border-emerald-500/30 ${isDarkMode ? 'border-zinc-800 bg-[#27272A]/30' : 'border-zinc-100 bg-zinc-50/50'}`}>
             <div className="flex flex-wrap items-center justify-between gap-6">
               <div className="flex flex-1 items-start gap-5">
                 <div className={`grid h-12 w-12 shrink-0 place-items-center rounded-xl ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white text-emerald-600 shadow-sm'}`}>
                   <Mail size={22} />
                 </div>
                 <div className="space-y-1">
-                  <h5 className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-900'}`}>Email Notifications</h5>
+                  <h5 className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-900'}`}>Email Notifications</h5>
                   <p className={`max-w-md text-[12px] font-medium leading-relaxed ${subLabelClass}`}>
                     Receive email notifications for important library activities such as reservations, due dates, and overdue items.
                   </p>
@@ -1001,10 +1001,10 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                     void saveGeneralSetting('general.email_notifications', String(next))
                   }}
                   className={`relative h-[26px] w-[50px] shrink-0 rounded-full transition-all duration-300 ${
-                    notifications ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-700'
+                    notifications ? 'bg-emerald-600' : 'bg-zinc-300 dark:bg-zinc-700'
                   }`}
                 >
-                  <div className={`absolute left-1 top-1 h-[18px] w-[18px] transform rounded-full bg-white shadow-sm transition-transform duration-300 ${notifications ? 'translate-x-6' : 'translate-x-0'}`} />
+                  <div className={`absolute left-1 top-1 h-[18px] w-[18px] transform rounded-full bg-white shadow-sm transition-transform duration-300 ${notifications ? 'tranzinc-x-6' : 'tranzinc-x-0'}`} />
                 </button>
                 <div className={`rounded-lg px-4 py-3 text-[11px] font-semibold leading-relaxed ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-700'}`}>
                   Notification will be sent to the <br /> registered email of the member.
@@ -1014,21 +1014,21 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
           </div>
 
           {/* Reservation Expiry */}
-          <div className={`rounded-2xl border p-6 transition-all hover:border-emerald-500/30 ${isDarkMode ? 'border-slate-800 bg-[#0f1f49]/30' : 'border-slate-100 bg-slate-50/50'}`}>
+          <div className={`rounded-2xl border p-6 transition-all hover:border-emerald-500/30 ${isDarkMode ? 'border-zinc-800 bg-[#27272A]/30' : 'border-zinc-100 bg-zinc-50/50'}`}>
             <div className="flex flex-wrap items-center justify-between gap-6">
               <div className="flex flex-1 items-start gap-5">
                 <div className={`grid h-12 w-12 shrink-0 place-items-center rounded-xl ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white text-emerald-600 shadow-sm'}`}>
                   <Calendar size={22} />
                 </div>
                 <div className="space-y-1">
-                  <h5 className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-900'}`}>Reservation Expiry <span className={`text-[11px] font-medium ${subLabelClass}`}>(days)</span></h5>
+                  <h5 className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-900'}`}>Reservation Expiry <span className={`text-[11px] font-medium ${subLabelClass}`}>(days)</span></h5>
                   <p className={`max-w-md text-[12px] font-medium leading-relaxed ${subLabelClass}`}>
                     Automatically cancel a reservation if it is not claimed within the set number of days.
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-6">
-                <div className={`relative flex h-11 w-24 items-center justify-between rounded-xl border px-3 ${isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'}`}>
+                <div className={`relative flex h-11 w-24 items-center justify-between rounded-xl border px-3 ${isDarkMode ? 'border-zinc-700 bg-zinc-800' : 'border-zinc-200 bg-white'}`}>
                   <input
                     type="text"
                     className="w-full bg-transparent text-[14px] font-bold outline-none"
@@ -1036,9 +1036,9 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                     onChange={(event) => setReservationExpiry(event.target.value)}
                     onBlur={() => saveGeneralSetting('general.reservation_expiry_days', reservationExpiry)}
                   />
-                  <div className="flex flex-col border-l border-slate-200 pl-2 dark:border-slate-800">
-                    <ChevronDown size={12} className="rotate-180 text-slate-400" />
-                    <ChevronDown size={12} className="text-slate-400" />
+                  <div className="flex flex-col border-l border-zinc-200 pl-2 dark:border-zinc-800">
+                    <ChevronDown size={12} className="rotate-180 text-zinc-400" />
+                    <ChevronDown size={12} className="text-zinc-400" />
                   </div>
                 </div>
                 <div className={`rounded-lg px-4 py-3 text-[11px] font-semibold leading-relaxed ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-700'}`}>
@@ -1051,8 +1051,8 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
       </section>
 
       <div className="flex items-center justify-center gap-2 py-4">
-        <Info size={16} className="text-slate-400" />
-        <p className="text-[12px] font-medium text-slate-400">These settings apply to the entire library system.</p>
+        <Info size={16} className="text-zinc-400" />
+        <p className="text-[12px] font-medium text-zinc-400">These settings apply to the entire library system.</p>
       </div>
     </div>
   )
@@ -1067,7 +1067,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
               <Shield size={24} strokeWidth={2} />
             </div>
             <div>
-              <h4 className={`text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Change Password</h4>
+              <h4 className={`text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Change Password</h4>
               <p className={`text-[13px] font-medium ${subLabelClass}`}>Update your password regularly to keep your account secure.</p>
             </div>
           </div>
@@ -1086,7 +1086,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                 <button 
                   type="button"
                   onClick={() => setShowCurrentPass(!showCurrentPass)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-500 transition-colors"
+                  className="absolute right-4 top-1/2 -tranzinc-y-1/2 text-zinc-400 hover:text-emerald-500 transition-colors"
                 >
                   <Eye size={18} />
                 </button>
@@ -1106,7 +1106,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                 <button 
                   type="button"
                   onClick={() => setShowNewPass(!showNewPass)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-500 transition-colors"
+                  className="absolute right-4 top-1/2 -tranzinc-y-1/2 text-zinc-400 hover:text-emerald-500 transition-colors"
                 >
                   <Eye size={18} />
                 </button>
@@ -1127,7 +1127,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                 <button 
                   type="button"
                   onClick={() => setShowConfirmPass(!showConfirmPass)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-500 transition-colors"
+                  className="absolute right-4 top-1/2 -tranzinc-y-1/2 text-zinc-400 hover:text-emerald-500 transition-colors"
                 >
                   <Eye size={18} />
                 </button>
@@ -1157,14 +1157,14 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
               <Clock size={24} strokeWidth={2} />
             </div>
             <div>
-              <h4 className={`text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Login Trail</h4>
+              <h4 className={`text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Login Trail</h4>
               <p className={`text-[13px] font-medium ${subLabelClass}`}>A record of recent login and logout activities.</p>
             </div>
           </div>
 
-          <div className={`overflow-hidden rounded-xl border ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+          <div className={`overflow-hidden rounded-xl border ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
             <table className="w-full text-left text-sm">
-              <thead className={isDarkMode ? 'bg-[#0f1f49] text-slate-300' : 'bg-slate-50 text-slate-600'}>
+              <thead className={isDarkMode ? 'bg-[#27272A] text-zinc-300' : 'bg-zinc-50 text-zinc-600'}>
                 <tr className="text-[11px] font-bold uppercase tracking-wider">
                   <th className="px-4 py-3">User</th>
                   <th className="px-4 py-3 text-center">Action</th>
@@ -1195,14 +1195,14 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                   })() : []
                   return [loginRow, ...logoutRows]
                 }).slice(0, 8).map((trail) => (
-                  <tr key={trail.key} className={`border-t transition-colors duration-150 ${isDarkMode ? 'border-slate-700 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}>
+                  <tr key={trail.key} className={`border-t transition-colors duration-150 ${isDarkMode ? 'border-zinc-700 hover:bg-[#3F3F46]' : 'border-zinc-100 hover:bg-zinc-50'}`}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className={`grid h-10 w-10 place-items-center rounded-full text-[11px] font-bold text-white ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200'}`}>
+                        <div className={`grid h-10 w-10 place-items-center rounded-full text-[11px] font-bold text-white ${isDarkMode ? 'bg-zinc-800' : 'bg-zinc-200'}`}>
                           {trail.name.split(' ').map(n => n[0]).join('')}
                         </div>
                         <div>
-                          <p className={`text-[13px] font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{trail.name}</p>
+                          <p className={`text-[13px] font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>{trail.name}</p>
                           <p className={`text-[11px] font-medium ${subLabelClass}`}>{trail.role}</p>
                         </div>
                       </div>
@@ -1217,14 +1217,14 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <p className={`text-[12px] font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{trail.date}</p>
+                      <p className={`text-[12px] font-bold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>{trail.date}</p>
                       <p className={`text-[11px] font-medium ${subLabelClass}`}>{trail.time}</p>
                     </td>
                   </tr>
                 ))}
                 {loginTrail.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className={`px-4 py-8 text-center text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                    <td colSpan={3} className={`px-4 py-8 text-center text-sm ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
                       No login activity yet.
                     </td>
                   </tr>
@@ -1241,8 +1241,8 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
       </div>
 
       <div className="flex items-center justify-center gap-2 py-4">
-        <Info size={16} className="text-slate-400" />
-        <p className="text-[13px] font-medium text-slate-400">If you notice any unfamiliar activity, please change your password immediately.</p>
+        <Info size={16} className="text-zinc-400" />
+        <p className="text-[13px] font-medium text-zinc-400">If you notice any unfamiliar activity, please change your password immediately.</p>
       </div>
     </div>
   )
@@ -1253,7 +1253,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
         <div className="mb-6 flex items-center gap-4">
           <div className={`grid h-12 w-12 place-items-center rounded-2xl ${iconBoxBg}`}><Mail size={24} /></div>
           <div>
-            <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Email Configuration</h3>
+            <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Email Configuration</h3>
             <p className={`text-sm ${subLabelClass}`}>Configure the sender and SMTP account used for book reminders.</p>
           </div>
         </div>
@@ -1275,9 +1275,9 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                   toggle.setter(next)
                   void saveEmailSetting(toggle.key, String(next))
                 }}
-                className={`relative h-7 w-12 rounded-full transition-colors ${toggle.value ? 'bg-emerald-600' : isDarkMode ? 'bg-slate-700' : 'bg-slate-300'}`}
+                className={`relative h-7 w-12 rounded-full transition-colors ${toggle.value ? 'bg-emerald-600' : isDarkMode ? 'bg-zinc-700' : 'bg-zinc-300'}`}
               >
-                <span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-transform ${toggle.value ? 'translate-x-5' : 'translate-x-1'}`} />
+                <span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-transform ${toggle.value ? 'tranzinc-x-5' : 'tranzinc-x-1'}`} />
               </button>
             </div>
           ))}
@@ -1308,7 +1308,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
       </section>
 
       <section className={`rounded-2xl border p-6 ${cardClass}`}>
-        <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Test Email</h3>
+        <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Test Email</h3>
         <p className={`mt-1 text-sm ${subLabelClass}`}>Send a quick test using the current configuration.</p>
         <div className="mt-5 space-y-3">
           <label className="space-y-2">
@@ -1328,7 +1328,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
 
   const renderEmailLogs = () => (
     <section className={`overflow-hidden rounded-2xl border ${cardClass}`}>
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b px-6 py-4 dark:border-slate-800">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b px-6 py-4 dark:border-zinc-800">
         <div className="flex flex-1 items-center gap-3">
           <div className={`flex h-11 min-w-64 items-center rounded-xl border px-3 ${inputClass}`}>
             <Search size={16} className={subLabelClass} />
@@ -1347,7 +1347,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
-          <thead className={isDarkMode ? 'bg-[#0f1f49]/50 text-slate-300' : 'bg-slate-50 text-slate-600'}>
+          <thead className={isDarkMode ? 'bg-[#27272A]/50 text-zinc-300' : 'bg-zinc-50 text-zinc-600'}>
             <tr>
               <th className="px-6 py-3 font-semibold">Borrower</th>
               <th className="px-6 py-3 font-semibold">Email</th>
@@ -1357,11 +1357,11 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
               <th className="px-6 py-3 font-semibold text-right">Sent Date</th>
             </tr>
           </thead>
-          <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
+          <tbody className={`divide-y ${isDarkMode ? 'divide-zinc-800' : 'divide-zinc-100'}`}>
             {emailLogs.length === 0 ? (
               <tr><td colSpan={6} className={`px-6 py-10 text-center ${subLabelClass}`}>No email logs yet.</td></tr>
             ) : emailLogs.map((log) => (
-              <tr key={log.id} className={isDarkMode ? 'hover:bg-[#12244f]' : 'hover:bg-slate-50'}>
+              <tr key={log.id} className={isDarkMode ? 'hover:bg-[#3F3F46]' : 'hover:bg-zinc-50'}>
                 <td className={`px-6 py-4 font-semibold ${labelClass}`}>{log.borrowerName}</td>
                 <td className={`px-6 py-4 ${subLabelClass}`}>{log.emailAddress}</td>
                 <td className={`px-6 py-4 ${labelClass}`}>{log.bookTitle}</td>
@@ -1507,7 +1507,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                   <card.icon size={28} />
                 </div>
                 <div>
-                  <h4 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{card.title}</h4>
+                  <h4 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>{card.title}</h4>
                   <p className={`mt-1.5 text-xs font-medium leading-relaxed ${subLabelClass}`}>{card.desc}</p>
                 </div>
               </div>
@@ -1525,7 +1525,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
         {/* Recent Activity Table */}
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Recent Settings Activity</h3>
+            <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Recent Settings Activity</h3>
             <button className="flex items-center gap-2 text-sm font-bold text-emerald-600 transition-colors hover:text-emerald-700">
               <span>View all activity</span>
               <ChevronRight size={18} />
@@ -1534,7 +1534,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
 
           <div className={`overflow-hidden rounded-2xl border ${cardClass}`}>
             <table className="w-full text-left text-sm">
-              <thead className={isDarkMode ? 'bg-[#0f1f49]/50 text-slate-300' : 'bg-slate-50/50 text-slate-600'}>
+              <thead className={isDarkMode ? 'bg-[#27272A]/50 text-zinc-300' : 'bg-zinc-50/50 text-zinc-600'}>
                 <tr>
                   <th className="px-6 py-3.5 font-semibold">ACTIVITY</th>
                   <th className="px-6 py-3.5 font-semibold">MODULE</th>
@@ -1542,23 +1542,23 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                   <th className="px-6 py-3.5 font-semibold text-right">DATE & TIME</th>
                 </tr>
               </thead>
-              <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800/30' : 'divide-slate-100/50'}`}>
+              <tbody className={`divide-y ${isDarkMode ? 'divide-zinc-800/30' : 'divide-zinc-100/50'}`}>
                 {recentActivity.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className={`px-6 py-8 text-center text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                    <td colSpan={4} className={`px-6 py-8 text-center text-sm ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
                       No settings activity yet.
                     </td>
                   </tr>
                 ) : recentActivity.map((item) => (
-                  <tr key={item.id} className={`transition-colors duration-150 ${isDarkMode ? 'hover:bg-[#12244f]' : 'hover:bg-slate-50'}`}>
+                  <tr key={item.id} className={`transition-colors duration-150 ${isDarkMode ? 'hover:bg-[#3F3F46]' : 'hover:bg-zinc-50'}`}>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
                         <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${item.color}`}>
                           <item.icon size={20} />
                         </div>
                         <div>
-                          <p className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{item.title}</p>
-                          <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{item.detail}</p>
+                          <p className={`font-semibold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{item.title}</p>
+                          <p className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{item.detail}</p>
                         </div>
                       </div>
                     </td>
@@ -1568,11 +1568,11 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <p className={`font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{item.updatedBy}</p>
+                      <p className={`font-medium ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>{item.updatedBy}</p>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <p className={`font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{item.date}</p>
-                      <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{item.time}</p>
+                      <p className={`font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>{item.date}</p>
+                      <p className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{item.time}</p>
                     </td>
                   </tr>
                 ))}
@@ -1585,24 +1585,24 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
   }
 
   return (
-    <div className={`min-h-0 flex-1 overflow-auto p-8 transition-colors duration-300 ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
+    <div className={`min-h-0 flex-1 overflow-auto p-8 transition-colors duration-300 ${isDarkMode ? 'bg-[transparent] text-zinc-100' : 'bg-[#f8fafc] text-zinc-900'}`}>
       <div className="space-y-10 pb-20">
           <div className="mb-10 items-start justify-between">
             {activeMenu !== 'Overview' && (
               <nav className="mb-4 flex items-center gap-2 text-[13px] font-bold">
                 <button 
                   onClick={() => onTabChange?.('Overview')}
-                  className="text-slate-400 transition-colors hover:text-emerald-600"
+                  className="text-zinc-400 transition-colors hover:text-emerald-600"
                 >
                   Settings
                 </button>
-                <ChevronRight size={14} className="text-slate-300" />
+                <ChevronRight size={14} className="text-zinc-300" />
                 <span className="text-emerald-600">{activeMenu}</span>
               </nav>
             )}
             <div className="flex items-start justify-between">
               <div>
-                <h2 className={`text-4xl font-black tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                <h2 className={`text-4xl font-black tracking-tight ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>
                 {activeMenu === 'Overview' ? 'Settings' : activeMenu}
               </h2>
               <p className={`mt-1 text-base ${subLabelClass}`}>
@@ -1668,21 +1668,21 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
       </div>
 
       {isUserModalOpen ? (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/45 p-4 backdrop-blur-[1px]">
-          <section className={`w-full max-w-4xl rounded-2xl border shadow-2xl ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
-            <div className={`flex items-start justify-between border-b px-6 py-5 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-zinc-900/45 p-4 backdrop-blur-[1px]">
+          <section className={`w-full max-w-4xl rounded-2xl border shadow-2xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
+            <div className={`flex items-start justify-between border-b px-6 py-5 ${isDarkMode ? 'border-zinc-700' : 'border-zinc-200'}`}>
               <div>
-                <h3 className={`text-3xl font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+                <h3 className={`text-3xl font-black ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>
                   {editingUser ? 'Edit User' : 'Add New User'}
                 </h3>
-                <p className={`mt-1 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                <p className={`mt-1 text-sm ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
                   {editingUser ? 'Update user profile and role permissions.' : 'Create a new user account with assigned role.'}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => { setIsUserModalOpen(false); setEditingUser(null) }}
-                className={`grid h-10 w-10 place-items-center rounded-xl border ${isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                className={`grid h-10 w-10 place-items-center rounded-xl border ${isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'}`}
               >
                 <X size={18} />
               </button>
@@ -1699,7 +1699,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                       onChange={handleUserProfilePhotoChange}
                     />
                     <div className="flex items-center gap-3">
-                      <div className={`grid h-10 w-10 place-items-center overflow-hidden rounded-full ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
+                      <div className={`grid h-10 w-10 place-items-center overflow-hidden rounded-full ${isDarkMode ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-100 text-zinc-600'}`}>
                         {userForm.profilePhotoData ? (
                           <img src={userForm.profilePhotoData} alt="User profile preview" className="h-full w-full object-cover" />
                         ) : (
@@ -1709,7 +1709,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                       <button
                         type="button"
                         onClick={() => userPhotoInputRef.current?.click()}
-                        className={`h-10 rounded-lg border px-4 text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}
+                        className={`h-10 rounded-lg border px-4 text-sm font-semibold ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}
                       >
                         Upload Photo
                       </button>
@@ -1761,7 +1761,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                   </div>
                 </div>
               <div className="grid gap-3 pt-1 sm:grid-cols-2">
-                <button type="button" onClick={() => { setIsUserModalOpen(false); setEditingUser(null) }} className={`h-11 rounded-xl border text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>Cancel</button>
+                <button type="button" onClick={() => { setIsUserModalOpen(false); setEditingUser(null) }} className={`h-11 rounded-xl border text-sm font-semibold ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>Cancel</button>
                 <button type="button" onClick={() => { void saveUserFromModal() }} className="h-11 rounded-xl bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-700">
                   {editingUser ? 'Save Changes' : 'Add User'}
                 </button>
@@ -1772,11 +1772,11 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
       ) : null}
 
       {userToDelete ? (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-zinc-950/60 p-4 backdrop-blur-sm">
           <section className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl ${cardClass}`}>
-            <h4 className={`text-xl font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Delete User</h4>
+            <h4 className={`text-xl font-black ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Delete User</h4>
             <p className={`mt-2 text-sm ${subLabelClass}`}>
-              Are you sure you want to remove <span className={isDarkMode ? 'text-slate-100 font-bold' : 'text-slate-900 font-bold'}>{userToDelete.name}</span>?
+              Are you sure you want to remove <span className={isDarkMode ? 'text-zinc-100 font-bold' : 'text-zinc-900 font-bold'}>{userToDelete.name}</span>?
             </p>
             <div className="mt-6 flex gap-3">
               <button type="button" onClick={() => setUserToDelete(null)} className={`h-11 flex-1 rounded-xl border font-bold ${inputClass}`}>Cancel</button>

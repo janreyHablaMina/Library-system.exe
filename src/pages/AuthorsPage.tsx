@@ -75,8 +75,8 @@ export function AuthorActionsMenu({ isDarkMode, onViewDetails, onEdit, onDelete 
 
   const baseButton = `flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg transition-colors duration-150`
   const normalButton = isDarkMode
-    ? `text-slate-300 hover:bg-slate-800 hover:text-white`
-    : `text-slate-600 hover:bg-slate-50 hover:text-slate-900`
+    ? `text-zinc-300 hover:bg-zinc-800 hover:text-white`
+    : `text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900`
   const dangerButton = isDarkMode
     ? `text-rose-400 hover:bg-rose-500/10 hover:text-rose-300`
     : `text-rose-600 hover:bg-rose-50 hover:text-rose-700`
@@ -90,8 +90,8 @@ export function AuthorActionsMenu({ isDarkMode, onViewDetails, onEdit, onDelete 
           open 
             ? 'bg-emerald-50 text-emerald-600 border-emerald-300 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30' 
             : isDarkMode 
-              ? 'border-slate-700 text-slate-400 hover:bg-slate-800' 
-              : 'border-slate-200 text-slate-500 hover:bg-white hover:text-emerald-600'
+              ? 'border-zinc-700 text-zinc-400 hover:bg-zinc-800' 
+              : 'border-zinc-200 text-zinc-500 hover:bg-white hover:text-emerald-600'
         }`}
       >
         <MoreHorizontal size={14} />
@@ -101,8 +101,8 @@ export function AuthorActionsMenu({ isDarkMode, onViewDetails, onEdit, onDelete 
         <div
           className={`absolute right-0 z-50 w-44 rounded-xl border p-1.5 shadow-xl animate-[fadeIn_0.12s_ease] ${
             isDarkMode 
-              ? 'border-slate-700 bg-[#0f1f49]' 
-              : 'border-slate-200 bg-white'
+              ? 'border-zinc-700 bg-[#27272A]' 
+              : 'border-zinc-200 bg-white'
           } ${
             openUpward 
               ? 'bottom-full mb-1.5 origin-bottom-right' 
@@ -127,7 +127,7 @@ export function AuthorActionsMenu({ isDarkMode, onViewDetails, onEdit, onDelete 
             Edit Profile
           </button>
           
-          <div className={`my-1 border-t ${isDarkMode ? 'border-slate-700' : 'border-slate-100'}`} />
+          <div className={`my-1 border-t ${isDarkMode ? 'border-zinc-700' : 'border-zinc-100'}`} />
 
           <button
             type="button"
@@ -414,15 +414,15 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
   }, [authorsList, allBooksCount])
 
   return (
-    <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
+    <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[transparent] text-zinc-100' : 'bg-[#f8fafc] text-zinc-900'}`}>
       <section className="p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h2 className={`text-4xl font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Authors</h2>
-            <p className={`mt-1 text-base font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Manage and organize all authors in your library.</p>
+            <h2 className={`text-4xl font-black ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Authors</h2>
+            <p className={`mt-1 text-base font-medium ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Manage and organize all authors in your library.</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button type="button" className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-bold transition-all ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
+            <button type="button" className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-bold transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
               <Download size={16} />
               Export
             </button>
@@ -437,17 +437,17 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
           {stats.map((stat) => {
             const Icon = stat.icon
             return (
-              <article key={stat.label} className={`rounded-xl border p-5 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+              <article key={stat.label} className={`rounded-xl border p-5 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-tranzinc-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
                 <div className="flex items-center gap-4">
                   <div className={`grid h-12 w-12 place-items-center rounded-2xl ${stat.bg} ${stat.color}`}>
                     <Icon size={22} />
                   </div>
                   <div className="flex flex-col">
-                    <p className={`text-xs font-bold text-slate-500 dark:text-slate-400`}>{stat.label}</p>
-                    <p className={`text-2xl font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{stat.value}</p>
+                    <p className={`text-xs font-bold text-zinc-500 dark:text-zinc-400`}>{stat.label}</p>
+                    <p className={`text-2xl font-black ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{stat.value}</p>
                   </div>
                 </div>
-                <p className={`mt-3 text-[11px] font-bold ${stat.color === 'text-rose-600' || stat.color === 'text-violet-600' ? 'text-slate-500 dark:text-slate-400' : stat.color}`}>
+                <p className={`mt-3 text-[11px] font-bold ${stat.color === 'text-rose-600' || stat.color === 'text-violet-600' ? 'text-zinc-500 dark:text-zinc-400' : stat.color}`}>
                   {stat.subValue}
                 </p>
               </article>
@@ -455,35 +455,35 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
           })}
         </section>
 
-        <div className={`mt-8 rounded-xl border ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
-          <div className={`flex flex-wrap items-center gap-4 p-4 border-b rounded-t-xl ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-100 bg-white'}`}>
-            <label className={`group flex h-12 min-w-[320px] flex-1 items-center rounded-xl border px-3 transition-all ${isDarkMode ? 'border-slate-700 focus-within:border-emerald-500 bg-[#0f1f49]' : 'border-slate-200 focus-within:border-emerald-500 bg-slate-50'}`}>
-              <Search size={18} className={`mr-2 transition-colors ${isDarkMode ? 'text-slate-500 group-focus-within:text-emerald-400' : 'text-slate-400 group-focus-within:text-emerald-600'}`} />
-              <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className={`w-full bg-transparent text-sm font-medium outline-none ${isDarkMode ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400'}`} placeholder="Search authors by name..." />
+        <div className={`mt-8 rounded-xl border ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
+          <div className={`flex flex-wrap items-center gap-4 p-4 border-b rounded-t-xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-100 bg-white'}`}>
+            <label className={`group flex h-12 min-w-[320px] flex-1 items-center rounded-xl border px-3 transition-all ${isDarkMode ? 'border-zinc-700 focus-within:border-emerald-500 bg-[#27272A]' : 'border-zinc-200 focus-within:border-emerald-500 bg-zinc-50'}`}>
+              <Search size={18} className={`mr-2 transition-colors ${isDarkMode ? 'text-zinc-500 group-focus-within:text-emerald-400' : 'text-zinc-400 group-focus-within:text-emerald-600'}`} />
+              <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className={`w-full bg-transparent text-sm font-medium outline-none ${isDarkMode ? 'text-zinc-200 placeholder:text-zinc-500' : 'text-zinc-700 placeholder:text-zinc-400'}`} placeholder="Search authors by name..." />
             </label>
             
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-slate-500">Status</span>
+                <span className="text-xs font-bold text-zinc-500">Status</span>
                 <div className="relative">
-                  <select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)} className={`h-11 min-w-[120px] appearance-none rounded-xl border py-2 pl-4 pr-10 text-xs font-bold outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
+                  <select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)} className={`h-11 min-w-[120px] appearance-none rounded-xl border py-2 pl-4 pr-10 text-xs font-bold outline-none ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'}`}>
                     <option value="All">All</option>
                     <option value="Active">Active</option>
                     <option value="Inactive">Inactive</option>
                   </select>
-                  <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                  <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -tranzinc-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-slate-500">Sort By</span>
+                <span className="text-xs font-bold text-zinc-500">Sort By</span>
                 <div className="relative">
-                  <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className={`h-11 min-w-[160px] appearance-none rounded-xl border py-2 pl-4 pr-10 text-xs font-bold outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
+                  <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className={`h-11 min-w-[160px] appearance-none rounded-xl border py-2 pl-4 pr-10 text-xs font-bold outline-none ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'}`}>
                     <option value="Name (A-Z)">Name (A-Z)</option>
                     <option value="Name (Z-A)">Name (Z-A)</option>
                     <option value="Books (High-Low)">Books (High-Low)</option>
                   </select>
-                  <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                  <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -tranzinc-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
                 </div>
               </div>
 
@@ -491,9 +491,9 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
             </div>
           </div>
 
-          <div className={`relative z-10 overflow-x-auto lg:overflow-visible ${isDarkMode ? 'bg-[#0b1738]' : 'bg-white'}`}>
+          <div className={`relative z-10 overflow-x-auto lg:overflow-visible ${isDarkMode ? 'bg-[#18181B]' : 'bg-white'}`}>
             <table className="w-full text-left text-sm border-collapse">
-              <thead className={isDarkMode ? 'bg-[#0f1f49] text-slate-300' : 'bg-slate-50 text-slate-600'}>
+              <thead className={isDarkMode ? 'bg-[#27272A] text-zinc-300' : 'bg-zinc-50 text-zinc-600'}>
                 <tr>
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Author</th>
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Nationality</th>
@@ -504,10 +504,10 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
               </thead>
               <tbody>
                 {paginatedAuthors.map((author) => (
-                  <tr key={author.id} className={`border-t transition-colors duration-150 ${isDarkMode ? 'border-slate-700 hover:bg-[#12244f]' : 'border-slate-100 hover:bg-slate-50'}`}>
+                  <tr key={author.id} className={`border-t transition-colors duration-150 ${isDarkMode ? 'border-zinc-700 hover:bg-[#3F3F46]' : 'border-zinc-100 hover:bg-zinc-50'}`}>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <span className={`grid h-10 w-10 place-items-center overflow-hidden rounded-full text-lg border ${isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-100'}`}>
+                        <span className={`grid h-10 w-10 place-items-center overflow-hidden rounded-full text-lg border ${isDarkMode ? 'border-zinc-700 bg-zinc-800' : 'border-zinc-200 bg-zinc-100'}`}>
                           {author.profilePhotoData ? (
                             <img src={author.profilePhotoData} alt={`${author.name} photo`} className="h-full w-full object-cover" />
                           ) : (
@@ -515,19 +515,19 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
                           )}
                         </span>
                         <div>
-                          <p className={`font-semibold text-sm ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{author.name}</p>
-                          <p className={`text-[11px] font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{author.email}</p>
+                          <p className={`font-semibold text-sm ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{author.name}</p>
+                          <p className={`text-[11px] font-medium ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{author.email}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                       <div className="flex items-center gap-2 font-medium text-slate-600 dark:text-slate-300">
-                         <Globe size={14} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />
+                       <div className="flex items-center gap-2 font-medium text-zinc-600 dark:text-zinc-300">
+                         <Globe size={14} className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} />
                          <span className="text-xs">{author.nationality}</span>
                        </div>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <span className={`text-xs font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{author.books}</span>
+                      <span className={`text-xs font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>{author.books}</span>
                     </td>
                     <td className="px-6 py-4">
                       <span className={`rounded-md px-3 py-1 text-[11px] font-semibold tracking-wide ${
@@ -552,31 +552,31 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
             </table>
           </div>
 
-          <div className={`flex flex-wrap items-center justify-between gap-4 border-t p-4 text-xs font-bold rounded-b-xl ${isDarkMode ? 'border-slate-700 bg-[#0b1738] text-slate-300' : 'border-slate-200 bg-white text-slate-600'}`}>
+          <div className={`flex flex-wrap items-center justify-between gap-4 border-t p-4 text-xs font-bold rounded-b-xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B] text-zinc-300' : 'border-zinc-200 bg-white text-zinc-600'}`}>
             <p>Showing {filteredAuthors.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to {Math.min(currentPage * itemsPerPage, filteredAuthors.length)} of {filteredAuthors.length} authors</p>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1.5">
-                <button type="button" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className={`grid h-8 w-8 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 text-slate-400 hover:bg-slate-800 disabled:opacity-50' : 'border-slate-200 text-slate-400 hover:bg-white disabled:opacity-50'}`}>
+                <button type="button" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className={`grid h-8 w-8 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-400 hover:bg-zinc-800 disabled:opacity-50' : 'border-zinc-200 text-zinc-400 hover:bg-white disabled:opacity-50'}`}>
                   <ChevronLeft size={16} />
                 </button>
                 <div className="flex items-center gap-1">
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                    <button key={page} type="button" onClick={() => setCurrentPage(page)} className={page === currentPage ? "grid h-8 w-8 place-items-center rounded-lg bg-emerald-600 text-white shadow-sm" : `grid h-8 w-8 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 text-slate-400 hover:bg-slate-800' : 'border-slate-200 text-slate-400 hover:bg-white'}`}>
+                    <button key={page} type="button" onClick={() => setCurrentPage(page)} className={page === currentPage ? "grid h-8 w-8 place-items-center rounded-lg bg-emerald-600 text-white shadow-sm" : `grid h-8 w-8 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-400 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-400 hover:bg-white'}`}>
                       {page}
                     </button>
                   ))}
                 </div>
-                <button type="button" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0} className={`grid h-8 w-8 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 text-slate-400 hover:bg-slate-800 disabled:opacity-50' : 'border-slate-200 text-slate-400 hover:bg-white disabled:opacity-50'}`}>
+                <button type="button" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0} className={`grid h-8 w-8 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-400 hover:bg-zinc-800 disabled:opacity-50' : 'border-zinc-200 text-zinc-400 hover:bg-white disabled:opacity-50'}`}>
                   <ChevronRight size={16} />
                 </button>
               </div>
               <div className="relative">
-                <select value={itemsPerPage} onChange={(e) => setItemsPerPage(Number(e.target.value))} className={`h-8 min-w-[100px] appearance-none rounded-lg border pl-3 pr-8 text-[11px] font-bold outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-slate-800 text-slate-300' : 'border-slate-200 bg-white text-slate-600'}`}>
+                <select value={itemsPerPage} onChange={(e) => setItemsPerPage(Number(e.target.value))} className={`h-8 min-w-[100px] appearance-none rounded-lg border pl-3 pr-8 text-[11px] font-bold outline-none transition-all ${isDarkMode ? 'border-zinc-700 bg-zinc-800 text-zinc-300' : 'border-zinc-200 bg-white text-zinc-600'}`}>
                   <option value={10}>10 / page</option>
                   <option value={20}>20 / page</option>
                   <option value={50}>50 / page</option>
                 </select>
-                <ChevronDown size={12} className={`pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400`} />
+                <ChevronDown size={12} className={`pointer-events-none absolute right-2.5 top-1/2 -tranzinc-y-1/2 text-zinc-400`} />
               </div>
             </div>
           </div>
@@ -584,14 +584,14 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
       </section>
 
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/45 p-4 backdrop-blur-[1px]">
-          <section className={`w-full max-w-4xl rounded-2xl border shadow-2xl ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
-            <div className={`flex items-start justify-between border-b px-6 py-5 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-zinc-900/45 p-4 backdrop-blur-[1px]">
+          <section className={`w-full max-w-4xl rounded-2xl border shadow-2xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
+            <div className={`flex items-start justify-between border-b px-6 py-5 ${isDarkMode ? 'border-zinc-700' : 'border-zinc-200'}`}>
               <div>
-                <h3 className={`text-3xl font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{authorToEdit ? 'Edit Author Profile' : 'Add New Author'}</h3>
-                <p className={`mt-1 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{authorToEdit ? 'Update author details below.' : 'Create a new library author profile.'}</p>
+                <h3 className={`text-3xl font-black ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{authorToEdit ? 'Edit Author Profile' : 'Add New Author'}</h3>
+                <p className={`mt-1 text-sm ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{authorToEdit ? 'Update author details below.' : 'Create a new library author profile.'}</p>
               </div>
-              <button type="button" onClick={closeAddModal} className={`grid h-10 w-10 place-items-center rounded-xl border ${isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
+              <button type="button" onClick={closeAddModal} className={`grid h-10 w-10 place-items-center rounded-xl border ${isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'}`}>
                 <X size={18} />
               </button>
             </div>
@@ -599,41 +599,41 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
             <form onSubmit={handleSave} className="space-y-5 px-6 py-5">
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Author Name <span className="text-rose-500">*</span></label>
-                  <input value={authorForm.name} onChange={(e) => handleFormChange('name', e.target.value)} placeholder="Enter full name" className={`h-11 w-full rounded-xl border px-3 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400 focus:border-emerald-500'}`} required />
+                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Author Name <span className="text-rose-500">*</span></label>
+                  <input value={authorForm.name} onChange={(e) => handleFormChange('name', e.target.value)} placeholder="Enter full name" className={`h-11 w-full rounded-xl border px-3 text-sm outline-none ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-100 placeholder:text-zinc-500 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-700 placeholder:text-zinc-400 focus:border-emerald-500'}`} required />
                 </div>
                 <div>
-                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Email Address</label>
-                  <div className={`flex h-11 items-center rounded-xl border px-3 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] focus-within:border-emerald-500' : 'border-slate-200 bg-white focus-within:border-emerald-500'}`}>
-                    <Mail size={15} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />
-                    <input value={authorForm.email} onChange={(e) => handleFormChange('email', e.target.value)} placeholder="Enter email address" className={`ml-2 w-full bg-transparent text-sm outline-none ${isDarkMode ? 'text-slate-100 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400'}`} />
+                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Email Address</label>
+                  <div className={`flex h-11 items-center rounded-xl border px-3 ${isDarkMode ? 'border-zinc-700 bg-[#27272A] focus-within:border-emerald-500' : 'border-zinc-200 bg-white focus-within:border-emerald-500'}`}>
+                    <Mail size={15} className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} />
+                    <input value={authorForm.email} onChange={(e) => handleFormChange('email', e.target.value)} placeholder="Enter email address" className={`ml-2 w-full bg-transparent text-sm outline-none ${isDarkMode ? 'text-zinc-100 placeholder:text-zinc-500' : 'text-zinc-700 placeholder:text-zinc-400'}`} />
                   </div>
                 </div>
                 <div>
-                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Nationality</label>
-                  <div className={`flex h-11 items-center rounded-xl border px-3 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] focus-within:border-emerald-500' : 'border-slate-200 bg-white focus-within:border-emerald-500'}`}>
-                    <Globe size={15} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />
-                    <input value={authorForm.nationality} onChange={(e) => handleFormChange('nationality', e.target.value)} placeholder="Enter nationality" className={`ml-2 w-full bg-transparent text-sm outline-none ${isDarkMode ? 'text-slate-100 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400'}`} />
+                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Nationality</label>
+                  <div className={`flex h-11 items-center rounded-xl border px-3 ${isDarkMode ? 'border-zinc-700 bg-[#27272A] focus-within:border-emerald-500' : 'border-zinc-200 bg-white focus-within:border-emerald-500'}`}>
+                    <Globe size={15} className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} />
+                    <input value={authorForm.nationality} onChange={(e) => handleFormChange('nationality', e.target.value)} placeholder="Enter nationality" className={`ml-2 w-full bg-transparent text-sm outline-none ${isDarkMode ? 'text-zinc-100 placeholder:text-zinc-500' : 'text-zinc-700 placeholder:text-zinc-400'}`} />
                   </div>
                 </div>
                 <div>
-                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Date of Birth</label>
-                  <div className={`flex h-11 items-center rounded-xl border px-3 ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] focus-within:border-emerald-500' : 'border-slate-200 bg-white focus-within:border-emerald-500'}`}>
-                    <Calendar size={15} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />
-                    <input type="date" value={authorForm.dob} onChange={(e) => handleFormChange('dob', e.target.value)} className={`ml-2 w-full bg-transparent text-sm outline-none ${isDarkMode ? 'text-slate-100' : 'text-slate-700'}`} />
+                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Date of Birth</label>
+                  <div className={`flex h-11 items-center rounded-xl border px-3 ${isDarkMode ? 'border-zinc-700 bg-[#27272A] focus-within:border-emerald-500' : 'border-zinc-200 bg-white focus-within:border-emerald-500'}`}>
+                    <Calendar size={15} className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} />
+                    <input type="date" value={authorForm.dob} onChange={(e) => handleFormChange('dob', e.target.value)} className={`ml-2 w-full bg-transparent text-sm outline-none ${isDarkMode ? 'text-zinc-100' : 'text-zinc-700'}`} />
                   </div>
                 </div>
               </div>
 
               <div>
-                <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Biography / Description</label>
-                <textarea value={authorForm.biography} onChange={(e) => handleFormChange('biography', e.target.value)} maxLength={200} placeholder="Enter author's short biography or description" className={`min-h-24 w-full rounded-xl border px-3 py-2 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 placeholder:text-slate-500 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400 focus:border-emerald-500'}`} />
-                <p className={`mt-1 text-right text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{authorForm.biography.length} / 200</p>
+                <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Biography / Description</label>
+                <textarea value={authorForm.biography} onChange={(e) => handleFormChange('biography', e.target.value)} maxLength={200} placeholder="Enter author's short biography or description" className={`min-h-24 w-full rounded-xl border px-3 py-2 text-sm outline-none ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-100 placeholder:text-zinc-500 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-700 placeholder:text-zinc-400 focus:border-emerald-500'}`} />
+                <p className={`mt-1 text-right text-xs ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>{authorForm.biography.length} / 200</p>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Author Photo</label>
+                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Author Photo</label>
                   <input
                     ref={authorPhotoInputRef}
                     type="file"
@@ -642,7 +642,7 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
                     onChange={handleAuthorPhotoChange}
                   />
                   <div className="flex items-center gap-3">
-                    <div className={`grid h-10 w-10 place-items-center overflow-hidden rounded-full ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
+                    <div className={`grid h-10 w-10 place-items-center overflow-hidden rounded-full ${isDarkMode ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-100 text-zinc-600'}`}>
                       {authorPhotoPreview ? (
                         <img src={authorPhotoPreview} alt="Author preview" className="h-full w-full object-cover" />
                       ) : (
@@ -652,27 +652,27 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
                     <button
                       type="button"
                       onClick={() => authorPhotoInputRef.current?.click()}
-                      className={`h-10 rounded-lg border px-4 text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}
+                      className={`h-10 rounded-lg border px-4 text-sm font-semibold ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}
                     >
                       Upload Photo
                     </button>
-                    <span className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>{authorPhotoName || 'JPG, PNG (Max 2MB)'}</span>
+                    <span className={`text-xs ${isDarkMode ? 'text-zinc-500' : 'text-zinc-500'}`}>{authorPhotoName || 'JPG, PNG (Max 2MB)'}</span>
                   </div>
                 </div>
                 <div>
-                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Status <span className="text-rose-500">*</span></label>
+                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Status <span className="text-rose-500">*</span></label>
                   <div className="relative">
-                    <select value={authorForm.status} onChange={(e) => handleFormChange('status', e.target.value)} className={`h-11 w-full appearance-none rounded-xl border pl-3 pr-10 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`}>
+                    <select value={authorForm.status} onChange={(e) => handleFormChange('status', e.target.value)} className={`h-11 w-full appearance-none rounded-xl border pl-3 pr-10 text-sm outline-none ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-100 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-700 focus:border-emerald-500'}`}>
                       <option value="Active">Active</option>
                       <option value="Inactive">Inactive</option>
                     </select>
-                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -tranzinc-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
                   </div>
                 </div>
               </div>
 
               <div className="grid gap-3 pt-1 sm:grid-cols-2">
-                <button type="button" onClick={closeAddModal} className={`h-11 rounded-xl border text-sm font-semibold ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>Cancel</button>
+                <button type="button" onClick={closeAddModal} className={`h-11 rounded-xl border text-sm font-semibold ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>Cancel</button>
                 <button type="submit" className="h-11 rounded-xl bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-700">{authorToEdit ? 'Save Changes' : 'Save Author'}</button>
               </div>
             </form>
@@ -682,15 +682,15 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
 
       {/* Styled Confirmation Modal (Delete) */}
       {authorToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
-          <div className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl transition-all ${isDarkMode ? 'border-slate-700 bg-[#0b1738]' : 'border-slate-200 bg-white'}`}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/60 backdrop-blur-sm">
+          <div className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl transition-all ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
             <div className="flex items-start gap-4">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-rose-500/10 text-rose-500">
                 <AlertTriangle size={24} />
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-bold leading-6">Delete Author</h3>
-                <p className={`mt-2 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                <p className={`mt-2 text-sm ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
                   Are you sure you want to delete <span className="font-semibold text-rose-500">"{authorToDelete.name}"</span>? This action cannot be undone and will remove their profile records.
                 </p>
               </div>
@@ -701,8 +701,8 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
                 onClick={() => setAuthorToDelete(null)}
                 className={`rounded-xl px-4 py-2 text-sm font-semibold border ${
                   isDarkMode
-                    ? 'border-slate-700 hover:bg-slate-800 text-slate-300'
-                    : 'border-slate-200 hover:bg-slate-50 text-slate-700'
+                    ? 'border-zinc-700 hover:bg-zinc-800 text-zinc-300'
+                    : 'border-zinc-200 hover:bg-zinc-50 text-zinc-700'
                 }`}
               >
                 Cancel

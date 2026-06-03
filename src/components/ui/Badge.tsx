@@ -20,7 +20,7 @@ export const Badge: React.FC<BadgeProps> = ({
     rose: isDarkMode ? 'bg-rose-500/15 text-rose-400' : 'bg-rose-50 text-rose-700',
     amber: isDarkMode ? 'bg-amber-500/15 text-amber-400' : 'bg-amber-50 text-amber-700',
     sky: isDarkMode ? 'bg-sky-500/15 text-sky-400' : 'bg-sky-50 text-sky-700',
-    slate: isDarkMode ? 'bg-slate-500/15 text-slate-400' : 'bg-slate-50 text-slate-700',
+    slate: isDarkMode ? 'bg-zinc-500/15 text-zinc-400' : 'bg-zinc-50 text-zinc-700',
   };
 
   return (

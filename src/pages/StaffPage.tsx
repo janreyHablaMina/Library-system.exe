@@ -53,8 +53,8 @@ function StaffActionsMenu({ isDarkMode, onEdit, onDelete }: StaffActionsMenuProp
   }, [open])
 
   const surface = isDarkMode
-    ? 'bg-[#0f172a] border-slate-700 text-slate-200 shadow-[0_8px_32px_rgba(0,0,0,0.6)]'
-    : 'bg-white border-slate-200 text-slate-700 shadow-[0_8px_32px_rgba(0,0,0,0.12)]'
+    ? 'bg-[#0f172a] border-zinc-700 text-zinc-200 shadow-[0_8px_32px_rgba(0,0,0,0.6)]'
+    : 'bg-white border-zinc-200 text-zinc-700 shadow-[0_8px_32px_rgba(0,0,0,0.12)]'
 
   const handleToggle = (event: React.MouseEvent) => {
     event.stopPropagation()
@@ -74,11 +74,11 @@ function StaffActionsMenu({ isDarkMode, onEdit, onDelete }: StaffActionsMenuProp
         className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border transition-colors ${
           open
             ? isDarkMode
-              ? 'border-slate-500 bg-slate-700 text-slate-100'
+              ? 'border-zinc-500 bg-zinc-700 text-zinc-100'
               : 'border-emerald-300 bg-emerald-50 text-emerald-700'
             : isDarkMode
-              ? 'border-slate-700 text-slate-300 hover:bg-slate-800'
-              : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+              ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'
+              : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'
         }`}
       >
         <MoreHorizontal size={15} />
@@ -107,7 +107,7 @@ function StaffActionsMenu({ isDarkMode, onEdit, onDelete }: StaffActionsMenuProp
           <button
             type="button"
             className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors duration-100 ${
-              isDarkMode ? 'text-slate-200 hover:bg-slate-800' : 'text-slate-700 hover:bg-slate-50'
+              isDarkMode ? 'text-zinc-200 hover:bg-zinc-800' : 'text-zinc-700 hover:bg-zinc-50'
             }`}
             onClick={() => { setOpen(false); onEdit() }}
           >
@@ -115,7 +115,7 @@ function StaffActionsMenu({ isDarkMode, onEdit, onDelete }: StaffActionsMenuProp
             Edit Staff
           </button>
           
-          <div className={`my-1.5 border-t ${isDarkMode ? 'border-slate-700/60' : 'border-slate-100'}`} />
+          <div className={`my-1.5 border-t ${isDarkMode ? 'border-zinc-700/60' : 'border-zinc-100'}`} />
           
           <button
             type="button"
@@ -348,7 +348,7 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
   }, [isAddModalOpen, editingStaff])
 
   return (
-    <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
+    <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[transparent] text-zinc-100' : 'bg-[#f8fafc] text-zinc-900'}`}>
       <Toast message={showToast} onClose={() => setShowToast(null)} isDarkMode={isDarkMode} />
       <section className="p-5">
         {staffError ? (
@@ -358,8 +358,8 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
         ) : null}
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h2 className={`text-4xl font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Staff</h2>
-            <p className={`mt-1 text-base font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Manage library staff and their access to the system.</p>
+            <h2 className={`text-4xl font-black ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Staff</h2>
+            <p className={`mt-1 text-base font-medium ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Manage library staff and their access to the system.</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <button
@@ -377,17 +377,17 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
           {dynamicStats.map((stat) => {
             const Icon = stat.icon
             return (
-              <article key={stat.label} className={`rounded-xl border p-5 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${isDarkMode ? 'border-slate-800 bg-[#0a1633]' : 'border-slate-200 bg-white'}`}>
+              <article key={stat.label} className={`rounded-xl border p-5 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-tranzinc-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
                 <div className="flex items-center gap-4">
                   <div className={`grid h-12 w-12 place-items-center rounded-2xl ${stat.bg} ${stat.color}`}>
                     <Icon size={22} />
                   </div>
                   <div className="flex flex-col">
-                    <p className={`text-xs font-bold text-slate-500 dark:text-slate-400`}>{stat.label}</p>
-                    <p className={`text-2xl font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{stat.value}</p>
+                    <p className={`text-xs font-bold text-zinc-500 dark:text-zinc-400`}>{stat.label}</p>
+                    <p className={`text-2xl font-black ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{stat.value}</p>
                   </div>
                 </div>
-                <p className={`mt-3 text-[11px] font-bold ${stat.color === 'text-rose-600' || stat.color === 'text-violet-600' ? 'text-slate-500 dark:text-slate-400' : stat.color}`}>
+                <p className={`mt-3 text-[11px] font-bold ${stat.color === 'text-rose-600' || stat.color === 'text-violet-600' ? 'text-zinc-500 dark:text-zinc-400' : stat.color}`}>
                   {stat.subValue}
                 </p>
               </article>
@@ -395,26 +395,26 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
           })}
         </section>
 
-        <div className={`mt-8 rounded-2xl border ${isDarkMode ? 'border-slate-800 bg-[#0a1633]' : 'border-slate-200/60 bg-white shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)]'}`}>
-          <div className={`flex flex-wrap items-center gap-4 p-4 rounded-t-2xl ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
-            <label className={`group flex h-12 min-w-[320px] flex-1 items-center rounded-xl border px-3 transition-all ${isDarkMode ? 'border-slate-700 focus-within:border-emerald-500 bg-[#0f1f49]' : 'border-slate-200 focus-within:border-emerald-500 bg-slate-50'}`}>
-              <Search size={18} className={`mr-2 transition-colors ${isDarkMode ? 'text-slate-500 group-focus-within:text-emerald-400' : 'text-slate-400 group-focus-within:text-emerald-600'}`} />
+        <div className={`mt-8 rounded-2xl border ${isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-200/60 bg-white shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)]'}`}>
+          <div className={`flex flex-wrap items-center gap-4 p-4 rounded-t-2xl ${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'}`}>
+            <label className={`group flex h-12 min-w-[320px] flex-1 items-center rounded-xl border px-3 transition-all ${isDarkMode ? 'border-zinc-700 focus-within:border-emerald-500 bg-[#27272A]' : 'border-zinc-200 focus-within:border-emerald-500 bg-zinc-50'}`}>
+              <Search size={18} className={`mr-2 transition-colors ${isDarkMode ? 'text-zinc-500 group-focus-within:text-emerald-400' : 'text-zinc-400 group-focus-within:text-emerald-600'}`} />
               <input
                 value={staffSearch}
                 onChange={(event) => setStaffSearch(event.target.value)}
-                className={`w-full bg-transparent text-sm font-medium outline-none ${isDarkMode ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-700 placeholder:text-slate-400'}`}
+                className={`w-full bg-transparent text-sm font-medium outline-none ${isDarkMode ? 'text-zinc-200 placeholder:text-zinc-500' : 'text-zinc-700 placeholder:text-zinc-400'}`}
                 placeholder="Search staff by name, email or role..."
               />
             </label>
             
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-slate-500">Role</span>
+                <span className="text-xs font-bold text-zinc-500">Role</span>
                 <div className="relative">
                   <select
                     value={roleFilter}
                     onChange={(event) => setRoleFilter(event.target.value as 'All Roles' | StaffRole)}
-                    className={`h-11 min-w-[120px] appearance-none rounded-xl border py-2 pl-4 pr-10 text-xs font-bold outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}
+                    className={`h-11 min-w-[120px] appearance-none rounded-xl border py-2 pl-4 pr-10 text-xs font-bold outline-none ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'}`}
                   >
                     <option value="All Roles">All Roles</option>
                     <option value="Administrator">Administrator</option>
@@ -422,23 +422,23 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
                     <option value="Assistant Librarian">Assistant Librarian</option>
                     <option value="Library Clerk">Library Clerk</option>
                   </select>
-                  <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                  <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -tranzinc-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-slate-500">Status</span>
+                <span className="text-xs font-bold text-zinc-500">Status</span>
                 <div className="relative">
                   <select
                     value={statusFilter}
                     onChange={(event) => setStatusFilter(event.target.value as 'All Status' | StaffStatus)}
-                    className={`h-11 min-w-[120px] appearance-none rounded-xl border py-2 pl-4 pr-10 text-xs font-bold outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}
+                    className={`h-11 min-w-[120px] appearance-none rounded-xl border py-2 pl-4 pr-10 text-xs font-bold outline-none ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'}`}
                   >
                     <option value="All Status">All Status</option>
                     <option value="Active">Active</option>
                     <option value="Inactive">Inactive</option>
                   </select>
-                  <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                  <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -tranzinc-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
                 </div>
               </div>
 
@@ -449,7 +449,7 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
                   setRoleFilter('All Roles')
                   setStatusFilter('All Status')
                 }}
-                className={`inline-flex h-11 items-center gap-2 rounded-xl border px-4 text-xs font-bold transition-all ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-white'}`}
+                className={`inline-flex h-11 items-center gap-2 rounded-xl border px-4 text-xs font-bold transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-white'}`}
               >
                 <Filter size={16} />
                 Reset
@@ -457,9 +457,9 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
             </div>
           </div>
 
-          <div className={`relative z-10 overflow-visible ${isDarkMode ? 'bg-[#0b1738]' : 'bg-white'}`}>
+          <div className={`relative z-10 overflow-visible ${isDarkMode ? 'bg-[#18181B]' : 'bg-white'}`}>
             <table className="w-full min-w-[800px] text-left text-sm border-collapse">
-              <thead className={isDarkMode ? 'bg-[#0f1f49]/50 text-slate-400' : 'bg-slate-50/50 text-slate-500'}>
+              <thead className={isDarkMode ? 'bg-[#27272A]/50 text-zinc-400' : 'bg-zinc-50/50 text-zinc-500'}>
                 <tr>
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Staff Name</th>
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Email</th>
@@ -471,10 +471,10 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
               </thead>
               <tbody>
                 {paginatedStaff.map((staff) => (
-                  <tr key={staff.id} className={`border-t transition-colors duration-150 ${isDarkMode ? 'border-slate-800 hover:bg-slate-800/30' : 'border-slate-100 hover:bg-slate-50'}`}>
+                  <tr key={staff.id} className={`border-t transition-colors duration-150 ${isDarkMode ? 'border-zinc-800 hover:bg-zinc-800/30' : 'border-zinc-100 hover:bg-zinc-50'}`}>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <span className={`grid h-10 w-10 place-items-center overflow-hidden rounded-full text-xs font-bold border ${isDarkMode ? 'border-slate-700 bg-slate-800/50 text-slate-300' : 'border-slate-200 bg-slate-100 text-slate-600'}`}>
+                        <span className={`grid h-10 w-10 place-items-center overflow-hidden rounded-full text-xs font-bold border ${isDarkMode ? 'border-zinc-700 bg-zinc-800/50 text-zinc-300' : 'border-zinc-200 bg-zinc-100 text-zinc-600'}`}>
                           {staff.profilePhotoData ? (
                             <img
                               src={staff.profilePhotoData}
@@ -486,10 +486,10 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
                             <span className="grid h-full w-full place-items-center">{avatarFromName(staff.name)}</span>
                           )}
                         </span>
-                        <p className={`font-semibold text-sm ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{staff.name}</p>
+                        <p className={`font-semibold text-sm ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{staff.name}</p>
                       </div>
                     </td>
-                    <td className={`px-6 py-4 text-xs font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>{staff.email}</td>
+                    <td className={`px-6 py-4 text-xs font-medium ${isDarkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>{staff.email}</td>
                     <td className="px-6 py-4">
                       <span className={`rounded-md px-2.5 py-1 text-[11px] font-bold ${getRoleStyle(staff.role)}`}>
                         {staff.role}
@@ -505,8 +505,8 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <p className={`text-[11px] font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{staff.joinedOn}</p>
-                      <p className={`text-[10px] font-medium ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{staff.joinedTime}</p>
+                      <p className={`text-[11px] font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>{staff.joinedOn}</p>
+                      <p className={`text-[10px] font-medium ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>{staff.joinedTime}</p>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center">
@@ -521,7 +521,7 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
                 ))}
                 {filteredStaff.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className={`px-6 py-12 text-center text-sm font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                    <td colSpan={7} className={`px-6 py-12 text-center text-sm font-medium ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
                       No staff members match your current filters.
                     </td>
                   </tr>
@@ -530,46 +530,46 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
             </table>
           </div>
 
-          <div className={`relative z-0 flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm rounded-b-xl ${isDarkMode ? 'border-slate-700 bg-[#0b1738] text-slate-300' : 'border-slate-200 bg-white text-slate-600'}`}>
+          <div className={`relative z-0 flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm rounded-b-xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B] text-zinc-300' : 'border-zinc-200 bg-white text-zinc-600'}`}>
             <p>Showing {filteredStaff.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to {Math.min(currentPage * itemsPerPage, filteredStaff.length)} of {filteredStaff.length} staff members</p>
             <div className="flex items-center gap-2">
-              <select value={itemsPerPage} onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }} className={`h-9 rounded-lg border px-3 text-sm outline-none ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
+              <select value={itemsPerPage} onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }} className={`h-9 rounded-lg border px-3 text-sm outline-none ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'}`}>
                 <option value={10}>10 per page</option>
                 <option value={20}>20 per page</option>
                 <option value={50}>50 per page</option>
               </select>
-              <button type="button" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className={`grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 hover:bg-slate-800 disabled:opacity-50' : 'border-slate-200 hover:bg-slate-50 disabled:opacity-50'}`}>{'<'}</button>
+              <button type="button" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className={`grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800 disabled:opacity-50' : 'border-zinc-200 hover:bg-zinc-50 disabled:opacity-50'}`}>{'<'}</button>
               
               <div className="flex items-center gap-1">
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                  <button key={page} type="button" onClick={() => setCurrentPage(page)} className={page === currentPage ? "grid h-9 w-9 place-items-center rounded-lg bg-emerald-50 font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" : `grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}>
+                  <button key={page} type="button" onClick={() => setCurrentPage(page)} className={page === currentPage ? "grid h-9 w-9 place-items-center rounded-lg bg-emerald-50 font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" : `grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800' : 'border-zinc-200 hover:bg-zinc-50'}`}>
                     {page}
                   </button>
                 ))}
               </div>
 
-              <button type="button" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0} className={`grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 hover:bg-slate-800 disabled:opacity-50' : 'border-slate-200 hover:bg-slate-50 disabled:opacity-50'}`}>{'>'}</button>
+              <button type="button" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0} className={`grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800 disabled:opacity-50' : 'border-zinc-200 hover:bg-zinc-50 disabled:opacity-50'}`}>{'>'}</button>
             </div>
           </div>
         </div>
       </section>
 
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
-          <section className={`flex w-full max-w-4xl max-h-[92vh] flex-col overflow-hidden rounded-3xl border shadow-2xl animate-in zoom-in-95 duration-200 ${isDarkMode ? 'border-slate-800 bg-[#0a1633]' : 'border-slate-200 bg-white'}`}>
-            <div className={`flex items-start justify-between border-b px-8 py-6 ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/60 p-4 backdrop-blur-sm">
+          <section className={`flex w-full max-w-4xl max-h-[92vh] flex-col overflow-hidden rounded-3xl border shadow-2xl animate-in zoom-in-95 duration-200 ${isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
+            <div className={`flex items-start justify-between border-b px-8 py-6 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'}`}>
               <div>
-                <h3 className={`text-3xl font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+                <h3 className={`text-3xl font-black ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>
                   {editingStaff ? 'Edit Staff Member' : 'Add Staff Member'}
                 </h3>
-                <p className={`mt-1 text-sm font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                <p className={`mt-1 text-sm font-medium ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
                   {editingStaff ? 'Update staff profile details and account access.' : 'Create a new staff profile and set system permissions.'}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => { setIsAddModalOpen(false); setEditingStaff(null) }}
-                className={`grid h-10 w-10 place-items-center rounded-xl border transition-all ${isDarkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                className={`grid h-10 w-10 place-items-center rounded-xl border transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'}`}
               >
                 <X size={18} />
               </button>
@@ -579,80 +579,80 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
               <div className="min-h-0 flex-1 overflow-y-auto px-8 py-7">
                 <div className="space-y-7">
                   <div>
-                    <h4 className={`mb-4 text-sm font-black uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Identity & Access</h4>
+                    <h4 className={`mb-4 text-sm font-black uppercase tracking-wider ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Identity & Access</h4>
                     <div className="grid gap-6 md:grid-cols-2">
                       <div className="space-y-2">
-                        <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Full Name <span className="text-rose-500">*</span></label>
-                        <input name="fullName" defaultValue={editingStaff?.name ?? ''} placeholder="e.g. James Anderson" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} required />
+                        <label className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Full Name <span className="text-rose-500">*</span></label>
+                        <input name="fullName" defaultValue={editingStaff?.name ?? ''} placeholder="e.g. James Anderson" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-100 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-700 focus:border-emerald-500'}`} required />
                       </div>
                       <div className="space-y-2">
-                        <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Email Address <span className="text-rose-500">*</span></label>
-                        <input name="email" defaultValue={editingStaff?.email ?? ''} placeholder="email@infolib.com" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} required />
+                        <label className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Email Address <span className="text-rose-500">*</span></label>
+                        <input name="email" defaultValue={editingStaff?.email ?? ''} placeholder="email@infolib.com" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-100 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-700 focus:border-emerald-500'}`} required />
                       </div>
                       <div className="space-y-2">
-                        <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>System Role <span className="text-rose-500">*</span></label>
+                        <label className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>System Role <span className="text-rose-500">*</span></label>
                         <div className="relative">
-                          <select name="role" defaultValue={editingStaff?.role ?? 'Librarian'} className={`h-12 w-full appearance-none rounded-xl border pl-4 pr-10 text-sm font-bold outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`}>
+                          <select name="role" defaultValue={editingStaff?.role ?? 'Librarian'} className={`h-12 w-full appearance-none rounded-xl border pl-4 pr-10 text-sm font-bold outline-none transition-all ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-100 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-700 focus:border-emerald-500'}`}>
                             <option>Librarian</option>
                             <option>Administrator</option>
                             <option>Assistant Librarian</option>
                             <option>Library Clerk</option>
                           </select>
-                          <ChevronDown size={18} className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                          <ChevronDown size={18} className={`pointer-events-none absolute right-4 top-1/2 -tranzinc-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Status <span className="text-rose-500">*</span></label>
+                        <label className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Status <span className="text-rose-500">*</span></label>
                         <div className="relative">
-                          <select name="status" defaultValue={editingStaff?.status ?? 'Active'} className={`h-12 w-full appearance-none rounded-xl border pl-4 pr-10 text-sm font-bold outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`}>
+                          <select name="status" defaultValue={editingStaff?.status ?? 'Active'} className={`h-12 w-full appearance-none rounded-xl border pl-4 pr-10 text-sm font-bold outline-none transition-all ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-100 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-700 focus:border-emerald-500'}`}>
                             <option>Active</option>
                             <option>Inactive</option>
                           </select>
-                          <ChevronDown size={18} className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                          <ChevronDown size={18} className={`pointer-events-none absolute right-4 top-1/2 -tranzinc-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className={`${isDarkMode ? 'border-slate-800' : 'border-slate-100'} border-t pt-6`}>
-                    <h4 className={`mb-4 text-sm font-black uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Account Credentials</h4>
+                  <div className={`${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'} border-t pt-6`}>
+                    <h4 className={`mb-4 text-sm font-black uppercase tracking-wider ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Account Credentials</h4>
                     <div className="grid gap-6 md:grid-cols-2">
                       <div className="space-y-2 md:col-span-2">
-                        <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Username <span className="text-rose-500">*</span></label>
-                        <input name="username" defaultValue={editingStaff?.username ?? ''} placeholder="j.anderson" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} required />
+                        <label className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Username <span className="text-rose-500">*</span></label>
+                        <input name="username" defaultValue={editingStaff?.username ?? ''} placeholder="j.anderson" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-100 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-700 focus:border-emerald-500'}`} required />
                       </div>
                       <div className="space-y-2">
-                        <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Password <span className="text-rose-500">*</span></label>
-                        <input name="tempPassword" type="password" defaultValue={editingStaff?.tempPassword ?? ''} placeholder="Enter password" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} required />
+                        <label className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Password <span className="text-rose-500">*</span></label>
+                        <input name="tempPassword" type="password" defaultValue={editingStaff?.tempPassword ?? ''} placeholder="Enter password" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-100 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-700 focus:border-emerald-500'}`} required />
                       </div>
                       <div className="space-y-2">
-                        <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Confirm Password <span className="text-rose-500">*</span></label>
-                        <input type="password" placeholder="Re-enter password" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-slate-700 bg-[#0f1f49] text-slate-100 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500'}`} required />
+                        <label className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Confirm Password <span className="text-rose-500">*</span></label>
+                        <input type="password" placeholder="Re-enter password" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-100 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-700 focus:border-emerald-500'}`} required />
                       </div>
                     </div>
                   </div>
 
-                  <div className={`${isDarkMode ? 'border-slate-800' : 'border-slate-100'} border-t pt-6`}>
-                    <h4 className={`mb-4 text-sm font-black uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Optional</h4>
+                  <div className={`${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'} border-t pt-6`}>
+                    <h4 className={`mb-4 text-sm font-black uppercase tracking-wider ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Optional</h4>
                     <div className="space-y-2">
-                      <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Profile Photo</label>
+                      <label className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Profile Photo</label>
                       <div className="flex items-center gap-3">
-                        <span className={`grid h-12 w-12 place-items-center overflow-hidden rounded-full border text-xs font-bold ${isDarkMode ? 'border-slate-700 bg-slate-800/50 text-slate-300' : 'border-slate-200 bg-slate-100 text-slate-600'}`}>
+                        <span className={`grid h-12 w-12 place-items-center overflow-hidden rounded-full border text-xs font-bold ${isDarkMode ? 'border-zinc-700 bg-zinc-800/50 text-zinc-300' : 'border-zinc-200 bg-zinc-100 text-zinc-600'}`}>
                           {profilePhotoPreview ? (
                             <img src={profilePhotoPreview} alt="Profile preview" className="h-full w-full object-cover" />
                           ) : (
                             avatarFromName(editingStaff?.name || 'Staff')
                           )}
                         </span>
-                        <input type="file" accept="image/png,image/jpeg" onChange={handleProfilePhotoChange} className={`block w-full text-sm ${isDarkMode ? 'text-slate-300 file:bg-slate-800 file:text-slate-200 file:border-slate-700' : 'text-slate-700 file:bg-slate-100 file:text-slate-700 file:border-slate-200'} file:mr-4 file:rounded-lg file:border file:px-3 file:py-2`} />
+                        <input type="file" accept="image/png,image/jpeg" onChange={handleProfilePhotoChange} className={`block w-full text-sm ${isDarkMode ? 'text-zinc-300 file:bg-zinc-800 file:text-zinc-200 file:border-zinc-700' : 'text-zinc-700 file:bg-zinc-100 file:text-zinc-700 file:border-zinc-200'} file:mr-4 file:rounded-lg file:border file:px-3 file:py-2`} />
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className={`flex gap-4 border-t px-8 py-5 ${isDarkMode ? 'border-slate-800 bg-[#0b1738]' : 'border-slate-100 bg-slate-50/60'}`}>
-                <button type="button" onClick={() => { setIsAddModalOpen(false); setEditingStaff(null) }} className={`h-12 flex-1 rounded-xl border font-bold transition-all ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>Cancel</button>
+              <div className={`flex gap-4 border-t px-8 py-5 ${isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-100 bg-zinc-50/60'}`}>
+                <button type="button" onClick={() => { setIsAddModalOpen(false); setEditingStaff(null) }} className={`h-12 flex-1 rounded-xl border font-bold transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>Cancel</button>
                 <button
                   type="submit"
                   disabled={isSavingStaff}
@@ -667,17 +667,17 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
       )}
 
       {staffToDelete ? (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
-          <section className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl ${isDarkMode ? 'border-slate-800 bg-[#0a1633]' : 'border-slate-200 bg-white'}`}>
-            <h4 className={`text-xl font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Delete Staff Member</h4>
-            <p className={`mt-2 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-              Are you sure you want to remove <span className={isDarkMode ? 'text-slate-200 font-bold' : 'text-slate-900 font-bold'}>{staffToDelete.name}</span>? This action cannot be undone.
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-zinc-950/60 p-4 backdrop-blur-sm">
+          <section className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl ${isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
+            <h4 className={`text-xl font-black ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Delete Staff Member</h4>
+            <p className={`mt-2 text-sm ${isDarkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
+              Are you sure you want to remove <span className={isDarkMode ? 'text-zinc-200 font-bold' : 'text-zinc-900 font-bold'}>{staffToDelete.name}</span>? This action cannot be undone.
             </p>
             <div className="mt-6 flex gap-3">
               <button
                 type="button"
                 onClick={() => setStaffToDelete(null)}
-                className={`h-11 flex-1 rounded-xl border font-bold transition-all ${isDarkMode ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}
+                className={`h-11 flex-1 rounded-xl border font-bold transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}
               >
                 Cancel
               </button>

@@ -58,7 +58,7 @@ export function Toast({ message, onClose, isDarkMode }: ToastProps) {
   return (
     <div
       className={`fixed bottom-6 right-6 z-[100] flex items-center gap-3 rounded-2xl border px-4 py-3 shadow-2xl backdrop-blur-md transition-all duration-300 ${
-        isVisible ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-4 opacity-0 scale-95 pointer-events-none'
+        isVisible ? 'tranzinc-y-0 opacity-100 scale-100' : 'tranzinc-y-4 opacity-0 scale-95 pointer-events-none'
       } ${containerTheme}`}
     >
       <div className={`grid h-8 w-8 place-items-center rounded-full shrink-0 ${iconBgTheme}`}>

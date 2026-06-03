@@ -38,37 +38,77 @@
   box-sizing: border-box;
 }
 
+@import "tailwindcss";
+
+/* Custom Thin Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+  transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Dark Mode Scrollbar */
+.dashboard-dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
+.dashboard-dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+
+:root {
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.dashboard-dark [class~="text-slate-900"],
-.dashboard-dark [class~="text-slate-800"],
-.dashboard-dark [class~="text-slate-700"] {
+.dashboard-dark [class~="text-zinc-900"],
+.dashboard-dark [class~="text-zinc-800"],
+.dashboard-dark [class~="text-zinc-700"] {
   color: #dbe5f3 !important;
 }
 
-.dashboard-dark [class~="text-slate-600"],
-.dashboard-dark [class~="text-slate-500"] {
+.dashboard-dark [class~="text-zinc-600"],
+.dashboard-dark [class~="text-zinc-500"] {
   color: #8ea0bb !important;
 }
 
-.dashboard-dark .hover\:bg-slate-50:hover {
+.dashboard-dark .hover\:bg-zinc-50:hover {
   background-color: rgba(148, 163, 184, 0.12) !important;
 }
 
-.dashboard-dark .hover\:bg-slate-100:hover {
+.dashboard-dark .hover\:bg-zinc-100:hover {
   background-color: rgba(148, 163, 184, 0.16) !important;
 }
 
 /* Soften row/card separators in dark mode */
-.dashboard-dark [class~="border-slate-100"] {
+.dashboard-dark [class~="border-zinc-100"] {
   border-color: rgba(148, 163, 184, 0.14) !important;
 }
 
-.dashboard-dark [class~="border-slate-200"] {
+.dashboard-dark [class~="border-zinc-200"] {
   border-color: rgba(148, 163, 184, 0.18) !important;
 }
 
@@ -103,11 +143,11 @@ body {
   opacity: 0.9;
 }
 
-.dashboard-dark [class~="bg-slate-50"] {
+.dashboard-dark [class~="bg-zinc-50"] {
   background-color: rgba(30, 41, 59, 0.5) !important;
 }
 
-.dashboard-dark [class~="bg-slate-100"] {
+.dashboard-dark [class~="bg-zinc-100"] {
   background-color: rgba(51, 65, 85, 0.5) !important;
 }
 
@@ -117,46 +157,4 @@ body {
 
 .dashboard-dark [class~="text-sky-600"] {
   color: #38bdf8 !important;
-}
-
-/* Global VS Code Theme Overrides for all pages */
-.dashboard-dark [class~="bg-[#0b1738]"],
-.dashboard-dark [class~="bg-[#0f1f49]"],
-.dashboard-dark [class~="bg-[#0a1633]"],
-.dashboard-dark [class~="bg-slate-900"] {
-  background-color: #1e1e1e !important;
-}
-
-.dashboard-dark [class~="bg-[#020617]"],
-.dashboard-dark [class~="bg-[#05112e]"],
-.dashboard-dark [class~="bg-slate-950"] {
-  background-color: #181818 !important;
-}
-
-.dashboard-dark [class~="border-slate-700"],
-.dashboard-dark [class~="border-slate-800"] {
-  border-color: #2b2b2b !important;
-}
-
-.dashboard-dark [class~="text-slate-200"],
-.dashboard-dark [class~="text-slate-300"],
-.dashboard-dark [class~="text-slate-100"] {
-  color: #cccccc !important;
-}
-
-.dashboard-dark [class~="text-slate-400"] {
-  color: #858585 !important;
-}
-
-/* VS Code Hover effects for lists and tables */
-.dashboard-dark [class~="hover:bg-slate-50"]:hover,
-.dashboard-dark [class~="hover:bg-slate-100"]:hover,
-.dashboard-dark [class~="hover:bg-slate-800"]:hover,
-.dashboard-dark [class~="hover:bg-slate-800/80"]:hover,
-.dashboard-dark [class~="hover:bg-slate-800/50"]:hover,
-.dashboard-dark [class~="hover:bg-[#0f1f49]/70"]:hover,
-.dashboard-dark [class~="hover:bg-[#0f1f49]/50"]:hover,
-.dashboard-dark [class~="hover:bg-[#0f1f49]/30"]:hover,
-.dashboard-dark [class~="hover:bg-[#12244f]"]:hover {
-  background-color: #2a2d2e !important;
 }

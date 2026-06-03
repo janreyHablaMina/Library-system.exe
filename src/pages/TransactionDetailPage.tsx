@@ -120,7 +120,7 @@ export function TransactionDetailPage({ isDarkMode, onBack, transactionId }: Tra
 
  if (loading) {
  return (
- <div className={`flex flex-1 items-center justify-center ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
+ <div className={`flex flex-1 items-center justify-center ${isDarkMode ? 'bg-[transparent] text-zinc-100' : 'bg-[#f8fafc] text-zinc-900'}`}>
  <p className="animate-pulse font-semibold">Loading transaction details...</p>
  </div>
  )
@@ -128,9 +128,9 @@ export function TransactionDetailPage({ isDarkMode, onBack, transactionId }: Tra
 
  if (!transaction) {
  return (
- <div className={`flex flex-1 flex-col items-center justify-center ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
+ <div className={`flex flex-1 flex-col items-center justify-center ${isDarkMode ? 'bg-[transparent] text-zinc-100' : 'bg-[#f8fafc] text-zinc-900'}`}>
  <p className="font-semibold text-rose-500 mb-4">Transaction not found.</p>
- <button onClick={onBack} className={`rounded-lg border px-4 py-2 font-semibold ${isDarkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}>
+ <button onClick={onBack} className={`rounded-lg border px-4 py-2 font-semibold ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800' : 'border-zinc-200 hover:bg-zinc-50'}`}>
  Go Back
  </button>
  </div>
@@ -145,19 +145,19 @@ export function TransactionDetailPage({ isDarkMode, onBack, transactionId }: Tra
  const today = new Date()
  const daysRemaining = Math.max(0, Math.ceil((due.getTime() - today.getTime()) / (1000 * 3600 * 24)))
 
- const cardClass = isDarkMode ? 'border-slate-800 bg-[#0a1633]' : 'border-slate-200 bg-white'
- const labelClass = isDarkMode ? 'text-slate-400' : 'text-slate-500'
- const valueClass = isDarkMode ? 'text-slate-100' : 'text-slate-800'
+ const cardClass = isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-200 bg-white'
+ const labelClass = isDarkMode ? 'text-zinc-400' : 'text-zinc-500'
+ const valueClass = isDarkMode ? 'text-zinc-100' : 'text-zinc-800'
 
  return (
- <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[#020617] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
+ <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[transparent] text-zinc-100' : 'bg-[#f8fafc] text-zinc-900'}`}>
  <section className="p-5 space-y-6 max-w-7xl mx-auto">
  {/* Header Actions */}
  <div className="flex flex-wrap items-center justify-between gap-4">
  <div className="space-y-1">
  <button
  onClick={onBack}
- className={`flex items-center gap-2 text-sm font-semibold transition-colors ${isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-800'}`}
+ className={`flex items-center gap-2 text-sm font-semibold transition-colors ${isDarkMode ? 'text-zinc-400 hover:text-zinc-200' : 'text-zinc-500 hover:text-zinc-800'}`}
  >
  <ArrowLeft size={16} />
  Back to Transactions
@@ -170,11 +170,11 @@ export function TransactionDetailPage({ isDarkMode, onBack, transactionId }: Tra
  </div>
  </div>
  <div className="flex items-center gap-2">
- <button className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition-all ${isDarkMode ? 'border-slate-700 bg-slate-900 hover:bg-slate-800' : 'border-slate-200 bg-white hover:bg-slate-50'}`}>
+ <button className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition-all ${isDarkMode ? 'border-zinc-700 bg-zinc-900 hover:bg-zinc-800' : 'border-zinc-200 bg-white hover:bg-zinc-50'}`}>
  <Printer size={16} />
  Print Receipt
  </button>
- <button className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition-all ${isDarkMode ? 'border-slate-700 bg-slate-900 hover:bg-slate-800' : 'border-slate-200 bg-white hover:bg-slate-50'}`}>
+ <button className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition-all ${isDarkMode ? 'border-zinc-700 bg-zinc-900 hover:bg-zinc-800' : 'border-zinc-200 bg-white hover:bg-zinc-50'}`}>
  <MoreVertical size={16} />
  More Actions
  </button>
@@ -188,7 +188,7 @@ export function TransactionDetailPage({ isDarkMode, onBack, transactionId }: Tra
  <div className={`rounded-2xl border p-6 ${cardClass}`}>
  <h3 className="mb-6 text-sm font-bold uppercase tracking-wider opacity-70">Borrower Information</h3>
  <div className="flex items-center gap-6 mb-8">
- <div className="h-20 w-20 overflow-hidden rounded-full border-2 border-white dark:border-slate-800 shrink-0">
+ <div className="h-20 w-20 overflow-hidden rounded-full border-2 border-white dark:border-zinc-800 shrink-0">
  {transaction.memberProfilePhotoData ? (
  <img src={transaction.memberProfilePhotoData} alt={transaction.memberName} className="h-full w-full object-cover" />
  ) : (
@@ -237,12 +237,12 @@ export function TransactionDetailPage({ isDarkMode, onBack, transactionId }: Tra
  <div className={`rounded-2xl border p-6 ${cardClass}`}>
  <h3 className="mb-6 text-sm font-bold uppercase tracking-wider opacity-70">Book Information</h3>
  <div className="flex gap-6 mb-6">
- <div className="w-24 shrink-0 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 aspect-[2/3]">
+ <div className="w-24 shrink-0 overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800 aspect-[2/3]">
  {transaction.bookCoverData ? (
  <img src={transaction.bookCoverData} alt={transaction.bookTitle} className="h-full w-full object-cover" />
  ) : (
- <div className="grid h-full w-full place-items-center bg-slate-200 dark:bg-slate-800">
- <span className="text-xs font-bold text-slate-400">NO COVER</span>
+ <div className="grid h-full w-full place-items-center bg-zinc-200 dark:bg-zinc-800">
+ <span className="text-xs font-bold text-zinc-400">NO COVER</span>
  </div>
  )}
  </div>
@@ -306,7 +306,7 @@ export function TransactionDetailPage({ isDarkMode, onBack, transactionId }: Tra
  <RotateCcw size={16} className="opacity-40" />
  <span className={labelClass}>Return Date</span>
  </div>
- <p className={`text-sm font-semibold ${isReturned ? valueClass : isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+ <p className={`text-sm font-semibold ${isReturned ? valueClass : isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>
  {isReturned ? formatDate(transaction.returnDate!) : '-'}
  </p>
  </div>

@@ -23,7 +23,7 @@ export const Card: React.FC<CardProps> = ({
   };
 
   const baseStyles = `rounded-2xl border transition-all duration-300 ${
-    isDarkMode ? 'border-slate-800 bg-[#0a1633]' : 'border-slate-200 bg-white'
+    isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-200 bg-white'
   }`;
   
   const hoverStyles = hoverable ? 'hover:shadow-lg' : '';
