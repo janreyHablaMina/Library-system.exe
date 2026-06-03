@@ -561,7 +561,7 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
                   <option key={st} value={st}>{st}</option>
                 ))}
               </select>
-              <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -tranzinc-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+              <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
             </div>
 
             {/* Department Course Select */}
@@ -578,7 +578,7 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
                   <option key={dept} value={dept}>{dept}</option>
                 ))}
               </select>
-              <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -tranzinc-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+              <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
             </div>
 
             <button 
@@ -673,7 +673,7 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
           ) : (
             <div className={`relative z-20 grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5 ${isDarkMode ? 'bg-[#18181B]' : 'bg-white'}`}>
               {paginatedMembers.map((member) => (
-                <article key={member.id} className={`relative z-10 hover:z-20 flex h-full flex-col rounded-xl border p-3 transition-all duration-200 hover:-tranzinc-y-0.5 ${
+                <article key={member.id} className={`relative z-10 hover:z-20 flex h-full flex-col rounded-xl border p-3 transition-all duration-200 hover:-translate-y-0.5 ${
                   isDarkMode
                     ? 'border-zinc-700 bg-[#27272A] hover:border-emerald-500/60 hover:shadow-[0_12px_24px_-16px_rgba(16,185,129,0.45)]'
                     : 'border-zinc-200 bg-white hover:border-emerald-200 hover:shadow-[0_12px_24px_-16px_rgba(15,23,42,0.35)]'
@@ -772,7 +772,7 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
                       <option value="Staff">Staff</option>
                       <option value="Visitor">Visitor</option>
                     </select>
-                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -tranzinc-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
                   </div>
                 </div>
                 <div>
@@ -843,7 +843,7 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
                       <option value="Inactive">Inactive</option>
                       <option value="Suspended">Suspended</option>
                     </select>
-                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -tranzinc-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
                   </div>
                 </div>
               </div>

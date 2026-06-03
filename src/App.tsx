@@ -576,7 +576,7 @@ const greetingName = formatDisplayName(activeUsername)
         aside: 'border-[#27272A] bg-[#18181B] relative overflow-hidden shadow-[4px_0_24px_-12px_rgba(0,0,0,0.5)] z-20',
         asideTitle: 'text-white',
         asideSub: 'text-[#D4D4D8]',
-        asideHover: 'hover:bg-gradient-to-r hover:from-[#27272A]/80 hover:to-transparent hover:text-white hover:tranzinc-x-1',
+        asideHover: 'hover:bg-gradient-to-r hover:from-[#27272A]/80 hover:to-transparent hover:text-white hover:translate-x-1',
         asideActive: 'bg-gradient-to-r from-emerald-500/15 to-transparent border-l-[3px] border-[#10B981] text-[#34D399] drop-shadow-[0_2px_4px_rgba(16,185,129,0.2)]',
         asideIdle: 'border-l-[3px] border-transparent text-[#D4D4D8]',
         profileCard: 'backdrop-blur-xl bg-[#27272A]/40 border border-[#3F3F46]/50 shadow-lg',
@@ -607,7 +607,7 @@ const greetingName = formatDisplayName(activeUsername)
         aside: 'border-[#27272A] bg-[#18181B] relative overflow-hidden shadow-[4px_0_24px_-12px_rgba(0,0,0,0.5)] z-20',
         asideTitle: 'text-white',
         asideSub: 'text-[#D4D4D8]',
-        asideHover: 'hover:bg-gradient-to-r hover:from-[#27272A]/80 hover:to-transparent hover:text-white hover:tranzinc-x-1',
+        asideHover: 'hover:bg-gradient-to-r hover:from-[#27272A]/80 hover:to-transparent hover:text-white hover:translate-x-1',
         asideActive: 'bg-gradient-to-r from-emerald-500/15 to-transparent border-l-[3px] border-[#10B981] text-[#34D399] drop-shadow-[0_2px_4px_rgba(16,185,129,0.2)]',
         asideIdle: 'border-l-[3px] border-transparent text-[#D4D4D8]',
         profileCard: 'backdrop-blur-xl bg-[#27272A]/40 border border-[#3F3F46]/50 shadow-lg',
@@ -1262,42 +1262,42 @@ const greetingName = formatDisplayName(activeUsername)
             <section className="px-5 pb-2">
               <h3 className={`text-sm font-bold uppercase tracking-wider ${dashboardTheme.cardTitle} mb-3`}>Library Overview</h3>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-tranzinc-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-2 flex items-center gap-3">
                   <div className="rounded-lg bg-emerald-50 p-2"><BookOpen size={18} className="text-emerald-600" /></div>
                   <p className="text-sm font-semibold text-zinc-600">Total Books</p>
                 </div>
                 <p className="text-3xl font-extrabold text-zinc-900">{dashboardStats.totalBooks.toLocaleString('en-US')}</p>
               </article>
-              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-tranzinc-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-2 flex items-center gap-3">
                   <div className="rounded-lg bg-emerald-50 p-2"><Bookmark size={18} className="text-emerald-600" /></div>
                   <p className="text-sm font-semibold text-zinc-600">Available Books</p>
                 </div>
                 <p className="text-3xl font-extrabold text-zinc-900">{dashboardStats.availableBooks.toLocaleString('en-US')}</p>
               </article>
-              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-tranzinc-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-2 flex items-center gap-3">
                   <div className="rounded-lg bg-amber-50 p-2"><Undo2 size={18} className="text-amber-500" /></div>
                   <p className="text-sm font-semibold text-zinc-600">Borrowed Books</p>
                 </div>
                 <p className="text-3xl font-extrabold text-zinc-900">{dashboardStats.borrowedBooks.toLocaleString('en-US')}</p>
               </article>
-              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-tranzinc-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-2 flex items-center gap-3">
                   <div className="rounded-lg bg-rose-50 p-2"><Clock3 size={18} className="text-rose-500" /></div>
                   <p className="text-sm font-semibold text-zinc-600">Overdue Books</p>
                 </div>
                 <p className="text-3xl font-extrabold text-zinc-900">{dashboardStats.overdueBooks.toLocaleString('en-US')}</p>
               </article>
-              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-tranzinc-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-2 flex items-center gap-3">
                   <div className="rounded-lg bg-emerald-50 p-2"><Users size={18} className="text-emerald-600" /></div>
                   <p className="text-sm font-semibold text-zinc-600">Total Members</p>
                 </div>
                 <p className="text-3xl font-extrabold text-zinc-900">{dashboardStats.totalMembers.toLocaleString('en-US')}</p>
               </article>
-              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-tranzinc-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-2 flex items-center gap-3">
                   <div className="rounded-lg bg-emerald-50 p-2"><BookPlus size={18} className="text-emerald-600" /></div>
                   <p className="text-sm font-semibold text-zinc-600">Total Authors</p>
@@ -1310,7 +1310,7 @@ const greetingName = formatDisplayName(activeUsername)
             <section className="px-5 pb-3 mt-2">
               <h3 className={`text-sm font-bold uppercase tracking-wider ${dashboardTheme.cardTitle} mb-3`}>Email Activity</h3>
               <div className="grid gap-3 sm:grid-cols-1 md:grid-cols-3">
-                <button type="button" onClick={() => { setActivePage('Settings'); setActiveSettingsTab('Email Logs') }} className={`rounded-xl border p-4 text-left shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-tranzinc-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+                <button type="button" onClick={() => { setActivePage('Settings'); setActiveSettingsTab('Email Logs') }} className={`rounded-xl border p-4 text-left shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                   <div className="mb-2 flex items-center gap-3">
                     <div className="rounded-lg bg-sky-50 p-2"><Mail size={18} className="text-sky-600" /></div>
                     <p className="text-sm font-semibold text-zinc-600">Emails Sent Today</p>
@@ -1318,7 +1318,7 @@ const greetingName = formatDisplayName(activeUsername)
                   <p className="text-3xl font-extrabold text-zinc-900">{dashboardStats.emailsSentToday.toLocaleString('en-US')}</p>
                   <p className="mt-1 text-sm font-semibold text-sky-600">View email logs</p>
                 </button>
-                <button type="button" onClick={() => { setActivePage('Settings'); setActiveSettingsTab('Email Logs') }} className={`rounded-xl border p-4 text-left shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-tranzinc-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+                <button type="button" onClick={() => { setActivePage('Settings'); setActiveSettingsTab('Email Logs') }} className={`rounded-xl border p-4 text-left shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                   <div className="mb-2 flex items-center gap-3">
                     <div className="rounded-lg bg-rose-50 p-2"><AlertTriangle size={18} className="text-rose-500" /></div>
                     <p className="text-sm font-semibold text-zinc-600">Failed Emails</p>
@@ -1326,7 +1326,7 @@ const greetingName = formatDisplayName(activeUsername)
                   <p className="text-3xl font-extrabold text-zinc-900">{dashboardStats.failedEmails.toLocaleString('en-US')}</p>
                   <p className="mt-1 text-sm font-semibold text-rose-500">Needs attention</p>
                 </button>
-                <button type="button" onClick={() => { setActivePage('Settings'); setActiveSettingsTab('Email Logs') }} className={`rounded-xl border p-4 text-left shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-tranzinc-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+                <button type="button" onClick={() => { setActivePage('Settings'); setActiveSettingsTab('Email Logs') }} className={`rounded-xl border p-4 text-left shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                   <div className="mb-2 flex items-center gap-3">
                     <div className="rounded-lg bg-amber-50 p-2"><Clock3 size={18} className="text-amber-500" /></div>
                     <p className="text-sm font-semibold text-zinc-600">Pending Emails</p>
@@ -1338,7 +1338,7 @@ const greetingName = formatDisplayName(activeUsername)
             </section>
 
             <section className="grid gap-3 px-5 pb-4 xl:grid-cols-[40fr_35fr_25fr]">
-              <article className={`overflow-hidden rounded-2xl border shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-tranzinc-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+              <article className={`overflow-hidden rounded-2xl border shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="flex items-center justify-between px-4 py-3">
                   <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Recent Borrowed Books</h3>
                   <button type="button" onClick={() => openTransactionsPage('borrowed')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
@@ -1369,7 +1369,7 @@ const greetingName = formatDisplayName(activeUsername)
                 </div>
               </article>
 
-              <article className={`overflow-hidden rounded-2xl border shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-tranzinc-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+              <article className={`overflow-hidden rounded-2xl border shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="flex items-center justify-between px-4 py-3">
                   <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Overdue Returns</h3>
                   <button type="button" onClick={() => openTransactionsPage('overdue')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
@@ -1400,7 +1400,7 @@ const greetingName = formatDisplayName(activeUsername)
                 </div>
               </article>
 
-              <article className={`rounded-2xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-tranzinc-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+              <article className={`rounded-2xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-3 flex items-center justify-between pb-3">
                   <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Today&apos;s Activity</h3>
                   <button type="button" onClick={() => setActivePage('Reports')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
@@ -1433,7 +1433,7 @@ const greetingName = formatDisplayName(activeUsername)
             </section>
 
             <section className="grid gap-3 px-5 pb-5 xl:grid-cols-3">
-              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-tranzinc-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Most Borrowed Categories</h3>
                   <button type="button" onClick={() => setActivePage('Reports')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
@@ -1473,7 +1473,7 @@ const greetingName = formatDisplayName(activeUsername)
                   })()}
                 </div>
               </article>
-              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-tranzinc-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Low Stock / Missing Copies</h3>
                   <button type="button" onClick={() => setActivePage('Books')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
@@ -1503,7 +1503,7 @@ const greetingName = formatDisplayName(activeUsername)
                 </div>
               </article>
 
-              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-tranzinc-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Upcoming Due Dates</h3>
                   <button type="button" onClick={() => openTransactionsPage('overdue')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>

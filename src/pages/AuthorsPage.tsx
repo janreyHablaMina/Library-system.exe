@@ -437,7 +437,7 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
           {stats.map((stat) => {
             const Icon = stat.icon
             return (
-              <article key={stat.label} className={`rounded-xl border p-5 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-tranzinc-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
+              <article key={stat.label} className={`rounded-xl border p-5 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
                 <div className="flex items-center gap-4">
                   <div className={`grid h-12 w-12 place-items-center rounded-2xl ${stat.bg} ${stat.color}`}>
                     <Icon size={22} />
@@ -471,7 +471,7 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
                     <option value="Active">Active</option>
                     <option value="Inactive">Inactive</option>
                   </select>
-                  <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -tranzinc-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+                  <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
                 </div>
               </div>
 
@@ -483,7 +483,7 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
                     <option value="Name (Z-A)">Name (Z-A)</option>
                     <option value="Books (High-Low)">Books (High-Low)</option>
                   </select>
-                  <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -tranzinc-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+                  <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
                 </div>
               </div>
 
@@ -576,7 +576,7 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
                   <option value={20}>20 / page</option>
                   <option value={50}>50 / page</option>
                 </select>
-                <ChevronDown size={12} className={`pointer-events-none absolute right-2.5 top-1/2 -tranzinc-y-1/2 text-zinc-400`} />
+                <ChevronDown size={12} className={`pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400`} />
               </div>
             </div>
           </div>
@@ -666,7 +666,7 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
                       <option value="Active">Active</option>
                       <option value="Inactive">Inactive</option>
                     </select>
-                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -tranzinc-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
                   </div>
                 </div>
               </div>

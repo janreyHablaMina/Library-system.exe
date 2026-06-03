@@ -514,7 +514,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
               </select>
-              <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -tranzinc-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+              <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
             </div>
 
             {/* Author Select */}
@@ -531,7 +531,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
                   <option key={auth} value={auth}>{auth}</option>
                 ))}
               </select>
-              <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -tranzinc-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+              <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
             </div>
             <button 
               type="button" 

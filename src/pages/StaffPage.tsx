@@ -377,7 +377,7 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
           {dynamicStats.map((stat) => {
             const Icon = stat.icon
             return (
-              <article key={stat.label} className={`rounded-xl border p-5 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-tranzinc-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
+              <article key={stat.label} className={`rounded-xl border p-5 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
                 <div className="flex items-center gap-4">
                   <div className={`grid h-12 w-12 place-items-center rounded-2xl ${stat.bg} ${stat.color}`}>
                     <Icon size={22} />
@@ -422,7 +422,7 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
                     <option value="Assistant Librarian">Assistant Librarian</option>
                     <option value="Library Clerk">Library Clerk</option>
                   </select>
-                  <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -tranzinc-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+                  <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
                 </div>
               </div>
 
@@ -438,7 +438,7 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
                     <option value="Active">Active</option>
                     <option value="Inactive">Inactive</option>
                   </select>
-                  <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -tranzinc-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+                  <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
                 </div>
               </div>
 
@@ -598,7 +598,7 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
                             <option>Assistant Librarian</option>
                             <option>Library Clerk</option>
                           </select>
-                          <ChevronDown size={18} className={`pointer-events-none absolute right-4 top-1/2 -tranzinc-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+                          <ChevronDown size={18} className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
                         </div>
                       </div>
                       <div className="space-y-2">
@@ -608,7 +608,7 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
                             <option>Active</option>
                             <option>Inactive</option>
                           </select>
-                          <ChevronDown size={18} className={`pointer-events-none absolute right-4 top-1/2 -tranzinc-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+                          <ChevronDown size={18} className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
                         </div>
                       </div>
                     </div>

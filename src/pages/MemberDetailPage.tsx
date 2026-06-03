@@ -613,7 +613,7 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
                       <option value="Inactive">Inactive</option>
                       <option value="Suspended">Suspended</option>
                     </select>
-                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -tranzinc-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
                   </div>
                 </div>
               </div>

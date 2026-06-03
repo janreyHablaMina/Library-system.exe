@@ -584,7 +584,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                 <p className={`text-[11px] font-medium ${subLabelClass}`}>{stat.sub}</p>
               </div>
             </div>
-            <ChevronRight size={18} className="text-zinc-300 transition-transform group-hover:tranzinc-x-1" />
+            <ChevronRight size={18} className="text-zinc-300 transition-transform group-hover:translate-x-1" />
           </div>
         ))}
       </div>
@@ -1004,7 +1004,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                     notifications ? 'bg-emerald-600' : 'bg-zinc-300 dark:bg-zinc-700'
                   }`}
                 >
-                  <div className={`absolute left-1 top-1 h-[18px] w-[18px] transform rounded-full bg-white shadow-sm transition-transform duration-300 ${notifications ? 'tranzinc-x-6' : 'tranzinc-x-0'}`} />
+                  <div className={`absolute left-1 top-1 h-[18px] w-[18px] transform rounded-full bg-white shadow-sm transition-transform duration-300 ${notifications ? 'translate-x-6' : 'translate-x-0'}`} />
                 </button>
                 <div className={`rounded-lg px-4 py-3 text-[11px] font-semibold leading-relaxed ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-700'}`}>
                   Notification will be sent to the <br /> registered email of the member.
@@ -1086,7 +1086,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                 <button 
                   type="button"
                   onClick={() => setShowCurrentPass(!showCurrentPass)}
-                  className="absolute right-4 top-1/2 -tranzinc-y-1/2 text-zinc-400 hover:text-emerald-500 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-emerald-500 transition-colors"
                 >
                   <Eye size={18} />
                 </button>
@@ -1106,7 +1106,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                 <button 
                   type="button"
                   onClick={() => setShowNewPass(!showNewPass)}
-                  className="absolute right-4 top-1/2 -tranzinc-y-1/2 text-zinc-400 hover:text-emerald-500 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-emerald-500 transition-colors"
                 >
                   <Eye size={18} />
                 </button>
@@ -1127,7 +1127,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                 <button 
                   type="button"
                   onClick={() => setShowConfirmPass(!showConfirmPass)}
-                  className="absolute right-4 top-1/2 -tranzinc-y-1/2 text-zinc-400 hover:text-emerald-500 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-emerald-500 transition-colors"
                 >
                   <Eye size={18} />
                 </button>
@@ -1277,7 +1277,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                 }}
                 className={`relative h-7 w-12 rounded-full transition-colors ${toggle.value ? 'bg-emerald-600' : isDarkMode ? 'bg-zinc-700' : 'bg-zinc-300'}`}
               >
-                <span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-transform ${toggle.value ? 'tranzinc-x-5' : 'tranzinc-x-1'}`} />
+                <span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-transform ${toggle.value ? 'translate-x-5' : 'translate-x-1'}`} />
               </button>
             </div>
           ))}

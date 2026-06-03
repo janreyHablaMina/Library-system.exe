@@ -306,7 +306,7 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
                             <option key={cat} value={cat}>{cat}</option>
                           ))}
                         </select>
-                        <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -tranzinc-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+                        <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
                       </div>
                     </div>
                     <div>
@@ -322,12 +322,12 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
                           <option value="Overdue">Overdue</option>
                           <option value="Archived">Archived</option>
                         </select>
-                        <span className={`pointer-events-none absolute left-4 top-1/2 h-2.5 w-2.5 -tranzinc-y-1/2 rounded-full ${
+                        <span className={`pointer-events-none absolute left-4 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full ${
                           status === 'Available' ? 'bg-emerald-500'
                           : status === 'Borrowed' ? 'bg-amber-500'
                           : 'bg-rose-500'
                         }`} />
-                        <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -tranzinc-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+                        <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
                       </div>
                     </div>
                   </div>
@@ -694,12 +694,12 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
                       <option value="Archived">Archived</option>
                     </select>
                     {/* Status dot indicator */}
-                    <span className={`pointer-events-none absolute left-4 top-1/2 h-2.5 w-2.5 -tranzinc-y-1/2 rounded-full ${
+                    <span className={`pointer-events-none absolute left-4 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full ${
                       status === 'Available' ? 'bg-emerald-500'
                       : status === 'Borrowed' ? 'bg-amber-500'
                       : 'bg-rose-500'
                     }`} />
-                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -tranzinc-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
                   </div>
                 </div>
               </div>

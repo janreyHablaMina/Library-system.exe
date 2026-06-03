@@ -1005,7 +1005,7 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
             {stats.map((stat) => {
               const Icon = stat.icon
               return (
-                <article key={stat.label} className={`rounded-xl border p-5 transition-all duration-200 hover:-tranzinc-y-0.5 ${isDarkMode ? 'border-zinc-700 bg-[#18181B] hover:border-emerald-500/60 hover:shadow-[0_12px_24px_-16px_rgba(16,185,129,0.45)]' : 'border-zinc-200 bg-white hover:border-emerald-200 hover:shadow-[0_12px_24px_-16px_rgba(15,23,42,0.35)]'}`}>
+                <article key={stat.label} className={`rounded-xl border p-5 transition-all duration-200 hover:-translate-y-0.5 ${isDarkMode ? 'border-zinc-700 bg-[#18181B] hover:border-emerald-500/60 hover:shadow-[0_12px_24px_-16px_rgba(16,185,129,0.45)]' : 'border-zinc-200 bg-white hover:border-emerald-200 hover:shadow-[0_12px_24px_-16px_rgba(15,23,42,0.35)]'}`}>
                   <div className="flex items-center gap-4">
                     <div className={`grid h-12 w-12 place-items-center rounded-2xl ${stat.bg} ${stat.color}`}>
                       <Icon size={22} />
@@ -1050,7 +1050,7 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                       <option value="Expired">Expired</option>
                       <option value="Cancelled">Cancelled</option>
                     </select>
-                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -tranzinc-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
                   </div>
                 </div>
 
@@ -1680,7 +1680,7 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                                 selectedMember?.avatar
                               )}
                             </span>
-                            <span className={`absolute -bottom-1.5 left-1/2 -tranzinc-x-1/2 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold border whitespace-nowrap ${
+                            <span className={`absolute -bottom-1.5 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold border whitespace-nowrap ${
                               isDarkMode 
                                 ? 'bg-blue-950/90 border-blue-800 text-blue-400' 
                                 : 'bg-blue-50/90 border-blue-200 text-blue-700'

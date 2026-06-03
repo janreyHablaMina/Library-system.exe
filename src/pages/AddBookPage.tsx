@@ -388,7 +388,7 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
                           className={`h-12 w-full rounded-xl border px-4 pr-10 text-sm outline-none focus:border-emerald-500 ${inputClass}`}
                           placeholder={authorsLoading ? 'Loading authors...' : 'Search author by name...'}
                         />
-                        <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -tranzinc-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+                        <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
                       </div>
                     </div>
 
@@ -470,7 +470,7 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
                         </span>
                       </span>
                     </button>
-                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -tranzinc-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
 
                     {categoryDropdownOpen ? (
                       <div className={`absolute left-0 right-0 top-full z-30 mt-2 max-h-56 overflow-y-auto rounded-xl border p-2 shadow-xl ${isDarkMode ? 'border-zinc-700 bg-[#27272A]' : 'border-zinc-200 bg-white'}`}>
@@ -688,8 +688,8 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
                       <option value="Unavailable">Unavailable</option>
                       <option value="Archived">Archived</option>
                     </select>
-                    <span className="pointer-events-none absolute left-4 top-1/2 h-2.5 w-2.5 -tranzinc-y-1/2 rounded-full bg-emerald-500" />
-                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -tranzinc-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+                    <span className="pointer-events-none absolute left-4 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full bg-emerald-500" />
+                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
                   </div>
                 </div>
               </div>
