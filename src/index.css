@@ -147,3 +147,16 @@ body {
 .dashboard-dark [class~="text-slate-400"] {
   color: #858585 !important;
 }
+
+/* VS Code Hover effects for lists and tables */
+.dashboard-dark [class~="hover:bg-slate-50"]:hover,
+.dashboard-dark [class~="hover:bg-slate-100"]:hover,
+.dashboard-dark [class~="hover:bg-slate-800"]:hover,
+.dashboard-dark [class~="hover:bg-slate-800/80"]:hover,
+.dashboard-dark [class~="hover:bg-slate-800/50"]:hover,
+.dashboard-dark [class~="hover:bg-[#0f1f49]/70"]:hover,
+.dashboard-dark [class~="hover:bg-[#0f1f49]/50"]:hover,
+.dashboard-dark [class~="hover:bg-[#0f1f49]/30"]:hover,
+.dashboard-dark [class~="hover:bg-[#12244f]"]:hover {
+  background-color: #2a2d2e !important;
+}
