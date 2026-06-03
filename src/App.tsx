@@ -573,9 +573,12 @@ const greetingName = formatDisplayName(activeUsername)
     ? {
         main: 'bg-[#181818] text-[#cccccc]',
         frame: 'border-[#2b2b2b] bg-[#181818]',
-        aside: 'border-emerald-900/40 bg-[linear-gradient(180deg,#052e22_0%,#064e3b_55%,#022c22_100%)]',
-        asideTitle: 'text-emerald-100',
-        asideSub: 'text-emerald-200/75',
+        aside: 'border-[#1E293B] bg-[#0F172A]',
+        asideTitle: 'text-[#E2E8F0]',
+        asideSub: 'text-[#94A3B8]',
+        asideHover: 'hover:bg-[#1E293B] hover:text-[#E2E8F0]',
+        asideActive: 'bg-[rgba(16,185,129,0.15)] border-l-[3px] border-[#10B981] text-[#34D399]',
+        asideIdle: 'border-l-[3px] border-transparent text-[#94A3B8]',
         navActive: 'bg-[linear-gradient(90deg,#34d399_0%,#10b981_100%)] text-white shadow-[0_14px_22px_-16px_rgba(16,185,129,0.95)]',
         navIdle: 'text-emerald-50/90 hover:bg-emerald-700/40',
         header: 'border-[#2b2b2b] bg-[#1e1e1e]',
@@ -598,11 +601,14 @@ const greetingName = formatDisplayName(activeUsername)
     : {
         main: 'bg-white text-slate-800',
         frame: 'border-slate-200 bg-white',
-        aside: 'border-emerald-900/35 bg-[linear-gradient(180deg,#064e3b_0%,#065f46_48%,#064e3b_100%)]',
-        asideTitle: 'text-emerald-50',
-        asideSub: 'text-emerald-100/80',
-        navActive: 'bg-[linear-gradient(90deg,#34d399_0%,#10b981_100%)] text-white shadow-[0_14px_22px_-16px_rgba(16,185,129,0.95)]',
-        navIdle: 'text-emerald-50/90 hover:bg-emerald-700/35',
+        aside: 'border-[#E5E7EB] bg-[#FAFBFC]',
+        asideTitle: 'text-[#111827]',
+        asideSub: 'text-[#6B7280]',
+        asideHover: 'hover:bg-[#F3F4F6] hover:text-[#111827]',
+        asideActive: 'bg-[rgba(16,185,129,0.12)] border-l-[3px] border-[#10B981] text-[#10B981]',
+        asideIdle: 'border-l-[3px] border-transparent text-[#6B7280]',
+        navActive: 'bg-emerald-600 text-white shadow-[0_10px_20px_-10px_rgba(5,150,105,0.85)]',
+        navIdle: 'text-slate-600 hover:bg-slate-100',
         header: 'border-slate-200 bg-white',
         search: 'border-slate-200 bg-white',
         searchIcon: 'text-slate-400 group-focus-within:text-emerald-600',
@@ -624,16 +630,16 @@ const greetingName = formatDisplayName(activeUsername)
   return (
     <main className={`h-screen overflow-hidden p-0 ${dashboardTheme.main} ${isDarkMode ? 'dashboard-dark' : ''}`}>
       <div className={`flex h-full w-full overflow-hidden ${dashboardTheme.frame}`}>
-        <aside className={`hidden h-full shrink-0 border-r border-slate-900 bg-[#0b1220] transition-all duration-200 lg:flex lg:flex-col ${sidebarCollapsed ? 'w-20' : 'w-64'}`}>
-          <div className={`border-b border-slate-800 ${sidebarCollapsed ? 'px-2 py-4' : 'px-6 py-6'}`}>
+        <aside className={`hidden h-full shrink-0 border-r transition-all duration-200 lg:flex lg:flex-col ${dashboardTheme.aside} ${sidebarCollapsed ? 'w-20' : 'w-64'}`}>
+          <div className={`border-b ${dashboardTheme.rowBorder} ${sidebarCollapsed ? 'px-2 py-4' : 'px-5 py-5'}`}>
             <div className="flex flex-col items-center">
-              <div className={`grid place-items-center rounded-full border border-slate-700 bg-slate-900 shadow-sm ${sidebarCollapsed ? 'h-14 w-14' : 'h-20 w-20'}`}>
-                <div className={`grid place-items-center rounded-full border-2 border-emerald-500 font-black text-emerald-300 ${sidebarCollapsed ? 'h-10 w-10 text-base' : 'h-14 w-14 text-sm'}`}>CC</div>
+              <div className={`grid place-items-center rounded-full shadow-sm ${dashboardTheme.avatarBg} ${sidebarCollapsed ? 'h-12 w-12' : 'h-16 w-16'}`}>
+                <div className={`grid place-items-center rounded-full border-2 border-[#10B981] font-black text-[#10B981] ${sidebarCollapsed ? 'h-8 w-8 text-sm' : 'h-12 w-12 text-base'}`}>CC</div>
               </div>
               {!sidebarCollapsed ? (
                 <>
-                  <p className="mt-4 text-center text-[22px] font-black tracking-tight text-white">info<span className="text-emerald-400">Lib</span></p>
-                  <p className="mt-1 text-center text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400">Library Management System</p>
+                  <p className={`mt-3 text-center text-[20px] font-black tracking-tight ${dashboardTheme.asideTitle}`}>info<span className="text-[#10B981]">Lib</span></p>
+                  <p className={`mt-0.5 text-center text-[10px] font-semibold uppercase tracking-[0.08em] ${dashboardTheme.asideSub}`}>Library Management System</p>
                 </>
               ) : null}
             </div>
@@ -647,15 +653,14 @@ const greetingName = formatDisplayName(activeUsername)
                        <button
                         key={navItems[0].id}
                         onClick={() => setActivePage(navItems[0].id as any)}
-                        className={`group flex w-full items-center gap-3 rounded-xl py-3 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-2' : 'px-4'} ${
+                        className={`group flex w-full items-center gap-3 rounded-xl py-2.5 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-2' : 'px-4'} ${
                           activePage === navItems[0].id
-                            ? 'bg-emerald-500/20 text-emerald-300'
-                            : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+                            ? dashboardTheme.asideActive
+                            : `${dashboardTheme.asideIdle} ${dashboardTheme.asideHover}`
                         }`}
                       >
-                        <DashIcon size={18} className={activePage === navItems[0].id ? 'text-emerald-300' : 'text-slate-400'} />
+                        <DashIcon size={18} className={activePage === navItems[0].id ? '' : 'opacity-80'} />
                         {!sidebarCollapsed ? <span className="flex-1 text-left font-semibold">{navItems[0].label}</span> : null}
-                        {activePage === navItems[0].id && !sidebarCollapsed ? <div className="h-5 w-1 rounded-full bg-emerald-500" /> : null}
                       </button>
                      )
                    })()}
@@ -663,7 +668,7 @@ const greetingName = formatDisplayName(activeUsername)
 
                 {/* LIBRARY Section */}
                 <div className="mt-8 px-4">
-                  {!sidebarCollapsed ? <p className="px-4 text-[11px] font-bold uppercase tracking-[2px] text-slate-500">Library</p> : null}
+                  {!sidebarCollapsed ? <p className="px-4 text-[11px] font-bold uppercase tracking-[0.15em] ${dashboardTheme.asideSub}">Library</p> : null}
                   <div className="mt-4 space-y-1">
                     {navItems.slice(1, 5).map((item) => (
                       <button
@@ -672,15 +677,15 @@ const greetingName = formatDisplayName(activeUsername)
                           setActivePage(item.id as any)
                           if (item.id === 'Members') setMemberAddModalTrigger(0)
                         }}
-                        className={`group flex w-full items-center gap-3 rounded-xl py-3 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-2' : 'px-4'} ${
+                        className={`group flex w-full items-center gap-3 rounded-xl py-2.5 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-2' : 'px-4'} ${
                           activePage === item.id
-                            ? 'bg-emerald-500/20 text-emerald-300'
-                            : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+                            ? dashboardTheme.asideActive
+                            : `${dashboardTheme.asideIdle} ${dashboardTheme.asideHover}`
                         }`}
                       >
-                        <item.icon size={18} className={activePage === item.id ? 'text-emerald-300' : 'text-slate-400'} />
+                        <item.icon size={18} className={activePage === item.id ? '' : 'opacity-80'} />
                         {!sidebarCollapsed ? <span className="flex-1 text-left font-semibold">{item.label}</span> : null}
-                        {!sidebarCollapsed ? <ChevronRight size={14} className={`transition-transform duration-300 ${activePage === item.id ? 'rotate-90 text-emerald-400' : 'text-slate-600'}`} /> : null}
+                        {!sidebarCollapsed ? <ChevronRight size={14} className={`transition-transform duration-300 ${activePage === item.id ? 'rotate-90' : 'opacity-50'}`} /> : null}
                       </button>
                     ))}
                   </div>
@@ -688,7 +693,7 @@ const greetingName = formatDisplayName(activeUsername)
 
                 {/* CIRCULATION Section */}
                 <div className="mt-6 px-4">
-                  {!sidebarCollapsed ? <p className="px-4 text-[11px] font-bold uppercase tracking-[2px] text-slate-500">Circulation</p> : null}
+                  {!sidebarCollapsed ? <p className="px-4 text-[11px] font-bold uppercase tracking-[0.15em] ${dashboardTheme.asideSub}">Circulation</p> : null}
                   <div className="mt-4 space-y-1">
                     {navItems.slice(5, 7).map((item) => (
                       <button
@@ -697,15 +702,15 @@ const greetingName = formatDisplayName(activeUsername)
                           setActivePage(item.id as any)
                           if (item.id === 'Members') setMemberAddModalTrigger(0)
                         }}
-                        className={`group flex w-full items-center gap-3 rounded-xl py-3 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-2' : 'px-4'} ${
+                        className={`group flex w-full items-center gap-3 rounded-xl py-2.5 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-2' : 'px-4'} ${
                           activePage === item.id
-                            ? 'bg-emerald-500/20 text-emerald-300'
-                            : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+                            ? dashboardTheme.asideActive
+                            : `${dashboardTheme.asideIdle} ${dashboardTheme.asideHover}`
                         }`}
                       >
-                        <item.icon size={18} className={activePage === item.id ? 'text-emerald-300' : 'text-slate-400'} />
+                        <item.icon size={18} className={activePage === item.id ? '' : 'opacity-80'} />
                         {!sidebarCollapsed ? <span className="flex-1 text-left font-semibold">{item.label}</span> : null}
-                        {!sidebarCollapsed ? <ChevronRight size={14} className={`transition-transform duration-300 ${activePage === item.id ? 'rotate-90 text-emerald-400' : 'text-slate-600'}`} /> : null}
+                        {!sidebarCollapsed ? <ChevronRight size={14} className={`transition-transform duration-300 ${activePage === item.id ? 'rotate-90' : 'opacity-50'}`} /> : null}
                       </button>
                     ))}
                   </div>
@@ -713,7 +718,7 @@ const greetingName = formatDisplayName(activeUsername)
 
                 {/* MANAGEMENT Section */}
                 <div className="mt-6 px-4">
-                  {!sidebarCollapsed ? <p className="px-4 text-[11px] font-bold uppercase tracking-[2px] text-slate-500">Management</p> : null}
+                  {!sidebarCollapsed ? <p className="px-4 text-[11px] font-bold uppercase tracking-[0.15em] ${dashboardTheme.asideSub}">Management</p> : null}
                   <div className="mt-4 space-y-1">
                     {navItems.slice(7, 9).map((item) => (
                       <button
@@ -722,15 +727,15 @@ const greetingName = formatDisplayName(activeUsername)
                           setActivePage(item.id as any)
                           if (item.id === 'Members') setMemberAddModalTrigger(0)
                         }}
-                        className={`group flex w-full items-center gap-3 rounded-xl py-3 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-2' : 'px-4'} ${
+                        className={`group flex w-full items-center gap-3 rounded-xl py-2.5 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-2' : 'px-4'} ${
                           activePage === item.id
-                            ? 'bg-emerald-500/20 text-emerald-300'
-                            : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+                            ? dashboardTheme.asideActive
+                            : `${dashboardTheme.asideIdle} ${dashboardTheme.asideHover}`
                         }`}
                       >
-                        <item.icon size={18} className={activePage === item.id ? 'text-emerald-300' : 'text-slate-400'} />
+                        <item.icon size={18} className={activePage === item.id ? '' : 'opacity-80'} />
                         {!sidebarCollapsed ? <span className="flex-1 text-left font-semibold">{item.label}</span> : null}
-                        {!sidebarCollapsed ? <ChevronRight size={14} className={`transition-transform duration-300 ${activePage === item.id ? 'rotate-90 text-emerald-400' : 'text-slate-600'}`} /> : null}
+                        {!sidebarCollapsed ? <ChevronRight size={14} className={`transition-transform duration-300 ${activePage === item.id ? 'rotate-90' : 'opacity-50'}`} /> : null}
                       </button>
                     ))}
                   </div>
@@ -738,33 +743,33 @@ const greetingName = formatDisplayName(activeUsername)
 
                 {/* SYSTEM Section */}
                 <div className="mt-6 px-4 pb-4">
-                  {!sidebarCollapsed ? <p className="px-4 text-[11px] font-bold uppercase tracking-[2px] text-slate-500">System</p> : null}
+                  {!sidebarCollapsed ? <p className="px-4 text-[11px] font-bold uppercase tracking-[0.15em] ${dashboardTheme.asideSub}">System</p> : null}
                   <div className="mt-4 space-y-1">
                     <button
                       onClick={() => {
                         setActivePage('Settings')
                         setActiveSettingsTab('Overview')
                       }}
-                      className={`group flex w-full items-center gap-3 rounded-xl py-3 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-2' : 'px-4'} ${
+                      className={`group flex w-full items-center gap-3 rounded-xl py-2.5 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-2' : 'px-4'} ${
                         activePage === 'Settings'
-                          ? 'bg-emerald-500/20 text-emerald-300'
-                          : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+                          ? dashboardTheme.asideActive
+                          : `${dashboardTheme.asideIdle} ${dashboardTheme.asideHover}`
                       }`}
                     >
-                      <Settings2 size={18} className={activePage === 'Settings' ? 'text-emerald-300' : 'text-slate-400'} />
+                      <Settings2 size={18} className={activePage === 'Settings' ? '' : 'opacity-80'} />
                       <span className="flex-1 text-left font-semibold">{!sidebarCollapsed ? 'Settings' : ''}</span>
                     </button>
                   </div>
                 </div>
           </nav>
-          <div className={`border-t border-slate-800 ${sidebarCollapsed ? 'p-2' : 'p-4'}`}>
+          <div className={`border-t ${dashboardTheme.rowBorder} ${sidebarCollapsed ? 'p-2' : 'p-4'}`}>
             {!sidebarCollapsed ? (
-              <div className="rounded-xl border border-slate-700 bg-slate-800/80 p-3">
-                <p className="text-sm font-semibold text-slate-100">Admin User</p>
-                <p className="text-xs text-slate-400">Librarian</p>
+              <div className={`rounded-xl border p-3 ${dashboardTheme.cardPanel}`}>
+                <p className={`text-sm font-semibold ${dashboardTheme.cardTitle}`}>Admin User</p>
+                <p className={`text-xs ${dashboardTheme.cardMuted}`}>Librarian</p>
               </div>
             ) : (
-              <div className="grid h-10 w-10 place-items-center rounded-full border border-slate-700 bg-slate-800 text-xs font-bold text-slate-200">AU</div>
+              <div className={`grid h-10 w-10 place-items-center rounded-full border text-xs font-bold ${dashboardTheme.avatarBg}`}>AU</div>
             )}
           </div>
         </aside>
@@ -1769,6 +1774,7 @@ function App() {
 }
 
 export default App
+
 
 
 
