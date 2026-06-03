@@ -1463,7 +1463,7 @@ const greetingName = formatDisplayName(activeUsername)
               </article>
             </section>
 
-            <section className="grid gap-3 px-5 pb-5 xl:grid-cols-4">
+            <section className="grid gap-3 px-5 pb-5 xl:grid-cols-3">
               <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Most Borrowed Categories</h3>
@@ -1533,49 +1533,7 @@ const greetingName = formatDisplayName(activeUsername)
                   ) : null}
                 </div>
               </article>
-              <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
-                <div className="mb-3 flex items-center justify-between">
-                  <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Quick Reports</h3>
-                </div>
-                <div className="space-y-0">
-                  {quickReportItems.map((item) => {
-                    const ItemIcon = item.icon
-                    const meta = item.label === 'Books by Category'
-                      ? `${borrowedCategories.length} active categories`
-                      : item.label === 'Top Borrowed Books'
-                        ? `${recentBorrowedItems.length} recent borrows`
-                        : item.label === 'Overdue Books Report'
-                          ? `${overdueReturnItems.length} overdue items`
-                          : `${notifications.length} latest activities`
 
-                    return (
-                      <button
-                        key={item.label}
-                        type="button"
-                        onClick={() => {
-                          if (item.label === 'Top Borrowed Books') openTransactionsPage('borrowed')
-                          else if (item.label === 'Overdue Books Report') openTransactionsPage('overdue')
-                          else if (item.label === 'Monthly Activities') setActivePage('Reports')
-                          else setActivePage('Books')
-                        }}
-                        className="flex w-full items-center justify-between border-b border-slate-100 last:border-b-0 rounded-md px-2 py-2 text-left transition-colors duration-150 hover:bg-slate-50"
-                        aria-label={item.label}
-                      >
-                        <span className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                          <span className="grid h-7 w-7 place-items-center rounded-full bg-emerald-50 text-emerald-700">
-                            <ItemIcon size={13} />
-                          </span>
-                          <span className="flex flex-col items-start">
-                            <span>{item.label}</span>
-                            <span className="text-[11px] font-medium text-slate-500">{meta}</span>
-                          </span>
-                        </span>
-                        <span className="text-slate-500">›</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              </article>
               <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Upcoming Due Dates</h3>
