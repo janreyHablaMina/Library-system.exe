@@ -17,13 +17,14 @@ import {
   Phone,
   Plus,
   RefreshCw,
-  Send,
+  Send, Smartphone,
   User,
   UserCheck,
   X,
 } from 'lucide-react'
 import bookCover from '../assets/login.avif'
 import { SendEmailModal } from '../components/modals/SendEmailModal'
+import { SendSmsModal } from '../components/modals/SendSmsModal'
 import { mockMembersData } from './memberDetailData'
 import { listBorrowTransactions, listMembers, sendManualEmailReminder, updateMember, type Member as DbMember } from '../lib/tauriApi'
 import type { LoanItem } from './memberDetailData'
@@ -104,6 +105,7 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
   })
   const [editPhotoPreview, setEditPhotoPreview] = useState<string>(bookCover)
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false)
+  const [isSmsModalOpen, setIsSmsModalOpen] = useState(false)
 
   useEffect(() => {
     let mounted = true
@@ -548,6 +550,14 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
         onClose={() => setIsEmailModalOpen(false)}
         member={{ id: memberId || 0, fullName: member.name, email: member.email !== 'n/a' ? member.email : null }}
         onSuccess={() => setToast('Email sent successfully!')}
+        isDarkMode={isDarkMode}
+      />
+
+            <SendSmsModal
+        isOpen={isSmsModalOpen}
+        onClose={() => setIsSmsModalOpen(false)}
+        member={{ id: memberId || 0, fullName: member.name, phone: member.phone !== 'n/a' ? member.phone : null }}
+        onSuccess={() => setToast('SMS sent successfully!')}
         isDarkMode={isDarkMode}
       />
 

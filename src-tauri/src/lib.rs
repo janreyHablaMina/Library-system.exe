@@ -3263,6 +3263,96 @@ fn restore_login_window(app: tauri::AppHandle) -> Result<(), String> {
     Ok(())
 }
 
+
+async fn send_sms_txtbox(
+    api_key: &str,
+    to: &str,
+    message: &str,
+) -> Result<(), String> {
+    let client = reqwest::Client::new();
+    
+    let params = [
+        ("number", to),
+        ("message", message),
+    ];
+
+    let res = client.post("https://ws-v2.txtbox.com/messaging/v1/sms/push")
+        .header("X-TXTBOX-Auth", api_key)
+        .form(&params)
+        .send()
+        .await
+        .map_err(|e| format!("HTTP request failed: {e}"))?;
+
+    if res.status().is_success() {
+        Ok(())
+    } else {
+        let text = res.text().await.unwrap_or_default();
+        Err(format!("TxtBox Error: {}", text))
+    }
+}
+
+#[tauri::command]
+async fn test_sms_configuration(
+    app: tauri::AppHandle,
+    to: String,
+) -> Result<String, String> {
+    let conn = open_db(&database_path(&app)?)?;
+    let api_key: String = conn.query_row("SELECT value FROM settings WHERE key = 'sms.txtbox_api_key'", [], |row| row.get(0)).unwrap_or_default();
+    
+    if api_key.trim().is_empty() {
+        return Err("TxtBox API key is missing.".to_string());
+    }
+
+    send_sms_txtbox(&api_key, &to, "This is a test message from Library Management System.").await?;
+    
+    conn.execute(
+        "INSERT INTO email_logs (type, recipient, status, error_message, email_type) VALUES (?, ?, ?, ?, ?)",
+        ["Manual SMS", &to, "Sent", "", "Test"],
+    ).map_err(|e| format!("db error: {e}"))?;
+
+    Ok("Test SMS sent successfully!".to_string())
+}
+
+#[tauri::command]
+async fn send_manual_sms(
+    app: tauri::AppHandle,
+    member_id: i64,
+    message: String,
+) -> Result<String, String> {
+    let conn = open_db(&database_path(&app)?)?;
+    
+    let enabled = setting_bool(&conn, "sms.enabled", false);
+    if !enabled {
+        return Err("SMS notifications are disabled in settings.".to_string());
+    }
+
+    let api_key: String = conn.query_row("SELECT value FROM settings WHERE key = 'sms.txtbox_api_key'", [], |row| row.get(0)).unwrap_or_default();
+    if api_key.trim().is_empty() {
+        return Err("TxtBox API key is missing.".to_string());
+    }
+
+    let phone: Option<String> = conn.query_row(
+        "SELECT contact_number FROM members WHERE id = ?",
+        [member_id],
+        |row| row.get(0)
+    ).unwrap_or(None);
+
+    let phone_number = match phone {
+        Some(p) if !p.trim().is_empty() && p != "n/a" => p,
+        _ => return Err("Member does not have a valid contact number.".to_string()),
+    };
+
+    send_sms_txtbox(&api_key, &phone_number, &message).await?;
+
+    conn.execute(
+        "INSERT INTO email_logs (type, recipient, status, error_message, email_type) VALUES (?, ?, ?, ?, ?)",
+        ["Manual SMS", &phone_number, "Sent", "", "Custom SMS"],
+    ).map_err(|e| format!("db error: {e}"))?;
+
+    Ok("SMS sent successfully!".to_string())
+}
+
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -3330,6 +3420,8 @@ pub fn run() {
             list_email_logs,
             get_email_log_stats,
             test_email_configuration,
+            test_sms_configuration,
+            send_manual_sms,
             send_sms_gateway,
             export_report,
             sync_notifications,

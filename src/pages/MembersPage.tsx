@@ -2,7 +2,8 @@ import { Toast } from '../components/ui/Toast'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 import { SendEmailModal } from '../components/modals/SendEmailModal'
-import { AlertTriangle, Mail, ChevronDown, Download, Eye, Grid2x2, List, MoreHorizontal, Pencil, Phone, RotateCcw, Search, Trash2, UserPlus, Users, X } from 'lucide-react'
+import { SendSmsModal } from '../components/modals/SendSmsModal'
+import { AlertTriangle, Mail, ChevronDown, Download, Eye, Grid2x2, List, MoreHorizontal, Pencil, Phone, RotateCcw, Search, Smartphone, Trash2, UserPlus, Users, X } from 'lucide-react'
 import { createMember, listMembers, type Member } from '../lib/tauriApi'
 
 type MemberType = 'Student' | 'Teacher' | 'Staff' | 'Visitor'
@@ -80,7 +81,7 @@ type MemberActionsMenuProps = {
   onDelete: () => void
 }
 
-function MemberActionsMenu({ isDarkMode, onViewDetails, onEdit, onDelete, onSendEmail }: MemberActionsMenuProps) {
+function MemberActionsMenu({ isDarkMode, onViewDetails, onEdit, onDelete, onSendEmail, onSendSms }: MemberActionsMenuProps) {
   const [open, setOpen] = useState(false)
   const [openUpward, setOpenUpward] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -203,6 +204,7 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
   const [memberToEdit, setMemberToEdit] = useState<MemberRow | null>(null)
   const [memberToDelete, setMemberToDelete] = useState<MemberRow | null>(null)
   const [emailMember, setEmailMember] = useState<MemberRow | null>(null)
+  const [smsMember, setSmsMember] = useState<MemberRow | null>(null)
   const [showToast, setShowToast] = useState<string | null>(null)
   const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(null)
   const [profilePhotoName, setProfilePhotoName] = useState<string>('')
@@ -489,6 +491,14 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
         onClose={() => setEmailMember(null)}
         member={emailMember ? { id: emailMember.id, fullName: emailMember.name, email: emailMember.email !== 'n/a' ? emailMember.email : null } : { id: 0, fullName: '', email: null }}
         onSuccess={() => setShowToast('Email sent successfully!')}
+        isDarkMode={isDarkMode}
+      />
+
+            <SendSmsModal
+        isOpen={!!smsMember}
+        onClose={() => setSmsMember(null)}
+        member={smsMember ? { id: smsMember.id, fullName: smsMember.name, phone: smsMember.phone !== 'n/a' ? smsMember.phone : null } : { id: 0, fullName: '', phone: null }}
+        onSuccess={() => setShowToast('SMS sent successfully!')}
         isDarkMode={isDarkMode}
       />
 

@@ -229,6 +229,10 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
   const [emailLogs, setEmailLogs] = useState<EmailLog[]>([])
   const [emailLogSearch, setEmailLogSearch] = useState('')
   const [emailLogStatus, setEmailLogStatus] = useState('')
+  const [smsEnabled, setSmsEnabled] = useState(false)
+  const [txtboxApiKey, setTxtboxApiKey] = useState('')
+  const [smsTestTo, setSmsTestTo] = useState('')
+  const [smsTestStatus, setSmsTestStatus] = useState<{ type: 'idle' | 'success' | 'error'; message: string }>({ type: 'idle', message: '' })
 
   const cardClass = isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-200 bg-white'
   const iconBoxBg = isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-[#f0fdf4] text-emerald-600'
@@ -442,6 +446,8 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
         if (configuredSmtpPort) setSmtpPort(configuredSmtpPort)
         if (configuredSmtpUsername) setSmtpUsername(configuredSmtpUsername)
         if (configuredSmtpPassword) setSmtpPassword(configuredSmtpPassword)
+        if (configuredSmsEnabled) setSmsEnabled(configuredSmsEnabled === 'true')
+        if (configuredTxtboxApiKey) setTxtboxApiKey(configuredTxtboxApiKey)
       } catch (error) {
         console.error('Failed to load general settings:', error)
       }
@@ -477,6 +483,27 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
   }, [activeMenu, emailLogSearch, emailLogStatus])
 
   const saveEmailSetting = async (key: string, value: string) => {
+    await saveGeneralSetting(key, value)
+  }
+
+  const handleTestSms = async () => {
+    const recipient = smsTestTo.trim()
+    if (!recipient) {
+      setSmsTestStatus({ type: 'error', message: 'Enter a test recipient phone number.' })
+      return
+    }
+    setSmsTestStatus({ type: 'idle', message: '' })
+    try {
+      const message = await invoke('test_sms_configuration', { to: recipient }) as string
+      setSmsTestStatus({ type: 'success', message })
+      void loadEmailLogs()
+    } catch (error) {
+      setSmsTestStatus({ type: 'error', message: typeof error === 'string' ? error : error instanceof Error ? error.message : 'Failed to send test SMS.' })
+      void loadEmailLogs()
+    }
+  }
+
+  const saveSmsSetting = async (key: string, value: string) => {
     await saveGeneralSetting(key, value)
   }
 
