@@ -1274,6 +1274,70 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
     </div>
   )
 
+
+  const renderSmsConfiguration = () => (
+    <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+      <section className={`rounded-2xl border p-6 ${cardClass}`}>
+        <div className="mb-6 flex items-center gap-4">
+          <div className={`grid h-12 w-12 place-items-center rounded-2xl ${iconBoxBg}`}><Smartphone size={24} /></div>
+          <div>
+            <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>SMS Configuration</h3>
+            <p className={`text-sm ${subLabelClass}`}>Configure the TxtBox API used for sending text messages.</p>
+          </div>
+        </div>
+
+        <div className="space-y-5">
+          <div className={`flex items-center justify-between rounded-xl border p-4 ${inputClass}`}>
+            <div>
+              <p className={`text-sm font-bold ${labelClass}`}>Enable SMS Notifications</p>
+              <p className={`text-xs ${subLabelClass}`}>{smsEnabled ? 'Enabled' : 'Disabled'}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const next = !smsEnabled
+                setSmsEnabled(next)
+                void saveSmsSetting('sms.enabled', String(next))
+              }}
+              className={`relative h-7 w-12 rounded-full transition-colors ${smsEnabled ? 'bg-emerald-600' : isDarkMode ? 'bg-zinc-700' : 'bg-zinc-300'}`}
+            >
+              <span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-transform ${smsEnabled ? 'translate-x-5' : 'translate-x-1'}`} />
+            </button>
+          </div>
+
+          <label className="space-y-2 block">
+            <span className={`text-sm font-bold ${labelClass}`}>TxtBox API Key</span>
+            <input
+              type="password"
+              value={txtboxApiKey}
+              onChange={(event) => setTxtboxApiKey(event.target.value)}
+              onBlur={() => void saveSmsSetting('sms.txtbox_api_key', txtboxApiKey)}
+              placeholder="TxtBox API Key"
+              className={`h-11 w-full rounded-xl border px-3 text-sm outline-none focus:border-emerald-500 ${inputClass}`}
+            />
+          </label>
+        </div>
+      </section>
+
+      <section className={`rounded-2xl border p-6 ${cardClass}`}>
+        <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Test SMS</h3>
+        <p className={`mt-1 text-sm ${subLabelClass}`}>Send a quick test SMS using the current configuration.</p>
+        <div className="mt-5 space-y-3">
+          <label className="space-y-2 block">
+            <span className={`text-sm font-bold ${labelClass}`}>Recipient Phone Number</span>
+            <input value={smsTestTo} onChange={(event) => setSmsTestTo(event.target.value)} placeholder="09xxxxxxxxx" className={`h-11 w-full rounded-xl border px-3 text-sm outline-none focus:border-emerald-500 ${inputClass}`} />
+          </label>
+          <button type="button" onClick={() => void handleTestSms()} className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#059669] px-5 text-sm font-bold text-white hover:bg-emerald-700">
+            <Send size={16} /> Test SMS
+          </button>
+          {smsTestStatus.message ? (
+            <p className={`text-sm font-semibold ${smsTestStatus.type === 'success' ? 'text-emerald-600' : 'text-rose-500'}`}>{smsTestStatus.message}</p>
+          ) : null}
+        </div>
+      </section>
+    </div>
+  )
+
   const renderEmailLogs = () => (
     <section className={`overflow-hidden rounded-2xl border ${cardClass}`}>
       <div className="flex flex-wrap items-center justify-between gap-3 border-b px-6 py-4 dark:border-zinc-800">
@@ -1441,6 +1505,14 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
               color: 'text-sky-500 bg-sky-50 dark:bg-sky-500/10'
             },
             {
+              title: 'SMS Configuration',
+              desc: 'Configure the TxtBox API for sending text message notifications.',
+              icon: Smartphone,
+              btnText: 'Configure SMS',
+              tab: 'SMS Configuration',
+              color: 'text-indigo-500 bg-indigo-50 dark:bg-indigo-500/10'
+            },
+            {
               title: 'Email Logs',
               desc: 'Review sent, failed and pending reminder emails.',
               icon: History,
@@ -1564,6 +1636,8 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                     ? 'Manage your account password and view login trail.'
                   : activeMenu === 'Email Configuration'
                     ? 'Configure SMTP and reminder delivery settings.'
+                  : activeMenu === 'SMS Configuration'
+                    ? 'Configure the TxtBox API for sending text messages.'
                   : activeMenu === 'Email Logs'
                     ? 'Search and review reminder email delivery history.'
                   : 'Manage your library system preferences and configuration.'}
@@ -1608,6 +1682,8 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
             renderAccountSecurity()
           ) : activeMenu === 'Email Configuration' ? (
             renderEmailConfiguration()
+          ) : activeMenu === 'SMS Configuration' ? (
+            renderSmsConfiguration()
           ) : activeMenu === 'Email Logs' ? (
             renderEmailLogs()
           ) : (

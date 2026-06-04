@@ -3303,11 +3303,11 @@ async fn test_sms_configuration(
         return Err("TxtBox API key is missing.".to_string());
     }
 
-    send_sms_txtbox(&api_key, &to, "This is a test message from Library Management System.").await?;
+    send_sms_txtbox(&api_key, &to, "Test SMS").await?;
     
     conn.execute(
-        "INSERT INTO email_logs (type, recipient, status, error_message, email_type) VALUES (?, ?, ?, ?, ?)",
-        ["Manual SMS", &to, "Sent", "", "Test"],
+        "INSERT INTO email_logs (borrower_name, email_address, book_title, email_type, status, sent_at, error_message) VALUES (?, ?, ?, ?, ?, datetime('now', 'localtime'), ?)",
+        ["Admin Test", &to, "N/A", "SMS Test", "Sent", ""],
     ).map_err(|e| format!("db error: {e}"))?;
 
     Ok("Test SMS sent successfully!".to_string())
@@ -3331,22 +3331,22 @@ async fn send_manual_sms(
         return Err("TxtBox API key is missing.".to_string());
     }
 
-    let phone: Option<String> = conn.query_row(
-        "SELECT contact_number FROM members WHERE id = ?",
+    let phone_data: Option<(String, String)> = conn.query_row(
+        "SELECT contact_number, first_name || ' ' || last_name FROM members WHERE id = ?",
         [member_id],
-        |row| row.get(0)
-    ).unwrap_or(None);
+        |row| Ok((row.get(0).unwrap_or_default(), row.get(1).unwrap_or_default()))
+    ).ok();
 
-    let phone_number = match phone {
-        Some(p) if !p.trim().is_empty() && p != "n/a" => p,
+    let (phone_number, member_name) = match phone_data {
+        Some((p, n)) if !p.trim().is_empty() && p != "n/a" => (p, n),
         _ => return Err("Member does not have a valid contact number.".to_string()),
     };
 
     send_sms_txtbox(&api_key, &phone_number, &message).await?;
 
     conn.execute(
-        "INSERT INTO email_logs (type, recipient, status, error_message, email_type) VALUES (?, ?, ?, ?, ?)",
-        ["Manual SMS", &phone_number, "Sent", "", "Custom SMS"],
+        "INSERT INTO email_logs (borrower_name, email_address, book_title, email_type, status, sent_at, error_message) VALUES (?, ?, ?, ?, ?, datetime('now', 'localtime'), ?)",
+        [&member_name, &phone_number, "Manual SMS", "Custom SMS", "Sent", ""],
     ).map_err(|e| format!("db error: {e}"))?;
 
     Ok("SMS sent successfully!".to_string())
