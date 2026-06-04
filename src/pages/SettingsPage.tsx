@@ -181,6 +181,8 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
   const activeMenu = activeTab
   const [notifications, setNotifications] = useState(true)
   const [settingsActivity, setSettingsActivity] = useState<SettingActivityRow[]>([])
+  const [activityCurrentPage, setActivityCurrentPage] = useState(1)
+  const [activityItemsPerPage] = useState(5)
   const [defaultLoanPeriod, setDefaultLoanPeriod] = useState('7')
   const [finePerDay, setFinePerDay] = useState('5.00')
   const [maximumRenewals, setMaximumRenewals] = useState('2')
@@ -1441,7 +1443,8 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
       }
     }
 
-    const recentActivity = settingsActivity.map((item, index) => {
+    const totalActivityPages = Math.ceil(settingsActivity.length / activityItemsPerPage)
+    const recentActivity = settingsActivity.slice((activityCurrentPage - 1) * activityItemsPerPage, activityCurrentPage * activityItemsPerPage).map((item, index) => {
       const module = mapModule(item.key)
       const meta = activityMeta(module)
       const when = formatActivityTime(item.updatedAt)
