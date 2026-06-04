@@ -1601,6 +1601,28 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                 ))}
               </tbody>
             </table>
+
+            <div className={`relative z-0 flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm rounded-b-xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B] text-zinc-300' : 'border-zinc-200 bg-white text-zinc-600'}`}>
+              <p>Showing {settingsActivity.length > 0 ? (activityCurrentPage - 1) * activityItemsPerPage + 1 : 0} to {Math.min(activityCurrentPage * activityItemsPerPage, settingsActivity.length)} of {settingsActivity.length} activities</p>
+              <div className="flex items-center gap-2">
+                <select value={activityItemsPerPage} onChange={(e) => { setActivityItemsPerPage(Number(e.target.value)); setActivityCurrentPage(1); }} className={`h-9 rounded-lg border px-3 text-sm outline-none ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'}`}>
+                  <option value={10}>10 per page</option>
+                  <option value={20}>20 per page</option>
+                  <option value={50}>50 per page</option>
+                </select>
+                <button type="button" onClick={() => setActivityCurrentPage(p => Math.max(1, p - 1))} disabled={activityCurrentPage === 1} className={`grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800 disabled:opacity-50' : 'border-zinc-200 hover:bg-zinc-50 disabled:opacity-50'}`}>{'<'}</button>
+                
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalActivityPages || 1 }, (_, i) => i + 1).map(page => (
+                    <button key={page} type="button" onClick={() => setActivityCurrentPage(page)} className={page === activityCurrentPage ? "grid h-9 w-9 place-items-center rounded-lg bg-emerald-50 font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" : `grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800' : 'border-zinc-200 hover:bg-zinc-50'}`}>
+                      {page}
+                    </button>
+                  ))}
+                </div>
+
+                <button type="button" onClick={() => setActivityCurrentPage(p => Math.min(totalActivityPages || 1, p + 1))} disabled={activityCurrentPage === (totalActivityPages || 1) || (totalActivityPages || 1) === 0} className={`grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800 disabled:opacity-50' : 'border-zinc-200 hover:bg-zinc-50 disabled:opacity-50'}`}>{'>'}</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
