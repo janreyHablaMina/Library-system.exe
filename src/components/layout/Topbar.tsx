@@ -1,4 +1,16 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { invoke } from '@tauri-apps/api/core';
+
+type EmailLogRow = {
+  id: number
+  borrower_name: string
+  email_address: string
+  book_title: string
+  email_type: string
+  status: string
+  sent_at: string
+  error_message: string
+}
 import { ArrowLeft, ArrowRight, Bell, MessageCircle, Moon, Search, Sun } from 'lucide-react';
 
 type TopbarProps = {
@@ -18,6 +30,28 @@ export const Topbar: React.FC<TopbarProps> = ({
   theme,
   onLogout,
 }) => {
+  const [isMessageMenuOpen, setIsMessageMenuOpen] = useState(false);
+  const [recentMessages, setRecentMessages] = useState<EmailLogRow[]>([]);
+  const messageMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (messageMenuRef.current && !messageMenuRef.current.contains(event.target as Node)) {
+        setIsMessageMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (isMessageMenuOpen) {
+      invoke<EmailLogRow[]>('list_email_logs', { search: '', status: '', limit: 5 })
+        .then((logs) => setRecentMessages(logs))
+        .catch((err) => console.error('Failed to fetch recent messages:', err));
+    }
+  }, [isMessageMenuOpen]);
+
   return (
     <header className={`sticky top-0 z-20 flex h-20 items-center border-b px-5 ${theme.header}`}>
       <div className="flex w-full items-center gap-4">
