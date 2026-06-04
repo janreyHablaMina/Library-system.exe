@@ -544,6 +544,8 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
   const [formError, setFormError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [reservationToDelete, setReservationToDelete] = useState<ReservationRow | null>(null)
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false)
+  const [selectedReservationIds, setSelectedReservationIds] = useState<Set<string>>(() => new Set())
   
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
@@ -570,6 +572,7 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
 
   const bookDropdownRef = useRef<HTMLDivElement>(null)
   const memberDropdownRef = useRef<HTMLDivElement>(null)
+  const selectAllRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -757,6 +760,48 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
 
   const totalPages = Math.ceil(filteredReservations.length / itemsPerPage)
   const paginatedReservations = filteredReservations.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+  const paginatedReservationIds = paginatedReservations.map((reservation) => reservation.id)
+  const selectedCount = selectedReservationIds.size
+  const allPageReservationsSelected = paginatedReservationIds.length > 0 && paginatedReservationIds.every((id) => selectedReservationIds.has(id))
+  const somePageReservationsSelected = paginatedReservationIds.some((id) => selectedReservationIds.has(id))
+
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = somePageReservationsSelected && !allPageReservationsSelected
+    }
+  }, [allPageReservationsSelected, somePageReservationsSelected])
+
+  useEffect(() => {
+    setSelectedReservationIds((prev) => {
+      const existingIds = new Set(reservations.map((reservation) => reservation.id))
+      const next = new Set([...prev].filter((id) => existingIds.has(id)))
+      return next.size === prev.size ? prev : next
+    })
+  }, [reservations])
+
+  const handleTogglePageSelection = () => {
+    setSelectedReservationIds((prev) => {
+      const next = new Set(prev)
+      if (allPageReservationsSelected) {
+        paginatedReservationIds.forEach((id) => next.delete(id))
+      } else {
+        paginatedReservationIds.forEach((id) => next.add(id))
+      }
+      return next
+    })
+  }
+
+  const handleToggleReservationSelection = (reservationId: string) => {
+    setSelectedReservationIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(reservationId)) {
+        next.delete(reservationId)
+      } else {
+        next.add(reservationId)
+      }
+      return next
+    })
+  }
 
   const mapReservationsToRows = (
     rows: Awaited<ReturnType<typeof listReservations>>,
@@ -905,6 +950,28 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
     }
   }
 
+  const handleBulkDeleteConfirm = async () => {
+    const selectedReservations = reservations.filter((reservation) => selectedReservationIds.has(reservation.id))
+    if (selectedReservations.length === 0) return
+
+    try {
+      setActionError(null)
+      await Promise.all(selectedReservations.map((reservation) => {
+        const numericId = Number.parseInt(reservation.id.replace('RES-', ''), 10)
+        if (Number.isNaN(numericId)) {
+          throw new Error(`Invalid reservation id: ${reservation.id}`)
+        }
+        return deleteReservation(numericId)
+      }))
+      await refreshReservations()
+      setSelectedReservationIds(new Set())
+      setShowBulkDeleteConfirm(false)
+    } catch (error) {
+      console.error('Failed to delete selected reservations:', error)
+      setActionError('Failed to delete selected reservations. Please try again.')
+    }
+  }
+
   const openEditReservation = (reservation: ReservationRow) => {
     const toInputDate = (value?: string) => {
       const parsed = value ? new Date(value) : null
@@ -962,6 +1029,41 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                 className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700"
               >
                 Yes, Delete Reservation
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showBulkDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/60 p-4 backdrop-blur-sm">
+          <div className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-rose-500/10 text-rose-500">
+                <AlertTriangle size={24} />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold leading-6">Delete Selected Reservations</h3>
+                <p className={`mt-2 text-sm ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                  Delete {selectedCount} selected reservation{selectedCount === 1 ? '' : 's'}? This action cannot be undone.
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowBulkDeleteConfirm(false)}
+                className={`rounded-xl border px-4 py-2 text-sm font-semibold ${
+                  isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'
+                }`}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkDeleteConfirm}
+                className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700"
+              >
+                Yes, Delete Selected
               </button>
             </div>
           </div>
@@ -1076,14 +1178,53 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
               </div>
             ) : null}
 
+            {selectedCount > 0 && (
+              <div className={`flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3 ${
+                isDarkMode ? 'border-zinc-700 bg-emerald-500/10 text-zinc-200' : 'border-zinc-200 bg-emerald-50 text-zinc-700'
+              }`}>
+                <p className="text-sm font-semibold">{selectedCount} selected</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowBulkDeleteConfirm(true)}
+                    className={`inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-sm font-semibold ${
+                      isDarkMode ? 'border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20' : 'border-rose-200 bg-white text-rose-600 hover:bg-rose-50'
+                    }`}
+                  >
+                    <Trash2 size={15} />
+                    Delete
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedReservationIds(new Set())}
+                    className={`grid h-9 w-9 place-items-center rounded-lg border ${
+                      isDarkMode ? 'border-zinc-700 bg-[#18181B] text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50'
+                    }`}
+                    aria-label="Clear selection"
+                  >
+                    <X size={15} />
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="overflow-x-auto lg:overflow-visible relative z-10">
               <table className="w-full text-left text-sm border-collapse">
                 <thead className={isDarkMode ? 'bg-[#27272A]/50 text-zinc-400' : 'bg-zinc-50/50 text-zinc-500'}>
                   <tr>
+                    <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">
+                      <input
+                        ref={selectAllRef}
+                        type="checkbox"
+                        className="app-choice-input"
+                        checked={allPageReservationsSelected}
+                        onChange={handleTogglePageSelection}
+                        aria-label="Select all reservations on this page"
+                      />
+                    </th>
                     <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">ID</th>
                     <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Book Details</th>
                     <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Member</th>
-                    <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Branch</th>
                     <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Reserved On</th>
                     <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Status</th>
                     <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Expires On</th>
@@ -1093,6 +1234,15 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                 <tbody>
                   {paginatedReservations.map((res) => (
                     <tr key={res.id} onClick={() => setActiveViewReservationId(res.id)} className={`cursor-pointer border-t transition-colors duration-150 ${isDarkMode ? 'border-zinc-800 hover:bg-zinc-800/30' : 'border-zinc-100 hover:bg-zinc-50'}`}>
+                      <td className="px-6 py-4 align-top" onClick={(event) => event.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          className="app-choice-input"
+                          checked={selectedReservationIds.has(res.id)}
+                          onChange={() => handleToggleReservationSelection(res.id)}
+                          aria-label={`Select ${res.id}`}
+                        />
+                      </td>
                       <td className="px-6 py-4">
                         <span className={`text-xs font-bold ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{res.id}</span>
                       </td>
@@ -1126,7 +1276,6 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                           </div>
                         </div>
                       </td>
-                      <td className={`px-6 py-4 text-xs font-medium ${isDarkMode ? 'text-zinc-300' : 'text-zinc-600'}`}>{res.pickupBranch}</td>
                       <td className="px-6 py-4">
                         <p className={`text-[11px] font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>{res.reservedOn}</p>
                         <p className={`text-[10px] font-medium ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>{res.reservedTime}</p>
@@ -1164,26 +1313,51 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
             </div>
 
             <div className={`relative z-0 flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm rounded-b-xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B] text-zinc-300' : 'border-zinc-200 bg-white text-zinc-600'}`}>
-            <p>Showing {filteredReservations.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to {Math.min(currentPage * itemsPerPage, filteredReservations.length)} of {filteredReservations.length} reservations</p>
-            <div className="flex items-center gap-2">
-              <select value={itemsPerPage} onChange={(e) => setItemsPerPage(Number(e.target.value))} className={`h-9 rounded-lg border px-3 text-sm outline-none ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'}`}>
-                <option value={10}>10 per page</option>
-                <option value={20}>20 per page</option>
-                <option value={50}>50 per page</option>
-              </select>
-              <button type="button" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className={`grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800 disabled:opacity-50' : 'border-zinc-200 hover:bg-zinc-50 disabled:opacity-50'}`}>{'<'}</button>
-              
-              <div className="flex items-center gap-1">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                  <button key={page} type="button" onClick={() => setCurrentPage(page)} className={page === currentPage ? "grid h-9 w-9 place-items-center rounded-lg bg-emerald-50 font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" : `grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800' : 'border-zinc-200 hover:bg-zinc-50'}`}>
-                    {page}
-                  </button>
-                ))}
+              <p>Showing {filteredReservations.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to {Math.min(currentPage * itemsPerPage, filteredReservations.length)} of {filteredReservations.length} reservations</p>
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <select value={itemsPerPage} onChange={(e) => setItemsPerPage(Number(e.target.value))} className={`h-10 min-w-[150px] appearance-none rounded-lg border py-2 pl-4 pr-10 text-sm font-medium outline-none transition-colors ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200 hover:bg-zinc-800 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 focus:border-emerald-500'}`}>
+                    <option value={10}>10 per page</option>
+                    <option value={20}>20 per page</option>
+                    <option value={50}>50 per page</option>
+                  </select>
+                  <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className={`grid h-10 w-10 place-items-center rounded-lg border transition-colors disabled:cursor-not-allowed ${
+                    isDarkMode
+                      ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800 disabled:border-zinc-800 disabled:text-zinc-600 disabled:hover:bg-transparent'
+                      : 'border-zinc-200 text-zinc-500 hover:bg-zinc-50 disabled:border-zinc-100 disabled:text-zinc-300 disabled:hover:bg-white'
+                  }`}
+                  aria-label="Previous page"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                    <button key={page} type="button" onClick={() => setCurrentPage(page)} className={page === currentPage ? "grid h-10 w-10 place-items-center rounded-lg bg-emerald-50 font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" : `grid h-10 w-10 place-items-center rounded-lg border transition-colors ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800' : 'border-zinc-200 hover:bg-zinc-50'}`}>
+                      {page}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages || totalPages === 0}
+                  className={`grid h-10 w-10 place-items-center rounded-lg border transition-colors disabled:cursor-not-allowed ${
+                    isDarkMode
+                      ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800 disabled:border-zinc-800 disabled:text-zinc-600 disabled:hover:bg-transparent'
+                      : 'border-zinc-200 text-zinc-500 hover:bg-zinc-50 disabled:border-zinc-100 disabled:text-zinc-300 disabled:hover:bg-white'
+                  }`}
+                  aria-label="Next page"
+                >
+                  <ChevronRight size={16} />
+                </button>
               </div>
-
-              <button type="button" onClick={() => setCurrentPage(p => Math.min(totalPages, p - -1))} disabled={currentPage === totalPages || totalPages === 0} className={`grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800 disabled:opacity-50' : 'border-zinc-200 hover:bg-zinc-50 disabled:opacity-50'}`}>{'>'}</button>
             </div>
-          </div>
           </div>
         </section>
       ) : (

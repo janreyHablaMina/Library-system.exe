@@ -138,6 +138,8 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null)
   const [staffToDelete, setStaffToDelete] = useState<StaffMember | null>(null)
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false)
+  const [selectedStaffIds, setSelectedStaffIds] = useState<Set<number>>(() => new Set())
   const [staffError, setStaffError] = useState<string | null>(null)
   const [isSavingStaff, setIsSavingStaff] = useState(false)
   const [staffSearch, setStaffSearch] = useState('')
@@ -147,6 +149,7 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
   const [showToast, setShowToast] = useState<string | null>(null)
+  const selectAllRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     setCurrentPage(1)
@@ -205,6 +208,24 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
 
   const totalPages = Math.ceil(filteredStaff.length / itemsPerPage)
   const paginatedStaff = filteredStaff.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+  const paginatedStaffIds = paginatedStaff.map((staff) => staff.dbId)
+  const selectedCount = selectedStaffIds.size
+  const allPageStaffSelected = paginatedStaffIds.length > 0 && paginatedStaffIds.every((id) => selectedStaffIds.has(id))
+  const somePageStaffSelected = paginatedStaffIds.some((id) => selectedStaffIds.has(id))
+
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = somePageStaffSelected && !allPageStaffSelected
+    }
+  }, [allPageStaffSelected, somePageStaffSelected])
+
+  useEffect(() => {
+    setSelectedStaffIds((prev) => {
+      const existingIds = new Set(staffMembers.map((staff) => staff.dbId))
+      const next = new Set([...prev].filter((id) => existingIds.has(id)))
+      return next.size === prev.size ? prev : next
+    })
+  }, [staffMembers])
 
   const avatarFromName = (name: string) => {
     const parts = name.trim().split(/\s+/).filter(Boolean)
@@ -281,7 +302,6 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
     const fullName = String(form.get('fullName') || '').trim()
     const email = String(form.get('email') || '').trim()
     const role = String(form.get('role') || 'Librarian')
-    const branch = String(form.get('branch') || 'Central Library')
     const status = String(form.get('status') || 'Active')
     if (!fullName || !email) {
       setStaffError('Full name and email are required.')
@@ -338,6 +358,47 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
     } catch (error) {
       console.error('Failed to delete staff:', error)
       setStaffError('Failed to delete staff member. Please try again.')
+    }
+  }
+
+  const handleTogglePageSelection = () => {
+    setSelectedStaffIds((prev) => {
+      const next = new Set(prev)
+      if (allPageStaffSelected) {
+        paginatedStaffIds.forEach((id) => next.delete(id))
+      } else {
+        paginatedStaffIds.forEach((id) => next.add(id))
+      }
+      return next
+    })
+  }
+
+  const handleToggleStaffSelection = (staffId: number) => {
+    setSelectedStaffIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(staffId)) {
+        next.delete(staffId)
+      } else {
+        next.add(staffId)
+      }
+      return next
+    })
+  }
+
+  const handleBulkDeleteStaff = async () => {
+    const selectedStaff = staffMembers.filter((staff) => selectedStaffIds.has(staff.dbId))
+    if (selectedStaff.length === 0) return
+
+    try {
+      setStaffError(null)
+      await Promise.all(selectedStaff.map((staff) => deleteStaff(staff.dbId)))
+      await refreshStaff()
+      setSelectedStaffIds(new Set())
+      setShowBulkDeleteConfirm(false)
+      setShowToast(`Successfully deleted ${selectedStaff.length} selected staff member${selectedStaff.length === 1 ? '' : 's'}!`)
+    } catch (error) {
+      console.error('Failed to delete selected staff:', error)
+      setStaffError('Failed to delete selected staff members. Please try again.')
     }
   }
 
@@ -457,10 +518,50 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
             </div>
           </div>
 
+          {selectedCount > 0 && (
+            <div className={`flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3 ${
+              isDarkMode ? 'border-zinc-700 bg-emerald-500/10 text-zinc-200' : 'border-zinc-200 bg-emerald-50 text-zinc-700'
+            }`}>
+              <p className="text-sm font-semibold">{selectedCount} selected</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowBulkDeleteConfirm(true)}
+                  className={`inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-sm font-semibold ${
+                    isDarkMode ? 'border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20' : 'border-rose-200 bg-white text-rose-600 hover:bg-rose-50'
+                  }`}
+                >
+                  <Trash2 size={15} />
+                  Delete
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedStaffIds(new Set())}
+                  className={`grid h-9 w-9 place-items-center rounded-lg border ${
+                    isDarkMode ? 'border-zinc-700 bg-[#18181B] text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50'
+                  }`}
+                  aria-label="Clear selection"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className={`relative z-10 overflow-visible ${isDarkMode ? 'bg-[#18181B]' : 'bg-white'}`}>
             <table className="w-full min-w-[800px] text-left text-sm border-collapse">
               <thead className={isDarkMode ? 'bg-[#27272A]/50 text-zinc-400' : 'bg-zinc-50/50 text-zinc-500'}>
                 <tr>
+                  <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">
+                    <input
+                      ref={selectAllRef}
+                      type="checkbox"
+                      className="app-choice-input"
+                      checked={allPageStaffSelected}
+                      onChange={handleTogglePageSelection}
+                      aria-label="Select all staff on this page"
+                    />
+                  </th>
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Staff Name</th>
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Email</th>
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Role</th>
@@ -472,6 +573,15 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
               <tbody>
                 {paginatedStaff.map((staff) => (
                   <tr key={staff.id} className={`border-t transition-colors duration-150 ${isDarkMode ? 'border-zinc-800 hover:bg-zinc-800/30' : 'border-zinc-100 hover:bg-zinc-50'}`}>
+                    <td className="px-6 py-4 align-top">
+                      <input
+                        type="checkbox"
+                        className="app-choice-input"
+                        checked={selectedStaffIds.has(staff.dbId)}
+                        onChange={() => handleToggleStaffSelection(staff.dbId)}
+                        aria-label={`Select ${staff.name}`}
+                      />
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <span className={`grid h-10 w-10 place-items-center overflow-hidden rounded-full text-xs font-bold border ${isDarkMode ? 'border-zinc-700 bg-zinc-800/50 text-zinc-300' : 'border-zinc-200 bg-zinc-100 text-zinc-600'}`}>
@@ -533,22 +643,49 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
           <div className={`relative z-0 flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm rounded-b-xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B] text-zinc-300' : 'border-zinc-200 bg-white text-zinc-600'}`}>
             <p>Showing {filteredStaff.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to {Math.min(currentPage * itemsPerPage, filteredStaff.length)} of {filteredStaff.length} staff members</p>
             <div className="flex items-center gap-2">
-              <select value={itemsPerPage} onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }} className={`h-9 rounded-lg border px-3 text-sm outline-none ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'}`}>
-                <option value={10}>10 per page</option>
-                <option value={20}>20 per page</option>
-                <option value={50}>50 per page</option>
-              </select>
-              <button type="button" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className={`grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800 disabled:opacity-50' : 'border-zinc-200 hover:bg-zinc-50 disabled:opacity-50'}`}>{'<'}</button>
+              <div className="relative">
+                <select value={itemsPerPage} onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }} className={`h-10 min-w-[150px] appearance-none rounded-lg border py-2 pl-4 pr-10 text-sm font-medium outline-none transition-colors ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200 hover:bg-zinc-800 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 focus:border-emerald-500'}`}>
+                  <option value={10}>10 per page</option>
+                  <option value={20}>20 per page</option>
+                  <option value={50}>50 per page</option>
+                </select>
+                <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+              </div>
+              <button
+                type="button"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className={`grid h-10 w-10 place-items-center rounded-lg border transition-colors disabled:cursor-not-allowed ${
+                  isDarkMode
+                    ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800 disabled:border-zinc-800 disabled:text-zinc-600 disabled:hover:bg-transparent'
+                    : 'border-zinc-200 text-zinc-500 hover:bg-zinc-50 disabled:border-zinc-100 disabled:text-zinc-300 disabled:hover:bg-white'
+                }`}
+                aria-label="Previous page"
+              >
+                <ChevronLeft size={16} />
+              </button>
               
               <div className="flex items-center gap-1">
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                  <button key={page} type="button" onClick={() => setCurrentPage(page)} className={page === currentPage ? "grid h-9 w-9 place-items-center rounded-lg bg-emerald-50 font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" : `grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800' : 'border-zinc-200 hover:bg-zinc-50'}`}>
+                  <button key={page} type="button" onClick={() => setCurrentPage(page)} className={page === currentPage ? "grid h-10 w-10 place-items-center rounded-lg bg-emerald-50 font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" : `grid h-10 w-10 place-items-center rounded-lg border transition-colors ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800' : 'border-zinc-200 hover:bg-zinc-50'}`}>
                     {page}
                   </button>
                 ))}
               </div>
 
-              <button type="button" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0} className={`grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800 disabled:opacity-50' : 'border-zinc-200 hover:bg-zinc-50 disabled:opacity-50'}`}>{'>'}</button>
+              <button
+                type="button"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages || totalPages === 0}
+                className={`grid h-10 w-10 place-items-center rounded-lg border transition-colors disabled:cursor-not-allowed ${
+                  isDarkMode
+                    ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800 disabled:border-zinc-800 disabled:text-zinc-600 disabled:hover:bg-transparent'
+                    : 'border-zinc-200 text-zinc-500 hover:bg-zinc-50 disabled:border-zinc-100 disabled:text-zinc-300 disabled:hover:bg-white'
+                }`}
+                aria-label="Next page"
+              >
+                <ChevronRight size={16} />
+              </button>
             </div>
           </div>
         </div>
@@ -692,7 +829,33 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
           </section>
         </div>
       ) : null}
+
+      {showBulkDeleteConfirm ? (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-zinc-950/60 p-4 backdrop-blur-sm">
+          <section className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl ${isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
+            <h4 className={`text-xl font-black ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Delete Selected Staff</h4>
+            <p className={`mt-2 text-sm ${isDarkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
+              Delete {selectedCount} selected staff member{selectedCount === 1 ? '' : 's'}? This action cannot be undone.
+            </p>
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowBulkDeleteConfirm(false)}
+                className={`h-11 flex-1 rounded-xl border font-bold transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkDeleteStaff}
+                className="h-11 flex-1 rounded-xl bg-rose-600 font-bold text-white shadow-lg shadow-rose-600/30 hover:bg-rose-700 transition-all"
+              >
+                Delete Selected
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </div>
   )
 }
-

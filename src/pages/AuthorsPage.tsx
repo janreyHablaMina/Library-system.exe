@@ -148,12 +148,15 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
   const [authorForm, setAuthorForm] = useState<AuthorFormState>(initialFormState)
   const [authorToEdit, setAuthorToEdit] = useState<AuthorRow | null>(null)
   const [authorToDelete, setAuthorToDelete] = useState<AuthorRow | null>(null)
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false)
+  const [selectedAuthorIds, setSelectedAuthorIds] = useState<Set<number>>(() => new Set())
   const [authorsList, setAuthorsList] = useState<AuthorRow[]>([])
   const [allBooksCount, setAllBooksCount] = useState(0)
   const [showToast, setShowToast] = useState<string | null>(null)
   const [authorPhotoPreview, setAuthorPhotoPreview] = useState<string | null>(null)
   const [authorPhotoName, setAuthorPhotoName] = useState<string>('')
   const authorPhotoInputRef = useRef<HTMLInputElement>(null)
+  const selectAllRef = useRef<HTMLInputElement>(null)
 
   const getBookCountsByAuthorId = (authors: DbAuthor[], books: Book[]) => {
     const countsByAuthorId = new Map<number, number>()
@@ -385,6 +388,67 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
 
   const totalPages = Math.ceil(filteredAuthors.length / itemsPerPage)
   const paginatedAuthors = filteredAuthors.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+  const paginatedAuthorIds = paginatedAuthors.map((author) => author.id)
+  const selectedCount = selectedAuthorIds.size
+  const allPageAuthorsSelected = paginatedAuthorIds.length > 0 && paginatedAuthorIds.every((id) => selectedAuthorIds.has(id))
+  const somePageAuthorsSelected = paginatedAuthorIds.some((id) => selectedAuthorIds.has(id))
+
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = somePageAuthorsSelected && !allPageAuthorsSelected
+    }
+  }, [allPageAuthorsSelected, somePageAuthorsSelected])
+
+  useEffect(() => {
+    setSelectedAuthorIds((prev) => {
+      const existingIds = new Set(authorsList.map((author) => author.id))
+      const next = new Set([...prev].filter((id) => existingIds.has(id)))
+      return next.size === prev.size ? prev : next
+    })
+  }, [authorsList])
+
+  const handleTogglePageSelection = () => {
+    setSelectedAuthorIds((prev) => {
+      const next = new Set(prev)
+      if (allPageAuthorsSelected) {
+        paginatedAuthorIds.forEach((id) => next.delete(id))
+      } else {
+        paginatedAuthorIds.forEach((id) => next.add(id))
+      }
+      return next
+    })
+  }
+
+  const handleToggleAuthorSelection = (authorId: number) => {
+    setSelectedAuthorIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(authorId)) {
+        next.delete(authorId)
+      } else {
+        next.add(authorId)
+      }
+      return next
+    })
+  }
+
+  const handleBulkDeleteConfirm = async () => {
+    const selectedAuthors = authorsList.filter((author) => selectedAuthorIds.has(author.id))
+    if (selectedAuthors.length === 0) return
+
+    try {
+      await Promise.all(selectedAuthors.map((author) => deleteAuthor(author.id)))
+      const [rows, books] = await Promise.all([listAuthors(500), listBooks(2000)])
+      const booksCountByAuthorId = getBookCountsByAuthorId(rows, books)
+      setAllBooksCount(books.length)
+      setAuthorsList(rows.map((row) => toAuthorRow(row, booksCountByAuthorId)))
+      setShowToast(`Successfully deleted ${selectedAuthors.length} selected author${selectedAuthors.length === 1 ? '' : 's'}!`)
+      setSelectedAuthorIds(new Set())
+      setShowBulkDeleteConfirm(false)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to delete selected authors.'
+      setShowToast(message)
+    }
+  }
 
   const stats = useMemo(() => {
     const totalAuthors = authorsList.length
@@ -491,10 +555,50 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
             </div>
           </div>
 
+          {selectedCount > 0 && (
+            <div className={`flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3 ${
+              isDarkMode ? 'border-zinc-700 bg-emerald-500/10 text-zinc-200' : 'border-zinc-200 bg-emerald-50 text-zinc-700'
+            }`}>
+              <p className="text-sm font-semibold">{selectedCount} selected</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowBulkDeleteConfirm(true)}
+                  className={`inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-sm font-semibold ${
+                    isDarkMode ? 'border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20' : 'border-rose-200 bg-white text-rose-600 hover:bg-rose-50'
+                  }`}
+                >
+                  <Trash2 size={15} />
+                  Delete
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedAuthorIds(new Set())}
+                  className={`grid h-9 w-9 place-items-center rounded-lg border ${
+                    isDarkMode ? 'border-zinc-700 bg-[#18181B] text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50'
+                  }`}
+                  aria-label="Clear selection"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className={`relative z-10 overflow-x-auto lg:overflow-visible ${isDarkMode ? 'bg-[#18181B]' : 'bg-white'}`}>
             <table className="w-full text-left text-sm border-collapse">
               <thead className={isDarkMode ? 'bg-[#27272A] text-zinc-300' : 'bg-zinc-50 text-zinc-600'}>
                 <tr>
+                  <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">
+                    <input
+                      ref={selectAllRef}
+                      type="checkbox"
+                      className="app-choice-input"
+                      checked={allPageAuthorsSelected}
+                      onChange={handleTogglePageSelection}
+                      aria-label="Select all authors on this page"
+                    />
+                  </th>
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Author</th>
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Nationality</th>
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider text-center">Books</th>
@@ -505,6 +609,15 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
               <tbody>
                 {paginatedAuthors.map((author) => (
                   <tr key={author.id} className={`border-t transition-colors duration-150 ${isDarkMode ? 'border-zinc-700 hover:bg-[#3F3F46]' : 'border-zinc-100 hover:bg-zinc-50'}`}>
+                    <td className="px-6 py-4 align-top">
+                      <input
+                        type="checkbox"
+                        className="app-choice-input"
+                        checked={selectedAuthorIds.has(author.id)}
+                        onChange={() => handleToggleAuthorSelection(author.id)}
+                        aria-label={`Select ${author.name}`}
+                      />
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <span className={`grid h-10 w-10 place-items-center overflow-hidden rounded-full text-lg border ${isDarkMode ? 'border-zinc-700 bg-zinc-800' : 'border-zinc-200 bg-zinc-100'}`}>
@@ -552,32 +665,50 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
             </table>
           </div>
 
-          <div className={`flex flex-wrap items-center justify-between gap-4 border-t p-4 text-xs font-bold rounded-b-xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B] text-zinc-300' : 'border-zinc-200 bg-white text-zinc-600'}`}>
+          <div className={`relative z-0 flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm rounded-b-xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B] text-zinc-300' : 'border-zinc-200 bg-white text-zinc-600'}`}>
             <p>Showing {filteredAuthors.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to {Math.min(currentPage * itemsPerPage, filteredAuthors.length)} of {filteredAuthors.length} authors</p>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5">
-                <button type="button" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className={`grid h-8 w-8 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-400 hover:bg-zinc-800 disabled:opacity-50' : 'border-zinc-200 text-zinc-400 hover:bg-white disabled:opacity-50'}`}>
-                  <ChevronLeft size={16} />
-                </button>
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                    <button key={page} type="button" onClick={() => setCurrentPage(page)} className={page === currentPage ? "grid h-8 w-8 place-items-center rounded-lg bg-emerald-600 text-white shadow-sm" : `grid h-8 w-8 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-400 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-400 hover:bg-white'}`}>
-                      {page}
-                    </button>
-                  ))}
-                </div>
-                <button type="button" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0} className={`grid h-8 w-8 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-400 hover:bg-zinc-800 disabled:opacity-50' : 'border-zinc-200 text-zinc-400 hover:bg-white disabled:opacity-50'}`}>
-                  <ChevronRight size={16} />
-                </button>
-              </div>
+            <div className="flex items-center gap-2">
               <div className="relative">
-                <select value={itemsPerPage} onChange={(e) => setItemsPerPage(Number(e.target.value))} className={`h-8 min-w-[100px] appearance-none rounded-lg border pl-3 pr-8 text-[11px] font-bold outline-none transition-all ${isDarkMode ? 'border-zinc-700 bg-zinc-800 text-zinc-300' : 'border-zinc-200 bg-white text-zinc-600'}`}>
-                  <option value={10}>10 / page</option>
-                  <option value={20}>20 / page</option>
-                  <option value={50}>50 / page</option>
+                <select value={itemsPerPage} onChange={(e) => setItemsPerPage(Number(e.target.value))} className={`h-10 min-w-[150px] appearance-none rounded-lg border py-2 pl-4 pr-10 text-sm font-medium outline-none transition-colors ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200 hover:bg-zinc-800 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 focus:border-emerald-500'}`}>
+                  <option value={10}>10 per page</option>
+                  <option value={20}>20 per page</option>
+                  <option value={50}>50 per page</option>
                 </select>
-                <ChevronDown size={12} className={`pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400`} />
+                <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
               </div>
+              <button
+                type="button"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className={`grid h-10 w-10 place-items-center rounded-lg border transition-colors disabled:cursor-not-allowed ${
+                  isDarkMode
+                    ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800 disabled:border-zinc-800 disabled:text-zinc-600 disabled:hover:bg-transparent'
+                    : 'border-zinc-200 text-zinc-500 hover:bg-zinc-50 disabled:border-zinc-100 disabled:text-zinc-300 disabled:hover:bg-white'
+                }`}
+                aria-label="Previous page"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <button key={page} type="button" onClick={() => setCurrentPage(page)} className={page === currentPage ? "grid h-10 w-10 place-items-center rounded-lg bg-emerald-50 font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" : `grid h-10 w-10 place-items-center rounded-lg border transition-colors ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800' : 'border-zinc-200 hover:bg-zinc-50'}`}>
+                    {page}
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages || totalPages === 0}
+                className={`grid h-10 w-10 place-items-center rounded-lg border transition-colors disabled:cursor-not-allowed ${
+                  isDarkMode
+                    ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800 disabled:border-zinc-800 disabled:text-zinc-600 disabled:hover:bg-transparent'
+                    : 'border-zinc-200 text-zinc-500 hover:bg-zinc-50 disabled:border-zinc-100 disabled:text-zinc-300 disabled:hover:bg-white'
+                }`}
+                aria-label="Next page"
+              >
+                <ChevronRight size={16} />
+              </button>
             </div>
           </div>
         </div>
@@ -713,6 +844,44 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
                 className="rounded-xl bg-rose-600 hover:bg-rose-700 px-4 py-2 text-sm font-semibold text-white"
               >
                 Yes, Delete Author
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showBulkDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/60 backdrop-blur-sm">
+          <div className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl transition-all ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-rose-500/10 text-rose-500">
+                <AlertTriangle size={24} />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold leading-6">Delete Selected Authors</h3>
+                <p className={`mt-2 text-sm ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                  Delete {selectedCount} selected author{selectedCount === 1 ? '' : 's'}? This action cannot be undone.
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowBulkDeleteConfirm(false)}
+                className={`rounded-xl px-4 py-2 text-sm font-semibold border ${
+                  isDarkMode
+                    ? 'border-zinc-700 hover:bg-zinc-800 text-zinc-300'
+                    : 'border-zinc-200 hover:bg-zinc-50 text-zinc-700'
+                }`}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkDeleteConfirm}
+                className="rounded-xl bg-rose-600 hover:bg-rose-700 px-4 py-2 text-sm font-semibold text-white"
+              >
+                Yes, Delete Selected
               </button>
             </div>
           </div>

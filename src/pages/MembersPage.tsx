@@ -203,12 +203,15 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
   const [memberForm, setMemberForm] = useState<MemberFormState>(initialFormState)
   const [memberToEdit, setMemberToEdit] = useState<MemberRow | null>(null)
   const [memberToDelete, setMemberToDelete] = useState<MemberRow | null>(null)
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false)
+  const [selectedMemberIds, setSelectedMemberIds] = useState<Set<number>>(() => new Set())
   const [emailMember, setEmailMember] = useState<MemberRow | null>(null)
   const [smsMember, setSmsMember] = useState<MemberRow | null>(null)
   const [showToast, setShowToast] = useState<string | null>(null)
   const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(null)
   const [profilePhotoName, setProfilePhotoName] = useState<string>('')
   const photoInputRef = useRef<HTMLInputElement>(null)
+  const selectAllRef = useRef<HTMLInputElement>(null)
   const lastAddModalTriggerRef = useRef<number>(0)
 
   // Auto-dismiss toast
@@ -318,6 +321,24 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
 
   const totalPages = Math.ceil(filteredMembers.length / itemsPerPage)
   const paginatedMembers = filteredMembers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+  const paginatedMemberIds = paginatedMembers.map((member) => member.id)
+  const selectedCount = selectedMemberIds.size
+  const allPageMembersSelected = paginatedMemberIds.length > 0 && paginatedMemberIds.every((id) => selectedMemberIds.has(id))
+  const somePageMembersSelected = paginatedMemberIds.some((id) => selectedMemberIds.has(id))
+
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = somePageMembersSelected && !allPageMembersSelected
+    }
+  }, [allPageMembersSelected, somePageMembersSelected])
+
+  useEffect(() => {
+    setSelectedMemberIds((prev) => {
+      const existingIds = new Set(memberList.map((member) => member.id))
+      const next = new Set([...prev].filter((id) => existingIds.has(id)))
+      return next.size === prev.size ? prev : next
+    })
+  }, [memberList])
 
   // Reset Filters
   const handleResetFilters = () => {
@@ -440,6 +461,40 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
     }
   }
 
+  const handleTogglePageSelection = () => {
+    setSelectedMemberIds((prev) => {
+      const next = new Set(prev)
+      if (allPageMembersSelected) {
+        paginatedMemberIds.forEach((id) => next.delete(id))
+      } else {
+        paginatedMemberIds.forEach((id) => next.add(id))
+      }
+      return next
+    })
+  }
+
+  const handleToggleMemberSelection = (memberId: number) => {
+    setSelectedMemberIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(memberId)) {
+        next.delete(memberId)
+      } else {
+        next.add(memberId)
+      }
+      return next
+    })
+  }
+
+  const handleBulkDeleteConfirm = () => {
+    const selectedMembers = memberList.filter((member) => selectedMemberIds.has(member.id))
+    if (selectedMembers.length === 0) return
+
+    setMemberList(prev => prev.filter(member => !selectedMemberIds.has(member.id)))
+    setShowToast(`Successfully deleted ${selectedMembers.length} selected member${selectedMembers.length === 1 ? '' : 's'}`)
+    setSelectedMemberIds(new Set())
+    setShowBulkDeleteConfirm(false)
+  }
+
   return (
     <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[transparent] text-zinc-100' : 'bg-[#f8fafc] text-zinc-900'}`}>
       {/* Toast Notification */}
@@ -480,6 +535,46 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
                 className="rounded-xl bg-rose-600 hover:bg-rose-700 px-4 py-2 text-sm font-semibold text-white"
               >
                 Yes, Delete Member
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showBulkDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/60 backdrop-blur-sm">
+          <div className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl transition-all ${
+            isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'
+          }`}>
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-rose-500/10 text-rose-500">
+                <AlertTriangle size={24} />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold leading-6">Delete Selected Members</h3>
+                <p className={`mt-2 text-sm ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                  Delete {selectedCount} selected member{selectedCount === 1 ? '' : 's'}? This action cannot be undone.
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowBulkDeleteConfirm(false)}
+                className={`rounded-xl px-4 py-2 text-sm font-semibold border ${
+                  isDarkMode
+                    ? 'border-zinc-700 hover:bg-zinc-800 text-zinc-300'
+                    : 'border-zinc-200 hover:bg-zinc-50 text-zinc-700'
+                }`}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkDeleteConfirm}
+                className="rounded-xl bg-rose-600 hover:bg-rose-700 px-4 py-2 text-sm font-semibold text-white"
+              >
+                Yes, Delete Selected
               </button>
             </div>
           </div>
@@ -627,12 +722,51 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
             </div>
           </div>
 
+          {selectedCount > 0 && (
+            <div className={`flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3 ${
+              isDarkMode ? 'border-zinc-700 bg-emerald-500/10 text-zinc-200' : 'border-zinc-200 bg-emerald-50 text-zinc-700'
+            }`}>
+              <p className="text-sm font-semibold">{selectedCount} selected</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowBulkDeleteConfirm(true)}
+                  className={`inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-sm font-semibold ${
+                    isDarkMode ? 'border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20' : 'border-rose-200 bg-white text-rose-600 hover:bg-rose-50'
+                  }`}
+                >
+                  <Trash2 size={15} />
+                  Delete
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedMemberIds(new Set())}
+                  className={`grid h-9 w-9 place-items-center rounded-lg border ${
+                    isDarkMode ? 'border-zinc-700 bg-[#18181B] text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50'
+                  }`}
+                  aria-label="Clear selection"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+            </div>
+          )}
+
           {viewMode === 'list' ? (
             <div className={`relative z-10 ${isDarkMode ? 'overflow-x-auto lg:overflow-visible bg-[#18181B]' : 'overflow-x-auto lg:overflow-visible bg-white'}`}>
               <table className="min-w-[1080px] w-full text-left text-sm">
                 <thead className={isDarkMode ? 'bg-[#27272A] text-zinc-300' : 'bg-zinc-50 text-zinc-600'}>
                   <tr>
-                    <th className="px-4 py-3 font-semibold"><input type="checkbox" /></th>
+                    <th className="px-4 py-3 font-semibold">
+                      <input
+                        ref={selectAllRef}
+                        type="checkbox"
+                        className="app-choice-input"
+                        checked={allPageMembersSelected}
+                        onChange={handleTogglePageSelection}
+                        aria-label="Select all members on this page"
+                      />
+                    </th>
                     <th className="px-3 py-3 font-semibold">Member</th>
                     <th className="px-3 py-3 font-semibold">Member ID</th>
                     <th className="px-3 py-3 font-semibold">Type</th>
@@ -644,7 +778,15 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
                 <tbody>
                   {paginatedMembers.map((member) => (
                     <tr key={member.id} className={`border-t transition-colors duration-150 ${isDarkMode ? 'border-zinc-700 hover:bg-[#3F3F46]' : 'border-zinc-100 hover:bg-zinc-50'}`}>
-                      <td className="px-4 py-3 align-top"><input type="checkbox" /></td>
+                      <td className="px-4 py-3 align-top">
+                        <input
+                          type="checkbox"
+                          className="app-choice-input"
+                          checked={selectedMemberIds.has(member.id)}
+                          onChange={() => handleToggleMemberSelection(member.id)}
+                          aria-label={`Select ${member.name}`}
+                        />
+                      </td>
                       <td className="px-3 py-3">
                         <div className="flex items-start gap-3">
                           <span 

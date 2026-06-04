@@ -182,7 +182,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
   const [notifications, setNotifications] = useState(true)
   const [settingsActivity, setSettingsActivity] = useState<SettingActivityRow[]>([])
   const [activityCurrentPage, setActivityCurrentPage] = useState(1)
-  const [activityItemsPerPage] = useState(5)
+  const [activityItemsPerPage, setActivityItemsPerPage] = useState(10)
   const [defaultLoanPeriod, setDefaultLoanPeriod] = useState('7')
   const [finePerDay, setFinePerDay] = useState('5.00')
   const [maximumRenewals, setMaximumRenewals] = useState('2')
@@ -1605,22 +1605,49 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
             <div className={`relative z-0 flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm rounded-b-xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B] text-zinc-300' : 'border-zinc-200 bg-white text-zinc-600'}`}>
               <p>Showing {settingsActivity.length > 0 ? (activityCurrentPage - 1) * activityItemsPerPage + 1 : 0} to {Math.min(activityCurrentPage * activityItemsPerPage, settingsActivity.length)} of {settingsActivity.length} activities</p>
               <div className="flex items-center gap-2">
-                <select value={activityItemsPerPage} onChange={(e) => { setActivityItemsPerPage(Number(e.target.value)); setActivityCurrentPage(1); }} className={`h-9 rounded-lg border px-3 text-sm outline-none ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'}`}>
-                  <option value={10}>10 per page</option>
-                  <option value={20}>20 per page</option>
-                  <option value={50}>50 per page</option>
-                </select>
-                <button type="button" onClick={() => setActivityCurrentPage(p => Math.max(1, p - 1))} disabled={activityCurrentPage === 1} className={`grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800 disabled:opacity-50' : 'border-zinc-200 hover:bg-zinc-50 disabled:opacity-50'}`}>{'<'}</button>
+                <div className="relative">
+                  <select value={activityItemsPerPage} onChange={(e) => { setActivityItemsPerPage(Number(e.target.value)); setActivityCurrentPage(1); }} className={`h-10 min-w-[150px] appearance-none rounded-lg border py-2 pl-4 pr-10 text-sm font-medium outline-none transition-colors ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200 hover:bg-zinc-800 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 focus:border-emerald-500'}`}>
+                    <option value={10}>10 per page</option>
+                    <option value={20}>20 per page</option>
+                    <option value={50}>50 per page</option>
+                  </select>
+                  <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActivityCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={activityCurrentPage === 1}
+                  className={`grid h-10 w-10 place-items-center rounded-lg border transition-colors disabled:cursor-not-allowed ${
+                    isDarkMode
+                      ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800 disabled:border-zinc-800 disabled:text-zinc-600 disabled:hover:bg-transparent'
+                      : 'border-zinc-200 text-zinc-500 hover:bg-zinc-50 disabled:border-zinc-100 disabled:text-zinc-300 disabled:hover:bg-white'
+                  }`}
+                  aria-label="Previous page"
+                >
+                  <ChevronLeft size={16} />
+                </button>
                 
                 <div className="flex items-center gap-1">
                   {Array.from({ length: totalActivityPages || 1 }, (_, i) => i + 1).map(page => (
-                    <button key={page} type="button" onClick={() => setActivityCurrentPage(page)} className={page === activityCurrentPage ? "grid h-9 w-9 place-items-center rounded-lg bg-emerald-50 font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" : `grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800' : 'border-zinc-200 hover:bg-zinc-50'}`}>
+                    <button key={page} type="button" onClick={() => setActivityCurrentPage(page)} className={page === activityCurrentPage ? "grid h-10 w-10 place-items-center rounded-lg bg-emerald-50 font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" : `grid h-10 w-10 place-items-center rounded-lg border transition-colors ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800' : 'border-zinc-200 hover:bg-zinc-50'}`}>
                       {page}
                     </button>
                   ))}
                 </div>
 
-                <button type="button" onClick={() => setActivityCurrentPage(p => Math.min(totalActivityPages || 1, p + 1))} disabled={activityCurrentPage === (totalActivityPages || 1) || (totalActivityPages || 1) === 0} className={`grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800 disabled:opacity-50' : 'border-zinc-200 hover:bg-zinc-50 disabled:opacity-50'}`}>{'>'}</button>
+                <button
+                  type="button"
+                  onClick={() => setActivityCurrentPage(p => Math.min(totalActivityPages || 1, p + 1))}
+                  disabled={activityCurrentPage === (totalActivityPages || 1) || (totalActivityPages || 1) === 0}
+                  className={`grid h-10 w-10 place-items-center rounded-lg border transition-colors disabled:cursor-not-allowed ${
+                    isDarkMode
+                      ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800 disabled:border-zinc-800 disabled:text-zinc-600 disabled:hover:bg-transparent'
+                      : 'border-zinc-200 text-zinc-500 hover:bg-zinc-50 disabled:border-zinc-100 disabled:text-zinc-300 disabled:hover:bg-white'
+                  }`}
+                  aria-label="Next page"
+                >
+                  <ChevronRight size={16} />
+                </button>
               </div>
             </div>
           </div>

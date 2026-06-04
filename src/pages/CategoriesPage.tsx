@@ -1,7 +1,7 @@
 import { Toast } from '../components/ui/Toast'
 import { useState, useRef, useEffect, useMemo } from 'react'
 import type { FormEvent } from 'react'
-import { ChevronDown, Search, Plus, X, BookOpen, Layers, Monitor, GraduationCap, Globe, Palette, Briefcase, Atom, Library, Filter, Pencil, Trash2, MoreHorizontal, AlertTriangle } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight, Search, Plus, X, BookOpen, Layers, Monitor, GraduationCap, Globe, Palette, Briefcase, Atom, Library, Filter, Pencil, Trash2, MoreHorizontal, AlertTriangle } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { createCategory, deleteCategory, listBooks, listCategories, updateCategory, type Category as DbCategory } from '../lib/tauriApi'
 
@@ -139,10 +139,13 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
   const [categoryForm, setCategoryForm] = useState<CategoryFormState>(initialFormState)
   const [categoryToEdit, setCategoryToEdit] = useState<CategoryRow | null>(null)
   const [categoryToDelete, setCategoryToDelete] = useState<CategoryRow | null>(null)
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false)
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<Set<number>>(() => new Set())
   const [categoriesList, setCategoriesList] = useState<CategoryRow[]>(categoriesData)
   const [showToast, setShowToast] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
+  const selectAllRef = useRef<HTMLInputElement>(null)
 
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
@@ -199,7 +202,48 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
 
   const totalPages = Math.ceil(filteredCategories.length / itemsPerPage)
   const paginatedCategories = filteredCategories.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+  const paginatedCategoryIds = paginatedCategories.map((category) => category.id)
+  const selectedCount = selectedCategoryIds.size
+  const allPageCategoriesSelected = paginatedCategoryIds.length > 0 && paginatedCategoryIds.every((id) => selectedCategoryIds.has(id))
+  const somePageCategoriesSelected = paginatedCategoryIds.some((id) => selectedCategoryIds.has(id))
 
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = somePageCategoriesSelected && !allPageCategoriesSelected
+    }
+  }, [allPageCategoriesSelected, somePageCategoriesSelected])
+
+  useEffect(() => {
+    setSelectedCategoryIds((prev) => {
+      const existingIds = new Set(categoriesList.map((category) => category.id))
+      const next = new Set([...prev].filter((id) => existingIds.has(id)))
+      return next.size === prev.size ? prev : next
+    })
+  }, [categoriesList])
+
+  const handleTogglePageSelection = () => {
+    setSelectedCategoryIds((prev) => {
+      const next = new Set(prev)
+      if (allPageCategoriesSelected) {
+        paginatedCategoryIds.forEach((id) => next.delete(id))
+      } else {
+        paginatedCategoryIds.forEach((id) => next.add(id))
+      }
+      return next
+    })
+  }
+
+  const handleToggleCategorySelection = (categoryId: number) => {
+    setSelectedCategoryIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(categoryId)) {
+        next.delete(categoryId)
+      } else {
+        next.add(categoryId)
+      }
+      return next
+    })
+  }
 
   const handleFormChange = (field: keyof CategoryFormState, value: string) => {
     setCategoryForm((prev) => ({ ...prev, [field]: value }))
@@ -257,6 +301,22 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
       setCategoryToDelete(null)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to delete category.'
+      setShowToast(message)
+    }
+  }
+
+  const handleBulkDeleteConfirm = async () => {
+    const selectedCategories = categoriesList.filter((category) => selectedCategoryIds.has(category.id))
+    if (selectedCategories.length === 0) return
+
+    try {
+      await Promise.all(selectedCategories.map((category) => deleteCategory(category.id)))
+      await loadCategoriesFromDb()
+      setShowToast(`Successfully deleted ${selectedCategories.length} selected categor${selectedCategories.length === 1 ? 'y' : 'ies'}!`)
+      setSelectedCategoryIds(new Set())
+      setShowBulkDeleteConfirm(false)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to delete selected categories.'
       setShowToast(message)
     }
   }
@@ -337,10 +397,50 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
             </div>
           </div>
 
+          {selectedCount > 0 && (
+            <div className={`flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3 ${
+              isDarkMode ? 'border-zinc-700 bg-emerald-500/10 text-zinc-200' : 'border-zinc-200 bg-emerald-50 text-zinc-700'
+            }`}>
+              <p className="text-sm font-semibold">{selectedCount} selected</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowBulkDeleteConfirm(true)}
+                  className={`inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-sm font-semibold ${
+                    isDarkMode ? 'border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20' : 'border-rose-200 bg-white text-rose-600 hover:bg-rose-50'
+                  }`}
+                >
+                  <Trash2 size={15} />
+                  Delete
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedCategoryIds(new Set())}
+                  className={`grid h-9 w-9 place-items-center rounded-lg border ${
+                    isDarkMode ? 'border-zinc-700 bg-[#18181B] text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50'
+                  }`}
+                  aria-label="Clear selection"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="relative z-10 overflow-x-auto lg:overflow-visible">
             <table className="w-full text-left text-sm border-collapse">
               <thead className={isDarkMode ? 'bg-[#27272A]/50 text-zinc-400' : 'bg-zinc-50/50 text-zinc-500'}>
                 <tr>
+                  <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">
+                    <input
+                      ref={selectAllRef}
+                      type="checkbox"
+                      className="app-choice-input"
+                      checked={allPageCategoriesSelected}
+                      onChange={handleTogglePageSelection}
+                      aria-label="Select all categories on this page"
+                    />
+                  </th>
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Category Name</th>
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Description</th>
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider text-center">Books</th>
@@ -353,6 +453,15 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
                    const CatIcon = cat.icon
                    return (
                     <tr key={cat.id} className={`border-t transition-colors duration-150 ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800/30' : 'border-zinc-100 hover:bg-zinc-50'}`}>
+                      <td className="px-6 py-4 align-top">
+                        <input
+                          type="checkbox"
+                          className="app-choice-input"
+                          checked={selectedCategoryIds.has(cat.id)}
+                          onChange={() => handleToggleCategorySelection(cat.id)}
+                          aria-label={`Select ${cat.name}`}
+                        />
+                      </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className={`grid h-9 w-9 place-items-center rounded-lg ${isDarkMode ? 'bg-zinc-800/40' : 'bg-zinc-100/50'} ${cat.color}`}>
@@ -393,22 +502,49 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
           <div className={`relative z-0 flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm rounded-b-xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B] text-zinc-300' : 'border-zinc-200 bg-white text-zinc-600'}`}>
             <p>Showing {filteredCategories.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to {Math.min(currentPage * itemsPerPage, filteredCategories.length)} of {filteredCategories.length} categories</p>
             <div className="flex items-center gap-2">
-              <select value={itemsPerPage} onChange={(e) => setItemsPerPage(Number(e.target.value))} className={`h-9 rounded-lg border px-3 text-sm outline-none ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'}`}>
-                <option value={10}>10 per page</option>
-                <option value={20}>20 per page</option>
-                <option value={50}>50 per page</option>
-              </select>
-              <button type="button" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className={`grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800 disabled:opacity-50' : 'border-zinc-200 hover:bg-zinc-50 disabled:opacity-50'}`}>{'<'}</button>
+              <div className="relative">
+                <select value={itemsPerPage} onChange={(e) => setItemsPerPage(Number(e.target.value))} className={`h-10 min-w-[150px] appearance-none rounded-lg border py-2 pl-4 pr-10 text-sm font-medium outline-none transition-colors ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200 hover:bg-zinc-800 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 focus:border-emerald-500'}`}>
+                  <option value={10}>10 per page</option>
+                  <option value={20}>20 per page</option>
+                  <option value={50}>50 per page</option>
+                </select>
+                <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+              </div>
+              <button
+                type="button"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className={`grid h-10 w-10 place-items-center rounded-lg border transition-colors disabled:cursor-not-allowed ${
+                  isDarkMode
+                    ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800 disabled:border-zinc-800 disabled:text-zinc-600 disabled:hover:bg-transparent'
+                    : 'border-zinc-200 text-zinc-500 hover:bg-zinc-50 disabled:border-zinc-100 disabled:text-zinc-300 disabled:hover:bg-white'
+                }`}
+                aria-label="Previous page"
+              >
+                <ChevronLeft size={16} />
+              </button>
               
               <div className="flex items-center gap-1">
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                  <button key={page} type="button" onClick={() => setCurrentPage(page)} className={page === currentPage ? "grid h-9 w-9 place-items-center rounded-lg bg-emerald-50 font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" : `grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800' : 'border-zinc-200 hover:bg-zinc-50'}`}>
+                  <button key={page} type="button" onClick={() => setCurrentPage(page)} className={page === currentPage ? "grid h-10 w-10 place-items-center rounded-lg bg-emerald-50 font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" : `grid h-10 w-10 place-items-center rounded-lg border transition-colors ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800' : 'border-zinc-200 hover:bg-zinc-50'}`}>
                     {page}
                   </button>
                 ))}
               </div>
 
-              <button type="button" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0} className={`grid h-9 w-9 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800 disabled:opacity-50' : 'border-zinc-200 hover:bg-zinc-50 disabled:opacity-50'}`}>{'>'}</button>
+              <button
+                type="button"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages || totalPages === 0}
+                className={`grid h-10 w-10 place-items-center rounded-lg border transition-colors disabled:cursor-not-allowed ${
+                  isDarkMode
+                    ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800 disabled:border-zinc-800 disabled:text-zinc-600 disabled:hover:bg-transparent'
+                    : 'border-zinc-200 text-zinc-500 hover:bg-zinc-50 disabled:border-zinc-100 disabled:text-zinc-300 disabled:hover:bg-white'
+                }`}
+                aria-label="Next page"
+              >
+                <ChevronRight size={16} />
+              </button>
             </div>
           </div>
         </div>
@@ -520,6 +656,26 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
             <div className="mt-6 flex gap-3">
               <button type="button" onClick={() => setCategoryToDelete(null)} className={`h-10 flex-1 rounded-xl border text-xs font-semibold ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>Cancel</button>
               <button type="button" onClick={handleDeleteCategory} className="h-10 flex-1 rounded-xl bg-rose-600 text-xs font-semibold text-white hover:bg-rose-700 shadow-lg shadow-rose-600/20">Delete Category</button>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {showBulkDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/60 p-4 backdrop-blur-sm">
+          <section className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl animate-in zoom-in-95 duration-200 ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
+            <div className="flex flex-col items-center text-center">
+              <div className="grid h-12 w-12 place-items-center rounded-full bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400">
+                <AlertTriangle size={24} />
+              </div>
+              <h3 className={`mt-4 text-lg font-black ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Delete Selected Categories</h3>
+              <p className={`mt-2 text-xs font-medium leading-relaxed ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                Delete {selectedCount} selected categor{selectedCount === 1 ? 'y' : 'ies'}? This action cannot be undone and categorized books may be affected.
+              </p>
+            </div>
+            <div className="mt-6 flex gap-3">
+              <button type="button" onClick={() => setShowBulkDeleteConfirm(false)} className={`h-10 flex-1 rounded-xl border text-xs font-semibold ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>Cancel</button>
+              <button type="button" onClick={handleBulkDeleteConfirm} className="h-10 flex-1 rounded-xl bg-rose-600 text-xs font-semibold text-white hover:bg-rose-700 shadow-lg shadow-rose-600/20">Delete Selected</button>
             </div>
           </section>
         </div>

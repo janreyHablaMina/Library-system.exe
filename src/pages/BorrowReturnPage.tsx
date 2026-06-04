@@ -519,7 +519,7 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 
             <article className={`overflow-hidden rounded-xl border ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
               <div className={`flex items-center justify-between border-b p-4 ${isDarkMode ? 'border-zinc-700' : 'border-zinc-200'}`}>
                 <div>
-                  <h3 className={`text-xl font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Current Borrowed Books ({activeRows.length})</h3>
+                  <h3 className={`text-[18px] font-medium ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Current Borrowed Books ({activeRows.length})</h3>
                   <p className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Books currently borrowed by members.</p>
                 </div>
                 <button type="button" onClick={() => onOpenTransactions('borrowed')} className="text-sm font-semibold text-emerald-700 hover:underline">View all →</button>
@@ -570,7 +570,7 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 
             <article className={`overflow-hidden rounded-xl border ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
               <div className={`flex items-center justify-between border-b p-4 ${isDarkMode ? 'border-zinc-700' : 'border-zinc-200'}`}>
                 <div>
-                  <h3 className={`text-xl font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Recent Returned ({returnedRows.length})</h3>
+                  <h3 className={`text-[18px] font-medium ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Recent Returned ({returnedRows.length})</h3>
                   <p className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Recently returned books.</p>
                 </div>
                 <button type="button" onClick={() => onOpenTransactions('returned')} className="text-sm font-semibold text-emerald-700 hover:underline">View all →</button>
@@ -624,5 +624,3 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 
     </div>
   )
 }
-
-
