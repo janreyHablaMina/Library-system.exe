@@ -940,209 +940,6 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
           </div>
         </div>
       </section>
-
-      {/* SMS Configuration Section */}
-      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr] mt-6">
-        <section className={`rounded-2xl border p-6 ${cardClass}`}>
-          <div className="mb-6 flex items-center gap-4">
-            <div className={`grid h-12 w-12 place-items-center rounded-2xl ${iconBoxBg}`}><Smartphone size={24} /></div>
-            <div>
-              <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>SMS Configuration</h3>
-              <p className={`text-sm ${subLabelClass}`}>Configure the TxtBox API used for sending text messages.</p>
-            </div>
-          </div>
-
-          <div className="space-y-5">
-            <div className={`flex items-center justify-between rounded-xl border p-4 ${inputClass}`}>
-              <div>
-                <p className={`text-sm font-bold ${labelClass}`}>Enable SMS Notifications</p>
-                <p className={`text-xs ${subLabelClass}`}>{smsEnabled ? 'Enabled' : 'Disabled'}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  const next = !smsEnabled
-                  setSmsEnabled(next)
-                  void saveSmsSetting('sms.enabled', String(next))
-                }}
-                className={`relative h-7 w-12 rounded-full transition-colors ${smsEnabled ? 'bg-emerald-600' : isDarkMode ? 'bg-zinc-700' : 'bg-zinc-300'}`}
-              >
-                <span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-transform ${smsEnabled ? 'translate-x-5' : 'translate-x-1'}`} />
-              </button>
-            </div>
-
-            <label className="space-y-2 block">
-              <span className={`text-sm font-bold ${labelClass}`}>TxtBox API Key</span>
-              <input
-                type="password"
-                value={txtboxApiKey}
-                onChange={(event) => setTxtboxApiKey(event.target.value)}
-                onBlur={() => void saveSmsSetting('sms.txtbox_api_key', txtboxApiKey)}
-                placeholder="TxtBox API Key"
-                className={`h-11 w-full rounded-xl border px-3 text-sm outline-none focus:border-emerald-500 ${inputClass}`}
-              />
-            </label>
-          </div>
-        </section>
-
-        <section className={`rounded-2xl border p-6 ${cardClass}`}>
-          <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Test SMS</h3>
-          <p className={`mt-1 text-sm ${subLabelClass}`}>Send a quick test SMS using the current configuration.</p>
-          <div className="mt-5 space-y-3">
-            <label className="space-y-2 block">
-              <span className={`text-sm font-bold ${labelClass}`}>Recipient Phone Number</span>
-              <input value={smsTestTo} onChange={(event) => setSmsTestTo(event.target.value)} placeholder="09xxxxxxxxx" className={`h-11 w-full rounded-xl border px-3 text-sm outline-none focus:border-emerald-500 ${inputClass}`} />
-            </label>
-            <button type="button" onClick={() => void handleTestSms()} className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#059669] px-5 text-sm font-bold text-white hover:bg-emerald-700">
-              <Send size={16} /> Test SMS
-            </button>
-            {smsTestStatus.message ? (
-              <p className={`text-sm font-semibold ${smsTestStatus.type === 'success' ? 'text-emerald-600' : 'text-rose-500'}`}>{smsTestStatus.message}</p>
-            ) : null}
-          </div>
-        </section>
-      </div>
-    </div>
-  )
-
-  const renderGeneralSettings = () => (
-    <div className="space-y-6">
-      {/* Circulation Rules */}
-      <section className={`rounded-2xl border p-8 ${cardClass}`}>
-        <div className="mb-10 flex items-center gap-4">
-          <div className={`grid h-12 w-12 place-items-center rounded-xl ${iconBoxBg}`}>
-            <Calendar size={24} strokeWidth={2} />
-          </div>
-          <div>
-            <h4 className={`text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Circulation Rules</h4>
-            <p className={`text-[13px] font-medium ${subLabelClass}`}>Set rules for borrowing and returning library materials.</p>
-          </div>
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {[
-            { label: 'Default Loan Period', sub: '(days)', desc: 'Number of days a book can be borrowed.', value: defaultLoanPeriod, onChange: setDefaultLoanPeriod, dbKey: 'general.default_loan_period', icon: Calendar },
-            { label: 'Fine Per Day', sub: '(PHP)', desc: 'Amount charged for each overdue day.', value: finePerDay, onChange: setFinePerDay, dbKey: 'general.fine_per_day', icon: CreditCard },
-            { label: 'Maximum Renewals', sub: '(times)', desc: 'How many times a loan can be renewed.', value: maximumRenewals, onChange: setMaximumRenewals, dbKey: 'general.maximum_renewals', icon: RotateCcw },
-            { label: 'Grace Period', sub: '(days)', desc: 'Number of days before fines are applied.', value: gracePeriod, onChange: setGracePeriod, dbKey: 'general.grace_period', icon: Clock },
-          ].map((item) => (
-            <div key={item.label} className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="text-emerald-600 dark:text-emerald-400">
-                  <item.icon size={18} />
-                </div>
-                <div>
-                  <label className={`block text-[13px] font-bold ${labelClass}`}>{item.label}</label>
-                  <span className={`text-[11px] font-medium ${subLabelClass}`}>{item.sub}</span>
-                </div>
-              </div>
-              <div className={`relative flex h-12 w-full items-center justify-between rounded-xl border px-4 ${inputClass}`}>
-                <input
-                  type="text"
-                  className="w-full bg-transparent text-[15px] font-bold outline-none"
-                  value={item.value}
-                  onChange={(event) => item.onChange(event.target.value)}
-                  onBlur={() => saveGeneralSetting(item.dbKey, item.value)}
-                />
-                <div className="flex flex-col border-l border-zinc-200 pl-3 dark:border-zinc-800">
-                  <button className="text-zinc-400 hover:text-emerald-500 transition-colors"><ChevronDown size={14} className="rotate-180" /></button>
-                  <button className="text-zinc-400 hover:text-emerald-500 transition-colors"><ChevronDown size={14} /></button>
-                </div>
-              </div>
-              <p className={`text-[11px] font-medium leading-relaxed ${subLabelClass}`}>{item.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Notifications & Behavior */}
-      <section className={`rounded-2xl border p-8 ${cardClass}`}>
-        <div className="mb-10 flex items-center gap-4">
-          <div className={`grid h-12 w-12 place-items-center rounded-xl ${iconBoxBg}`}>
-            <Bell size={24} strokeWidth={2} />
-          </div>
-          <div>
-            <h4 className={`text-[17px] font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Notifications & Behavior</h4>
-            <p className={`text-[13px] font-medium ${subLabelClass}`}>Configure notification settings and reservation behavior.</p>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          {/* Email Notifications */}
-          <div className={`rounded-2xl border p-6 transition-all hover:border-emerald-500/30 ${isDarkMode ? 'border-zinc-800 bg-[#27272A]/30' : 'border-zinc-100 bg-zinc-50/50'}`}>
-            <div className="flex flex-wrap items-center justify-between gap-6">
-              <div className="flex flex-1 items-start gap-5">
-                <div className={`grid h-12 w-12 shrink-0 place-items-center rounded-xl ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white text-emerald-600 shadow-sm'}`}>
-                  <Mail size={22} />
-                </div>
-                <div className="space-y-1">
-                  <h5 className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-900'}`}>Email Notifications</h5>
-                  <p className={`max-w-md text-[12px] font-medium leading-relaxed ${subLabelClass}`}>
-                    Receive email notifications for important library activities such as reservations, due dates, and overdue items.
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-6">
-                <button
-                  onClick={() => {
-                    const next = !notifications
-                    setNotifications(next)
-                    void saveGeneralSetting('general.email_notifications', String(next))
-                  }}
-                  className={`relative h-[26px] w-[50px] shrink-0 rounded-full transition-all duration-300 ${
-                    notifications ? 'bg-emerald-600' : 'bg-zinc-300 dark:bg-zinc-700'
-                  }`}
-                >
-                  <div className={`absolute left-1 top-1 h-[18px] w-[18px] transform rounded-full bg-white shadow-sm transition-transform duration-300 ${notifications ? 'translate-x-6' : 'translate-x-0'}`} />
-                </button>
-                <div className={`rounded-lg px-4 py-3 text-[11px] font-semibold leading-relaxed ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-700'}`}>
-                  Notification will be sent to the <br /> registered email of the member.
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Reservation Expiry */}
-          <div className={`rounded-2xl border p-6 transition-all hover:border-emerald-500/30 ${isDarkMode ? 'border-zinc-800 bg-[#27272A]/30' : 'border-zinc-100 bg-zinc-50/50'}`}>
-            <div className="flex flex-wrap items-center justify-between gap-6">
-              <div className="flex flex-1 items-start gap-5">
-                <div className={`grid h-12 w-12 shrink-0 place-items-center rounded-xl ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white text-emerald-600 shadow-sm'}`}>
-                  <Calendar size={22} />
-                </div>
-                <div className="space-y-1">
-                  <h5 className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-900'}`}>Reservation Expiry <span className={`text-[11px] font-medium ${subLabelClass}`}>(days)</span></h5>
-                  <p className={`max-w-md text-[12px] font-medium leading-relaxed ${subLabelClass}`}>
-                    Automatically cancel a reservation if it is not claimed within the set number of days.
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-6">
-                <div className={`relative flex h-11 w-24 items-center justify-between rounded-xl border px-3 ${isDarkMode ? 'border-zinc-700 bg-zinc-800' : 'border-zinc-200 bg-white'}`}>
-                  <input
-                    type="text"
-                    className="w-full bg-transparent text-[14px] font-bold outline-none"
-                    value={reservationExpiry}
-                    onChange={(event) => setReservationExpiry(event.target.value)}
-                    onBlur={() => saveGeneralSetting('general.reservation_expiry_days', reservationExpiry)}
-                  />
-                  <div className="flex flex-col border-l border-zinc-200 pl-2 dark:border-zinc-800">
-                    <ChevronDown size={12} className="rotate-180 text-zinc-400" />
-                    <ChevronDown size={12} className="text-zinc-400" />
-                  </div>
-                </div>
-                <div className={`rounded-lg px-4 py-3 text-[11px] font-semibold leading-relaxed ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-700'}`}>
-                  Reservation will be cancelled <br /> after the number of days.
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <div className="flex items-center justify-center gap-2 py-4">
-        <Info size={16} className="text-zinc-400" />
-        <p className="text-[12px] font-medium text-zinc-400">These settings apply to the entire library system.</p>
-      </div>
     </div>
   )
 
@@ -1412,6 +1209,68 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
           ) : null}
         </div>
       </section>
+
+      {/* SMS Configuration Section */}
+      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr] mt-6">
+        <section className={`rounded-2xl border p-6 ${cardClass}`}>
+          <div className="mb-6 flex items-center gap-4">
+            <div className={`grid h-12 w-12 place-items-center rounded-2xl ${iconBoxBg}`}><Smartphone size={24} /></div>
+            <div>
+              <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>SMS Configuration</h3>
+              <p className={`text-sm ${subLabelClass}`}>Configure the TxtBox API used for sending text messages.</p>
+            </div>
+          </div>
+
+          <div className="space-y-5">
+            <div className={`flex items-center justify-between rounded-xl border p-4 ${inputClass}`}>
+              <div>
+                <p className={`text-sm font-bold ${labelClass}`}>Enable SMS Notifications</p>
+                <p className={`text-xs ${subLabelClass}`}>{smsEnabled ? 'Enabled' : 'Disabled'}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const next = !smsEnabled
+                  setSmsEnabled(next)
+                  void saveSmsSetting('sms.enabled', String(next))
+                }}
+                className={`relative h-7 w-12 rounded-full transition-colors ${smsEnabled ? 'bg-emerald-600' : isDarkMode ? 'bg-zinc-700' : 'bg-zinc-300'}`}
+              >
+                <span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-transform ${smsEnabled ? 'translate-x-5' : 'translate-x-1'}`} />
+              </button>
+            </div>
+
+            <label className="space-y-2 block">
+              <span className={`text-sm font-bold ${labelClass}`}>TxtBox API Key</span>
+              <input
+                type="password"
+                value={txtboxApiKey}
+                onChange={(event) => setTxtboxApiKey(event.target.value)}
+                onBlur={() => void saveSmsSetting('sms.txtbox_api_key', txtboxApiKey)}
+                placeholder="TxtBox API Key"
+                className={`h-11 w-full rounded-xl border px-3 text-sm outline-none focus:border-emerald-500 ${inputClass}`}
+              />
+            </label>
+          </div>
+        </section>
+
+        <section className={`rounded-2xl border p-6 ${cardClass}`}>
+          <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Test SMS</h3>
+          <p className={`mt-1 text-sm ${subLabelClass}`}>Send a quick test SMS using the current configuration.</p>
+          <div className="mt-5 space-y-3">
+            <label className="space-y-2 block">
+              <span className={`text-sm font-bold ${labelClass}`}>Recipient Phone Number</span>
+              <input value={smsTestTo} onChange={(event) => setSmsTestTo(event.target.value)} placeholder="09xxxxxxxxx" className={`h-11 w-full rounded-xl border px-3 text-sm outline-none focus:border-emerald-500 ${inputClass}`} />
+            </label>
+            <button type="button" onClick={() => void handleTestSms()} className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#059669] px-5 text-sm font-bold text-white hover:bg-emerald-700">
+              <Send size={16} /> Test SMS
+            </button>
+            {smsTestStatus.message ? (
+              <p className={`text-sm font-semibold ${smsTestStatus.type === 'success' ? 'text-emerald-600' : 'text-rose-500'}`}>{smsTestStatus.message}</p>
+            ) : null}
+          </div>
+        </section>
+      </div>
     </div>
   )
 
