@@ -1,9 +1,9 @@
 import { Toast } from '../components/ui/Toast'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  BookOpen, Bookmark, ChevronDown, Clock3, Download, Filter, Grid2x2,
-  List, MoreHorizontal, RotateCcw, Search, Upload,
-  Eye, Pencil, BookMarked, PlusCircle, RefreshCw, Trash2, AlertTriangle, X, Archive
+  BookOpen, Bookmark, ChevronDown, ChevronLeft, ChevronRight, Clock3, Download, Filter, Grid2x2,
+  List, MoreHorizontal, RotateCcw, Search,
+  Eye, Pencil, BookMarked, Trash2, AlertTriangle, X, Archive
 } from 'lucide-react'
 import { EditBookPage } from './EditBookPage'
 import { deleteBook, listBooks, updateBook } from '../lib/tauriApi'
@@ -18,6 +18,7 @@ type BookRow = {
   author: string
   category: string
   shelfLocation: string
+  callNumber: string
   year: number
   status: BookStatus
   available: string
@@ -35,18 +36,18 @@ type BooksPageProps = {
 }
 
 const initialBooks: BookRow[] = [
-  { id: 1, cover: '📚', title: 'Sosyolohiya sa Filipino', isbn: '978-621-455-010-2', author: 'Kahayon, Alicia H.', category: 'Social Sciences', shelfLocation: '300.72 KAH', year: 2021, status: 'Available', available: '5 / 7' },
-  { id: 2, cover: '📕', title: 'Understanding Philippine Social Realities through the Filipino Family', isbn: '978-971-009-123-4', author: 'Ramirez, Mina M.', category: 'Social Sciences', shelfLocation: '305.23 RAM', year: 2020, status: 'Borrowed', available: '1 / 3' },
-  { id: 3, cover: '📘', title: 'The Conjugal Dictatorship of Ferdinand and Imelda Marcos I', isbn: '978-971-555-001-1', author: 'Mijares, Primitivo', category: 'History', shelfLocation: '959.904 MIJ', year: 2018, status: 'Available', available: '2 / 4' },
-  { id: 4, cover: '📗', title: 'Filipino Values Today', isbn: '978-971-100-456-7', author: 'Timberza, Florentino T.', category: 'Education', shelfLocation: '370.115 TIM', year: 2019, status: 'Available', available: '3 / 5' },
-  { id: 5, cover: '📙', title: 'The Fateful Years', isbn: '978-621-455-789-6', author: 'Agoncillo, Teodoro A.', category: 'History', shelfLocation: '959.902 AGO', year: 2017, status: 'Overdue', available: '0 / 2' },
-  { id: 6, cover: '📙', title: 'Philippine Constitution Explained', isbn: '978-971-888-777-1', author: 'De Vera, Hector S.', category: 'Law', shelfLocation: '342.59903 DEV', year: 2022, status: 'Available', available: '4 / 6' },
-  { id: 7, cover: '📚', title: 'The Life and Works of Jose Rizal', isbn: '978-971-245-678-3', author: 'Tellos, Ricardo', category: 'Biography', shelfLocation: '920 RIZ', year: 2016, status: 'Borrowed', available: '1 / 2' },
-  { id: 8, cover: '📓', title: 'Introduction to Library Science', isbn: '978-971-333-222-8', author: 'Villanueva, Ma. Teresa', category: 'Library Science', shelfLocation: '025.1 VIL', year: 2021, status: 'Available', available: '6 / 8' },
-  { id: 9, cover: '📘', title: 'The Philippine Islands, 1493–1898', isbn: '978-971-555-025-7', author: 'Blair, Emma Helen', category: 'History', shelfLocation: '959.9 BLA', year: 2015, status: 'Archived', available: '0 / 5' },
-  { id: 10, cover: '📚', title: 'Florante at Laura', isbn: '978-971-08-6047-0', author: 'Balagtas, Francisco', category: 'Fiction', shelfLocation: '899.211 BAL', year: 2019, status: 'Available', available: '7 / 7' },
-  { id: 11, cover: '📗', title: 'Noli Me Tangere', isbn: '978-971-08-6046-3', author: 'Rizal, Jose', category: 'Fiction', shelfLocation: '899.211 RIZ', year: 2018, status: 'Borrowed', available: '2 / 5' },
-  { id: 12, cover: '📕', title: 'Web Development with React and Node', isbn: '978-1-80181-234-5', author: 'Freeman, Adam', category: 'Technology', shelfLocation: '005.276 FRE', year: 2022, status: 'Available', available: '3 / 3' },
+  { id: 1, cover: '📚', title: 'Sosyolohiya sa Filipino', isbn: '978-621-455-010-2', author: 'Kahayon, Alicia H.', category: 'Social Sciences', shelfLocation: '300.72 KAH', callNumber: '300.72 KAH', year: 2021, status: 'Available', available: '5 / 7' },
+  { id: 2, cover: '📕', title: 'Understanding Philippine Social Realities through the Filipino Family', isbn: '978-971-009-123-4', author: 'Ramirez, Mina M.', category: 'Social Sciences', shelfLocation: '305.23 RAM', callNumber: '305.23 RAM', year: 2020, status: 'Borrowed', available: '1 / 3' },
+  { id: 3, cover: '📘', title: 'The Conjugal Dictatorship of Ferdinand and Imelda Marcos I', isbn: '978-971-555-001-1', author: 'Mijares, Primitivo', category: 'History', shelfLocation: '959.904 MIJ', callNumber: '959.904 MIJ', year: 2018, status: 'Available', available: '2 / 4' },
+  { id: 4, cover: '📗', title: 'Filipino Values Today', isbn: '978-971-100-456-7', author: 'Timberza, Florentino T.', category: 'Education', shelfLocation: '370.115 TIM', callNumber: '370.115 TIM', year: 2019, status: 'Available', available: '3 / 5' },
+  { id: 5, cover: '📙', title: 'The Fateful Years', isbn: '978-621-455-789-6', author: 'Agoncillo, Teodoro A.', category: 'History', shelfLocation: '959.902 AGO', callNumber: '959.902 AGO', year: 2017, status: 'Overdue', available: '0 / 2' },
+  { id: 6, cover: '📙', title: 'Philippine Constitution Explained', isbn: '978-971-888-777-1', author: 'De Vera, Hector S.', category: 'Law', shelfLocation: '342.59903 DEV', callNumber: '342.59903 DEV', year: 2022, status: 'Available', available: '4 / 6' },
+  { id: 7, cover: '📚', title: 'The Life and Works of Jose Rizal', isbn: '978-971-245-678-3', author: 'Tellos, Ricardo', category: 'Biography', shelfLocation: '920 RIZ', callNumber: '920 RIZ', year: 2016, status: 'Borrowed', available: '1 / 2' },
+  { id: 8, cover: '📓', title: 'Introduction to Library Science', isbn: '978-971-333-222-8', author: 'Villanueva, Ma. Teresa', category: 'Library Science', shelfLocation: '025.1 VIL', callNumber: '025.1 VIL', year: 2021, status: 'Available', available: '6 / 8' },
+  { id: 9, cover: '📘', title: 'The Philippine Islands, 1493-1898', isbn: '978-971-555-025-7', author: 'Blair, Emma Helen', category: 'History', shelfLocation: '959.9 BLA', callNumber: '959.9 BLA', year: 2015, status: 'Archived', available: '0 / 5' },
+  { id: 10, cover: '📚', title: 'Florante at Laura', isbn: '978-971-08-6047-0', author: 'Balagtas, Francisco', category: 'Fiction', shelfLocation: '899.211 BAL', callNumber: '899.211 BAL', year: 2019, status: 'Available', available: '7 / 7' },
+  { id: 11, cover: '📗', title: 'Noli Me Tangere', isbn: '978-971-08-6046-3', author: 'Rizal, Jose', category: 'Fiction', shelfLocation: '899.211 RIZ', callNumber: '899.211 RIZ', year: 2018, status: 'Borrowed', available: '2 / 5' },
+  { id: 12, cover: '📕', title: 'Web Development with React and Node', isbn: '978-1-80181-234-5', author: 'Freeman, Adam', category: 'Technology', shelfLocation: '005.276 FRE', callNumber: '005.276 FRE', year: 2022, status: 'Available', available: '3 / 3' },
 ]
 
 function getStatusClass(status: BookStatus, isDarkMode: boolean) {
@@ -220,6 +221,9 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
   const [bookList, setBookList] = useState<BookRow[]>(initialBooks)
   const [bookToDelete, setBookToDelete] = useState<BookRow | null>(null)
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false)
+  const [selectedBookIds, setSelectedBookIds] = useState<Set<number>>(() => new Set())
+  const selectAllRef = useRef<HTMLInputElement>(null)
   
   // State for editing book details (renders full EditBookPage overlay)
   const [bookToEdit, setBookToEdit] = useState<BookRow | null>(null)
@@ -238,6 +242,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
           author: row.author,
           category: row.category ?? 'Uncategorized',
           shelfLocation: row.shelfLocation ?? '-',
+          callNumber: row.shelfLocation ?? '-',
           year: new Date(row.createdAt).getFullYear() || new Date().getFullYear(),
           status: row.isArchived ? 'Archived' : (row.available > 0 ? 'Available' : 'Borrowed'),
           available: `${row.available} / ${row.totalCopies}`,
@@ -268,12 +273,12 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
   const [activeStatTab, setActiveStatTab] = useState<'All Books' | 'Available' | 'Borrowed' | 'Overdue' | 'Archived'>('All Books')
 
   const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 10
+  const [itemsPerPage, setItemsPerPage] = useState(10)
 
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchTerm, selectedCategory, selectedAuthor, activeStatTab])
+  }, [searchTerm, selectedCategory, selectedAuthor, activeStatTab, itemsPerPage])
 
 
   // Filter dynamic helper
@@ -308,6 +313,24 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
 
   const totalPages = Math.ceil(filteredBooks.length / itemsPerPage)
   const paginatedBooks = filteredBooks.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+  const paginatedBookIds = paginatedBooks.map((book) => book.id)
+  const selectedCount = selectedBookIds.size
+  const allPageBooksSelected = paginatedBookIds.length > 0 && paginatedBookIds.every((id) => selectedBookIds.has(id))
+  const somePageBooksSelected = paginatedBookIds.some((id) => selectedBookIds.has(id))
+
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = somePageBooksSelected && !allPageBooksSelected
+    }
+  }, [allPageBooksSelected, somePageBooksSelected])
+
+  useEffect(() => {
+    setSelectedBookIds((prev) => {
+      const existingIds = new Set(bookList.map((book) => book.id))
+      const next = new Set([...prev].filter((id) => existingIds.has(id)))
+      return next.size === prev.size ? prev : next
+    })
+  }, [bookList])
 
   // Reset Filters
   const handleResetFilters = () => {
@@ -344,6 +367,62 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
     }
   }
 
+  const handleTogglePageSelection = () => {
+    setSelectedBookIds((prev) => {
+      const next = new Set(prev)
+      if (allPageBooksSelected) {
+        paginatedBookIds.forEach((id) => next.delete(id))
+      } else {
+        paginatedBookIds.forEach((id) => next.add(id))
+      }
+      return next
+    })
+  }
+
+  const handleToggleBookSelection = (bookId: number) => {
+    setSelectedBookIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(bookId)) {
+        next.delete(bookId)
+      } else {
+        next.add(bookId)
+      }
+      return next
+    })
+  }
+
+  const handleBulkArchive = async () => {
+    const selectedBooks = bookList.filter((book) => selectedBookIds.has(book.id))
+    if (selectedBooks.length === 0) return
+
+    await Promise.all(selectedBooks.map((book) => updateBook({
+      id: book.id,
+      title: book.title,
+      author: book.author,
+      category: book.category === 'Uncategorized' ? null : book.category,
+      isbn: book.isbn === '-' ? null : book.isbn,
+      coverData: book.cover.startsWith('data:') ? book.cover : null,
+      available: Number(book.available.split(' / ')[0] || '0'),
+      totalCopies: Number(book.available.split(' / ')[1] || '1'),
+      isArchived: true,
+    })))
+
+    setBookList(prev => prev.map(book => selectedBookIds.has(book.id) ? { ...book, status: 'Archived', isArchived: true } : book))
+    setShowToast(`Successfully archived ${selectedBooks.length} selected book${selectedBooks.length === 1 ? '' : 's'}`)
+    setSelectedBookIds(new Set())
+  }
+
+  const handleBulkDeleteConfirm = async () => {
+    const selectedBooks = bookList.filter((book) => selectedBookIds.has(book.id))
+    if (selectedBooks.length === 0) return
+
+    await Promise.all(selectedBooks.map((book) => deleteBook(book.id)))
+    setBookList(prev => prev.filter(book => !selectedBookIds.has(book.id)))
+    setShowToast(`Successfully deleted ${selectedBooks.length} selected book${selectedBooks.length === 1 ? '' : 's'}`)
+    setSelectedBookIds(new Set())
+    setShowBulkDeleteConfirm(false)
+  }
+
   // Render Full Screen Edit Page if active
   if (bookToEdit) {
     return (
@@ -354,6 +433,8 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
         onSave={(updatedBook) => {
           const normalizedBook: BookRow = {
             ...updatedBook,
+            shelfLocation: updatedBook.callNumber,
+            callNumber: updatedBook.callNumber,
             status: updatedBook.status as BookStatus,
           }
           const persist = async () => {
@@ -427,6 +508,44 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
         </div>
       )}
 
+      {showBulkDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/60 backdrop-blur-sm">
+          <div className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl transition-all ${cardClass}`}>
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-rose-500/10 text-rose-500">
+                <AlertTriangle size={24} />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold leading-6">Delete Selected Books</h3>
+                <p className={`mt-2 text-sm ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                  Delete {selectedCount} selected book{selectedCount === 1 ? '' : 's'}? This action cannot be undone.
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowBulkDeleteConfirm(false)}
+                className={`rounded-xl px-4 py-2 text-sm font-semibold border ${
+                  isDarkMode
+                    ? 'border-zinc-700 hover:bg-zinc-800 text-zinc-300'
+                    : 'border-zinc-200 hover:bg-zinc-50 text-zinc-700'
+                }`}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkDeleteConfirm}
+                className="rounded-xl bg-rose-600 hover:bg-rose-700 px-4 py-2 text-sm font-semibold text-white"
+              >
+                Yes, Delete Selected
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <section className="p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
@@ -441,10 +560,6 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
             >
               <span className="text-lg leading-none">+</span>
               Add Book
-            </button>
-            <button type="button" className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-semibold ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
-              <Upload size={15} />
-              Import
             </button>
             <button type="button" className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-semibold ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
               <Download size={15} />
@@ -559,12 +674,61 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
             </div>
           </div>
 
+          {selectedCount > 0 && (
+            <div className={`flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3 ${
+              isDarkMode ? 'border-zinc-700 bg-emerald-500/10 text-zinc-200' : 'border-zinc-200 bg-emerald-50 text-zinc-700'
+            }`}>
+              <p className="text-sm font-semibold">{selectedCount} selected</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleBulkArchive}
+                  className={`inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-sm font-semibold ${
+                    isDarkMode ? 'border-zinc-700 bg-[#18181B] text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50'
+                  }`}
+                >
+                  <Archive size={15} />
+                  Archive
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowBulkDeleteConfirm(true)}
+                  className={`inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-sm font-semibold ${
+                    isDarkMode ? 'border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20' : 'border-rose-200 bg-white text-rose-600 hover:bg-rose-50'
+                  }`}
+                >
+                  <Trash2 size={15} />
+                  Delete
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedBookIds(new Set())}
+                  className={`grid h-9 w-9 place-items-center rounded-lg border ${
+                    isDarkMode ? 'border-zinc-700 bg-[#18181B] text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50'
+                  }`}
+                  aria-label="Clear selection"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+            </div>
+          )}
+
           {viewMode === 'list' ? (
             <div className={`relative z-10 ${isDarkMode ? 'overflow-x-auto lg:overflow-visible bg-[#18181B]' : 'overflow-x-auto lg:overflow-visible bg-white'}`}>
               <table className="min-w-[980px] w-full text-left text-sm">
                 <thead className={isDarkMode ? 'bg-[#27272A] text-zinc-300' : 'bg-zinc-50 text-zinc-600'}>
                   <tr>
-                    <th className="px-4 py-3 font-semibold"><input type="checkbox" /></th>
+                    <th className="px-4 py-3 font-semibold">
+                      <input
+                        ref={selectAllRef}
+                        type="checkbox"
+                        className="app-choice-input"
+                        checked={allPageBooksSelected}
+                        onChange={handleTogglePageSelection}
+                        aria-label="Select all books on this page"
+                      />
+                    </th>
                     <th className="px-3 py-3 font-semibold">Book</th>
                     <th className="px-3 py-3 font-semibold">Author</th>
                     <th className="px-3 py-3 font-semibold">Category</th>
@@ -576,7 +740,15 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
                 <tbody>
                   {paginatedBooks.map((book) => (
                     <tr key={book.id} className={`border-t transition-colors duration-150 ${isDarkMode ? 'border-zinc-700 hover:bg-[#3F3F46]' : 'border-zinc-100 hover:bg-zinc-50'}`}>
-                      <td className="px-4 py-3 align-top"><input type="checkbox" /></td>
+                      <td className="px-4 py-3 align-top">
+                        <input
+                          type="checkbox"
+                          className="app-choice-input"
+                          checked={selectedBookIds.has(book.id)}
+                          onChange={() => handleToggleBookSelection(book.id)}
+                          aria-label={`Select ${book.title}`}
+                        />
+                      </td>
                       <td className="px-3 py-3">
                         <div className="flex items-start gap-3">
                           <span className={`grid h-12 w-9 place-items-center rounded text-xl overflow-hidden shrink-0 ${isDarkMode ? 'bg-zinc-800' : 'bg-zinc-100'}`}>
@@ -683,15 +855,30 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
             </div>
           )}
 
-          <div className={`flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm rounded-b-xl ${isDarkMode ? 'border-zinc-700 text-zinc-300' : 'border-zinc-200 text-zinc-600'}`}>
+          <div className={`relative z-0 flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm rounded-b-xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B] text-zinc-300' : 'border-zinc-200 bg-white text-zinc-600'}`}>
             <p>Showing {filteredBooks.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to {Math.min(currentPage * itemsPerPage, filteredBooks.length)} of {filteredBooks.length} books</p>
             <div className="flex items-center gap-2">
-              <button 
-                type="button" 
+              <div className="relative">
+                <select value={itemsPerPage} onChange={(e) => setItemsPerPage(Number(e.target.value))} className={`h-10 min-w-[150px] appearance-none rounded-lg border py-2 pl-4 pr-10 text-sm font-medium outline-none transition-colors ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200 hover:bg-zinc-800 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 focus:border-emerald-500'}`}>
+                  <option value={10}>10 per page</option>
+                  <option value={20}>20 per page</option>
+                  <option value={50}>50 per page</option>
+                </select>
+                <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+              </div>
+              <button
+                type="button"
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className={`grid h-9 w-9 place-items-center rounded-lg border ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800 disabled:opacity-50' : 'border-zinc-200 hover:bg-zinc-50 disabled:opacity-50'}`}
-              >{'<'}</button>
+                className={`grid h-10 w-10 place-items-center rounded-lg border transition-colors disabled:cursor-not-allowed ${
+                  isDarkMode
+                    ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800 disabled:border-zinc-800 disabled:text-zinc-600 disabled:hover:bg-transparent'
+                    : 'border-zinc-200 text-zinc-500 hover:bg-zinc-50 disabled:border-zinc-100 disabled:text-zinc-300 disabled:hover:bg-white'
+                }`}
+                aria-label="Previous page"
+              >
+                <ChevronLeft size={16} />
+              </button>
               
               <div className="flex items-center gap-1">
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
@@ -700,20 +887,27 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
                     type="button" 
                     onClick={() => setCurrentPage(page)}
                     className={page === currentPage 
-                      ? "grid h-9 w-9 place-items-center rounded-lg bg-emerald-50 font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" 
-                      : `grid h-9 w-9 place-items-center rounded-lg border ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800' : 'border-zinc-200 hover:bg-zinc-50'}`}
+                      ? "grid h-10 w-10 place-items-center rounded-lg bg-emerald-50 font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" 
+                      : `grid h-10 w-10 place-items-center rounded-lg border transition-colors ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800' : 'border-zinc-200 hover:bg-zinc-50'}`}
                   >
                     {page}
                   </button>
                 ))}
               </div>
 
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages || totalPages === 0}
-                className={`grid h-9 w-9 place-items-center rounded-lg border ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800 disabled:opacity-50' : 'border-zinc-200 hover:bg-zinc-50 disabled:opacity-50'}`}
-              >{'>'}</button>
+                className={`grid h-10 w-10 place-items-center rounded-lg border transition-colors disabled:cursor-not-allowed ${
+                  isDarkMode
+                    ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800 disabled:border-zinc-800 disabled:text-zinc-600 disabled:hover:bg-transparent'
+                    : 'border-zinc-200 text-zinc-500 hover:bg-zinc-50 disabled:border-zinc-100 disabled:text-zinc-300 disabled:hover:bg-white'
+                }`}
+                aria-label="Next page"
+              >
+                <ChevronRight size={16} />
+              </button>
             </div>
           </div>
         </div>
