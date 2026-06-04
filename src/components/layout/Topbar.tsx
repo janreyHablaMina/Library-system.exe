@@ -49,10 +49,65 @@ export const Topbar: React.FC<TopbarProps> = ({
             >
               {isDarkMode ? <Sun size={18} strokeWidth={1.9} /> : <Moon size={18} strokeWidth={1.9} />}
             </button>
-            <button type="button" className={`relative rounded-lg p-2 ${theme.iconBtn}`}>
-              <MessageCircle size={18} strokeWidth={1.9} />
-              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
-            </button>
+            <div className="relative" ref={messageMenuRef}>
+              <button 
+                type="button" 
+                onClick={() => setIsMessageMenuOpen(!isMessageMenuOpen)}
+                className={`relative rounded-lg p-2 ${isMessageMenuOpen ? 'bg-emerald-500/10 text-emerald-500' : theme.iconBtn}`}
+              >
+                <MessageCircle size={18} strokeWidth={1.9} />
+                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+              </button>
+
+              {isMessageMenuOpen && (
+                <div className={`absolute right-0 top-full mt-2 w-80 overflow-hidden rounded-xl border shadow-2xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
+                  <div className={`flex items-center justify-between border-b px-4 py-3 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'}`}>
+                    <h3 className={`text-sm font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Recent Outbound Messages</h3>
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${isDarkMode ? 'bg-zinc-800 text-zinc-400' : 'bg-zinc-100 text-zinc-500'}`}>
+                      {recentMessages.length} New
+                    </span>
+                  </div>
+                  <div className="max-h-96 overflow-y-auto">
+                    {recentMessages.length === 0 ? (
+                      <div className="px-4 py-8 text-center text-sm text-zinc-500">
+                        No recent messages.
+                      </div>
+                    ) : (
+                      <div className={`divide-y ${isDarkMode ? 'divide-zinc-800/50' : 'divide-zinc-100'}`}>
+                        {recentMessages.map((msg) => (
+                          <div key={msg.id} className={`flex flex-col gap-1 p-4 transition-colors ${isDarkMode ? 'hover:bg-zinc-800/50' : 'hover:bg-zinc-50'}`}>
+                            <div className="flex items-start justify-between gap-2">
+                              <p className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-800'}`}>
+                                To: {msg.borrower_name}
+                              </p>
+                              <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                                msg.status === 'Sent' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
+                                : msg.status === 'Failed' ? 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400'
+                                : 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400'
+                              }`}>
+                                {msg.status}
+                              </span>
+                            </div>
+                            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                              {msg.email_type} • {new Date(msg.sent_at).toLocaleDateString()} {new Date(msg.sent_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                            </p>
+                            <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                              Reminder for <span className="font-semibold text-emerald-600 dark:text-emerald-400">{msg.book_title}</span>
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <button 
+                    onClick={() => setIsMessageMenuOpen(false)}
+                    className={`w-full border-t p-3 text-center text-xs font-bold transition-colors ${isDarkMode ? 'border-zinc-800 text-emerald-500 hover:bg-zinc-800/50' : 'border-zinc-100 text-emerald-600 hover:bg-zinc-50'}`}
+                  >
+                    Close Menu
+                  </button>
+                </div>
+              )}
+            </div>
             <button type="button" className={`relative rounded-lg p-2 ${theme.iconBtn}`}>
               <Bell size={18} strokeWidth={1.9} />
               <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />

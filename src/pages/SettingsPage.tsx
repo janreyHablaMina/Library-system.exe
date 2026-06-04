@@ -399,6 +399,8 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
           configuredSmtpPort,
           configuredSmtpUsername,
           configuredSmtpPassword,
+          configuredSmsEnabled,
+          configuredTxtboxApiKey,
         ] = await Promise.all([
           getSetting('general.default_loan_period'),
           getSetting('general.fine_per_day'),
@@ -421,6 +423,8 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
           getSetting('email.smtp_port'),
           getSetting('email.smtp_username'),
           getSetting('email.smtp_password'),
+          getSetting('sms.enabled'),
+          getSetting('sms.txtbox_api_key'),
         ])
 
         if (cancelled) return
@@ -781,6 +785,107 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
       </div>
     </div>
   )
+
+  const renderGeneralSettings = () => {
+    const numberFields = [
+      {
+        label: 'Default Loan Period',
+        helper: 'Number of days a borrowed book is due by default.',
+        value: defaultLoanPeriod,
+        setter: setDefaultLoanPeriod,
+        settingKey: 'general.default_loan_period',
+        suffix: 'days',
+      },
+      {
+        label: 'Fine Per Day',
+        helper: 'Daily overdue fine charged after the grace period.',
+        value: finePerDay,
+        setter: setFinePerDay,
+        settingKey: 'general.fine_per_day',
+        suffix: 'PHP',
+      },
+      {
+        label: 'Maximum Renewals',
+        helper: 'How many times a member can renew one borrowed book.',
+        value: maximumRenewals,
+        setter: setMaximumRenewals,
+        settingKey: 'general.maximum_renewals',
+        suffix: 'times',
+      },
+      {
+        label: 'Grace Period',
+        helper: 'Extra days before overdue fines begin.',
+        value: gracePeriod,
+        setter: setGracePeriod,
+        settingKey: 'general.grace_period',
+        suffix: 'days',
+      },
+      {
+        label: 'Reservation Expiry',
+        helper: 'How long a reservation stays active before expiring.',
+        value: reservationExpiry,
+        setter: setReservationExpiry,
+        settingKey: 'general.reservation_expiry_days',
+        suffix: 'days',
+      },
+    ]
+
+    return (
+      <div className="grid gap-6 xl:grid-cols-[1fr_0.85fr]">
+        <section className={`rounded-2xl border p-6 ${cardClass}`}>
+          <div className="mb-6">
+            <h3 className={`text-lg font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Circulation Rules</h3>
+            <p className={`mt-1 text-sm ${subLabelClass}`}>Configure the default borrowing and reservation behavior.</p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {numberFields.map((field) => (
+              <label key={field.settingKey} className={`rounded-xl border p-4 ${inputClass}`}>
+                <span className={`block text-sm font-bold ${labelClass}`}>{field.label}</span>
+                <span className={`mt-1 block text-xs ${subLabelClass}`}>{field.helper}</span>
+                <div className={`mt-3 flex h-11 items-center rounded-xl border px-3 ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-zinc-50'}`}>
+                  <input
+                    value={field.value}
+                    onChange={(event) => field.setter(event.target.value)}
+                    onBlur={() => saveGeneralSetting(field.settingKey, field.value)}
+                    className={`w-full bg-transparent text-sm font-semibold outline-none ${isDarkMode ? 'text-zinc-100' : 'text-zinc-700'}`}
+                  />
+                  <span className={`ml-2 text-xs font-bold ${subLabelClass}`}>{field.suffix}</span>
+                </div>
+              </label>
+            ))}
+          </div>
+        </section>
+
+        <section className={`rounded-2xl border p-6 ${cardClass}`}>
+          <div className="mb-6">
+            <h3 className={`text-lg font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>System Preferences</h3>
+            <p className={`mt-1 text-sm ${subLabelClass}`}>Basic notification behavior for library operations.</p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              const next = !notifications
+              setNotifications(next)
+              void saveGeneralSetting('general.email_notifications', String(next))
+            }}
+            className={`flex w-full items-center justify-between rounded-xl border p-4 text-left transition-colors ${
+              isDarkMode ? 'border-zinc-700 bg-[#27272A] hover:bg-zinc-800' : 'border-zinc-200 bg-white hover:bg-zinc-50'
+            }`}
+          >
+            <div>
+              <p className={`text-sm font-bold ${labelClass}`}>Email Notifications</p>
+              <p className={`mt-1 text-xs ${subLabelClass}`}>{notifications ? 'Enabled for general notices.' : 'Disabled for general notices.'}</p>
+            </div>
+            <span className={`inline-flex h-6 w-11 items-center rounded-full p-1 transition-colors ${notifications ? 'bg-emerald-600' : isDarkMode ? 'bg-zinc-700' : 'bg-zinc-200'}`}>
+              <span className={`h-4 w-4 rounded-full bg-white transition-transform ${notifications ? 'translate-x-5' : 'translate-x-0'}`} />
+            </span>
+          </button>
+        </section>
+      </div>
+    )
+  }
 
   const renderLibraryProfile = () => (
     <div className="grid items-start gap-6 lg:grid-cols-[3fr_7fr]">
