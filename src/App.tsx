@@ -679,11 +679,11 @@ const greetingName = formatDisplayName(activeUsername)
           )}
           <div className={`relative z-10 flex flex-col gap-6 px-4 pt-12 pb-6`}>
             <div className="flex items-center gap-3">
-                            <div className={`grid place-items-center rounded-full shadow-sm ${dashboardTheme.avatarBg} ${sidebarCollapsed ? 'h-10 w-10 mx-auto' : 'h-10 w-10 shrink-0'} overflow-hidden`}>
+                            <div className={`grid place-items-center rounded-full shadow-sm border-2 border-[#10B981] ${dashboardTheme.avatarBg} ${sidebarCollapsed ? 'h-10 w-10 mx-auto' : 'h-10 w-10 shrink-0'} overflow-hidden`}>
                 {libraryLogo ? (
                    <img src={libraryLogo} alt="Logo" className="h-full w-full object-cover" />
                 ) : (
-                   <div className="grid place-items-center rounded-full border-2 border-[#10B981] font-black text-[#10B981] h-8 w-8 text-xs">CC</div>
+                   <div className="grid place-items-center rounded-full font-black text-[#10B981] h-full w-full text-xs">CC</div>
                 )}
               </div>
               {!sidebarCollapsed ? (
