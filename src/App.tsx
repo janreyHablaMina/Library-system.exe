@@ -678,21 +678,21 @@ const greetingName = formatDisplayName(activeUsername)
             <div className="pointer-events-none absolute left-0 top-0 h-96 w-full bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-emerald-500/10 via-[#18181B]/5 to-transparent" />
           )}
           <div className={`relative z-10 flex flex-col gap-6 px-4 pt-12 pb-6`}>
-            <div className="flex items-center gap-3">
-                            <div className={`grid place-items-center rounded-full shadow-sm border-2 border-[#10B981] ${dashboardTheme.avatarBg} ${sidebarCollapsed ? 'h-10 w-10 mx-auto' : 'h-10 w-10 shrink-0'} overflow-hidden`}>
+            <div className="flex flex-col items-center gap-3 text-center">
+              <div className={`grid place-items-center rounded-full shadow-sm border-2 border-[#10B981] ${dashboardTheme.avatarBg} ${sidebarCollapsed ? 'h-10 w-10 mx-auto' : 'h-16 w-16'} overflow-hidden shrink-0`}>
                 {libraryLogo ? (
                    <img src={libraryLogo} alt="Logo" className="h-full w-full object-cover" />
                 ) : (
-                   <div className="grid place-items-center rounded-full font-black text-[#10B981] h-full w-full text-xs">CC</div>
+                   <div className="grid place-items-center rounded-full font-black text-[#10B981] h-full w-full text-sm">CC</div>
                 )}
               </div>
               {!sidebarCollapsed ? (
-                <div className="flex flex-col overflow-hidden">
-                  <p className={`text-base font-black tracking-tight truncate w-40 ${dashboardTheme.asideTitle}`} title={libraryName}>
+                <div className="flex flex-col overflow-hidden items-center">
+                  <p className={`text-lg font-black tracking-tight truncate w-48 ${dashboardTheme.asideTitle}`} title={libraryName}>
                     <span className="text-[#10B981]">{libraryName.substring(0, Math.ceil(libraryName.length / 2))}</span>
                     {libraryName.substring(Math.ceil(libraryName.length / 2))}
                   </p>
-                  <p className={`text-[10px] font-semibold uppercase tracking-[0.08em] ${dashboardTheme.asideSub}`}>Admin Workspace</p>
+                  <p className={`text-[10px] font-semibold uppercase tracking-[0.08em] mt-1 ${dashboardTheme.asideSub}`}>Admin Workspace</p>
                 </div>
               ) : null}
             </div>
