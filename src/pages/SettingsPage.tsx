@@ -468,6 +468,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
   const saveGeneralSetting = async (key: string, value: string) => {
     try {
       await setSetting(key, value)
+      window.dispatchEvent(new CustomEvent('setting-updated', { detail: { key, value } }))
     } catch (error) {
       console.error(`Failed to save setting ${key}:`, error)
     }

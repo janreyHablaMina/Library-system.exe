@@ -21,7 +21,7 @@ import { AuthorDetailPage } from './pages/AuthorDetailPage'
 import { CategoriesPage } from './pages/CategoriesPage'
 import { ReservationsPage } from './pages/ReservationsPage'
 import { StaffPage } from './pages/StaffPage'
-import { getTrialDaysRemaining, verifyLicenseKey, getLicenseStatus, createBook, expandMainWindow, getActiveSession, getEmailLogStats, listAuthors, listBooks, listBorrowTransactions, listMembers, listNotifications, listEmailLogs, login as loginWithDb, logout as logoutFromDb, markAllNotificationsRead, markNotificationAsRead, restoreLoginWindow, runAutomaticEmailReminders, searchAuthors, searchBooks, searchMembers, syncNotifications, type NotificationItem, type EmailLog } from './lib/tauriApi'
+import { getSetting, getTrialDaysRemaining, verifyLicenseKey, getLicenseStatus, createBook, expandMainWindow, getActiveSession, getEmailLogStats, listAuthors, listBooks, listBorrowTransactions, listMembers, listNotifications, listEmailLogs, login as loginWithDb, logout as logoutFromDb, markAllNotificationsRead, markNotificationAsRead, restoreLoginWindow, runAutomaticEmailReminders, searchAuthors, searchBooks, searchMembers, syncNotifications, type NotificationItem, type EmailLog } from './lib/tauriApi'
 
 
 type LoginFormState = {
@@ -139,6 +139,36 @@ function DashboardShell({ onLogout, licenseStatus, trialDays }: { onLogout: () =
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [activePage, setActivePage] = useState<ActivePage>('Dashboard')
   const [activeSettingsTab, setActiveSettingsTab] = useState('Overview')
+  const [libraryName, setLibraryName] = useState('infoLib')
+  const [libraryLogo, setLibraryLogo] = useState<string | null>(null)
+
+  useEffect(() => {
+    let mounted = true
+    const loadProfile = async () => {
+       try {
+          const name = await getSetting('library.name')
+          const logo = await getSetting('library.logo_data')
+          if (mounted) {
+             setLibraryName(name || 'infoLib')
+             setLibraryLogo(logo || null)
+          }
+       } catch (e) {
+          // ignore
+       }
+    }
+    loadProfile()
+
+    const handleUpdate = (e: any) => {
+       if (e.detail?.key === 'library.name') setLibraryName(e.detail.value || 'infoLib')
+       if (e.detail?.key === 'library.logo_data') setLibraryLogo(e.detail.value || null)
+    }
+    window.addEventListener('setting-updated', handleUpdate)
+    return () => {
+       mounted = false
+       window.removeEventListener('setting-updated', handleUpdate)
+    }
+  }, [])
+
   const [isAddBookOpen, setIsAddBookOpen] = useState(false)
   const [booksRefreshKey, setBooksRefreshKey] = useState(0)
   const [booksToastMessage, setBooksToastMessage] = useState<string | null>(null)
