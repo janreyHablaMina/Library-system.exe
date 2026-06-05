@@ -77,17 +77,21 @@ function SmsLogsPage({ isDarkMode }: SmsLogsPageProps) {
             <p className={`mt-1 text-sm ${textSecondary}`}>View and manage all SMS notifications sent to library members.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <button className={`inline-flex h-9 items-center gap-2 rounded-lg bg-emerald-600 px-4 text-xs font-bold text-white transition-colors hover:bg-emerald-700`}>
-              <Plus size={14} /> Send SMS
+            <button className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-semibold text-white hover:bg-emerald-700">
+              <span className="text-lg leading-none">+</span>
+              Send SMS
             </button>
-            <button className={`inline-flex h-9 items-center gap-2 rounded-lg border px-4 text-xs font-bold transition-colors ${isDarkMode ? 'border-zinc-700 bg-[#18181B] hover:bg-zinc-800 text-zinc-300' : 'border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700'}`}>
-              <FileText size={14} className="text-emerald-600" /> Templates
+            <button className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-semibold ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
+              <FileText size={15} />
+              Templates
             </button>
-            <button className={`inline-flex h-9 items-center gap-2 rounded-lg border px-4 text-xs font-bold transition-colors ${isDarkMode ? 'border-zinc-700 bg-[#18181B] hover:bg-zinc-800 text-zinc-300' : 'border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700'}`}>
-              <BarChart2 size={14} className="text-emerald-600" /> SMS Reports
+            <button className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-semibold ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
+              <BarChart2 size={15} />
+              SMS Reports
             </button>
-            <button className={`inline-flex h-9 items-center gap-2 rounded-lg border px-4 text-xs font-bold transition-colors ${isDarkMode ? 'border-zinc-700 bg-[#18181B] hover:bg-zinc-800 text-zinc-300' : 'border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700'}`}>
-              <RotateCcw size={14} className="text-purple-600" /> Retry Failed SMS
+            <button className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-semibold ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
+              <RotateCcw size={15} />
+              Retry Failed SMS
             </button>
           </div>
         </header>
