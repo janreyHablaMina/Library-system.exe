@@ -112,6 +112,17 @@ export type EmailLog = {
   errorMessage: string | null
 }
 
+export type SmsLog = {
+  id: number
+  borrowerName: string
+  phoneNumber: string
+  bookTitle: string | null
+  smsType: string
+  status: string
+  sentAt: string
+  errorMessage: string | null
+}
+
 export type EmailLogStats = {
   sentToday: number
   failed: number
@@ -505,6 +516,10 @@ export async function listEmailLogs(search?: string, status?: string, limit?: nu
   return invoke<EmailLog[]>('list_email_logs', { search, status, limit })
 }
 
+export async function listSmsLogs(search?: string, status?: string, limit?: number): Promise<SmsLog[]> {
+  return invoke<SmsLog[]>('list_sms_logs', { search, status, limit })
+}
+
 export async function getEmailLogStats(): Promise<EmailLogStats> {
   return invoke<EmailLogStats>('get_email_log_stats')
 }
@@ -513,8 +528,8 @@ export async function testEmailConfiguration(to: string): Promise<string> {
   return invoke<string>('test_email_configuration', { to })
 }
 
-export async function sendSmsGateway(phone: string, message: string): Promise<string> {
-  return invoke<string>('send_sms_gateway', { phone, message })
+export async function sendSmsGateway(phone: string, message: string, borrowerName?: string | null, smsType?: string | null): Promise<string> {
+  return invoke<string>('send_sms_gateway', { phone, message, borrowerName, smsType })
 }
 
 export async function exportReport(format: 'pdf' | 'excel', name: string): Promise<string> {

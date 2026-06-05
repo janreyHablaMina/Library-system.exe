@@ -1801,7 +1801,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                   : 'Manage your library system preferences and configuration.'}
               </p>
             </div>
-            {activeMenu === 'Overview' || activeMenu === 'Email Logs' ? null : activeMenu === 'Users & Roles' ? (
+            {activeMenu === 'Overview' ? null : activeMenu === 'Users & Roles' ? (
               <div className="flex gap-3">
                 <button 
                   onClick={() => alert('Exporting user data...')}
@@ -1842,8 +1842,6 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
             renderEmailConfiguration()
           ) : activeMenu === 'SMS Configuration' ? (
             renderSmsConfiguration()
-          ) : activeMenu === 'Email Logs' ? (
-            renderEmailLogs()
           ) : (
             renderSettingsOverview()
           )}

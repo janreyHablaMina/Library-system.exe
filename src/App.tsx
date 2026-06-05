@@ -21,7 +21,7 @@ import { AuthorDetailPage } from './pages/AuthorDetailPage'
 import { CategoriesPage } from './pages/CategoriesPage'
 import { ReservationsPage } from './pages/ReservationsPage'
 import { StaffPage } from './pages/StaffPage'
-import { getSetting, getTrialDaysRemaining, verifyLicenseKey, getLicenseStatus, createBook, expandMainWindow, getActiveSession, getEmailLogStats, listAuthors, listBooks, listBorrowTransactions, listMembers, listNotifications, listEmailLogs, login as loginWithDb, logout as logoutFromDb, markAllNotificationsRead, markNotificationAsRead, restoreLoginWindow, runAutomaticEmailReminders, searchAuthors, searchBooks, searchMembers, syncNotifications, type NotificationItem, type EmailLog } from './lib/tauriApi'
+import { getSetting, getTrialDaysRemaining, verifyLicenseKey, getLicenseStatus, createBook, expandMainWindow, getActiveSession, getEmailLogStats, listAuthors, listBooks, listBorrowTransactions, listMembers, listNotifications, listEmailLogs, listSmsLogs, login as loginWithDb, logout as logoutFromDb, markAllNotificationsRead, markNotificationAsRead, restoreLoginWindow, runAutomaticEmailReminders, searchAuthors, searchBooks, searchMembers, syncNotifications, type NotificationItem, type EmailLog, type SmsLog } from './lib/tauriApi'
 
 
 type LoginFormState = {
@@ -185,10 +185,14 @@ function DashboardShell({ onLogout, licenseStatus, trialDays }: { onLogout: () =
   const [borrowPrefill, setBorrowPrefill] = useState<{ memberId: number, bookId: number } | null>(null)
   const [borrowReturnActiveTab, setBorrowReturnActiveTab] = useState<'borrow' | 'return'>('borrow')
 
-  const [isMessageMenuOpen, setIsMessageMenuOpen] = useState(false)
-  const [recentMessages, setRecentMessages] = useState<EmailLog[]>([])
-  const [messageError, setMessageError] = useState<string | null>(null)
-  const messageMenuRef = useRef<HTMLDivElement | null>(null)
+  const [isEmailMenuOpen, setIsEmailMenuOpen] = useState(false)
+  const [isSmsMenuOpen, setIsSmsMenuOpen] = useState(false)
+  const [recentEmails, setRecentEmails] = useState<EmailLog[]>([])
+  const [recentSms, setRecentSms] = useState<SmsLog[]>([])
+  const [emailError, setEmailError] = useState<string | null>(null)
+  const [smsError, setSmsError] = useState<string | null>(null)
+  const emailMenuRef = useRef<HTMLDivElement | null>(null)
+  const smsMenuRef = useRef<HTMLDivElement | null>(null)
 
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
@@ -238,7 +242,7 @@ function DashboardShell({ onLogout, licenseStatus, trialDays }: { onLogout: () =
           ])
           if (mounted) {
             setGlobalSearchData({
-              books: books.map(b => ({ id: b.id, title: b.title, author: b.author, cover: b.coverData || '📘', category: b.category, available: b.available })),
+              books: books.map(b => ({ id: b.id, title: b.title, author: b.author, cover: b.coverData || 'ðŸ“˜', category: b.category, available: b.available })),
               members: members.map(m => ({ id: m.id, fullName: m.fullName, memberId: m.memberId })),
               authors: authors.map(a => ({ id: a.id, name: a.name, profilePhotoData: a.profilePhotoData }))
             })
@@ -264,6 +268,22 @@ function DashboardShell({ onLogout, licenseStatus, trialDays }: { onLogout: () =
       setNotifications(rows)
     } catch (error) {
       console.error('Failed to refresh notifications:', error)
+    }
+    try {
+      const emailRows = await listEmailLogs('', '', 10)
+      setRecentEmails(emailRows)
+      setEmailError(null)
+    } catch (error) {
+      console.error('Failed to load recent emails:', error)
+      setEmailError('Failed to load recent emails')
+    }
+    try {
+      const smsRows = await listSmsLogs('', '', 10)
+      setRecentSms(smsRows)
+      setSmsError(null)
+    } catch (error) {
+      console.error('Failed to load recent SMS:', error)
+      setSmsError('Failed to load recent SMS')
     }
   }
   
@@ -879,7 +899,7 @@ const greetingName = formatDisplayName(activeUsername)
                                         if (book) {
                                           setSelectedBook({
                                             id: book.id,
-                                            cover: book.coverData || '📘',
+                                            cover: book.coverData || 'ðŸ“˜',
                                             title: book.title,
                                             isbn: book.isbn ?? '-',
                                             author: book.author,
@@ -1016,73 +1036,93 @@ const greetingName = formatDisplayName(activeUsername)
                   >
                     {isDarkMode ? <Sun size={18} strokeWidth={1.9} /> : <Moon size={18} strokeWidth={1.9} />}
                   </button>
-                                    <div ref={messageMenuRef} className="relative">
+                  <div ref={smsMenuRef} className="relative">
                     <button 
                       type="button" 
-                      onClick={() => setIsMessageMenuOpen((v) => !v)}
-                      className={`relative rounded-lg p-2 ${isMessageMenuOpen ? 'bg-emerald-500/10 text-emerald-500' : dashboardTheme.iconBtn}`} 
-                      aria-label="Open messages"
+                      onClick={() => setIsSmsMenuOpen((v) => !v)}
+                      className={`relative rounded-lg p-2 ${isSmsMenuOpen ? 'bg-sky-500/10 text-sky-500' : dashboardTheme.iconBtn}`} 
+                      aria-label="Open SMS logs"
                     >
                       <MessageCircle size={18} strokeWidth={1.9} />
-                      <span aria-hidden="true" className="absolute -right-0.5 -top-0.5 grid h-4 w-4 place-items-center rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] text-[10px] font-bold text-white">{recentMessages.length > 0 ? recentMessages.length : 3}</span>
+                      <span aria-hidden="true" className="absolute -right-0.5 -top-0.5 grid h-4 w-4 place-items-center rounded-full bg-sky-500 shadow-[0_0_8px_rgba(14,165,233,0.8)] text-[10px] font-bold text-white">{recentSms.length > 0 ? recentSms.length : 0}</span>
                     </button>
-                    {isMessageMenuOpen && (
+                    {isSmsMenuOpen && (
                       <div className={`absolute right-0 top-11 z-30 w-80 overflow-hidden rounded-xl border shadow-2xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
                         <div className={`flex items-center justify-between border-b px-4 py-3 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'}`}>
-                          <h3 className={`text-sm font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Recent Outbound Messages</h3>
-                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${isDarkMode ? 'bg-zinc-800 text-zinc-400' : 'bg-zinc-100 text-zinc-500'}`}>
-                            {recentMessages.length} New
-                          </span>
+                          <h3 className={`text-sm font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Recent SMS Logs</h3>
                         </div>
                         <div className="max-h-96 overflow-y-auto">
-                          {messageError ? (
-                            <div className="px-4 py-8 text-center text-sm text-red-500">
-                              {messageError}
-                            </div>
-                          ) : recentMessages.length === 0 ? (
-                            <div className="px-4 py-8 text-center text-sm text-zinc-500">
-                              No recent messages.
-                            </div>
+                          {smsError ? (
+                            <div className="px-4 py-8 text-center text-sm text-red-500">{smsError}</div>
+                          ) : recentSms.length === 0 ? (
+                            <div className="px-4 py-8 text-center text-sm text-zinc-500">No recent SMS logs.</div>
                           ) : (
                             <div className={`divide-y ${isDarkMode ? 'divide-zinc-800/50' : 'divide-zinc-100'}`}>
-                              {recentMessages.map((msg) => (
+                              {recentSms.map((msg) => (
                                 <div key={msg.id} className={`flex flex-col gap-1 p-4 transition-colors ${isDarkMode ? 'hover:bg-zinc-800/50' : 'hover:bg-zinc-50'}`}>
                                   <div className="flex items-start justify-between gap-2">
-                                    <p className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-800'}`}>
-                                      To: {msg.borrowerName}
-                                    </p>
-                                    <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
-                                      msg.status === 'Sent' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
-                                      : msg.status === 'Failed' ? 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400'
-                                      : 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400'
-                                    }`}>
-                                      {msg.status}
-                                    </span>
+                                    <p className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-800'}`}>To: {msg.phoneNumber}</p>
+                                    <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${msg.status === 'Sent' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' : msg.status === 'Failed' ? 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400' : 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400'}`}>{msg.status}</span>
                                   </div>
-                                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                                    {msg.emailType} • {new Date(msg.sentAt).toLocaleDateString()} {new Date(msg.sentAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                                  </p>
-                                  <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
-                                    Reminder for <span className="font-semibold text-emerald-600 dark:text-emerald-400">{msg.bookTitle}</span>
-                                  </p>
+                                  <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">{msg.smsType}</p>
                                 </div>
                               ))}
                             </div>
                           )}
                         </div>
                         <button 
-                          onClick={() => setIsMessageMenuOpen(false)}
-                          className={`w-full border-t p-3 text-center text-xs font-bold transition-colors ${isDarkMode ? 'border-zinc-800 text-emerald-500 hover:bg-zinc-800/50' : 'border-zinc-100 text-emerald-600 hover:bg-zinc-50'}`}
+                          onClick={() => { setIsSmsMenuOpen(false); setActivePage('SmsLogs'); }}
+                          className={`w-full border-t p-3 text-center text-xs font-bold transition-colors ${isDarkMode ? 'border-zinc-800 text-sky-500 hover:bg-zinc-800/50' : 'border-zinc-100 text-sky-600 hover:bg-zinc-50'}`}
                         >
-                          Close Menu
+                          View All SMS Logs
                         </button>
                       </div>
                     )}
                   </div>
-                  <button type="button" className={`relative rounded-lg p-2 ${dashboardTheme.iconBtn}`} aria-label="Open inbox">
-                    <Mail size={18} strokeWidth={1.9} />
-                    <span aria-hidden="true" className="absolute -right-0.5 -top-0.5 grid h-4 w-4 place-items-center rounded-full bg-red-500 text-[10px] font-bold text-white">5</span>
-                  </button>
+                  
+                  <div ref={emailMenuRef} className="relative">
+                    <button 
+                      type="button" 
+                      onClick={() => setIsEmailMenuOpen((v) => !v)}
+                      className={`relative rounded-lg p-2 ${isEmailMenuOpen ? 'bg-emerald-500/10 text-emerald-500' : dashboardTheme.iconBtn}`} 
+                      aria-label="Open email logs"
+                    >
+                      <Mail size={18} strokeWidth={1.9} />
+                      <span aria-hidden="true" className="absolute -right-0.5 -top-0.5 grid h-4 w-4 place-items-center rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] text-[10px] font-bold text-white">{recentEmails.length > 0 ? recentEmails.length : 0}</span>
+                    </button>
+                    {isEmailMenuOpen && (
+                      <div className={`absolute right-0 top-11 z-30 w-80 overflow-hidden rounded-xl border shadow-2xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
+                        <div className={`flex items-center justify-between border-b px-4 py-3 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'}`}>
+                          <h3 className={`text-sm font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Recent Email Logs</h3>
+                        </div>
+                        <div className="max-h-96 overflow-y-auto">
+                          {emailError ? (
+                            <div className="px-4 py-8 text-center text-sm text-red-500">{emailError}</div>
+                          ) : recentEmails.length === 0 ? (
+                            <div className="px-4 py-8 text-center text-sm text-zinc-500">No recent email logs.</div>
+                          ) : (
+                            <div className={`divide-y ${isDarkMode ? 'divide-zinc-800/50' : 'divide-zinc-100'}`}>
+                              {recentEmails.map((msg) => (
+                                <div key={msg.id} className={`flex flex-col gap-1 p-4 transition-colors ${isDarkMode ? 'hover:bg-zinc-800/50' : 'hover:bg-zinc-50'}`}>
+                                  <div className="flex items-start justify-between gap-2">
+                                    <p className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-800'}`}>To: {msg.emailAddress}</p>
+                                    <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${msg.status === 'Sent' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' : msg.status === 'Failed' ? 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400' : 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400'}`}>{msg.status}</span>
+                                  </div>
+                                  <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">{msg.emailType}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <button 
+                          onClick={() => { setIsEmailMenuOpen(false); setActivePage('EmailLogs'); }}
+                          className={`w-full border-t p-3 text-center text-xs font-bold transition-colors ${isDarkMode ? 'border-zinc-800 text-emerald-500 hover:bg-zinc-800/50' : 'border-zinc-100 text-emerald-600 hover:bg-zinc-50'}`}
+                        >
+                          View All Email Logs
+                        </button>
+                      </div>
+                    )}
+                  </div>
                   <div ref={notificationsRef} className="relative">
                     <button type="button" onClick={() => void handleOpenNotifications()} className={`relative rounded-lg p-2 ${dashboardTheme.iconBtn}`} aria-label="Open notifications">
                       <Bell size={18} strokeWidth={1.9} />
@@ -1317,7 +1357,7 @@ const greetingName = formatDisplayName(activeUsername)
             <section className="p-5">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div>
-                  <h2 className={`text-3xl font-black ${dashboardTheme.greetingTitle}`}>{greetingText}, {greetingName}! 👋</h2>
+                  <h2 className={`text-3xl font-black ${dashboardTheme.greetingTitle}`}>{greetingText}, {greetingName}! ðŸ‘‹</h2>
                   <p className={`mt-1 text-sm ${dashboardTheme.greetingSub}`}>Here&apos;s what&apos;s happening in your library today.</p>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -1451,7 +1491,7 @@ const greetingName = formatDisplayName(activeUsername)
               <article className={`overflow-hidden rounded-2xl border shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="flex items-center justify-between px-4 py-3">
                   <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Recent Borrowed Books</h3>
-                  <button type="button" onClick={() => openTransactionsPage('borrowed')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
+                  <button type="button" onClick={() => openTransactionsPage('borrowed')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all â†’</button>
                 </div>
                 <div>
                   {recentBorrowedItems.map((item, idx) => (
@@ -1482,7 +1522,7 @@ const greetingName = formatDisplayName(activeUsername)
               <article className={`overflow-hidden rounded-2xl border shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="flex items-center justify-between px-4 py-3">
                   <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Overdue Returns</h3>
-                  <button type="button" onClick={() => openTransactionsPage('overdue')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
+                  <button type="button" onClick={() => openTransactionsPage('overdue')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all â†’</button>
                 </div>
                 <div>
                   {overdueReturnItems.map((item, idx) => (
@@ -1513,7 +1553,7 @@ const greetingName = formatDisplayName(activeUsername)
               <article className={`rounded-2xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-3 flex items-center justify-between pb-3">
                   <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Today&apos;s Activity</h3>
-                  <button type="button" onClick={() => setActivePage('Reports')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
+                  <button type="button" onClick={() => setActivePage('Reports')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all â†’</button>
                 </div>
                 <div className="space-y-0">
                   {notifications.slice(0, 6).map((item, idx) => {
@@ -1546,7 +1586,7 @@ const greetingName = formatDisplayName(activeUsername)
               <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Most Borrowed Categories</h3>
-                  <button type="button" onClick={() => setActivePage('Reports')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
+                  <button type="button" onClick={() => setActivePage('Reports')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all â†’</button>
                 </div>
                 <div className="flex min-h-[220px] items-center">
                   {(() => {
@@ -1586,7 +1626,7 @@ const greetingName = formatDisplayName(activeUsername)
               <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Low Stock / Missing Copies</h3>
-                  <button type="button" onClick={() => setActivePage('Books')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
+                  <button type="button" onClick={() => setActivePage('Books')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all â†’</button>
                 </div>
                 <div className="space-y-0 text-xs">
                   {lowStockItems.map((item, idx) => (
@@ -1616,7 +1656,7 @@ const greetingName = formatDisplayName(activeUsername)
               <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Upcoming Due Dates</h3>
-                  <button type="button" onClick={() => openTransactionsPage('overdue')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all →</button>
+                  <button type="button" onClick={() => openTransactionsPage('overdue')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all â†’</button>
                 </div>
                 <div className="space-y-0">
                   {upcomingDueItems.map((item, idx) => (
@@ -1968,7 +2008,7 @@ function App() {
                 </button>
               </div>
 
-              <p className="mt-auto pt-3 text-center text-xs text-zinc-500">© 2026 infoLib. All rights reserved.</p>
+              <p className="mt-auto pt-3 text-center text-xs text-zinc-500">Â© 2026 infoLib. All rights reserved.</p>
             </form>
           </section>
         </div>

@@ -272,6 +272,18 @@ struct EmailLogRow {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+struct SmsLogRow {
+    id: i64,
+    borrower_name: String,
+    phone_number: String,
+    book_title: Option<String>,
+    sms_type: String,
+    status: String,
+    sent_at: String,
+    error_message: Option<String>,
+}
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct EmailLogStats {
     sent_today: i64,
     failed: i64,
@@ -571,6 +583,19 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
         email_address TEXT NOT NULL,
         book_title TEXT NOT NULL,
         email_type TEXT NOT NULL,
+        status TEXT NOT NULL,
+        sent_at TEXT NOT NULL,
+        error_message TEXT,
+        automatic_key TEXT UNIQUE,
+        FOREIGN KEY(borrow_transaction_id) REFERENCES borrow_transactions(id) ON DELETE SET NULL
+      );
+      CREATE TABLE IF NOT EXISTS sms_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        borrow_transaction_id INTEGER,
+        borrower_name TEXT NOT NULL,
+        phone_number TEXT NOT NULL,
+        book_title TEXT,
+        sms_type TEXT NOT NULL,
         status TEXT NOT NULL,
         sent_at TEXT NOT NULL,
         error_message TEXT,
@@ -2821,6 +2846,48 @@ fn list_email_logs(
 }
 
 #[tauri::command]
+fn list_sms_logs(
+    app: tauri::AppHandle,
+    search: Option<String>,
+    status: Option<String>,
+    limit: Option<i64>,
+) -> Result<Vec<SmsLogRow>, String> {
+    let conn = open_db(&database_path(&app)?)?;
+    init_schema(&conn)?;
+    let q = format!("%{}%", search.unwrap_or_default().trim());
+    let status_filter = status.unwrap_or_default();
+    let max_rows = limit.unwrap_or(200).clamp(1, 1000);
+    let mut stmt = conn
+    .prepare(
+      "
+      SELECT id, borrower_name, phone_number, book_title, sms_type, status, sent_at, error_message
+      FROM sms_logs
+      WHERE (?1 = '%' OR ?1 = '%%' OR borrower_name LIKE ?1 OR phone_number LIKE ?1 OR book_title LIKE ?1 OR sms_type LIKE ?1)
+        AND (?2 = '' OR status = ?2)
+      ORDER BY sent_at DESC, id DESC
+      LIMIT ?3
+      ",
+    )
+    .map_err(|e| format!("prepare sms logs failed: {e}"))?;
+    let rows = stmt
+        .query_map(params![q, status_filter, max_rows], |row| {
+            Ok(SmsLogRow {
+                id: row.get(0)?,
+                borrower_name: row.get(1)?,
+                phone_number: row.get(2)?,
+                book_title: row.get(3)?,
+                sms_type: row.get(4)?,
+                status: row.get(5)?,
+                sent_at: row.get(6)?,
+                error_message: row.get(7)?,
+            })
+        })
+        .map_err(|e| format!("list sms logs failed: {e}"))?;
+    rows.collect::<Result<Vec<_>, _>>()
+        .map_err(|e| format!("collect sms logs failed: {e}"))
+}
+
+#[tauri::command]
 fn get_email_log_stats(app: tauri::AppHandle) -> Result<EmailLogStats, String> {
     let conn = open_db(&database_path(&app)?)?;
     init_schema(&conn)?;
@@ -2878,11 +2945,27 @@ fn test_email_configuration(app: tauri::AppHandle, to: String) -> Result<String,
 }
 
 #[tauri::command]
-fn send_sms_gateway(phone: String, message: String) -> Result<String, String> {
+fn send_sms_gateway(
+    app: tauri::AppHandle,
+    phone: String,
+    message: String,
+    borrower_name: Option<String>,
+    sms_type: Option<String>,
+) -> Result<String, String> {
     let summary = format!(
         "SMS gateway stub queued. Phone: {phone}, Message chars: {}",
         message.chars().count()
     );
+    let conn = open_db(&database_path(&app)?)?;
+    init_schema(&conn)?;
+    let b_name = borrower_name.unwrap_or_else(|| "Unknown".to_string());
+    let s_type = sms_type.unwrap_or_else(|| "Notification".to_string());
+    
+    conn.execute(
+        "INSERT INTO sms_logs (borrower_name, phone_number, book_title, sms_type, status, sent_at, error_message) VALUES (?, ?, ?, ?, ?, datetime('now', 'localtime'), ?)",
+        params![b_name, phone, message, s_type, "Sent", None::<String>],
+    ).map_err(|e| format!("failed to insert sms log: {e}"))?;
+    
     Ok(summary)
 }
 
@@ -3306,7 +3389,7 @@ async fn test_sms_configuration(
     send_sms_txtbox(&api_key, &to, "Test SMS").await?;
     
     conn.execute(
-        "INSERT INTO email_logs (borrower_name, email_address, book_title, email_type, status, sent_at, error_message) VALUES (?, ?, ?, ?, ?, datetime('now', 'localtime'), ?)",
+        "INSERT INTO sms_logs (borrower_name, phone_number, book_title, sms_type, status, sent_at, error_message) VALUES (?, ?, ?, ?, ?, datetime('now', 'localtime'), ?)",
         ["Admin Test", &to, "N/A", "SMS Test", "Sent", ""],
     ).map_err(|e| format!("db error: {e}"))?;
 
@@ -3345,7 +3428,7 @@ async fn send_manual_sms(
     send_sms_txtbox(&api_key, &phone_number, &message).await?;
 
     conn.execute(
-        "INSERT INTO email_logs (borrower_name, email_address, book_title, email_type, status, sent_at, error_message) VALUES (?, ?, ?, ?, ?, datetime('now', 'localtime'), ?)",
+        "INSERT INTO sms_logs (borrower_name, phone_number, book_title, sms_type, status, sent_at, error_message) VALUES (?, ?, ?, ?, ?, datetime('now', 'localtime'), ?)",
         [&member_name, &phone_number, "Manual SMS", "Custom SMS", "Sent", ""],
     ).map_err(|e| format!("db error: {e}"))?;
 
@@ -3501,6 +3584,7 @@ pub fn run() {
             send_manual_email_reminder,
             run_automatic_email_reminders,
             list_email_logs,
+            list_sms_logs,
             get_email_log_stats,
             test_email_configuration,
             test_sms_configuration,
