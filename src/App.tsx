@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { listen } from '@tauri-apps/api/event'
-import { AlertTriangle, ArrowLeft, ArrowLeftRight, ArrowRight, BarChart3, Bell, BookOpen, BookPlus, Bookmark, Calendar, ChevronRight, Clock3, Feather, FileText, Grid2x2, LayoutDashboard, Library, Lock, LogOut, Mail, MessageCircle, Moon, RotateCcw, Search, Settings2, Shield, Sun, Undo2, UserCircle, UserPlus, Users, UsersRound } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, ArrowLeftRight, ArrowRight, BarChart3, Bell, BookOpen, BookPlus, Bookmark, Calendar, ChevronRight, Clock3, Feather, FileText, Grid2x2, LayoutDashboard, Library, Lock, LogOut, Mail, MessageCircle, Moon, RotateCcw, Search, Settings2, Shield, Sun, Undo2, UserCircle, UserPlus, Users, UsersRound, X } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import heroImage from './assets/login.avif'
 import { BooksPage } from './pages/BooksPage'
@@ -21,6 +21,9 @@ import { AuthorDetailPage } from './pages/AuthorDetailPage'
 import { CategoriesPage } from './pages/CategoriesPage'
 import { ReservationsPage } from './pages/ReservationsPage'
 import { StaffPage } from './pages/StaffPage'
+import EmailLogsPage from './pages/EmailLogsPage'
+import SmsLogsPage from './pages/SmsLogsPage'
+import NotificationsPage from './pages/NotificationsPage'
 import { getSetting, getTrialDaysRemaining, verifyLicenseKey, getLicenseStatus, createBook, expandMainWindow, getActiveSession, getEmailLogStats, listAuthors, listBooks, listBorrowTransactions, listMembers, listNotifications, listEmailLogs, listSmsLogs, login as loginWithDb, logout as logoutFromDb, markAllNotificationsRead, markNotificationAsRead, restoreLoginWindow, runAutomaticEmailReminders, searchAuthors, searchBooks, searchMembers, syncNotifications, type NotificationItem, type EmailLog, type SmsLog } from './lib/tauriApi'
 
 
@@ -332,12 +335,20 @@ function DashboardShell({ onLogout, licenseStatus, trialDays }: { onLogout: () =
       if (!searchContainerRef.current?.contains(event.target as Node)) {
         setIsSearchFocused(false)
       }
+      if (!emailMenuRef.current?.contains(event.target as Node)) {
+        setIsEmailMenuOpen(false)
+      }
+      if (!smsMenuRef.current?.contains(event.target as Node)) {
+        setIsSmsMenuOpen(false)
+      }
     }
 
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setIsProfileOpen(false)
         setIsNotificationsOpen(false)
+        setIsEmailMenuOpen(false)
+        setIsSmsMenuOpen(false)
       }
     }
 
@@ -1039,7 +1050,11 @@ const greetingName = formatDisplayName(activeUsername)
                   <div ref={smsMenuRef} className="relative">
                     <button 
                       type="button" 
-                      onClick={() => setIsSmsMenuOpen((v) => !v)}
+                      onClick={() => {
+                        setIsSmsMenuOpen((v) => !v)
+                        setIsEmailMenuOpen(false)
+                        setIsNotificationsOpen(false)
+                      }}
                       className={`relative rounded-lg p-2 ${isSmsMenuOpen ? 'bg-sky-500/10 text-sky-500' : dashboardTheme.iconBtn}`} 
                       aria-label="Open SMS logs"
                     >
@@ -1050,6 +1065,9 @@ const greetingName = formatDisplayName(activeUsername)
                       <div className={`absolute right-0 top-11 z-30 w-80 overflow-hidden rounded-xl border shadow-2xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
                         <div className={`flex items-center justify-between border-b px-4 py-3 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'}`}>
                           <h3 className={`text-sm font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Recent SMS Logs</h3>
+                          <button type="button" onClick={() => setIsSmsMenuOpen(false)} className={`rounded-md p-1 transition-colors ${isDarkMode ? 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200' : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800'}`}>
+                            <X size={16} />
+                          </button>
                         </div>
                         <div className="max-h-96 overflow-y-auto">
                           {smsError ? (
@@ -1083,7 +1101,11 @@ const greetingName = formatDisplayName(activeUsername)
                   <div ref={emailMenuRef} className="relative">
                     <button 
                       type="button" 
-                      onClick={() => setIsEmailMenuOpen((v) => !v)}
+                      onClick={() => {
+                        setIsEmailMenuOpen((v) => !v)
+                        setIsSmsMenuOpen(false)
+                        setIsNotificationsOpen(false)
+                      }}
                       className={`relative rounded-lg p-2 ${isEmailMenuOpen ? 'bg-emerald-500/10 text-emerald-500' : dashboardTheme.iconBtn}`} 
                       aria-label="Open email logs"
                     >
@@ -1094,6 +1116,9 @@ const greetingName = formatDisplayName(activeUsername)
                       <div className={`absolute right-0 top-11 z-30 w-80 overflow-hidden rounded-xl border shadow-2xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
                         <div className={`flex items-center justify-between border-b px-4 py-3 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'}`}>
                           <h3 className={`text-sm font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Recent Email Logs</h3>
+                          <button type="button" onClick={() => setIsEmailMenuOpen(false)} className={`rounded-md p-1 transition-colors ${isDarkMode ? 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200' : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800'}`}>
+                            <X size={16} />
+                          </button>
                         </div>
                         <div className="max-h-96 overflow-y-auto">
                           {emailError ? (
@@ -1124,7 +1149,16 @@ const greetingName = formatDisplayName(activeUsername)
                     )}
                   </div>
                   <div ref={notificationsRef} className="relative">
-                    <button type="button" onClick={() => void handleOpenNotifications()} className={`relative rounded-lg p-2 ${dashboardTheme.iconBtn}`} aria-label="Open notifications">
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        void handleOpenNotifications()
+                        setIsEmailMenuOpen(false)
+                        setIsSmsMenuOpen(false)
+                      }} 
+                      className={`relative rounded-lg p-2 ${dashboardTheme.iconBtn}`} 
+                      aria-label="Open notifications"
+                    >
                       <Bell size={18} strokeWidth={1.9} />
                       {unreadNotifications > 0 ? (
                         <span aria-hidden="true" className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
@@ -1134,9 +1168,14 @@ const greetingName = formatDisplayName(activeUsername)
                     </button>
                     {isNotificationsOpen ? (
                       <div className={`absolute right-0 top-11 z-30 w-80 rounded-xl border p-2 shadow-xl ${isDarkMode ? 'border-zinc-700 bg-[#27272A]' : 'border-zinc-200 bg-white'}`}>
-                        <div className="mb-2 flex items-center justify-between px-2 py-1">
-                          <p className={`text-sm font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Notifications</p>
-                          <button type="button" onClick={() => void handleReadAllNotifications()} className="text-[11px] font-semibold text-emerald-600 hover:underline">Mark all read</button>
+                        <div className="mb-2 flex items-center justify-between border-b px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <h3 className={`text-sm font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Notifications</h3>
+                            <button type="button" onClick={() => void handleReadAllNotifications()} className="text-[11px] font-semibold text-emerald-600 hover:underline">Mark all read</button>
+                          </div>
+                          <button type="button" onClick={() => setIsNotificationsOpen(false)} className={`rounded-md p-1 transition-colors ${isDarkMode ? 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200' : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800'}`}>
+                            <X size={16} />
+                          </button>
                         </div>
                         <div className="max-h-80 overflow-auto">
                           {notifications.length === 0 ? (
@@ -1351,6 +1390,12 @@ const greetingName = formatDisplayName(activeUsername)
             />
           ) : activePage === 'Staff' ? (
             <StaffPage isDarkMode={isDarkMode} />
+          ) : activePage === 'EmailLogs' ? (
+            <EmailLogsPage isDarkMode={isDarkMode} />
+          ) : activePage === 'SmsLogs' ? (
+            <SmsLogsPage isDarkMode={isDarkMode} />
+          ) : activePage === 'Notifications' ? (
+            <NotificationsPage isDarkMode={isDarkMode} />
           ) : (
 
           <div className={`min-h-0 flex-1 overflow-auto p-4 ${dashboardTheme.contentBg}`}>

@@ -281,6 +281,7 @@ struct SmsLogRow {
     status: String,
     sent_at: String,
     error_message: Option<String>,
+    message_body: Option<String>,
 }
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -600,6 +601,7 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
         sent_at TEXT NOT NULL,
         error_message TEXT,
         automatic_key TEXT UNIQUE,
+        message_body TEXT,
         FOREIGN KEY(borrow_transaction_id) REFERENCES borrow_transactions(id) ON DELETE SET NULL
       );
       ",
@@ -608,6 +610,7 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
 
     // Schema migrations
     let _ = conn.execute("ALTER TABLE books ADD COLUMN shelf_location TEXT", []);
+    let _ = conn.execute("ALTER TABLE sms_logs ADD COLUMN message_body TEXT", []);
 
     // Backward-compatible migration for older local DBs created before cover_data existed.
     if let Err(e) = conn.execute("ALTER TABLE books ADD COLUMN cover_data TEXT", []) {
@@ -2860,7 +2863,7 @@ fn list_sms_logs(
     let mut stmt = conn
     .prepare(
       "
-      SELECT id, borrower_name, phone_number, book_title, sms_type, status, sent_at, error_message
+      SELECT id, borrower_name, phone_number, book_title, sms_type, status, sent_at, error_message, message_body
       FROM sms_logs
       WHERE (?1 = '%' OR ?1 = '%%' OR borrower_name LIKE ?1 OR phone_number LIKE ?1 OR book_title LIKE ?1 OR sms_type LIKE ?1)
         AND (?2 = '' OR status = ?2)
@@ -2880,6 +2883,7 @@ fn list_sms_logs(
                 status: row.get(5)?,
                 sent_at: row.get(6)?,
                 error_message: row.get(7)?,
+                message_body: row.get(8)?,
             })
         })
         .map_err(|e| format!("list sms logs failed: {e}"))?;
@@ -2962,8 +2966,8 @@ fn send_sms_gateway(
     let s_type = sms_type.unwrap_or_else(|| "Notification".to_string());
     
     conn.execute(
-        "INSERT INTO sms_logs (borrower_name, phone_number, book_title, sms_type, status, sent_at, error_message) VALUES (?, ?, ?, ?, ?, datetime('now', 'localtime'), ?)",
-        params![b_name, phone, message, s_type, "Sent", None::<String>],
+        "INSERT INTO sms_logs (borrower_name, phone_number, book_title, sms_type, status, sent_at, error_message, message_body) VALUES (?, ?, ?, ?, ?, datetime('now', 'localtime'), ?, ?)",
+        params![b_name, phone, "N/A", s_type, "Sent", None::<String>, message],
     ).map_err(|e| format!("failed to insert sms log: {e}"))?;
     
     Ok(summary)
@@ -3389,8 +3393,8 @@ async fn test_sms_configuration(
     send_sms_txtbox(&api_key, &to, "Test SMS").await?;
     
     conn.execute(
-        "INSERT INTO sms_logs (borrower_name, phone_number, book_title, sms_type, status, sent_at, error_message) VALUES (?, ?, ?, ?, ?, datetime('now', 'localtime'), ?)",
-        ["Admin Test", &to, "N/A", "SMS Test", "Sent", ""],
+        "INSERT INTO sms_logs (borrower_name, phone_number, book_title, sms_type, status, sent_at, error_message, message_body) VALUES (?, ?, ?, ?, ?, datetime('now', 'localtime'), ?, ?)",
+        ["Admin Test", &to, "N/A", "SMS Test", "Sent", "", "Test SMS"],
     ).map_err(|e| format!("db error: {e}"))?;
 
     Ok("Test SMS sent successfully!".to_string())
@@ -3428,8 +3432,8 @@ async fn send_manual_sms(
     send_sms_txtbox(&api_key, &phone_number, &message).await?;
 
     conn.execute(
-        "INSERT INTO sms_logs (borrower_name, phone_number, book_title, sms_type, status, sent_at, error_message) VALUES (?, ?, ?, ?, ?, datetime('now', 'localtime'), ?)",
-        [&member_name, &phone_number, "Manual SMS", "Custom SMS", "Sent", ""],
+        "INSERT INTO sms_logs (borrower_name, phone_number, book_title, sms_type, status, sent_at, error_message, message_body) VALUES (?, ?, ?, ?, ?, datetime('now', 'localtime'), ?, ?)",
+        [&member_name, &phone_number, "Manual SMS", "Custom SMS", "Sent", "", &message],
     ).map_err(|e| format!("db error: {e}"))?;
 
     Ok("SMS sent successfully!".to_string())

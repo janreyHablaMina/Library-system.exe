@@ -121,6 +121,7 @@ export type SmsLog = {
   status: string
   sentAt: string
   errorMessage: string | null
+  messageBody: string | null
 }
 
 export type EmailLogStats = {
