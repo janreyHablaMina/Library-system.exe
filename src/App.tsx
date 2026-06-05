@@ -775,7 +775,13 @@ const greetingName = formatDisplayName(activeUsername)
         </aside>
 
         <section className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <header className={`sticky top-0 z-20 flex h-20 items-center border-b px-5 ${dashboardTheme.header}`}>
+          {licenseStatus === 'trial' && (
+          <div className="bg-amber-500 px-4 py-2 text-center text-sm font-semibold text-white shadow-sm flex items-center justify-center gap-2">
+            <AlertTriangle size={16} />
+            <span>You are on a free trial. You have {trialDays} {trialDays === 1 ? 'day' : 'days'} remaining before your license expires.</span>
+          </div>
+        )}
+        <header className={`sticky top-0 z-20 flex h-20 items-center border-b px-5 ${dashboardTheme.header}`}>
             <div className="flex w-full items-center gap-4">
               <button
                 type="button"
