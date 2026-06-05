@@ -5,8 +5,15 @@ use lettre::{
 };
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
-use std::{fs, path::PathBuf};
-use tauri::{Emitter, Manager};
+use std::{fs, path::PathBuf, sync::Mutex};
+use tauri::{AppHandle, Emitter, Manager};
+use log::{info, error, warn};
+
+pub mod imap_client;
+
+pub struct AppState {
+    pub db: Mutex<Connection>,
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -603,6 +610,17 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
         automatic_key TEXT UNIQUE,
         message_body TEXT,
         FOREIGN KEY(borrow_transaction_id) REFERENCES borrow_transactions(id) ON DELETE SET NULL
+      );
+      CREATE TABLE IF NOT EXISTS inbox_messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        message_type TEXT NOT NULL,
+        sender_address TEXT NOT NULL,
+        sender_name TEXT,
+        subject TEXT,
+        body TEXT,
+        received_at TEXT NOT NULL,
+        read INTEGER DEFAULT 0,
+        thread_id TEXT
       );
       ",
     )
@@ -3520,6 +3538,67 @@ fn get_trial_days_remaining(app: tauri::AppHandle) -> Result<i64, String> {
     Ok(7)
 }
 
+// ==========================================
+// INBOX MESSAGES API
+// ==========================================
+
+#[tauri::command]
+fn sync_inbox(app: tauri::AppHandle) -> Result<usize, String> {
+    let conn = open_db(&database_path(&app)?)?;
+    
+    let imap_host = conn.query_row("SELECT value FROM settings WHERE key = 'email.imap_host'", [], |row| row.get::<_, String>(0)).unwrap_or_default();
+    let imap_port_str = conn.query_row("SELECT value FROM settings WHERE key = 'email.imap_port'", [], |row| row.get::<_, String>(0)).unwrap_or_default();
+    let imap_port = imap_port_str.parse::<u16>().unwrap_or(993);
+    let username = conn.query_row("SELECT value FROM settings WHERE key = 'email.smtp_username'", [], |row| row.get::<_, String>(0)).unwrap_or_default();
+    let password = conn.query_row("SELECT value FROM settings WHERE key = 'email.smtp_password'", [], |row| row.get::<_, String>(0)).unwrap_or_default();
+
+    if imap_host.is_empty() || username.is_empty() || password.is_empty() {
+        return Err("IMAP host, username, and password are required in settings.".to_string());
+    }
+
+    imap_client::fetch_emails_and_save(&conn, &imap_host, imap_port, &username, &password)
+}
+
+#[derive(serde::Serialize)]
+struct InboxMessage {
+    id: i64,
+    message_type: String,
+    sender_address: String,
+    sender_name: Option<String>,
+    subject: Option<String>,
+    body: Option<String>,
+    received_at: String,
+    read: i32,
+    thread_id: Option<String>,
+}
+
+#[tauri::command]
+fn list_inbox_messages(app: tauri::AppHandle) -> Result<Vec<InboxMessage>, String> {
+    let conn = open_db(&database_path(&app)?)?;
+    let mut stmt = conn.prepare("SELECT id, message_type, sender_address, sender_name, subject, body, received_at, read, thread_id FROM inbox_messages ORDER BY received_at DESC").map_err(|e| e.to_string())?;
+    let rows = stmt.query_map([], |row| {
+        Ok(InboxMessage {
+            id: row.get(0)?,
+            message_type: row.get(1)?,
+            sender_address: row.get(2)?,
+            sender_name: row.get(3)?,
+            subject: row.get(4)?,
+            body: row.get(5)?,
+            received_at: row.get(6)?,
+            read: row.get(7)?,
+            thread_id: row.get(8)?,
+        })
+    }).map_err(|e| e.to_string())?;
+
+    let mut messages = Vec::new();
+    for row in rows {
+        if let Ok(msg) = row {
+            messages.push(msg);
+        }
+    }
+    Ok(messages)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -3577,6 +3656,8 @@ pub fn run() {
             list_staff,
             update_staff,
             delete_staff,
+            sync_inbox,
+            list_inbox_messages,
             login,
             logout,
             get_active_session,

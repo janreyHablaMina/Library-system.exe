@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react'
+import React, { useState, FormEvent, useEffect } from 'react'
 import { MessageSquare, X, Send } from 'lucide-react'
 import { invoke } from '@tauri-apps/api/core'
 
@@ -11,13 +11,20 @@ type SendSmsModalProps = {
     phone: string | null
   }
   onSuccess: () => void
-  isDarkMode: boolean
+  initialBody?: string
 }
 
-export function SendSmsModal({ isOpen, onClose, member, onSuccess, isDarkMode }: SendSmsModalProps) {
-  const [message, setMessage] = useState('')
+export function SendSmsModal({ isOpen, onClose, member, onSuccess, isDarkMode, initialBody = '' }: SendSmsModalProps) {
+  const [message, setMessage] = useState(initialBody)
   const [isSending, setIsSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setMessage(initialBody)
+      setError(null)
+    }
+  }, [isOpen, initialBody])
 
   if (!isOpen) return null
 

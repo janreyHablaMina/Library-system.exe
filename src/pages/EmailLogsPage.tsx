@@ -112,7 +112,7 @@ function EmailLogsPage({ isDarkMode }: EmailLogsPageProps) {
               <Send size={20} className="text-emerald-600 dark:text-emerald-400" />
             </div>
             <div className="flex-1">
-              <p className={`text-xs ${textSecondary}`}>email Sent Today</p>
+              <p className={`text-xs ${textSecondary}`}>Emails Sent Today</p>
               <h3 className={`text-2xl font-black ${textPrimary}`}>{sentToday}</h3>
             </div>
             <div className="text-[10px] font-bold text-emerald-600 self-end mb-1 cursor-pointer hover:underline">View all</div>
@@ -152,7 +152,7 @@ function EmailLogsPage({ isDarkMode }: EmailLogsPageProps) {
               <CreditCard size={24} className="text-purple-600 dark:text-purple-400" />
             </div>
             <div className="flex-1">
-              <p className={`text-xs ${textSecondary}`}>email Credits</p>
+              <p className={`text-xs ${textSecondary}`}>Email Credits</p>
               <h3 className={`text-2xl font-black ${textPrimary}`}>{credits}</h3>
             </div>
           </div>
@@ -164,7 +164,7 @@ function EmailLogsPage({ isDarkMode }: EmailLogsPageProps) {
           {/* Left Table Panel */}
           <div className={`flex-1 rounded-xl border ${cardClass}`}>
             <div className={`border-b p-4 rounded-t-xl ${isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
-              <h2 className={`font-bold ${textPrimary}`}>email History</h2>
+              <h2 className={`text-lg font-bold ${textPrimary}`}>Email History</h2>
             </div>
             <div className={`flex flex-wrap items-center gap-3 border-b p-3 ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
               <label className={`group flex h-11 min-w-[280px] flex-1 items-center rounded-xl border px-3 ${isDarkMode ? 'border-zinc-700 focus-within:border-emerald-500' : 'border-zinc-200 focus-within:border-emerald-500'}`}>
@@ -172,7 +172,7 @@ function EmailLogsPage({ isDarkMode }: EmailLogsPageProps) {
                 <input 
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search member name or phone number..." 
+                  placeholder="Search member name or email address..." 
                   className={`w-full bg-transparent text-sm outline-none ${isDarkMode ? 'text-zinc-200 placeholder:text-zinc-500' : 'text-zinc-700 placeholder:text-zinc-400'}`}
                 />
               </label>

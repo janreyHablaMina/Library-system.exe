@@ -10,6 +10,7 @@ import {
   ClipboardList,
   Download,
   Eye,
+  MessageSquare,
   MoreHorizontal,
   Printer,
   Receipt,
@@ -19,11 +20,6 @@ import {
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { listBorrowTransactions, listMembers, returnBorrowTransaction, sendManualEmailReminder, type BorrowTransaction, type Member } from '../lib/tauriApi'
-
-type TransactionType = 'Borrow' | 'Return'
-type TransactionStatus = 'Borrowed' | 'Returned' | 'Overdue'
-type TransactionTab = 'all' | 'borrowed' | 'returned' | 'overdue'
-
 type TransactionsPageProps = {
   isDarkMode: boolean
   onBack: () => void
@@ -48,6 +44,8 @@ type TransactionRow = {
   status: TransactionStatus
   fine: string
   fineValue: number
+  memberEmail: string | null
+  memberPhone: string | null
 }
 
 function getTypeClass(type: TransactionType) {
@@ -116,6 +114,8 @@ function toTransactionRow(tx: BorrowTransaction, memberMap: Map<string, Member>)
     status,
     fine: `PHP ${fineValue.toFixed(2)}`,
     fineValue,
+    memberEmail: memberRecord?.email || null,
+    memberPhone: memberRecord?.phone || null,
   }
 }
 
@@ -126,6 +126,7 @@ type TransactionActionsMenuProps = {
   onViewDetails: () => void
   onMarkReturned: () => void
   onSendReminder: () => void
+  onSendSmsReminder: () => void
   onRecordPayment: () => void
   onPrintReceipt: () => void
 }
@@ -137,6 +138,7 @@ function TransactionActionsMenu({
   onViewDetails,
   onMarkReturned,
   onSendReminder,
+  onSendSmsReminder,
   onRecordPayment,
   onPrintReceipt,
 }: TransactionActionsMenuProps) {
@@ -236,6 +238,20 @@ function TransactionActionsMenu({
             </button>
           )}
 
+          {(status === 'Borrowed' || status === 'Overdue') && (
+            <button
+              type="button"
+              className={`${itemBase} ${itemNormal}`}
+              onClick={() => {
+                setOpen(false)
+                onSendSmsReminder()
+              }}
+            >
+              <MessageSquare size={15} className="shrink-0 text-sky-500" />
+              Send SMS Reminder
+            </button>
+          )}
+
           {hasFine && status !== 'Returned' && (
             <button
               type="button"
@@ -274,6 +290,15 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
   const [transactionList, setTransactionList] = useState<TransactionRow[]>([])
   const [showToast, setShowToast] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [emailModalData, setEmailModalData] = useState<{
+    member: { id: number; fullName: string; email: string | null }
+    initialSubject: string
+    initialBody: string
+  } | null>(null)
+  const [smsModalData, setSmsModalData] = useState<{
+    member: { id: number; fullName: string; phone: string | null }
+    initialBody: string
+  } | null>(null)
 
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
@@ -283,6 +308,8 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
   }, [activeTab, itemsPerPage])
 
 
+  const memberMapRef = useRef<Map<string, Member>>(new Map())
+
   const loadTransactions = async () => {
     setLoading(true)
     try {
@@ -291,6 +318,7 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
         listMembers(2000),
       ])
       const memberMap = new Map<string, Member>(members.map((m) => [m.memberId, m]))
+      memberMapRef.current = memberMap
       setTransactionList(rows.map((row) => toTransactionRow(row, memberMap)))
     } catch (error) {
       console.error(error)
@@ -328,13 +356,32 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
     }
   }
 
-  const handleSendReminder = async (row: TransactionRow) => {
-    try {
-      const message = await sendManualEmailReminder(row.transactionId)
-      triggerToast(message)
-    } catch (error) {
-      triggerToast(error instanceof Error ? error.message : `Failed to send reminder to ${row.member}.`)
+  const handleSendReminder = (row: TransactionRow) => {
+    if (!row.memberEmail) {
+      triggerToast('Cannot send email: This member does not have an email address on file.')
+      return
     }
+    const defaultSubject = `Library Reminder: ${row.book}`
+    const defaultBody = `Hello ${row.member},\n\nThis is a friendly reminder regarding the book "${row.book}" you borrowed on ${row.borrowDate}. ${row.status === 'Overdue' ? 'This book is currently OVERDUE.' : `It is due on ${row.dueDate}.`}\n\nPlease ensure it is returned to the library promptly.\n\nThank you,\nLibrary Management System`
+
+    setEmailModalData({
+      member: { id: 0, fullName: row.member, email: row.memberEmail },
+      initialSubject: defaultSubject,
+      initialBody: defaultBody,
+    })
+  }
+
+  const handleSendSmsReminder = (row: TransactionRow) => {
+    if (!row.memberPhone) {
+      triggerToast('Cannot send SMS: This member does not have a phone number on file.')
+      return
+    }
+    const defaultBody = `Lib Msg: Hello ${row.member.split(' ')[0]}, ${row.book} is ${row.status === 'Overdue' ? 'OVERDUE' : `due on ${row.dueDate}`}. Please return it to avoid penalties.`
+
+    setSmsModalData({
+      member: { id: memberMapRef.current?.get(row.memberId)?.id || 0, fullName: row.member, phone: row.memberPhone },
+      initialBody: defaultBody,
+    })
   }
 
   const handleSettleFine = (id: string, fineAmount: string) => {
@@ -490,7 +537,8 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
                         hasFine={row.fineValue > 0}
                         onViewDetails={() => onOpenTransactionDetail(row.id)}
                         onMarkReturned={() => void handleMarkReturned(row)}
-                        onSendReminder={() => { void handleSendReminder(row) }}
+                        onSendReminder={() => handleSendReminder(row)}
+                        onSendSmsReminder={() => handleSendSmsReminder(row)}
                         onRecordPayment={() => handleSettleFine(row.id, row.fine)}
                         onPrintReceipt={() => handlePrintReceipt(row.id)}
                       />
@@ -533,8 +581,29 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
       </section>
 
       <Toast message={showToast} onClose={() => setShowToast(null)} isDarkMode={isDarkMode} />
+      
+      {emailModalData && (
+        <SendEmailModal
+          isOpen={!!emailModalData}
+          onClose={() => setEmailModalData(null)}
+          member={emailModalData.member}
+          isDarkMode={isDarkMode}
+          onSuccess={() => triggerToast(`Successfully sent email to ${emailModalData.member.fullName}`)}
+          initialSubject={emailModalData.initialSubject}
+          initialBody={emailModalData.initialBody}
+        />
+      )}
+
+      {smsModalData && (
+        <SendSmsModal
+          isOpen={!!smsModalData}
+          onClose={() => setSmsModalData(null)}
+          member={smsModalData.member}
+          isDarkMode={isDarkMode}
+          onSuccess={() => triggerToast(`Successfully sent SMS to ${smsModalData.member.fullName}`)}
+          initialBody={smsModalData.initialBody}
+        />
+      )}
     </div>
   )
 }
-
-

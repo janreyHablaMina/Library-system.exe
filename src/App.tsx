@@ -245,7 +245,7 @@ function DashboardShell({ onLogout, licenseStatus, trialDays }: { onLogout: () =
           ])
           if (mounted) {
             setGlobalSearchData({
-              books: books.map(b => ({ id: b.id, title: b.title, author: b.author, cover: b.coverData || 'ðŸ“˜', category: b.category, available: b.available })),
+              books: books.map(b => ({ id: b.id, title: b.title, author: b.author, cover: b.coverData || '📖', category: b.category, available: b.available })),
               members: members.map(m => ({ id: m.id, fullName: m.fullName, memberId: m.memberId })),
               authors: authors.map(a => ({ id: a.id, name: a.name, profilePhotoData: a.profilePhotoData }))
             })
@@ -266,7 +266,7 @@ function DashboardShell({ onLogout, licenseStatus, trialDays }: { onLogout: () =
   const refreshNotifications = async () => {
     try {
       await syncNotifications()
-      await runAutomaticEmailReminders()
+      // await runAutomaticEmailReminders() // Disabled for now as per user request
       const rows = await listNotifications(12)
       setNotifications(rows)
     } catch (error) {
@@ -910,7 +910,7 @@ const greetingName = formatDisplayName(activeUsername)
                                         if (book) {
                                           setSelectedBook({
                                             id: book.id,
-                                            cover: book.coverData || 'ðŸ“˜',
+                                            cover: book.coverData || '📖',
                                             title: book.title,
                                             isbn: book.isbn ?? '-',
                                             author: book.author,
@@ -1047,104 +1047,26 @@ const greetingName = formatDisplayName(activeUsername)
                   >
                     {isDarkMode ? <Sun size={18} strokeWidth={1.9} /> : <Moon size={18} strokeWidth={1.9} />}
                   </button>
-                  <div ref={smsMenuRef} className="relative">
+                  <div className="relative">
                     <button 
                       type="button" 
-                      onClick={() => {
-                        setIsSmsMenuOpen((v) => !v)
-                        setIsEmailMenuOpen(false)
-                        setIsNotificationsOpen(false)
-                      }}
-                      className={`relative rounded-lg p-2 ${isSmsMenuOpen ? 'bg-sky-500/10 text-sky-500' : dashboardTheme.iconBtn}`} 
+                      onClick={() => setActivePage('SmsLogs')}
+                      className={`relative rounded-lg p-2 ${activePage === 'SmsLogs' ? 'bg-sky-500/10 text-sky-500' : dashboardTheme.iconBtn}`} 
                       aria-label="Open SMS logs"
                     >
                       <MessageCircle size={18} strokeWidth={1.9} />
                     </button>
-                    {isSmsMenuOpen && (
-                      <div className={`absolute right-0 top-11 z-30 w-80 overflow-hidden rounded-xl border shadow-2xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
-                        <div className={`flex items-center justify-between border-b px-4 py-3 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'}`}>
-                          <h3 className={`text-sm font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Recent SMS Logs</h3>
-                          <button type="button" onClick={() => setIsSmsMenuOpen(false)} className={`rounded-md p-1 transition-colors ${isDarkMode ? 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200' : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800'}`}>
-                            <X size={16} />
-                          </button>
-                        </div>
-                        <div className="max-h-96 overflow-y-auto">
-                          {smsError ? (
-                            <div className="px-4 py-8 text-center text-sm text-red-500">{smsError}</div>
-                          ) : recentSms.length === 0 ? (
-                            <div className="px-4 py-8 text-center text-sm text-zinc-500">No recent SMS logs.</div>
-                          ) : (
-                            <div className={`divide-y ${isDarkMode ? 'divide-zinc-800/50' : 'divide-zinc-100'}`}>
-                              {recentSms.map((msg) => (
-                                <div key={msg.id} className={`flex flex-col gap-1 p-4 transition-colors ${isDarkMode ? 'hover:bg-zinc-800/50' : 'hover:bg-zinc-50'}`}>
-                                  <div className="flex items-start justify-between gap-2">
-                                    <p className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-800'}`}>To: {msg.phoneNumber}</p>
-                                    <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${msg.status === 'Sent' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' : msg.status === 'Failed' ? 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400' : 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400'}`}>{msg.status}</span>
-                                  </div>
-                                  <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">{msg.smsType}</p>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                        <button 
-                          onClick={() => { setIsSmsMenuOpen(false); setActivePage('SmsLogs'); }}
-                          className={`w-full border-t p-3 text-center text-xs font-bold transition-colors ${isDarkMode ? 'border-zinc-800 text-sky-500 hover:bg-zinc-800/50' : 'border-zinc-100 text-sky-600 hover:bg-zinc-50'}`}
-                        >
-                          View All SMS Logs
-                        </button>
-                      </div>
-                    )}
                   </div>
                   
-                  <div ref={emailMenuRef} className="relative">
+                  <div className="relative">
                     <button 
                       type="button" 
-                      onClick={() => {
-                        setIsEmailMenuOpen((v) => !v)
-                        setIsSmsMenuOpen(false)
-                        setIsNotificationsOpen(false)
-                      }}
-                      className={`relative rounded-lg p-2 ${isEmailMenuOpen ? 'bg-emerald-500/10 text-emerald-500' : dashboardTheme.iconBtn}`} 
+                      onClick={() => setActivePage('EmailLogs')}
+                      className={`relative rounded-lg p-2 ${activePage === 'EmailLogs' ? 'bg-emerald-500/10 text-emerald-500' : dashboardTheme.iconBtn}`} 
                       aria-label="Open email logs"
                     >
                       <Mail size={18} strokeWidth={1.9} />
                     </button>
-                    {isEmailMenuOpen && (
-                      <div className={`absolute right-0 top-11 z-30 w-80 overflow-hidden rounded-xl border shadow-2xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
-                        <div className={`flex items-center justify-between border-b px-4 py-3 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'}`}>
-                          <h3 className={`text-sm font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Recent Email Logs</h3>
-                          <button type="button" onClick={() => setIsEmailMenuOpen(false)} className={`rounded-md p-1 transition-colors ${isDarkMode ? 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200' : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800'}`}>
-                            <X size={16} />
-                          </button>
-                        </div>
-                        <div className="max-h-96 overflow-y-auto">
-                          {emailError ? (
-                            <div className="px-4 py-8 text-center text-sm text-red-500">{emailError}</div>
-                          ) : recentEmails.length === 0 ? (
-                            <div className="px-4 py-8 text-center text-sm text-zinc-500">No recent email logs.</div>
-                          ) : (
-                            <div className={`divide-y ${isDarkMode ? 'divide-zinc-800/50' : 'divide-zinc-100'}`}>
-                              {recentEmails.map((msg) => (
-                                <div key={msg.id} className={`flex flex-col gap-1 p-4 transition-colors ${isDarkMode ? 'hover:bg-zinc-800/50' : 'hover:bg-zinc-50'}`}>
-                                  <div className="flex items-start justify-between gap-2">
-                                    <p className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-800'}`}>To: {msg.emailAddress}</p>
-                                    <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${msg.status === 'Sent' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' : msg.status === 'Failed' ? 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400' : 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400'}`}>{msg.status}</span>
-                                  </div>
-                                  <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">{msg.emailType}</p>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                        <button 
-                          onClick={() => { setIsEmailMenuOpen(false); setActivePage('EmailLogs'); }}
-                          className={`w-full border-t p-3 text-center text-xs font-bold transition-colors ${isDarkMode ? 'border-zinc-800 text-emerald-500 hover:bg-zinc-800/50' : 'border-zinc-100 text-emerald-600 hover:bg-zinc-50'}`}
-                        >
-                          View All Email Logs
-                        </button>
-                      </div>
-                    )}
                   </div>
                   <div ref={notificationsRef} className="relative">
                     <button 

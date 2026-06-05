@@ -11,14 +11,23 @@ interface SendEmailModalProps {
     email: string | null
   }
   onSuccess: () => void
-  isDarkMode: boolean
+  initialSubject?: string
+  initialBody?: string
 }
 
-export function SendEmailModal({ isOpen, onClose, member, onSuccess, isDarkMode }: SendEmailModalProps) {
-  const [subject, setSubject] = useState('')
-  const [body, setBody] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [error, setError] = useState('')
+export function SendEmailModal({ isOpen, onClose, member, onSuccess, isDarkMode, initialSubject = '', initialBody = '' }: SendEmailModalProps) {
+  const [subject, setSubject] = React.useState(initialSubject)
+  const [body, setBody] = React.useState(initialBody)
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [error, setError] = React.useState('')
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setSubject(initialSubject)
+      setBody(initialBody)
+      setError('')
+    }
+  }, [isOpen, initialSubject, initialBody])
 
   if (!isOpen) return null
 
