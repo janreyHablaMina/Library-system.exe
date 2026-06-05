@@ -698,6 +698,8 @@ const greetingName = formatDisplayName(activeUsername)
             </div>
           </div>
 
+          <div className="mx-4 h-px shrink-0 bg-gradient-to-r from-transparent via-[#10B981]/40 to-transparent relative z-10" />
+
           <nav className="relative z-10 flex flex-1 flex-col overflow-y-auto px-3 pt-6 pb-5 text-sm space-y-6">
                 {/* Top Section - Dashboard */}
                 <div>
