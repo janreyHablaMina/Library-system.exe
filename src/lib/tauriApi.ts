@@ -593,3 +593,7 @@ export async function verifyLicenseKey(key: string): Promise<boolean> {
 export async function getLicenseStatus(): Promise<'checking' | 'active' | 'trial' | 'expired'> {
   return invoke<'checking' | 'active' | 'trial' | 'expired'>('get_license_status')
 }
+
+export async function getTrialDaysRemaining(): Promise<number> {
+  return invoke<number>('get_trial_days_remaining')
+}

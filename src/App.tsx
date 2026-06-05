@@ -21,7 +21,7 @@ import { AuthorDetailPage } from './pages/AuthorDetailPage'
 import { CategoriesPage } from './pages/CategoriesPage'
 import { ReservationsPage } from './pages/ReservationsPage'
 import { StaffPage } from './pages/StaffPage'
-import { verifyLicenseKey, getLicenseStatus, createBook, expandMainWindow, getActiveSession, getEmailLogStats, listAuthors, listBooks, listBorrowTransactions, listMembers, listNotifications, listEmailLogs, login as loginWithDb, logout as logoutFromDb, markAllNotificationsRead, markNotificationAsRead, restoreLoginWindow, runAutomaticEmailReminders, searchAuthors, searchBooks, searchMembers, syncNotifications, type NotificationItem, type EmailLog } from './lib/tauriApi'
+import { getTrialDaysRemaining, verifyLicenseKey, getLicenseStatus, createBook, expandMainWindow, getActiveSession, getEmailLogStats, listAuthors, listBooks, listBorrowTransactions, listMembers, listNotifications, listEmailLogs, login as loginWithDb, logout as logoutFromDb, markAllNotificationsRead, markNotificationAsRead, restoreLoginWindow, runAutomaticEmailReminders, searchAuthors, searchBooks, searchMembers, syncNotifications, type NotificationItem, type EmailLog } from './lib/tauriApi'
 
 
 type LoginFormState = {
@@ -129,7 +129,7 @@ function formatDisplayName(username: string | null) {
     .join(' ') || 'Admin'
 }
 
-function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) {
+function DashboardShell({ onLogout, licenseStatus, trialDays }: { onLogout: () => Promise<void> | void, licenseStatus: string, trialDays: number }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [currentTime, setCurrentTime] = useState(() => new Date())
@@ -1723,6 +1723,7 @@ function App() {
   const [isCheckingSession, setIsCheckingSession] = useState(true)
 
   const [licenseStatus, setLicenseStatus] = useState<'checking' | 'active' | 'trial' | 'expired'>('checking')
+  const [trialDays, setTrialDays] = useState(7)
 
   useEffect(() => {
     let mounted = true
@@ -1731,6 +1732,10 @@ function App() {
         const status = await getLicenseStatus()
         if (mounted) {
           setLicenseStatus(status)
+          if (status === 'trial') {
+            const days = await getTrialDaysRemaining()
+            setTrialDays(days)
+          }
         }
       } catch (err) {
         if (mounted) setLicenseStatus('expired')
@@ -1838,7 +1843,7 @@ function App() {
 
   if (isAuthenticated) {
 
-    return <DashboardShell onLogout={handleLogout} />
+    return <DashboardShell onLogout={handleLogout} licenseStatus={licenseStatus} trialDays={trialDays} />
   }
 
   return (

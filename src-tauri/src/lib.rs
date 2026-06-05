@@ -3416,6 +3416,23 @@ fn get_license_status(app: tauri::AppHandle) -> Result<String, String> {
     Ok("trial".to_string())
 }
 
+#[tauri::command]
+fn get_trial_days_remaining(app: tauri::AppHandle) -> Result<i64, String> {
+    let conn = open_db(&database_path(&app)?)?;
+    let install_date: Option<String> = conn.query_row("SELECT value FROM settings WHERE key = 'license.install_date'", [], |r| r.get(0)).ok();
+    
+    if let Some(date_str) = install_date {
+        if let Ok(parsed_date) = chrono::DateTime::parse_from_rfc3339(&date_str) {
+            let parsed_utc = parsed_date.with_timezone(&Utc);
+            let now = Utc::now();
+            let diff = now.signed_duration_since(parsed_utc).num_days();
+            let remaining = 7 - diff;
+            return Ok(if remaining < 0 { 0 } else { remaining });
+        }
+    }
+    Ok(7)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -3430,6 +3447,7 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            get_trial_days_remaining,
             verify_license_key,
             get_license_status,
             init_db,
