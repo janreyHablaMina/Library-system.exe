@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Search, Plus, FileText, BarChart2, RotateCcw, Send, CheckCircle2, XCircle, Clock, CreditCard, MoreVertical, Calendar, Copy, User } from 'lucide-react'
+import { Search, Plus, FileText, BarChart2, RotateCcw, Send, CheckCircle2, XCircle, Clock, CreditCard, MoreVertical, Calendar, Copy, User, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { listSmsLogs, type SmsLog } from '../lib/tauriApi'
 
 type SmsLogsPageProps = {
@@ -12,6 +12,13 @@ function SmsLogsPage({ isDarkMode }: SmsLogsPageProps) {
   const [typeFilter, setTypeFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [selectedLog, setSelectedLog] = useState<SmsLog | null>(null)
+  
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [search, typeFilter, statusFilter, itemsPerPage])
 
   const loadSmsLogs = async () => {
     try {
@@ -36,6 +43,9 @@ function SmsLogsPage({ isDarkMode }: SmsLogsPageProps) {
       return matchesSearch && matchesType && matchesStatus
     })
   }, [smsLogs, search, typeFilter, statusFilter])
+
+  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage)
+  const paginatedLogs = filteredLogs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   // Mock Stats
   const sentToday = 25
@@ -84,7 +94,7 @@ function SmsLogsPage({ isDarkMode }: SmsLogsPageProps) {
 
         {/* Stats Row */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          <div className={`flex items-center gap-4 rounded-xl border p-4 shadow-sm ${cardClass}`}>
+          <div className={`flex items-center gap-4 rounded-xl border p-4 ${cardClass}`}>
             <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${isDarkMode ? 'bg-emerald-500/10' : 'bg-emerald-50'}`}>
               <Send size={20} className="text-emerald-600 dark:text-emerald-400" />
             </div>
@@ -94,7 +104,7 @@ function SmsLogsPage({ isDarkMode }: SmsLogsPageProps) {
             </div>
             <div className="text-[10px] font-bold text-emerald-600 self-end mb-1 cursor-pointer hover:underline">View all</div>
           </div>
-          <div className={`flex items-center gap-4 rounded-xl border p-4 shadow-sm ${cardClass}`}>
+          <div className={`flex items-center gap-4 rounded-xl border p-4 ${cardClass}`}>
             <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${isDarkMode ? 'bg-emerald-500/10' : 'bg-emerald-50'}`}>
               <CheckCircle2 size={24} className="text-emerald-600 dark:text-emerald-400" />
             </div>
@@ -104,7 +114,7 @@ function SmsLogsPage({ isDarkMode }: SmsLogsPageProps) {
             </div>
             <div className="text-[10px] font-bold text-emerald-600 self-end mb-1 cursor-pointer hover:underline">View all</div>
           </div>
-          <div className={`flex items-center gap-4 rounded-xl border p-4 shadow-sm ${cardClass}`}>
+          <div className={`flex items-center gap-4 rounded-xl border p-4 ${cardClass}`}>
             <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${isDarkMode ? 'bg-rose-500/10' : 'bg-rose-50'}`}>
               <XCircle size={24} className="text-rose-600 dark:text-rose-400" />
             </div>
@@ -114,7 +124,7 @@ function SmsLogsPage({ isDarkMode }: SmsLogsPageProps) {
             </div>
             <div className="text-[10px] font-bold text-rose-600 self-end mb-1 text-center">8%</div>
           </div>
-          <div className={`flex items-center gap-4 rounded-xl border p-4 shadow-sm ${cardClass}`}>
+          <div className={`flex items-center gap-4 rounded-xl border p-4 ${cardClass}`}>
             <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${isDarkMode ? 'bg-amber-500/10' : 'bg-amber-50'}`}>
               <Clock size={24} className="text-amber-500 dark:text-amber-400" />
             </div>
@@ -124,7 +134,7 @@ function SmsLogsPage({ isDarkMode }: SmsLogsPageProps) {
             </div>
             <div className="text-[10px] font-bold text-amber-500 self-end mb-1">4%</div>
           </div>
-          <div className={`flex items-center gap-4 rounded-xl border p-4 shadow-sm ${cardClass}`}>
+          <div className={`flex items-center gap-4 rounded-xl border p-4 ${cardClass}`}>
             <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${isDarkMode ? 'bg-purple-500/10' : 'bg-purple-50'}`}>
               <CreditCard size={24} className="text-purple-600 dark:text-purple-400" />
             </div>
@@ -139,44 +149,57 @@ function SmsLogsPage({ isDarkMode }: SmsLogsPageProps) {
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
           
           {/* Left Table Panel */}
-          <div className={`flex-1 rounded-xl border shadow-sm ${cardClass}`}>
-            <div className={`border-b p-4 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'}`}>
+          <div className={`flex-1 rounded-xl border ${cardClass}`}>
+            <div className={`border-b p-4 rounded-t-xl ${isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
               <h2 className={`font-bold ${textPrimary}`}>SMS History</h2>
             </div>
-            <div className="flex flex-wrap items-center gap-3 p-4">
-              <div className={`flex h-9 flex-1 min-w-[200px] items-center rounded-lg border px-3 ${inputClass}`}>
-                <Search size={14} className={textSecondary} />
+            <div className={`flex flex-wrap items-center gap-3 border-b p-3 ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
+              <label className={`group flex h-11 min-w-[280px] flex-1 items-center rounded-xl border px-3 ${isDarkMode ? 'border-zinc-700 focus-within:border-emerald-500' : 'border-zinc-200 focus-within:border-emerald-500'}`}>
+                <Search size={16} className={`mr-2 ${isDarkMode ? 'text-zinc-500 group-focus-within:text-emerald-400' : 'text-zinc-400 group-focus-within:text-emerald-600'}`} />
                 <input 
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search member name or phone number..." 
-                  className="ml-2 w-full bg-transparent text-xs outline-none" 
+                  className={`w-full bg-transparent text-sm outline-none ${isDarkMode ? 'text-zinc-200 placeholder:text-zinc-500' : 'text-zinc-700 placeholder:text-zinc-400'}`}
                 />
+              </label>
+              
+              <div className="relative">
+                <select 
+                  value={typeFilter}
+                  onChange={(e) => setTypeFilter(e.target.value)}
+                  className={`h-11 appearance-none rounded-xl border py-2 pl-3 pr-9 text-sm outline-none min-w-[150px] ${
+                    isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'
+                  }`}
+                >
+                  <option value="">All Types</option>
+                  <option value="Overdue Notice">Overdue Notice</option>
+                  <option value="Due Reminder">Due Reminder</option>
+                  <option value="Reservation Alert">Reservation Alert</option>
+                  <option value="Announcement">Announcement</option>
+                </select>
+                <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
               </div>
-              <select 
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-                className={`h-9 rounded-lg border px-3 text-xs outline-none ${inputClass}`}
-              >
-                <option value="">All Types</option>
-                <option value="Overdue Notice">Overdue Notice</option>
-                <option value="Due Reminder">Due Reminder</option>
-                <option value="Reservation Alert">Reservation Alert</option>
-                <option value="Announcement">Announcement</option>
-              </select>
-              <select 
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className={`h-9 rounded-lg border px-3 text-xs outline-none ${inputClass}`}
-              >
-                <option value="">All Status</option>
-                <option value="Sent">Delivered</option>
-                <option value="Failed">Failed</option>
-                <option value="Pending">Pending</option>
-              </select>
-              <div className={`flex h-9 items-center gap-2 rounded-lg border px-3 text-xs ${inputClass}`}>
-                <span>Jun 1, 2026 - Jun 5, 2026</span>
-                <Calendar size={14} className={textSecondary} />
+              
+              <div className="relative">
+                <select 
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className={`h-11 appearance-none rounded-xl border py-2 pl-3 pr-9 text-sm outline-none min-w-[150px] ${
+                    isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'
+                  }`}
+                >
+                  <option value="">All Status</option>
+                  <option value="Sent">Delivered</option>
+                  <option value="Failed">Failed</option>
+                  <option value="Pending">Pending</option>
+                </select>
+                <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+              </div>
+              
+              <div className={`flex h-11 items-center gap-2 rounded-xl border px-3 text-sm ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'}`}>
+                <span>Jun 1 - Jun 5</span>
+                <Calendar size={16} className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} />
               </div>
             </div>
 
@@ -194,9 +217,9 @@ function SmsLogsPage({ isDarkMode }: SmsLogsPageProps) {
                   </tr>
                 </thead>
                 <tbody className={`divide-y ${isDarkMode ? 'divide-zinc-800/50' : 'divide-zinc-50'}`}>
-                  {filteredLogs.length === 0 ? (
+                  {paginatedLogs.length === 0 ? (
                     <tr><td colSpan={7} className="px-6 py-12 text-center text-zinc-500">No logs found.</td></tr>
-                  ) : filteredLogs.map((log) => {
+                  ) : paginatedLogs.map((log) => {
                     const isSelected = selectedLog?.id === log.id;
                     return (
                       <tr 
@@ -231,20 +254,59 @@ function SmsLogsPage({ isDarkMode }: SmsLogsPageProps) {
                 </tbody>
               </table>
             </div>
-            <div className={`flex items-center justify-between border-t p-4 text-xs ${isDarkMode ? 'border-zinc-800 text-zinc-400' : 'border-zinc-100 text-zinc-500'}`}>
-              <div>Showing 1 to {Math.min(10, filteredLogs.length)} of {filteredLogs.length} entries</div>
-              <div className="flex gap-1">
-                <button className={`flex h-7 w-7 items-center justify-center rounded border transition-colors ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800' : 'border-zinc-200 hover:bg-zinc-50'}`}>&lt;</button>
-                <button className="flex h-7 w-7 items-center justify-center rounded bg-emerald-600 font-bold text-white">1</button>
-                <button className={`flex h-7 w-7 items-center justify-center rounded border transition-colors ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800' : 'border-zinc-200 hover:bg-zinc-50'}`}>2</button>
-                <button className={`flex h-7 w-7 items-center justify-center rounded border transition-colors ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800' : 'border-zinc-200 hover:bg-zinc-50'}`}>&gt;</button>
+            <div className={`relative z-0 flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm rounded-b-xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B] text-zinc-300' : 'border-zinc-200 bg-white text-zinc-600'}`}>
+              <p>Showing {filteredLogs.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to {Math.min(currentPage * itemsPerPage, filteredLogs.length)} of {filteredLogs.length} entries</p>
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <select value={itemsPerPage} onChange={(e) => setItemsPerPage(Number(e.target.value))} className={`h-10 min-w-[150px] appearance-none rounded-lg border py-2 pl-4 pr-10 text-sm font-medium outline-none transition-colors ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200 hover:bg-zinc-800 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 focus:border-emerald-500'}`}>
+                    <option value={10}>10 per page</option>
+                    <option value={20}>20 per page</option>
+                    <option value={50}>50 per page</option>
+                  </select>
+                  <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className={`grid h-10 w-10 place-items-center rounded-lg border transition-colors disabled:cursor-not-allowed ${
+                    isDarkMode
+                      ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800 disabled:border-zinc-800 disabled:text-zinc-600 disabled:hover:bg-transparent'
+                      : 'border-zinc-200 text-zinc-500 hover:bg-zinc-50 disabled:border-zinc-100 disabled:text-zinc-300 disabled:hover:bg-white'
+                  }`}
+                  aria-label="Previous page"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                    <button key={page} type="button" onClick={() => setCurrentPage(page)} className={page === currentPage ? "grid h-10 w-10 place-items-center rounded-lg bg-emerald-50 font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" : `grid h-10 w-10 place-items-center rounded-lg border transition-colors ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800' : 'border-zinc-200 hover:bg-zinc-50'}`}>
+                      {page}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages || totalPages === 0}
+                  className={`grid h-10 w-10 place-items-center rounded-lg border transition-colors disabled:cursor-not-allowed ${
+                    isDarkMode
+                      ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800 disabled:border-zinc-800 disabled:text-zinc-600 disabled:hover:bg-transparent'
+                      : 'border-zinc-200 text-zinc-500 hover:bg-zinc-50 disabled:border-zinc-100 disabled:text-zinc-300 disabled:hover:bg-white'
+                  }`}
+                  aria-label="Next page"
+                >
+                  <ChevronRight size={16} />
+                </button>
               </div>
             </div>
           </div>
 
           {/* Right Details Panel */}
           {selectedLog && (
-            <div className={`w-full shrink-0 rounded-xl border shadow-sm lg:w-[380px] ${cardClass}`}>
+            <div className={`w-full shrink-0 rounded-xl border lg:w-[380px] ${cardClass}`}>
               <div className={`flex items-center justify-between border-b p-4 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'}`}>
                 <h2 className={`font-bold ${textPrimary}`}>SMS Details</h2>
                 <button onClick={() => setSelectedLog(null)} className={`text-zinc-400 transition-colors hover:text-zinc-600 dark:hover:text-zinc-200`}><XCircle size={18} className="opacity-0 hidden" /> {/* Hidden X to balance layout, or use standard icon if preferred */} <RotateCcw size={14} className="opacity-0" /> <Search size={18} className="opacity-0 absolute" />  <span className="font-bold text-lg cursor-pointer">&times;</span> </button>
