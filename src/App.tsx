@@ -21,7 +21,7 @@ import { AuthorDetailPage } from './pages/AuthorDetailPage'
 import { CategoriesPage } from './pages/CategoriesPage'
 import { ReservationsPage } from './pages/ReservationsPage'
 import { StaffPage } from './pages/StaffPage'
-import { createBook, expandMainWindow, getActiveSession, getEmailLogStats, listAuthors, listBooks, listBorrowTransactions, listMembers, listNotifications, login as loginWithDb, logout as logoutFromDb, markAllNotificationsRead, markNotificationAsRead, restoreLoginWindow, runAutomaticEmailReminders, searchAuthors, searchBooks, searchMembers, syncNotifications, type NotificationItem } from './lib/tauriApi'
+import { verifyLicenseKey, getLicenseStatus, createBook, expandMainWindow, getActiveSession, getEmailLogStats, listAuthors, listBooks, listBorrowTransactions, listMembers, listNotifications, listEmailLogs, login as loginWithDb, logout as logoutFromDb, markAllNotificationsRead, markNotificationAsRead, restoreLoginWindow, runAutomaticEmailReminders, searchAuthors, searchBooks, searchMembers, syncNotifications, type NotificationItem, type EmailLog } from './lib/tauriApi'
 
 
 type LoginFormState = {
@@ -154,6 +154,12 @@ function DashboardShell({ onLogout }: { onLogout: () => Promise<void> | void }) 
   const [transactionActiveTab, setTransactionActiveTab] = useState<'all' | 'borrowed' | 'returned' | 'overdue'>('all')
   const [borrowPrefill, setBorrowPrefill] = useState<{ memberId: number, bookId: number } | null>(null)
   const [borrowReturnActiveTab, setBorrowReturnActiveTab] = useState<'borrow' | 'return'>('borrow')
+
+  const [isMessageMenuOpen, setIsMessageMenuOpen] = useState(false)
+  const [recentMessages, setRecentMessages] = useState<EmailLog[]>([])
+  const [messageError, setMessageError] = useState<string | null>(null)
+  const messageMenuRef = useRef<HTMLDivElement | null>(null)
+
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
@@ -965,10 +971,69 @@ const greetingName = formatDisplayName(activeUsername)
                   >
                     {isDarkMode ? <Sun size={18} strokeWidth={1.9} /> : <Moon size={18} strokeWidth={1.9} />}
                   </button>
-                  <button type="button" className={`relative rounded-lg p-2 ${dashboardTheme.iconBtn}`} aria-label="Open messages">
-                    <MessageCircle size={18} strokeWidth={1.9} />
-                    <span aria-hidden="true" className="absolute -right-0.5 -top-0.5 grid h-4 w-4 place-items-center rounded-full bg-red-500 text-[10px] font-bold text-white">3</span>
-                  </button>
+                                    <div ref={messageMenuRef} className="relative">
+                    <button 
+                      type="button" 
+                      onClick={() => setIsMessageMenuOpen((v) => !v)}
+                      className={`relative rounded-lg p-2 ${isMessageMenuOpen ? 'bg-emerald-500/10 text-emerald-500' : dashboardTheme.iconBtn}`} 
+                      aria-label="Open messages"
+                    >
+                      <MessageCircle size={18} strokeWidth={1.9} />
+                      <span aria-hidden="true" className="absolute -right-0.5 -top-0.5 grid h-4 w-4 place-items-center rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] text-[10px] font-bold text-white">{recentMessages.length > 0 ? recentMessages.length : 3}</span>
+                    </button>
+                    {isMessageMenuOpen && (
+                      <div className={`absolute right-0 top-11 z-30 w-80 overflow-hidden rounded-xl border shadow-2xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
+                        <div className={`flex items-center justify-between border-b px-4 py-3 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'}`}>
+                          <h3 className={`text-sm font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Recent Outbound Messages</h3>
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${isDarkMode ? 'bg-zinc-800 text-zinc-400' : 'bg-zinc-100 text-zinc-500'}`}>
+                            {recentMessages.length} New
+                          </span>
+                        </div>
+                        <div className="max-h-96 overflow-y-auto">
+                          {messageError ? (
+                            <div className="px-4 py-8 text-center text-sm text-red-500">
+                              {messageError}
+                            </div>
+                          ) : recentMessages.length === 0 ? (
+                            <div className="px-4 py-8 text-center text-sm text-zinc-500">
+                              No recent messages.
+                            </div>
+                          ) : (
+                            <div className={`divide-y ${isDarkMode ? 'divide-zinc-800/50' : 'divide-zinc-100'}`}>
+                              {recentMessages.map((msg) => (
+                                <div key={msg.id} className={`flex flex-col gap-1 p-4 transition-colors ${isDarkMode ? 'hover:bg-zinc-800/50' : 'hover:bg-zinc-50'}`}>
+                                  <div className="flex items-start justify-between gap-2">
+                                    <p className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-800'}`}>
+                                      To: {msg.borrowerName}
+                                    </p>
+                                    <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                                      msg.status === 'Sent' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
+                                      : msg.status === 'Failed' ? 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400'
+                                      : 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400'
+                                    }`}>
+                                      {msg.status}
+                                    </span>
+                                  </div>
+                                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                                    {msg.emailType} • {new Date(msg.sentAt).toLocaleDateString()} {new Date(msg.sentAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                  </p>
+                                  <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                                    Reminder for <span className="font-semibold text-emerald-600 dark:text-emerald-400">{msg.bookTitle}</span>
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <button 
+                          onClick={() => setIsMessageMenuOpen(false)}
+                          className={`w-full border-t p-3 text-center text-xs font-bold transition-colors ${isDarkMode ? 'border-zinc-800 text-emerald-500 hover:bg-zinc-800/50' : 'border-zinc-100 text-emerald-600 hover:bg-zinc-50'}`}
+                        >
+                          Close Menu
+                        </button>
+                      </div>
+                    )}
+                  </div>
                   <button type="button" className={`relative rounded-lg p-2 ${dashboardTheme.iconBtn}`} aria-label="Open inbox">
                     <Mail size={18} strokeWidth={1.9} />
                     <span aria-hidden="true" className="absolute -right-0.5 -top-0.5 grid h-4 w-4 place-items-center rounded-full bg-red-500 text-[10px] font-bold text-white">5</span>
@@ -1578,6 +1643,77 @@ const greetingName = formatDisplayName(activeUsername)
   )
 }
 
+
+function LicenseActivationScreen({ onActivated, onStartTrial }: { onActivated: () => void, onStartTrial: () => void }) {
+  const [key, setKey] = useState('')
+  const [error, setError] = useState('')
+  const [isActivating, setIsActivating] = useState(false)
+
+  const handleActivate = async (e: FormEvent) => {
+    e.preventDefault()
+    if (!key.trim()) {
+      setError('Please enter a license key.')
+      return
+    }
+    
+    setIsActivating(true)
+    setError('')
+    try {
+      const isValid = await verifyLicenseKey(key)
+      if (isValid) {
+        onActivated()
+      } else {
+        setError('Invalid license key. Please check and try again.')
+      }
+    } catch (err) {
+      setError('Verification failed. Please try again.')
+    } finally {
+      setIsActivating(false)
+    }
+  }
+
+  return (
+    <main className="flex h-screen w-full items-center justify-center bg-zinc-900 p-4">
+      <div className="w-full max-w-md rounded-2xl border border-zinc-800 bg-[#18181B] p-8 shadow-2xl">
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full bg-emerald-500/10 text-emerald-500">
+            <Shield size={32} />
+          </div>
+          <h1 className="text-2xl font-black tracking-tight text-zinc-100">License Activation</h1>
+          <p className="mt-2 text-sm text-zinc-400">Your 7-day free trial has expired. Please enter your license key to unlock the Library System permanently.</p>
+        </div>
+
+        <form onSubmit={handleActivate} className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase tracking-wider text-zinc-500">License Key</label>
+            <input 
+              type="text" 
+              value={key}
+              onChange={(e) => { setError(''); setKey(e.target.value.toUpperCase()) }}
+              placeholder="LIB-XXXX-XXXX-XXXX" 
+              className="w-full rounded-xl border border-zinc-700 bg-zinc-800/50 px-4 py-3 text-center font-mono text-lg font-bold tracking-widest text-zinc-100 outline-none transition-colors focus:border-emerald-500 focus:bg-zinc-800"
+            />
+          </div>
+
+          {error && (
+            <div className="rounded-lg border border-rose-500/20 bg-rose-500/10 p-3 text-center text-sm font-semibold text-rose-400">
+              {error}
+            </div>
+          )}
+
+          <button 
+            type="submit" 
+            disabled={isActivating}
+            className="w-full rounded-xl bg-emerald-600 py-3.5 text-sm font-bold text-white transition-colors hover:bg-emerald-500 disabled:opacity-50"
+          >
+            {isActivating ? 'Verifying...' : 'Activate License'}
+          </button>
+        </form>
+      </div>
+    </main>
+  )
+}
+
 function App() {
   const [formState, setFormState] = useState<LoginFormState>(initialState)
   const [showPassword, setShowPassword] = useState(false)
@@ -1585,6 +1721,24 @@ function App() {
   const [loginError, setLoginError] = useState('')
   const [isSigningIn, setIsSigningIn] = useState(false)
   const [isCheckingSession, setIsCheckingSession] = useState(true)
+
+  const [licenseStatus, setLicenseStatus] = useState<'checking' | 'active' | 'trial' | 'expired'>('checking')
+
+  useEffect(() => {
+    let mounted = true
+    const checkLicense = async () => {
+      try {
+        const status = await getLicenseStatus()
+        if (mounted) {
+          setLicenseStatus(status)
+        }
+      } catch (err) {
+        if (mounted) setLicenseStatus('expired')
+      }
+    }
+    checkLicense()
+  }, [])
+
 
   useEffect(() => {
     if (!isAuthenticated) return
@@ -1669,7 +1823,8 @@ function App() {
     }
   }
 
-  if (isCheckingSession) {
+  
+  if (licenseStatus === 'checking' || isCheckingSession) {
     return (
       <main className="grid h-screen place-items-center bg-[#f4f6f8] text-zinc-600">
         <p className="text-sm font-semibold">Loading session...</p>
@@ -1677,7 +1832,12 @@ function App() {
     )
   }
 
+  if (licenseStatus === 'expired') {
+    return <LicenseActivationScreen onActivated={() => setLicenseStatus('active')} onStartTrial={() => setLicenseStatus('trial')} />
+  }
+
   if (isAuthenticated) {
+
     return <DashboardShell onLogout={handleLogout} />
   }
 

@@ -2795,9 +2795,9 @@ fn list_email_logs(
       "
       SELECT id, borrower_name, email_address, book_title, email_type, status, sent_at, error_message
       FROM email_logs
-      WHERE (?1 = '%%' OR borrower_name LIKE ?1 OR email_address LIKE ?1 OR book_title LIKE ?1 OR email_type LIKE ?1)
+      WHERE (?1 = '%' OR ?1 = '%%' OR borrower_name LIKE ?1 OR email_address LIKE ?1 OR book_title LIKE ?1 OR email_type LIKE ?1)
         AND (?2 = '' OR status = ?2)
-      ORDER BY datetime(sent_at) DESC, id DESC
+      ORDER BY sent_at DESC, id DESC
       LIMIT ?3
       ",
     )
@@ -3353,6 +3353,69 @@ async fn send_manual_sms(
 }
 
 
+
+fn is_valid_license(key: &str) -> bool {
+    let clean_key = key.replace("-", "").to_uppercase();
+    if !clean_key.starts_with("LIB") || clean_key.len() != 15 {
+        return false;
+    }
+    let payload = &clean_key[3..13];
+    let expected_checksum = &clean_key[13..15];
+    
+    let mut sum: u32 = 0;
+    for (i, c) in payload.chars().enumerate() {
+        let val = c.to_digit(36).unwrap_or(0);
+        sum += val * (i as u32 + 1);
+    }
+    
+    let checksum = format!("{:02X}", sum % 256);
+    checksum == expected_checksum
+}
+
+#[tauri::command]
+fn verify_license_key(app: tauri::AppHandle, key: String) -> Result<bool, String> {
+    if is_valid_license(&key) {
+        let conn = open_db(&database_path(&app)?)?;
+        conn.execute("INSERT INTO settings (key, value, updated_at) VALUES ('license.status', 'active', datetime('now', 'localtime')) ON CONFLICT(key) DO UPDATE SET value = 'active'", [])
+            .map_err(|e| format!("db error: {}", e))?;
+        Ok(true)
+    } else {
+        Ok(false)
+    }
+}
+
+#[tauri::command]
+fn get_license_status(app: tauri::AppHandle) -> Result<String, String> {
+    let conn = open_db(&database_path(&app)?)?;
+    let status: String = conn.query_row("SELECT value FROM settings WHERE key = 'license.status'", [], |r| r.get(0)).unwrap_or_else(|_| "trial".to_string());
+    
+    if status == "active" {
+        return Ok("active".to_string());
+    }
+    
+    let install_date: Option<String> = conn.query_row("SELECT value FROM settings WHERE key = 'license.install_date'", [], |r| r.get(0)).ok();
+    
+    let now = Utc::now();
+    
+    if let Some(date_str) = install_date {
+        if let Ok(parsed_date) = chrono::DateTime::parse_from_rfc3339(&date_str) {
+            let parsed_utc = parsed_date.with_timezone(&Utc);
+            let diff = now.signed_duration_since(parsed_utc).num_days();
+            if diff >= 7 {
+                return Ok("expired".to_string());
+            } else {
+                return Ok("trial".to_string());
+            }
+        }
+    } else {
+        let date_str = now.to_rfc3339();
+        let _ = conn.execute("INSERT INTO settings (key, value, updated_at) VALUES ('license.install_date', ?, datetime('now', 'localtime')) ON CONFLICT(key) DO NOTHING", [&date_str]);
+        let _ = conn.execute("INSERT INTO settings (key, value, updated_at) VALUES ('license.status', 'trial', datetime('now', 'localtime')) ON CONFLICT(key) DO NOTHING", []);
+    }
+    
+    Ok("trial".to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -3367,6 +3430,8 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            verify_license_key,
+            get_license_status,
             init_db,
             set_setting,
             get_setting,

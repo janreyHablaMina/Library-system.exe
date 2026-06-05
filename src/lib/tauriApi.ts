@@ -584,3 +584,12 @@ export async function markNotificationAsRead(id: number): Promise<void> {
 export async function markAllNotificationsRead(): Promise<void> {
   return invoke<void>('mark_all_notifications_read')
 }
+
+
+export async function verifyLicenseKey(key: string): Promise<boolean> {
+  return invoke<boolean>('verify_license_key', { key })
+}
+
+export async function getLicenseStatus(): Promise<'checking' | 'active' | 'trial' | 'expired'> {
+  return invoke<'checking' | 'active' | 'trial' | 'expired'>('get_license_status')
+}
