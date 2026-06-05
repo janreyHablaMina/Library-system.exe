@@ -688,7 +688,10 @@ const greetingName = formatDisplayName(activeUsername)
               </div>
               {!sidebarCollapsed ? (
                 <div className="flex flex-col overflow-hidden">
-                  <p className={`text-base font-black tracking-tight truncate w-40 ${dashboardTheme.asideTitle}`} title={libraryName}>{libraryName}</p>
+                  <p className={`text-base font-black tracking-tight truncate w-40 ${dashboardTheme.asideTitle}`} title={libraryName}>
+                    <span className="text-[#10B981]">{libraryName.substring(0, 3)}</span>
+                    {libraryName.substring(3)}
+                  </p>
                   <p className={`text-[10px] font-semibold uppercase tracking-[0.08em] ${dashboardTheme.asideSub}`}>Admin Workspace</p>
                 </div>
               ) : null}
