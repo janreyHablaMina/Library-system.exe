@@ -1059,7 +1059,6 @@ const greetingName = formatDisplayName(activeUsername)
                       aria-label="Open SMS logs"
                     >
                       <MessageCircle size={18} strokeWidth={1.9} />
-                      <span aria-hidden="true" className="absolute -right-0.5 -top-0.5 grid h-4 w-4 place-items-center rounded-full bg-sky-500 shadow-[0_0_8px_rgba(14,165,233,0.8)] text-[10px] font-bold text-white">{recentSms.length > 0 ? recentSms.length : 0}</span>
                     </button>
                     {isSmsMenuOpen && (
                       <div className={`absolute right-0 top-11 z-30 w-80 overflow-hidden rounded-xl border shadow-2xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
@@ -1110,7 +1109,6 @@ const greetingName = formatDisplayName(activeUsername)
                       aria-label="Open email logs"
                     >
                       <Mail size={18} strokeWidth={1.9} />
-                      <span aria-hidden="true" className="absolute -right-0.5 -top-0.5 grid h-4 w-4 place-items-center rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] text-[10px] font-bold text-white">{recentEmails.length > 0 ? recentEmails.length : 0}</span>
                     </button>
                     {isEmailMenuOpen && (
                       <div className={`absolute right-0 top-11 z-30 w-80 overflow-hidden rounded-xl border shadow-2xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>

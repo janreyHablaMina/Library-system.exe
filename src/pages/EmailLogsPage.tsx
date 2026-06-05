@@ -1,26 +1,37 @@
-import { useState, useEffect } from 'react'
-import { Search, RotateCcw } from 'lucide-react'
+import { useState, useEffect, useMemo } from 'react'
+import { Search, Plus, FileText, BarChart2, RotateCcw, Send, CheckCircle2, XCircle, Clock, CreditCard, MoreVertical, Calendar, Copy, User, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { listEmailLogs, type EmailLog } from '../lib/tauriApi'
 
-type MessagesPageProps = {
+type EmailLogsPageProps = {
   isDarkMode: boolean
 }
 
-function EmailLogsPage({ isDarkMode }: MessagesPageProps) {
+function EmailLogsPage({ isDarkMode }: EmailLogsPageProps) {
   const [emailLogs, setEmailLogs] = useState<EmailLog[]>([])
-  const [emailLogSearch, setEmailLogSearch] = useState('')
-  const [emailLogStatus, setEmailLogStatus] = useState('')
+  const [search, setSearch] = useState('')
+  const [typeFilter, setTypeFilter] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
+  const [selectedLog, setSelectedLog] = useState<EmailLog | null>(null)
+  const [isClosing, setIsClosing] = useState(false)
 
-  const cardClass = isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-200 bg-white'
-  const labelClass = isDarkMode ? 'text-zinc-200' : 'text-zinc-700'
-  const subLabelClass = isDarkMode ? 'text-zinc-400' : 'text-zinc-500'
-  const inputClass = isDarkMode
-    ? 'border-zinc-800 bg-[#27272A] text-zinc-200'
-    : 'border-zinc-200 bg-white text-zinc-700'
+  const handleCloseDrawer = () => {
+    setIsClosing(true)
+    setTimeout(() => {
+      setSelectedLog(null)
+      setIsClosing(false)
+    }, 300)
+  }
+  
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [search, typeFilter, statusFilter, itemsPerPage])
 
   const loadEmailLogs = async () => {
     try {
-      const rows = await listEmailLogs(emailLogSearch, emailLogStatus, 200)
+      const rows = await listEmailLogs('', '', 1000)
       setEmailLogs(rows)
     } catch (error) {
       console.error('Failed to load email logs:', error)
@@ -30,81 +41,377 @@ function EmailLogsPage({ isDarkMode }: MessagesPageProps) {
 
   useEffect(() => {
     void loadEmailLogs()
-  }, [emailLogSearch, emailLogStatus])
+  }, [])
+
+  const filteredLogs = useMemo(() => {
+    return emailLogs.filter(log => {
+      const q = search.toLowerCase()
+      const matchesSearch = log.borrowerName.toLowerCase().includes(q) || log.emailAddress.toLowerCase().includes(q) || log.bookTitle?.toLowerCase().includes(q)
+      const matchesType = typeFilter === '' || log.emailType === typeFilter
+      const matchesStatus = statusFilter === '' || log.status === statusFilter
+      return matchesSearch && matchesType && matchesStatus
+    })
+  }, [emailLogs, search, typeFilter, statusFilter])
+
+  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage)
+  const paginatedLogs = filteredLogs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+
+  // Dynamic Stats
+  const sentToday = emailLogs.filter(log => new Date(log.sentAt).toDateString() === new Date().toDateString()).length
+  const delivered = emailLogs.filter(log => log.status === 'Sent' || log.status === 'Delivered').length
+  const failed = emailLogs.filter(log => log.status === 'Failed').length
+  const pending = emailLogs.filter(log => log.status === 'Pending' || log.status === 'Queued').length
+  const credits = "Unlimited"
+
+  const cardClass = isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-200 bg-white'
+  const textPrimary = isDarkMode ? 'text-zinc-100' : 'text-zinc-900'
+  const textSecondary = isDarkMode ? 'text-zinc-400' : 'text-zinc-500'
+  const inputClass = isDarkMode ? 'border-zinc-800 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'
+
+  const getTypeStyle = (type: string) => {
+    if (type.toLowerCase().includes('overdue')) return isDarkMode ? 'bg-orange-500/10 text-orange-400' : 'bg-orange-50 text-orange-600'
+    if (type.toLowerCase().includes('due')) return isDarkMode ? 'bg-sky-500/10 text-sky-400' : 'bg-sky-50 text-sky-600'
+    if (type.toLowerCase().includes('reservation')) return isDarkMode ? 'bg-purple-500/10 text-purple-400' : 'bg-purple-50 text-purple-600'
+    return isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600'
+  }
 
   return (
-    <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[transparent] text-zinc-100' : 'bg-[#f8fafc] text-zinc-900'}`}>
-      <section className="p-5 space-y-6">
-        <header>
-          <h1 className={`text-4xl font-black ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>System Messages</h1>
-          <p className={`mt-1 text-base ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>View and manage all outbound emails and system messages.</p>
-        </header>
-
-        <section className={`overflow-hidden rounded-2xl border ${cardClass}`}>
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b px-6 py-4 dark:border-zinc-800">
-            <div className="flex flex-1 items-center gap-3">
-              <div className={`flex h-11 min-w-64 items-center rounded-xl border px-3 ${inputClass}`}>
-                <Search size={16} className={subLabelClass} />
-                <input 
-                  value={emailLogSearch} 
-                  onChange={(event) => setEmailLogSearch(event.target.value)} 
-                  placeholder="Search borrower, email, or book..." 
-                  className="ml-2 w-full bg-transparent text-sm outline-none" 
-                />
-              </div>
-              <select 
-                value={emailLogStatus} 
-                onChange={(event) => setEmailLogStatus(event.target.value)} 
-                className={`h-11 rounded-xl border px-3 text-sm outline-none ${inputClass}`}
-              >
-                <option value="">All statuses</option>
-                <option value="Sent">Sent</option>
-                <option value="Failed">Failed</option>
-                <option value="Pending">Pending</option>
-              </select>
-            </div>
-            <button 
-              type="button" 
-              onClick={() => void loadEmailLogs()} 
-              className={`inline-flex h-11 items-center gap-2 rounded-xl border px-4 text-sm font-bold ${inputClass} hover:opacity-80 transition-opacity`}
-            >
-              <RotateCcw size={15} /> Refresh
+    <div className={`min-h-0 flex-1 overflow-auto p-4 lg:p-6 ${isDarkMode ? 'bg-transparent text-zinc-100' : 'bg-[#f8fafc] text-zinc-900'}`}>
+      <div className="mx-auto max-w-[1600px] space-y-6">
+        
+        {/* Header */}
+        <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h1 className={`text-2xl font-black ${textPrimary}`}>System Messages</h1>
+            <p className={`mt-1 text-sm ${textSecondary}`}>View and manage all email notifications sent to library members.</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-semibold text-white hover:bg-emerald-700">
+              <span className="text-lg leading-none">+</span>
+              Send Email
+            </button>
+            <button className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-semibold ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
+              <FileText size={15} />
+              Templates
+            </button>
+            <button className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-semibold ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
+              <BarChart2 size={15} />
+              Email Reports
+            </button>
+            <button className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-semibold ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
+              <RotateCcw size={15} />
+              Retry Failed Email
             </button>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className={isDarkMode ? 'bg-[#27272A]/50 text-zinc-300' : 'bg-zinc-50 text-zinc-600'}>
-                <tr>
-                  <th className="px-6 py-3 font-semibold">Borrower</th>
-                  <th className="px-6 py-3 font-semibold">Email</th>
-                  <th className="px-6 py-3 font-semibold">Book</th>
-                  <th className="px-6 py-3 font-semibold">Type</th>
-                  <th className="px-6 py-3 font-semibold">Status</th>
-                  <th className="px-6 py-3 font-semibold text-right">Sent Date</th>
-                </tr>
-              </thead>
-              <tbody className={`divide-y ${isDarkMode ? 'divide-zinc-800' : 'divide-zinc-100'}`}>
-                {emailLogs.length === 0 ? (
-                  <tr><td colSpan={6} className={`px-6 py-10 text-center ${subLabelClass}`}>No messages found.</td></tr>
-                ) : emailLogs.map((log) => (
-                  <tr key={log.id} className={isDarkMode ? 'hover:bg-[#3F3F46]' : 'hover:bg-zinc-50'}>
-                    <td className={`px-6 py-4 font-semibold ${labelClass}`}>{log.borrowerName}</td>
-                    <td className={`px-6 py-4 ${subLabelClass}`}>{log.emailAddress}</td>
-                    <td className={`px-6 py-4 ${labelClass}`}>{log.bookTitle}</td>
-                    <td className={`px-6 py-4 ${subLabelClass}`}>{log.emailType}</td>
-                    <td className="px-6 py-4">
-                      <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${log.status === 'Sent' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : log.status === 'Failed' ? 'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400' : 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400'}`}>
-                        {log.status}
-                      </span>
-                    </td>
-                    <td className={`px-6 py-4 text-right ${subLabelClass}`}>{new Date(log.sentAt).toLocaleString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        </header>
+
+        {/* Stats Row */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <div className={`flex items-center gap-4 rounded-xl border p-4 ${cardClass}`}>
+            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${isDarkMode ? 'bg-emerald-500/10' : 'bg-emerald-50'}`}>
+              <Send size={20} className="text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div className="flex-1">
+              <p className={`text-xs ${textSecondary}`}>email Sent Today</p>
+              <h3 className={`text-2xl font-black ${textPrimary}`}>{sentToday}</h3>
+            </div>
+            <div className="text-[10px] font-bold text-emerald-600 self-end mb-1 cursor-pointer hover:underline">View all</div>
           </div>
-        </section>
-      </section>
+          <div className={`flex items-center gap-4 rounded-xl border p-4 ${cardClass}`}>
+            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${isDarkMode ? 'bg-emerald-500/10' : 'bg-emerald-50'}`}>
+              <CheckCircle2 size={24} className="text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div className="flex-1">
+              <p className={`text-xs ${textSecondary}`}>Delivered</p>
+              <h3 className={`text-2xl font-black ${textPrimary}`}>{delivered}</h3>
+            </div>
+            <div className="text-[10px] font-bold text-emerald-600 self-end mb-1 cursor-pointer hover:underline">View all</div>
+          </div>
+          <div className={`flex items-center gap-4 rounded-xl border p-4 ${cardClass}`}>
+            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${isDarkMode ? 'bg-rose-500/10' : 'bg-rose-50'}`}>
+              <XCircle size={24} className="text-rose-600 dark:text-rose-400" />
+            </div>
+            <div className="flex-1">
+              <p className={`text-xs ${textSecondary}`}>Failed</p>
+              <h3 className={`text-2xl font-black ${textPrimary}`}>{failed}</h3>
+            </div>
+            <div className="text-[10px] font-bold text-rose-600 self-end mb-1 text-center">8%</div>
+          </div>
+          <div className={`flex items-center gap-4 rounded-xl border p-4 ${cardClass}`}>
+            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${isDarkMode ? 'bg-amber-500/10' : 'bg-amber-50'}`}>
+              <Clock size={24} className="text-amber-500 dark:text-amber-400" />
+            </div>
+            <div className="flex-1">
+              <p className={`text-xs ${textSecondary}`}>Pending</p>
+              <h3 className={`text-2xl font-black ${textPrimary}`}>{pending}</h3>
+            </div>
+            <div className="text-[10px] font-bold text-amber-500 self-end mb-1">4%</div>
+          </div>
+          <div className={`flex items-center gap-4 rounded-xl border p-4 ${cardClass}`}>
+            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${isDarkMode ? 'bg-purple-500/10' : 'bg-purple-50'}`}>
+              <CreditCard size={24} className="text-purple-600 dark:text-purple-400" />
+            </div>
+            <div className="flex-1">
+              <p className={`text-xs ${textSecondary}`}>email Credits</p>
+              <h3 className={`text-2xl font-black ${textPrimary}`}>{credits}</h3>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content Area */}
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+          
+          {/* Left Table Panel */}
+          <div className={`flex-1 rounded-xl border ${cardClass}`}>
+            <div className={`border-b p-4 rounded-t-xl ${isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
+              <h2 className={`font-bold ${textPrimary}`}>email History</h2>
+            </div>
+            <div className={`flex flex-wrap items-center gap-3 border-b p-3 ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
+              <label className={`group flex h-11 min-w-[280px] flex-1 items-center rounded-xl border px-3 ${isDarkMode ? 'border-zinc-700 focus-within:border-emerald-500' : 'border-zinc-200 focus-within:border-emerald-500'}`}>
+                <Search size={16} className={`mr-2 ${isDarkMode ? 'text-zinc-500 group-focus-within:text-emerald-400' : 'text-zinc-400 group-focus-within:text-emerald-600'}`} />
+                <input 
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search member name or phone number..." 
+                  className={`w-full bg-transparent text-sm outline-none ${isDarkMode ? 'text-zinc-200 placeholder:text-zinc-500' : 'text-zinc-700 placeholder:text-zinc-400'}`}
+                />
+              </label>
+              
+              <div className="relative">
+                <select 
+                  value={typeFilter}
+                  onChange={(e) => setTypeFilter(e.target.value)}
+                  className={`h-11 appearance-none rounded-xl border py-2 pl-3 pr-9 text-sm outline-none min-w-[150px] ${
+                    isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'
+                  }`}
+                >
+                  <option value="">All Types</option>
+                  <option value="Overdue Notice">Overdue Notice</option>
+                  <option value="Due Reminder">Due Reminder</option>
+                  <option value="Reservation Alert">Reservation Alert</option>
+                  <option value="Announcement">Announcement</option>
+                </select>
+                <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+              </div>
+              
+              <div className="relative">
+                <select 
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className={`h-11 appearance-none rounded-xl border py-2 pl-3 pr-9 text-sm outline-none min-w-[150px] ${
+                    isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'
+                  }`}
+                >
+                  <option value="">All Status</option>
+                  <option value="Sent">Delivered</option>
+                  <option value="Failed">Failed</option>
+                  <option value="Pending">Pending</option>
+                </select>
+                <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+              </div>
+              
+              <div className={`flex h-11 items-center gap-2 rounded-xl border px-3 text-sm ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'}`}>
+                <span>Jun 1 - Jun 5</span>
+                <Calendar size={16} className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} />
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-[13px]">
+                <thead className={`border-b ${isDarkMode ? 'border-zinc-800 text-zinc-400' : 'border-zinc-100 text-zinc-500'}`}>
+                  <tr>
+                    <th className="whitespace-nowrap px-6 py-3 font-semibold">Date & Time</th>
+                    <th className="whitespace-nowrap px-6 py-3 font-semibold">Member</th>
+                    <th className="whitespace-nowrap px-6 py-3 font-semibold">Email Address</th>
+                    <th className="whitespace-nowrap px-6 py-3 font-semibold">Message Type</th>
+                    <th className="whitespace-nowrap px-6 py-3 font-semibold">Status</th>
+                    <th className="whitespace-nowrap px-6 py-3 font-semibold">Sent By</th>
+                    <th className="px-6 py-3"></th>
+                  </tr>
+                </thead>
+                <tbody className={`divide-y ${isDarkMode ? 'divide-zinc-800/50' : 'divide-zinc-50'}`}>
+                  {paginatedLogs.length === 0 ? (
+                    <tr><td colSpan={7} className="px-6 py-12 text-center text-zinc-500">No logs found.</td></tr>
+                  ) : paginatedLogs.map((log) => {
+                    const isSelected = selectedLog?.id === log.id;
+                    return (
+                      <tr 
+                        key={log.id} 
+                        onClick={() => setSelectedLog(log)}
+                        className={`cursor-pointer transition-colors ${isSelected ? (isDarkMode ? 'bg-zinc-800' : 'bg-emerald-50/50') : (isDarkMode ? 'hover:bg-zinc-800/50' : 'hover:bg-zinc-50')}`}
+                      >
+                        <td className={`whitespace-nowrap px-6 py-3.5 ${textPrimary}`}>{new Date(log.sentAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</td>
+                        <td className={`whitespace-nowrap px-6 py-3.5 font-semibold ${textPrimary}`}>{log.borrowerName}</td>
+                        <td className={`whitespace-nowrap px-6 py-3.5 ${textSecondary}`}>{log.emailAddress}</td>
+                        <td className="whitespace-nowrap px-6 py-3.5">
+                          <span className={`rounded-md px-2 py-1 text-[11px] font-bold ${getTypeStyle(log.emailType)}`}>
+                            {log.emailType}
+                          </span>
+                        </td>
+                        <td className="whitespace-nowrap px-6 py-3.5">
+                          {log.status === 'Sent' ? (
+                            <span className="flex items-center gap-1.5 font-bold text-emerald-600 dark:text-emerald-500"><CheckCircle2 size={14} /> Delivered</span>
+                          ) : log.status === 'Failed' ? (
+                            <span className="flex items-center gap-1.5 font-bold text-rose-600 dark:text-rose-500"><XCircle size={14} /> Failed</span>
+                          ) : (
+                            <span className="flex items-center gap-1.5 font-bold text-amber-500 dark:text-amber-500"><Clock size={14} /> {log.status}</span>
+                          )}
+                        </td>
+                        <td className={`whitespace-nowrap px-6 py-3.5 ${textSecondary}`}>Admin</td>
+                        <td className="whitespace-nowrap px-6 py-3.5 text-right">
+                          <button className={`p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-700 ${textSecondary}`}><MoreVertical size={16} /></button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <div className={`relative z-0 flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm rounded-b-xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B] text-zinc-300' : 'border-zinc-200 bg-white text-zinc-600'}`}>
+              <p>Showing {filteredLogs.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to {Math.min(currentPage * itemsPerPage, filteredLogs.length)} of {filteredLogs.length} entries</p>
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <select value={itemsPerPage} onChange={(e) => setItemsPerPage(Number(e.target.value))} className={`h-10 min-w-[150px] appearance-none rounded-lg border py-2 pl-4 pr-10 text-sm font-medium outline-none transition-colors ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200 hover:bg-zinc-800 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 focus:border-emerald-500'}`}>
+                    <option value={10}>10 per page</option>
+                    <option value={20}>20 per page</option>
+                    <option value={50}>50 per page</option>
+                  </select>
+                  <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className={`grid h-10 w-10 place-items-center rounded-lg border transition-colors disabled:cursor-not-allowed ${
+                    isDarkMode
+                      ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800 disabled:border-zinc-800 disabled:text-zinc-600 disabled:hover:bg-transparent'
+                      : 'border-zinc-200 text-zinc-500 hover:bg-zinc-50 disabled:border-zinc-100 disabled:text-zinc-300 disabled:hover:bg-white'
+                  }`}
+                  aria-label="Previous page"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                    <button key={page} type="button" onClick={() => setCurrentPage(page)} className={page === currentPage ? "grid h-10 w-10 place-items-center rounded-lg bg-emerald-50 font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" : `grid h-10 w-10 place-items-center rounded-lg border transition-colors ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800' : 'border-zinc-200 hover:bg-zinc-50'}`}>
+                      {page}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages || totalPages === 0}
+                  className={`grid h-10 w-10 place-items-center rounded-lg border transition-colors disabled:cursor-not-allowed ${
+                    isDarkMode
+                      ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800 disabled:border-zinc-800 disabled:text-zinc-600 disabled:hover:bg-transparent'
+                      : 'border-zinc-200 text-zinc-500 hover:bg-zinc-50 disabled:border-zinc-100 disabled:text-zinc-300 disabled:hover:bg-white'
+                  }`}
+                  aria-label="Next page"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Details Drawer */}
+          {selectedLog && (
+            <div className={`fixed inset-0 z-50 flex justify-end bg-zinc-950/60 backdrop-blur-sm transition-opacity duration-300 ${isClosing ? 'opacity-0' : 'opacity-100'}`} onClick={handleCloseDrawer}>
+              <div 
+                className={`h-full w-full max-w-md shadow-2xl border-l overflow-y-auto transition-transform duration-300 ease-in-out ${isClosing ? 'translate-x-full' : 'translate-x-0'} ${isDarkMode ? 'bg-[#18181B] border-zinc-800' : 'bg-white border-zinc-200'}`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className={`sticky top-0 flex items-center justify-between border-b p-4 z-10 ${isDarkMode ? 'bg-[#18181B] border-zinc-800' : 'bg-white border-zinc-100'}`}>
+                  <h2 className={`font-bold text-lg ${textPrimary}`}>Email Details</h2>
+                  <button onClick={handleCloseDrawer} className={`text-zinc-400 transition-colors hover:text-rose-500`}>
+                    <XCircle size={20} />
+                  </button>
+                </div>
+                
+                <div className="p-6">
+                {/* Profile Header */}
+                <div className="flex items-center gap-3 mb-6">
+                  <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full font-black text-white text-lg ${isDarkMode ? 'bg-zinc-700' : 'bg-zinc-400'}`}>
+                    {selectedLog.borrowerName.charAt(0)}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className={`font-bold ${textPrimary}`}>{selectedLog.borrowerName}</h3>
+                      <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">Active Member</span>
+                    </div>
+                    <p className={`text-xs mt-0.5 ${textSecondary}`}>{selectedLog.emailAddress}</p>
+                  </div>
+                </div>
+
+                {/* Metadata Grid */}
+                <div className="space-y-3 text-xs mb-6">
+                  <div className="flex justify-between">
+                    <span className={textSecondary}>Message Type</span>
+                    <span className={`rounded-md px-2 py-0.5 font-bold text-[10px] ${getTypeStyle(selectedLog.emailType)}`}>{selectedLog.emailType}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className={textSecondary}>Sent By</span>
+                    <span className={`font-medium ${textPrimary}`}>Admin</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className={textSecondary}>Date Sent</span>
+                    <span className={`font-medium ${textPrimary}`}>{new Date(selectedLog.sentAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className={textSecondary}>Delivery Status</span>
+                    {selectedLog.status === 'Sent' ? (
+                      <span className="flex items-center gap-1 font-bold text-emerald-600 dark:text-emerald-500"><CheckCircle2 size={12} /> Delivered</span>
+                    ) : selectedLog.status === 'Failed' ? (
+                      <span className="flex items-center gap-1 font-bold text-rose-600 dark:text-rose-500"><XCircle size={12} /> Failed</span>
+                    ) : (
+                      <span className="flex items-center gap-1 font-bold text-amber-500 dark:text-amber-500"><Clock size={12} /> {selectedLog.status}</span>
+                    )}
+                  </div>
+                  <div className="flex justify-between">
+                    <span className={textSecondary}>Gateway</span>
+                    <span className={`font-medium ${textPrimary}`}>SMTP Relay</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className={textSecondary}>Message ID</span>
+                    <span className={`font-medium ${textPrimary}`}>MSG-{selectedLog.id.toString().padStart(7, '0')}</span>
+                  </div>
+                </div>
+
+                {/* Message Content */}
+                <div>
+                  <h4 className={`mb-2 text-sm font-bold ${textPrimary}`}>Message Content</h4>
+                  <div className={`rounded-xl p-4 text-sm leading-relaxed ${isDarkMode ? 'bg-emerald-950/30 text-emerald-100 border border-emerald-900/50' : 'bg-[#F0FAF4] text-emerald-900 border border-emerald-100'}`}>
+                    <p className="whitespace-pre-wrap">[System Event] {selectedLog.emailType}</p>
+                    {selectedLog.errorMessage && (
+                      <p className="mt-3 text-xs font-bold text-rose-600 dark:text-rose-400">Error: {selectedLog.errorMessage}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="mt-6 space-y-3">
+                  <div className="flex gap-3">
+                    <button className={`flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border text-sm font-bold transition-colors ${isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
+                      <Send size={16} className="text-emerald-600" /> Send Again
+                    </button>
+                    <button className={`flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border text-sm font-bold transition-colors ${isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
+                      <Copy size={16} className="text-emerald-600" /> Copy Message
+                    </button>
+                  </div>
+                  <button className={`flex h-11 w-full items-center justify-center gap-2 rounded-xl border text-sm font-bold transition-colors ${isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
+                    <User size={16} className="text-emerald-600" /> View Member
+                  </button>
+                </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+        </div>
+      </div>
     </div>
   )
 }

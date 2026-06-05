@@ -12,6 +12,15 @@ function SmsLogsPage({ isDarkMode }: SmsLogsPageProps) {
   const [typeFilter, setTypeFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [selectedLog, setSelectedLog] = useState<SmsLog | null>(null)
+  const [isClosing, setIsClosing] = useState(false)
+
+  const handleCloseDrawer = () => {
+    setIsClosing(true)
+    setTimeout(() => {
+      setSelectedLog(null)
+      setIsClosing(false)
+    }, 300)
+  }
   
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
@@ -47,11 +56,11 @@ function SmsLogsPage({ isDarkMode }: SmsLogsPageProps) {
   const totalPages = Math.ceil(filteredLogs.length / itemsPerPage)
   const paginatedLogs = filteredLogs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
-  // Mock Stats
-  const sentToday = 25
-  const delivered = 22
-  const failed = 2
-  const pending = 1
+  // Dynamic Stats
+  const sentToday = smsLogs.filter(log => new Date(log.sentAt).toDateString() === new Date().toDateString()).length
+  const delivered = smsLogs.filter(log => log.status === 'Sent' || log.status === 'Delivered').length
+  const failed = smsLogs.filter(log => log.status === 'Failed').length
+  const pending = smsLogs.filter(log => log.status === 'Pending' || log.status === 'Queued').length
   const credits = "4,850"
 
   const cardClass = isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-200 bg-white'
@@ -308,15 +317,21 @@ function SmsLogsPage({ isDarkMode }: SmsLogsPageProps) {
             </div>
           </div>
 
-          {/* Right Details Panel */}
+          {/* Right Details Drawer */}
           {selectedLog && (
-            <div className={`w-full shrink-0 rounded-xl border lg:w-[380px] ${cardClass}`}>
-              <div className={`flex items-center justify-between border-b p-4 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'}`}>
-                <h2 className={`font-bold ${textPrimary}`}>SMS Details</h2>
-                <button onClick={() => setSelectedLog(null)} className={`text-zinc-400 transition-colors hover:text-zinc-600 dark:hover:text-zinc-200`}><XCircle size={18} className="opacity-0 hidden" /> {/* Hidden X to balance layout, or use standard icon if preferred */} <RotateCcw size={14} className="opacity-0" /> <Search size={18} className="opacity-0 absolute" />  <span className="font-bold text-lg cursor-pointer">&times;</span> </button>
-              </div>
-              
-              <div className="p-5">
+            <div className={`fixed inset-0 z-50 flex justify-end bg-zinc-950/60 backdrop-blur-sm transition-opacity duration-300 ${isClosing ? 'opacity-0' : 'opacity-100'}`} onClick={handleCloseDrawer}>
+              <div 
+                className={`h-full w-full max-w-md shadow-2xl border-l overflow-y-auto transition-transform duration-300 ease-in-out ${isClosing ? 'translate-x-full' : 'translate-x-0'} ${isDarkMode ? 'bg-[#18181B] border-zinc-800' : 'bg-white border-zinc-200'}`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className={`sticky top-0 flex items-center justify-between border-b p-4 z-10 ${isDarkMode ? 'bg-[#18181B] border-zinc-800' : 'bg-white border-zinc-100'}`}>
+                  <h2 className={`font-bold text-lg ${textPrimary}`}>SMS Details</h2>
+                  <button onClick={handleCloseDrawer} className={`text-zinc-400 transition-colors hover:text-rose-500`}>
+                    <XCircle size={20} />
+                  </button>
+                </div>
+                
+                <div className="p-6">
                 {/* Profile Header */}
                 <div className="flex items-center gap-3 mb-6">
                   <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full font-black text-white text-lg ${isDarkMode ? 'bg-zinc-700' : 'bg-zinc-400'}`}>
@@ -380,20 +395,20 @@ function SmsLogsPage({ isDarkMode }: SmsLogsPageProps) {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="mt-6 space-y-2">
-                  <div className="flex gap-2">
-                    <button className={`flex h-9 flex-1 items-center justify-center gap-2 rounded-lg border text-xs font-bold transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800 ${isDarkMode ? 'border-zinc-700 text-zinc-300' : 'border-zinc-200 text-zinc-700'}`}>
-                      <Send size={14} className="text-emerald-600" /> Send Again
+                <div className="mt-6 space-y-3">
+                  <div className="flex gap-3">
+                    <button className={`flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border text-sm font-bold transition-colors ${isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
+                      <Send size={16} className="text-emerald-600" /> Send Again
                     </button>
-                    <button className={`flex h-9 flex-1 items-center justify-center gap-2 rounded-lg border text-xs font-bold transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800 ${isDarkMode ? 'border-zinc-700 text-zinc-300' : 'border-zinc-200 text-zinc-700'}`}>
-                      <Copy size={14} className="text-emerald-600" /> Copy Message
+                    <button className={`flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border text-sm font-bold transition-colors ${isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
+                      <Copy size={16} className="text-emerald-600" /> Copy Message
                     </button>
                   </div>
-                  <button className={`flex h-9 w-full items-center justify-center gap-2 rounded-lg border text-xs font-bold transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800 ${isDarkMode ? 'border-zinc-700 text-zinc-300' : 'border-zinc-200 text-zinc-700'}`}>
-                    <User size={14} className="text-emerald-600" /> View Member
+                  <button className={`flex h-11 w-full items-center justify-center gap-2 rounded-xl border text-sm font-bold transition-colors ${isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
+                    <User size={16} className="text-emerald-600" /> View Member
                   </button>
                 </div>
-
+                </div>
               </div>
             </div>
           )}
