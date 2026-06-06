@@ -266,7 +266,7 @@ function DashboardShell({ onLogout, licenseStatus, trialDays }: { onLogout: () =
   const refreshNotifications = async () => {
     try {
       await syncNotifications()
-      // await runAutomaticEmailReminders() // Disabled for now as per user request
+      await runAutomaticEmailReminders()
       const rows = await listNotifications(12)
       setNotifications(rows)
     } catch (error) {
