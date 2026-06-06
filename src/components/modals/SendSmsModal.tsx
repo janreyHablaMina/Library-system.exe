@@ -37,7 +37,8 @@ export function SendSmsModal({ isOpen, onClose, member, onSuccess, isDarkMode, i
 
     try {
       await invoke('send_manual_sms', {
-        memberId: member.id,
+        phoneNumber: member.phone,
+        memberName: member.fullName,
         message: message.trim(),
       })
       setMessage('')

@@ -3421,7 +3421,8 @@ async fn test_sms_configuration(
 #[tauri::command]
 async fn send_manual_sms(
     app: tauri::AppHandle,
-    member_id: i64,
+    phone_number: String,
+    member_name: String,
     message: String,
 ) -> Result<String, String> {
     let conn = open_db(&database_path(&app)?)?;
@@ -3435,17 +3436,6 @@ async fn send_manual_sms(
     if api_key.trim().is_empty() {
         return Err("TxtBox API key is missing.".to_string());
     }
-
-    let phone_data: Option<(String, String)> = conn.query_row(
-        "SELECT contact_number, first_name || ' ' || last_name FROM members WHERE id = ?",
-        [member_id],
-        |row| Ok((row.get(0).unwrap_or_default(), row.get(1).unwrap_or_default()))
-    ).ok();
-
-    let (phone_number, member_name) = match phone_data {
-        Some((p, n)) if !p.trim().is_empty() && p != "n/a" => (p, n),
-        _ => return Err("Member does not have a valid contact number.".to_string()),
-    };
 
     send_sms_txtbox(&api_key, &phone_number, &message).await?;
 
