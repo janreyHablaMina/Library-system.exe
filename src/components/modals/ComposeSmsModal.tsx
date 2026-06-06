@@ -172,12 +172,21 @@ export function ComposeSmsModal({ isOpen, onClose, onSuccess, isDarkMode }: Comp
                         <li 
                           key={m.id} 
                           onClick={() => handleSelectMember(m)}
-                          className={`flex cursor-pointer flex-col px-4 py-2 transition-colors ${isDarkMode ? 'hover:bg-zinc-800' : 'hover:bg-zinc-50'}`}
+                          className={`flex cursor-pointer items-center gap-3 px-4 py-2 transition-colors ${isDarkMode ? 'hover:bg-zinc-800' : 'hover:bg-zinc-50'}`}
                         >
-                          <span className={`font-bold text-sm ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>{m.fullName}</span>
-                          <span className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                            {m.contactNumber || 'No phone number'}
-                          </span>
+                          <div className={`flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full font-bold text-white text-xs ${isDarkMode ? 'bg-zinc-700' : 'bg-zinc-400'}`}>
+                            {m.profilePhotoData ? (
+                              <img src={m.profilePhotoData} alt={m.fullName} className="h-full w-full object-cover" />
+                            ) : (
+                              m.fullName.charAt(0)
+                            )}
+                          </div>
+                          <div className="flex flex-col">
+                            <span className={`font-bold text-sm leading-none mb-1 ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>{m.fullName}</span>
+                            <span className={`text-xs leading-none ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                              {m.contactNumber || 'No phone number'}
+                            </span>
+                          </div>
                         </li>
                       ))}
                     </ul>
