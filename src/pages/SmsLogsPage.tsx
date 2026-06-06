@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Search, Plus, FileText, BarChart2, RotateCcw, Send, CheckCircle2, XCircle, Clock, CreditCard, MoreVertical, Calendar, Copy, User, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
-import { listSmsLogs, type SmsLog } from '../lib/tauriApi'
+import { listSmsLogs, type SmsLog, listMembers, type Member } from '../lib/tauriApi'
 
 import { ComposeSmsModal } from '../components/modals/ComposeSmsModal'
 
@@ -10,6 +10,7 @@ type SmsLogsPageProps = {
 
 function SmsLogsPage({ isDarkMode }: SmsLogsPageProps) {
   const [smsLogs, setSmsLogs] = useState<SmsLog[]>([])
+  const [membersMap, setMembersMap] = useState<Map<string, Member>>(new Map())
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
@@ -42,8 +43,20 @@ function SmsLogsPage({ isDarkMode }: SmsLogsPageProps) {
     }
   }
 
+  const loadMembers = async () => {
+    try {
+      const fetchedMembers = await listMembers(2000)
+      const map = new Map<string, Member>()
+      fetchedMembers.forEach(m => map.set(m.fullName, m))
+      setMembersMap(map)
+    } catch (error) {
+      console.error('Failed to load members:', error)
+    }
+  }
+
   useEffect(() => {
     void loadSmsLogs()
+    void loadMembers()
   }, [])
 
   const filteredLogs = useMemo(() => {
@@ -339,8 +352,16 @@ function SmsLogsPage({ isDarkMode }: SmsLogsPageProps) {
                 <div className="p-6">
                 {/* Profile Header */}
                 <div className="flex items-center gap-3 mb-6">
-                  <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full font-black text-white text-lg ${isDarkMode ? 'bg-zinc-700' : 'bg-zinc-400'}`}>
-                    {selectedLog.borrowerName.charAt(0)}
+                  <div className={`flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full font-black text-white text-lg ${isDarkMode ? 'bg-zinc-700' : 'bg-zinc-400'}`}>
+                    {membersMap.get(selectedLog.borrowerName)?.profilePhotoData ? (
+                      <img 
+                        src={membersMap.get(selectedLog.borrowerName)?.profilePhotoData!} 
+                        alt={selectedLog.borrowerName} 
+                        className="h-full w-full object-cover" 
+                      />
+                    ) : (
+                      selectedLog.borrowerName.charAt(0)
+                    )}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
