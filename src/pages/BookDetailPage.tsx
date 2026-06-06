@@ -128,7 +128,7 @@ export function BookDetailPage({
                   { label: 'Author', value: book?.author || 'Unknown Author', icon: User },
                   { label: 'ISBN', value: book?.isbn || '-', icon: Hash },
                   { label: 'Shelf Location', value: book?.shelfLocation || '-', icon: MapPin },
-                  { label: 'Publication Year', value: String(book?.year || '-'), icon: CalendarDays },
+                  { label: 'Publisher', value: String(book?.publisher || '-'), icon: CalendarDays },
                 ].map((item) => {
                   const Icon = item.icon
                   return (

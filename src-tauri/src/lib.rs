@@ -25,6 +25,7 @@ struct Book {
     author: String,
     category: Option<String>,
     isbn: Option<String>,
+    publisher: Option<String>,
     cover_data: Option<String>,
     shelf_location: Option<String>,
     available: i64,
@@ -40,6 +41,7 @@ struct CreateBookPayload {
     author: String,
     category: Option<String>,
     isbn: Option<String>,
+    publisher: Option<String>,
     cover_data: Option<String>,
     shelf_location: Option<String>,
     total_copies: Option<i64>,
@@ -53,6 +55,7 @@ struct UpdateBookPayload {
     author: String,
     category: Option<String>,
     isbn: Option<String>,
+    publisher: Option<String>,
     cover_data: Option<String>,
     shelf_location: Option<String>,
     available: i64,
@@ -532,6 +535,7 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
         author TEXT NOT NULL,
         category TEXT,
         isbn TEXT,
+        publisher TEXT,
         cover_data TEXT,
         shelf_location TEXT,
         available INTEGER NOT NULL DEFAULT 1,
@@ -708,6 +712,7 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
 
     // Schema migrations
     let _ = conn.execute("ALTER TABLE books ADD COLUMN shelf_location TEXT", []);
+    let _ = conn.execute("ALTER TABLE books ADD COLUMN publisher TEXT", []);
     let _ = conn.execute("ALTER TABLE sms_logs ADD COLUMN message_body TEXT", []);
     let _ = conn.execute("ALTER TABLE users ADD COLUMN full_name TEXT", []);
     let _ = conn.execute("ALTER TABLE users ADD COLUMN email TEXT", []);
@@ -1588,12 +1593,13 @@ fn create_book(app: tauri::AppHandle, payload: CreateBookPayload) -> Result<i64,
     init_schema(&conn)?;
     conn
     .execute(
-      "INSERT INTO books (title, author, category, isbn, cover_data, shelf_location, available, total_copies, is_archived, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 0, ?9)",
+      "INSERT INTO books (title, author, category, isbn, publisher, cover_data, shelf_location, available, total_copies, is_archived, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, 0, ?10)",
       params![
         payload.title,
         payload.author,
         payload.category.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
         payload.isbn,
+        payload.publisher.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
         payload.cover_data,
         payload.shelf_location,
         payload.total_copies.unwrap_or(1),
@@ -1614,7 +1620,7 @@ fn list_books(app: tauri::AppHandle, limit: Option<i64>) -> Result<Vec<Book>, St
     let max_rows = limit.unwrap_or(50).clamp(1, 500);
     let mut stmt = conn
     .prepare(
-      "SELECT id, title, author, category, isbn, cover_data, shelf_location, available, total_copies, is_archived, created_at
+      "SELECT id, title, author, category, isbn, publisher, cover_data, shelf_location, available, total_copies, is_archived, created_at
        FROM books
        ORDER BY id DESC
        LIMIT ?1",
@@ -1628,12 +1634,13 @@ fn list_books(app: tauri::AppHandle, limit: Option<i64>) -> Result<Vec<Book>, St
                 author: row.get(2)?,
                 category: row.get(3)?,
                 isbn: row.get(4)?,
-                cover_data: row.get(5)?,
-                shelf_location: row.get(6)?,
-                available: row.get(7)?,
-                total_copies: row.get(8)?,
-                is_archived: row.get::<_, i64>(9)? == 1,
-                created_at: row.get(10)?,
+                publisher: row.get(5)?,
+                cover_data: row.get(6)?,
+                shelf_location: row.get(7)?,
+                available: row.get(8)?,
+                total_copies: row.get(9)?,
+                is_archived: row.get::<_, i64>(10)? == 1,
+                created_at: row.get(11)?,
             })
         })
         .map_err(|e| format!("list books failed: {e}"))?;
@@ -1654,7 +1661,7 @@ fn search_books(
     let like_pattern = format!("%{}%", query.trim());
     let mut stmt = conn
     .prepare(
-      "SELECT id, title, author, category, isbn, cover_data, shelf_location, available, total_copies, is_archived, created_at
+      "SELECT id, title, author, category, isbn, publisher, cover_data, shelf_location, available, total_copies, is_archived, created_at
        FROM books
        WHERE title LIKE ?1 OR author LIKE ?1
        ORDER BY id DESC
@@ -1669,12 +1676,13 @@ fn search_books(
                 author: row.get(2)?,
                 category: row.get(3)?,
                 isbn: row.get(4)?,
-                cover_data: row.get(5)?,
-                shelf_location: row.get(6)?,
-                available: row.get(7)?,
-                total_copies: row.get(8)?,
-                is_archived: row.get::<_, i64>(9)? == 1,
-                created_at: row.get(10)?,
+                publisher: row.get(5)?,
+                cover_data: row.get(6)?,
+                shelf_location: row.get(7)?,
+                available: row.get(8)?,
+                total_copies: row.get(9)?,
+                is_archived: row.get::<_, i64>(10)? == 1,
+                created_at: row.get(11)?,
             })
         })
         .map_err(|e| format!("search books failed: {e}"))?;
@@ -1694,12 +1702,13 @@ fn update_book(app: tauri::AppHandle, payload: UpdateBookPayload) -> Result<(), 
           author = ?2,
           category = ?3,
           isbn = ?4,
-          cover_data = ?5,
-          shelf_location = ?6,
-          available = ?7,
-          total_copies = ?8,
-          is_archived = ?9
-      WHERE id = ?10
+          publisher = ?5,
+          cover_data = ?6,
+          shelf_location = ?7,
+          available = ?8,
+          total_copies = ?9,
+          is_archived = ?10
+      WHERE id = ?11
       ",
         params![
             payload.title,
@@ -1709,6 +1718,7 @@ fn update_book(app: tauri::AppHandle, payload: UpdateBookPayload) -> Result<(), 
                 .map(|v| v.trim().to_string())
                 .filter(|v| !v.is_empty()),
             payload.isbn,
+            payload.publisher,
             payload.cover_data,
             payload.shelf_location,
             payload.available,

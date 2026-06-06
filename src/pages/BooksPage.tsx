@@ -20,7 +20,7 @@ type BookRow = {
   category: string
   shelfLocation: string
   callNumber: string
-  year: number
+  publisher: string
   status: BookStatus
   available: string
   borrowedCopies?: number
@@ -40,18 +40,18 @@ type BooksPageProps = {
 }
 
 const initialBooks: BookRow[] = [
-  { id: 1, cover: '📚', title: 'Sosyolohiya sa Filipino', isbn: '978-621-455-010-2', author: 'Kahayon, Alicia H.', category: 'Social Sciences', shelfLocation: '300.72 KAH', callNumber: '300.72 KAH', year: 2021, status: 'Available', available: '5 / 7' },
-  { id: 2, cover: '📕', title: 'Understanding Philippine Social Realities through the Filipino Family', isbn: '978-971-009-123-4', author: 'Ramirez, Mina M.', category: 'Social Sciences', shelfLocation: '305.23 RAM', callNumber: '305.23 RAM', year: 2020, status: 'Borrowed', available: '1 / 3' },
-  { id: 3, cover: '📘', title: 'The Conjugal Dictatorship of Ferdinand and Imelda Marcos I', isbn: '978-971-555-001-1', author: 'Mijares, Primitivo', category: 'History', shelfLocation: '959.904 MIJ', callNumber: '959.904 MIJ', year: 2018, status: 'Available', available: '2 / 4' },
-  { id: 4, cover: '📗', title: 'Filipino Values Today', isbn: '978-971-100-456-7', author: 'Timberza, Florentino T.', category: 'Education', shelfLocation: '370.115 TIM', callNumber: '370.115 TIM', year: 2019, status: 'Available', available: '3 / 5' },
-  { id: 5, cover: '📙', title: 'The Fateful Years', isbn: '978-621-455-789-6', author: 'Agoncillo, Teodoro A.', category: 'History', shelfLocation: '959.902 AGO', callNumber: '959.902 AGO', year: 2017, status: 'Overdue', available: '0 / 2' },
-  { id: 6, cover: '📙', title: 'Philippine Constitution Explained', isbn: '978-971-888-777-1', author: 'De Vera, Hector S.', category: 'Law', shelfLocation: '342.59903 DEV', callNumber: '342.59903 DEV', year: 2022, status: 'Available', available: '4 / 6' },
-  { id: 7, cover: '📚', title: 'The Life and Works of Jose Rizal', isbn: '978-971-245-678-3', author: 'Tellos, Ricardo', category: 'Biography', shelfLocation: '920 RIZ', callNumber: '920 RIZ', year: 2016, status: 'Borrowed', available: '1 / 2' },
-  { id: 8, cover: '📓', title: 'Introduction to Library Science', isbn: '978-971-333-222-8', author: 'Villanueva, Ma. Teresa', category: 'Library Science', shelfLocation: '025.1 VIL', callNumber: '025.1 VIL', year: 2021, status: 'Available', available: '6 / 8' },
-  { id: 9, cover: '📘', title: 'The Philippine Islands, 1493-1898', isbn: '978-971-555-025-7', author: 'Blair, Emma Helen', category: 'History', shelfLocation: '959.9 BLA', callNumber: '959.9 BLA', year: 2015, status: 'Archived', available: '0 / 5' },
-  { id: 10, cover: '📚', title: 'Florante at Laura', isbn: '978-971-08-6047-0', author: 'Balagtas, Francisco', category: 'Fiction', shelfLocation: '899.211 BAL', callNumber: '899.211 BAL', year: 2019, status: 'Available', available: '7 / 7' },
-  { id: 11, cover: '📗', title: 'Noli Me Tangere', isbn: '978-971-08-6046-3', author: 'Rizal, Jose', category: 'Fiction', shelfLocation: '899.211 RIZ', callNumber: '899.211 RIZ', year: 2018, status: 'Borrowed', available: '2 / 5' },
-  { id: 12, cover: '📕', title: 'Web Development with React and Node', isbn: '978-1-80181-234-5', author: 'Freeman, Adam', category: 'Technology', shelfLocation: '005.276 FRE', callNumber: '005.276 FRE', year: 2022, status: 'Available', available: '3 / 3' },
+  { id: 1, cover: '📚', title: 'Sosyolohiya sa Filipino', isbn: '978-621-455-010-2', author: 'Kahayon, Alicia H.', category: 'Social Sciences', shelfLocation: '300.72 KAH', callNumber: '300.72 KAH', publisher: 'N/A', status: 'Available', available: '5 / 7' },
+  { id: 2, cover: '📕', title: 'Understanding Philippine Social Realities through the Filipino Family', isbn: '978-971-009-123-4', author: 'Ramirez, Mina M.', category: 'Social Sciences', shelfLocation: '305.23 RAM', callNumber: '305.23 RAM', publisher: 'N/A', status: 'Borrowed', available: '1 / 3' },
+  { id: 3, cover: '📘', title: 'The Conjugal Dictatorship of Ferdinand and Imelda Marcos I', isbn: '978-971-555-001-1', author: 'Mijares, Primitivo', category: 'History', shelfLocation: '959.904 MIJ', callNumber: '959.904 MIJ', publisher: 'N/A', status: 'Available', available: '2 / 4' },
+  { id: 4, cover: '📗', title: 'Filipino Values Today', isbn: '978-971-100-456-7', author: 'Timberza, Florentino T.', category: 'Education', shelfLocation: '370.115 TIM', callNumber: '370.115 TIM', publisher: 'N/A', status: 'Available', available: '3 / 5' },
+  { id: 5, cover: '📙', title: 'The Fateful Years', isbn: '978-621-455-789-6', author: 'Agoncillo, Teodoro A.', category: 'History', shelfLocation: '959.902 AGO', callNumber: '959.902 AGO', publisher: 'N/A', status: 'Overdue', available: '0 / 2' },
+  { id: 6, cover: '📙', title: 'Philippine Constitution Explained', isbn: '978-971-888-777-1', author: 'De Vera, Hector S.', category: 'Law', shelfLocation: '342.59903 DEV', callNumber: '342.59903 DEV', publisher: 'N/A', status: 'Available', available: '4 / 6' },
+  { id: 7, cover: '📚', title: 'The Life and Works of Jose Rizal', isbn: '978-971-245-678-3', author: 'Tellos, Ricardo', category: 'Biography', shelfLocation: '920 RIZ', callNumber: '920 RIZ', publisher: 'N/A', status: 'Borrowed', available: '1 / 2' },
+  { id: 8, cover: '📓', title: 'Introduction to Library Science', isbn: '978-971-333-222-8', author: 'Villanueva, Ma. Teresa', category: 'Library Science', shelfLocation: '025.1 VIL', callNumber: '025.1 VIL', publisher: 'N/A', status: 'Available', available: '6 / 8' },
+  { id: 9, cover: '📘', title: 'The Philippine Islands, 1493-1898', isbn: '978-971-555-025-7', author: 'Blair, Emma Helen', category: 'History', shelfLocation: '959.9 BLA', callNumber: '959.9 BLA', publisher: 'N/A', status: 'Archived', available: '0 / 5' },
+  { id: 10, cover: '📚', title: 'Florante at Laura', isbn: '978-971-08-6047-0', author: 'Balagtas, Francisco', category: 'Fiction', shelfLocation: '899.211 BAL', callNumber: '899.211 BAL', publisher: 'N/A', status: 'Available', available: '7 / 7' },
+  { id: 11, cover: '📗', title: 'Noli Me Tangere', isbn: '978-971-08-6046-3', author: 'Rizal, Jose', category: 'Fiction', shelfLocation: '899.211 RIZ', callNumber: '899.211 RIZ', publisher: 'N/A', status: 'Borrowed', available: '2 / 5' },
+  { id: 12, cover: '📕', title: 'Web Development with React and Node', isbn: '978-1-80181-234-5', author: 'Freeman, Adam', category: 'Technology', shelfLocation: '005.276 FRE', callNumber: '005.276 FRE', publisher: 'N/A', status: 'Available', available: '3 / 3' },
 ]
 
 function getStatusClass(status: BookStatus, isDarkMode: boolean) {
@@ -260,7 +260,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, onReser
           category: row.category ?? 'Uncategorized',
           shelfLocation: row.shelfLocation ?? '-',
           callNumber: row.shelfLocation ?? '-',
-          year: new Date(row.createdAt).getFullYear() || new Date().getFullYear(),
+          publisher: row.publisher || 'N/A',
           status: row.isArchived ? 'Archived' : (row.available > 0 ? 'Available' : 'Borrowed'),
           available: `${row.available} / ${row.totalCopies}`,
           borrowedCopies: Math.max(0, row.totalCopies - row.available),
@@ -399,7 +399,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, onReser
       'Category',
       'Shelf Location',
       'Call Number',
-      'Year',
+      'Publisher',
       'Status',
       'Available Copies',
       'Borrowed Copies',
@@ -415,7 +415,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, onReser
         book.category,
         book.shelfLocation,
         book.callNumber,
-        book.year,
+        book.publisher,
         book.status,
         availableCopies,
         Math.max(0, Number(totalCopies) - Number(availableCopies)),

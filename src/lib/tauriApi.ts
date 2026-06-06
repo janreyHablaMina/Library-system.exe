@@ -6,6 +6,7 @@ export type Book = {
   author: string
   category: string | null
   isbn: string | null
+  publisher: string | null
   coverData: string | null
   shelfLocation: string | null
   available: number
@@ -19,6 +20,7 @@ export type CreateBookPayload = {
   author: string
   category?: string | null
   isbn?: string | null
+  publisher?: string | null
   coverData?: string | null
   shelfLocation?: string | null
   totalCopies?: number
@@ -30,6 +32,7 @@ export type UpdateBookPayload = {
   author: string
   category?: string | null
   isbn?: string | null
+  publisher?: string | null
   coverData?: string | null
   shelfLocation?: string | null
   available: number

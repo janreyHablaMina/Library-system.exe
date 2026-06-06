@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { createAuthor, createCategory, listAuthors, listBooks, listCategories } from '../lib/tauriApi'
 import { Toast } from '../components/ui/Toast'
+import { DynamicBookCover } from '../components/ui/DynamicBookCover'
 
 type AddBookPageProps = {
   isDarkMode: boolean
@@ -394,9 +395,9 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
 
   return (
     <div
-      className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[transparent] text-zinc-100' : 'bg-[#f8fafc] text-zinc-900'}`}
+      className={`min-h-0 flex-1 overflow-auto px-4 pt-4 ${isDarkMode ? 'bg-[transparent] text-zinc-100' : 'bg-[#f8fafc] text-zinc-900'}`}
     >
-      <form onSubmit={handleSubmit} className="p-5">
+      <form onSubmit={handleSubmit} className="px-5 pt-5 pb-0">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-xs">
             <button
@@ -416,10 +417,10 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
         <h2 className={`text-[38px] font-black leading-tight tracking-tight ${isDarkMode ? 'text-zinc-100' : 'text-[#0a1b4f]'}`}>Add New Book</h2>
         <p className={`mt-1 text-sm font-medium ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Add only the essentials needed to make this book available.</p>
 
-        <div className="mt-7 grid gap-5 xl:grid-cols-[minmax(0,1fr)_480px]">
+        <div className="mt-6 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_450px]">
           <div className="space-y-4">
-            <article className={`rounded-2xl border p-6 ${subtleCardShadow} ${cardClass}`}>
-              <div className="mb-6 flex items-start gap-4">
+            <article className={`rounded-2xl border p-6 ${cardClass}`}>
+              <div className="mb-5 flex items-start gap-3 border-b border-zinc-200/10 pb-4">
                 <div className={`grid h-11 w-11 place-items-center rounded-full ${iconBoxClass}`}>
                   <BookOpen size={19} />
                 </div>
@@ -428,19 +429,21 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
                 </div>
               </div>
 
-              <div className="space-y-5">
+              <div className="space-y-4">
                 <div>
-                  <label className={`text-xs font-black ${labelClass}`}>Title *</label>
+                  <label className={`text-xs font-bold uppercase tracking-wider ${labelClass}`}>Title *</label>
                   <input
                     value={form.title}
                     onChange={(e) => setField('title', e.target.value)}
-                    className={`mt-2 h-12 w-full rounded-xl border px-4 text-sm outline-none focus:border-emerald-500 ${inputClass}`}
+                    className={`mt-1.5 h-11 w-full rounded-xl border px-4 outline-none ${inputClass}`}
                     placeholder="Enter book title"
                   />
                   <FieldError error={errors.title} />
                 </div>
-                <div>
-                  <label className={`text-xs font-black ${labelClass}`}>Author *</label>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                  <label className={`text-xs font-bold uppercase tracking-wider ${labelClass}`}>Author *</label>
                   <div className="relative mt-2" ref={authorDropdownRef}>
                     <div className="flex gap-2">
                       <div className="relative flex-1">
@@ -452,7 +455,7 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
                             setAuthorDropdownOpen(true)
                           }}
                           onFocus={() => setAuthorDropdownOpen(true)}
-                          className={`h-12 w-full rounded-xl border px-4 pr-10 text-sm outline-none focus:border-emerald-500 ${inputClass}`}
+                          className={`h-11 w-full rounded-xl border px-4 pr-10 outline-none ${inputClass}`}
                           placeholder={authorsLoading ? 'Loading authors...' : 'Search author by name...'}
                         />
                         <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
@@ -522,13 +525,24 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
                   </div>
                   <FieldError error={errors.author} />
                 </div>
-                <div>
-                  <label className={`text-xs font-black ${labelClass}`}>Category *</label>
+                    <div>
+                  <label className={`text-xs font-bold uppercase tracking-wider ${labelClass}`}>ISBN</label>
+                  <input
+                    value={form.isbn}
+                    onChange={(e) => setField('isbn', e.target.value)}
+                    className={`mt-1.5 h-11 w-full rounded-xl border px-4 outline-none ${inputClass}`}
+                    placeholder="Enter ISBN (optional)"
+                  />
+                </div>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                  <label className={`text-xs font-bold uppercase tracking-wider ${labelClass}`}>Category *</label>
                   <div className="relative mt-2" ref={categoryDropdownRef}>
                     <button
                       type="button"
                       onClick={() => setCategoryDropdownOpen((prev) => !prev)}
-                      className={`h-12 w-full rounded-xl border px-4 pr-10 text-left text-sm outline-none focus:border-emerald-500 ${inputClass}`}
+                      className={`h-11 w-full rounded-xl border px-4 pr-10 text-left outline-none ${inputClass}`}
                     >
                       <span className="inline-flex items-center gap-2">
                         <BookOpen size={15} className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} />
@@ -597,57 +611,39 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
                   </div>
                   <FieldError error={errors.category} />
                 </div>
-              </div>
-
-            </article>
-
-            <article className={`rounded-2xl border p-6 ${subtleCardShadow} ${cardClass}`}>
-              <div className="mb-6 flex items-start gap-4">
-                <div className={`grid h-11 w-11 place-items-center rounded-full ${iconBoxClass}`}>
-                  <BookOpen size={19} />
-                </div>
-                <div>
-                  <h3 className={`text-lg font-black leading-tight ${isDarkMode ? 'text-zinc-100' : 'text-[#0a1b4f]'}`}>Optional Details</h3>
-                </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label className={`text-xs font-black ${labelClass}`}>ISBN</label>
-                  <input
-                    value={form.isbn}
-                    onChange={(e) => setField('isbn', e.target.value)}
-                    className={`mt-2 h-12 w-full rounded-xl border px-4 text-sm outline-none focus:border-emerald-500 ${inputClass}`}
-                    placeholder="Enter ISBN (optional)"
-                  />
-                </div>
-                <div>
-                  <label className={`text-xs font-black ${labelClass}`}>Publisher</label>
+                    <div>
+                  <label className={`text-xs font-bold uppercase tracking-wider ${labelClass}`}>Publisher</label>
                   <input
                     value={form.publisher}
                     onChange={(e) => setField('publisher', e.target.value)}
-                    className={`mt-2 h-12 w-full rounded-xl border px-4 text-sm outline-none focus:border-emerald-500 ${inputClass}`}
+                    className={`mt-1.5 h-11 w-full rounded-xl border px-4 outline-none ${inputClass}`}
                     placeholder="Enter publisher (optional)"
                   />
                 </div>
-              </div>
-
-              <div className="mt-4">
-                <label className={`text-xs font-black ${labelClass}`}>Description</label>
+                  </div>
+                  <div>
+                <label className={`text-xs font-bold uppercase tracking-wider ${labelClass}`}>Description</label>
                 <textarea
                   value={form.description}
                   onChange={(e) => setField('description', e.target.value.slice(0, DESCRIPTION_MAX))}
-                  className={`mt-2 min-h-[126px] w-full rounded-xl border px-4 py-3 text-sm outline-none focus:border-emerald-500 ${inputClass}`}
+                  className={`mt-1.5 min-h-[116px] w-full rounded-xl border px-4 py-3 outline-none ${inputClass}`}
                   placeholder="Enter a brief description about the book (optional)"
                 />
                 <p className={`mt-1 text-right text-xs ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>{form.description.length} / {DESCRIPTION_MAX}</p>
               </div>
+
+                
+                
+              </div>
+
             </article>
+
+            
           </div>
 
           <aside className="space-y-4">
-            <article className={`rounded-2xl border p-6 ${subtleCardShadow} ${cardClass}`}>
-              <div className="mb-6 flex items-start gap-4">
+            <article className={`rounded-2xl border p-6 ${cardClass}`}>
+              <div className="mb-4 flex items-start gap-3">
                 <div className={`grid h-11 w-11 place-items-center rounded-full ${iconBoxClass}`}>
                   <ImagePlus size={19} />
                 </div>
@@ -657,58 +653,78 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
                 </div>
               </div>
 
-              <div
-                onDragOver={(e) => {
-                  e.preventDefault()
-                  setIsDragging(true)
-                }}
-                onDragLeave={() => setIsDragging(false)}
-                onDrop={(e) => {
-                  e.preventDefault()
-                  setIsDragging(false)
-                  handleCoverSelection(e.dataTransfer.files?.[0] ?? null)
-                }}
-                className={`rounded-2xl border-2 border-dashed p-8 text-center transition ${
-                  isDragging
-                    ? 'border-emerald-500 bg-emerald-50/60'
-                    : isDarkMode
-                      ? 'border-zinc-700 bg-[#27272A]'
-                      : 'border-zinc-200 bg-zinc-50/40'
-                }`}
-              >
+              
+              <div className="flex gap-4">
+                {/* Visual Cover Preview */}
                 {coverPreviewUrl ? (
-                  <div className="space-y-3">
-                    <img src={coverPreviewUrl} alt="Book cover preview" className="mx-auto h-44 w-32 rounded-lg object-cover shadow-sm" />
-                    <p className={`truncate text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{form.coverFile?.name}</p>
+                  <div className="relative w-[145px] h-[195px] rounded-lg shadow-md overflow-hidden shrink-0 border border-zinc-200/10">
+                    <img src={coverPreviewUrl} alt="Cover preview" className="w-full h-full object-cover" />
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    <CloudUpload size={42} className={`mx-auto ${isDarkMode ? 'text-zinc-400' : 'text-[#64748b]'}`} />
-                    <p className={`text-sm font-medium ${isDarkMode ? 'text-zinc-300' : 'text-zinc-600'}`}>Drag and drop image here</p>
-                    <p className={`text-xs ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>or</p>
-                    <button
-                      type="button"
-                      onClick={() => coverInputRef.current?.click()}
-                      className={`rounded-lg border px-5 py-2.5 text-xs font-black ${isDarkMode ? 'border-zinc-600 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-100'}`}
-                    >
-                      Choose File
-                    </button>
-                    <p className={`mx-auto max-w-[220px] text-[11px] leading-relaxed ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>Recommended size: 600 x 800px (JPG, PNG)<br />Max file size: 2MB</p>
+                  <div className="h-[195px] w-[145px] shrink-0 rounded-lg shadow-md overflow-hidden">
+                    <DynamicBookCover title={form.title || 'Unknown Title'} author={form.author || 'Unknown Author'} seed="preview-seed" />
                   </div>
                 )}
-                <input
-                  ref={coverInputRef}
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  onChange={(e) => handleCoverSelection(e.target.files?.[0] ?? null)}
-                  className="hidden"
-                />
+                
+                {/* Upload zone */}
+                <div
+                  onDragOver={(e) => {
+                    e.preventDefault()
+                    setIsDragging(true)
+                  }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={(e) => {
+                    e.preventDefault()
+                    setIsDragging(false)
+                    handleCoverSelection(e.dataTransfer.files?.[0] ?? null)
+                  }}
+                  onClick={() => coverInputRef.current?.click()}
+                  className={`flex-1 rounded-xl border-2 border-dashed p-4 text-center flex flex-col justify-center items-center cursor-pointer transition ${
+                    isDragging
+                      ? 'border-emerald-500 bg-emerald-50/60'
+                      : isDarkMode
+                        ? 'border-zinc-700 hover:border-zinc-500 bg-[#27272A]/50 hover:bg-[#27272A]/70'
+                        : 'border-zinc-200 hover:border-emerald-500 bg-zinc-50/40 hover:bg-emerald-50/20'
+                  }`}
+                >
+                  <CloudUpload size={28} className={`mb-2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+                  <p className={`text-xs font-semibold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-600'}`}>Drag and drop image here</p>
+                  <p className={`text-[10px] my-1 ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>or</p>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); coverInputRef.current?.click(); }}
+                    className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${isDarkMode ? 'border-zinc-600 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-300 text-zinc-700 hover:bg-zinc-100'}`}
+                  >
+                    Choose File
+                  </button>
+                  <input
+                    ref={coverInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={(e) => handleCoverSelection(e.target.files?.[0] ?? null)}
+                    className="hidden"
+                  />
+                  <p className={`text-[9px] mt-2 leading-tight ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                    Recommended: 600 x 800px (JPG, PNG)<br />Max file size: 2MB
+                  </p>
+                </div>
               </div>
+
+              {coverPreviewUrl ? (
+                <button
+                  type="button"
+                  onClick={() => handleCoverSelection(null)}
+                  className="mt-4 w-full border border-rose-500/25 hover:bg-rose-500/5 text-rose-500 font-semibold text-xs h-10 rounded-xl inline-flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  <X size={14} />
+                  Remove Cover
+                </button>
+              ) : null}
               {coverError ? <p className="mt-2 text-xs font-semibold text-rose-600">{coverError}</p> : null}
             </article>
 
-            <article className={`rounded-2xl border p-6 ${subtleCardShadow} ${cardClass}`}>
-              <div className="mb-6 flex items-start gap-4">
+            <article className={`rounded-2xl border p-6 ${cardClass}`}>
+              <div className="mb-4 flex items-start gap-3">
                 <div className={`grid h-11 w-11 place-items-center rounded-full ${iconBoxClass}`}>
                   <Package size={19} />
                 </div>
@@ -720,7 +736,7 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
 
               <div className="space-y-4">
                 <div>
-                  <label className={`text-xs font-black ${labelClass}`}>Number of Copies *</label>
+                  <label className={`text-xs font-bold uppercase tracking-wider ${labelClass}`}>Number of Copies *</label>
                   <input
                     type="number"
                     min={1}
@@ -729,27 +745,27 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
                       const parsed = Number(e.target.value)
                       setField('numberOfCopies', Number.isFinite(parsed) ? parsed : 0)
                     }}
-                    className={`mt-2 h-12 w-full rounded-xl border px-4 text-sm outline-none focus:border-emerald-500 ${inputClass}`}
+                    className={`mt-1.5 h-11 w-full rounded-xl border px-4 outline-none ${inputClass}`}
                     placeholder="Enter number of copies"
                   />
                   <FieldError error={errors.numberOfCopies} />
                 </div>
                 <div>
-                  <label className={`text-xs font-black ${labelClass}`}>Shelf Location (Optional)</label>
+                  <label className={`text-xs font-bold uppercase tracking-wider ${labelClass}`}>Shelf Location (Optional)</label>
                   <input
                     value={form.shelfLocation}
                     onChange={(e) => setField('shelfLocation', e.target.value)}
-                    className={`mt-2 h-12 w-full rounded-xl border px-4 text-sm outline-none focus:border-emerald-500 ${inputClass}`}
+                    className={`mt-1.5 h-11 w-full rounded-xl border px-4 outline-none ${inputClass}`}
                     placeholder="e.g. 300.72 KAH or A-12"
                   />
                 </div>
                 <div>
-                  <label className={`text-xs font-black ${labelClass}`}>Status *</label>
+                  <label className={`text-xs font-bold uppercase tracking-wider ${labelClass}`}>Status *</label>
                   <div className="relative mt-2">
                     <select
                       value={form.status}
                       onChange={(e) => setField('status', e.target.value as BookAvailability)}
-                      className={`h-12 w-full appearance-none rounded-xl border px-10 pr-10 text-sm outline-none focus:border-emerald-500 ${inputClass}`}
+                      className={`h-11 w-full appearance-none rounded-xl border pl-10 pr-10 outline-none ${inputClass}`}
                     >
                       <option value="Available">Available</option>
                       <option value="Unavailable">Unavailable</option>
@@ -764,7 +780,9 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
           </aside>
         </div>
 
-        <div className={`-mx-9 sticky bottom-0 mt-4 border-t px-9 py-3 ${isDarkMode ? 'border-zinc-800 bg-[transparent]' : 'border-zinc-200 bg-white'}`}>
+        <div className={`-mx-9 sticky bottom-0 mt-5 border-t px-9 py-4 ${
+          isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-200 bg-white'
+        }`}>
           <div className="flex justify-end gap-3">
             <button
               type="button"
@@ -775,11 +793,10 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
             </button>
             <button
               type="submit"
-              disabled={isSaving}
-              className="inline-flex h-11 items-center gap-2 rounded-lg bg-emerald-700 px-8 text-sm font-semibold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-70"
+              className="inline-flex h-11 items-center gap-2 rounded-lg bg-emerald-700 px-8 text-sm font-semibold text-white hover:bg-emerald-800"
             >
-              <Save size={15} />
-              {isSaving ? 'Saving...' : 'Save Book'}
+              <Save size={16} />
+              Save Book
             </button>
           </div>
         </div>
