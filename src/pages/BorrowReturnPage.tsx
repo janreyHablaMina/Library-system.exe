@@ -19,7 +19,7 @@ type BorrowReturnPageProps = {
   isDarkMode: boolean
   onOpenTransactions: (tab: 'all' | 'borrowed' | 'returned' | 'overdue') => void
   initialTab?: 'borrow' | 'return'
-  prefillBorrowData?: { memberId: number, bookId: number } | null
+  prefillBorrowData?: { memberId?: number, bookId: number } | null
 }
 
 type MemberItem = {
@@ -220,8 +220,10 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 
 
   useEffect(() => {
     if (prefillBorrowData && members.length > 0 && books.length > 0) {
-      const mem = members.find(m => m.id === prefillBorrowData.memberId)
-      if (mem) setSelectedMember(mem)
+      if (prefillBorrowData.memberId) {
+        const mem = members.find(m => m.id === prefillBorrowData.memberId)
+        if (mem) setSelectedMember(mem)
+      }
       
       const bk = books.find(b => b.id === prefillBorrowData.bookId)
       if (bk) setSelectedBook(bk)

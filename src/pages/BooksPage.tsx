@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { EditBookPage } from './EditBookPage'
 import { deleteBook, listBooks, updateBook } from '../lib/tauriApi'
+import { DynamicBookCover } from '../components/ui/DynamicBookCover'
 
 type BookStatus = 'Available' | 'Borrowed' | 'Overdue' | 'Archived'
 
@@ -32,8 +33,10 @@ type BooksPageProps = {
   isDarkMode: boolean
   onOpenBookDetail: (book: BookDetailData) => void
   onOpenAddBook: () => void
+  onReserveBook: (bookId: number) => void
   refreshKey?: number
   externalToastMessage?: string | null
+  onExternalToastConsumed?: () => void
 }
 
 const initialBooks: BookRow[] = [
@@ -78,11 +81,12 @@ type BookActionsMenuProps = {
   isArchived: boolean
   onViewDetails: () => void
   onEdit: () => void
+  onReserve: () => void
   onDelete: () => void
   onArchive: () => void
 }
 
-function BookActionsMenu({ isDarkMode, isArchived, onViewDetails, onEdit, onDelete, onArchive }: BookActionsMenuProps) {
+function BookActionsMenu({ isDarkMode, isArchived, onViewDetails, onEdit, onReserve, onDelete, onArchive }: BookActionsMenuProps) {
   const [open, setOpen] = useState(false)
   const [openUpward, setOpenUpward] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -125,14 +129,14 @@ function BookActionsMenu({ isDarkMode, isArchived, onViewDetails, onEdit, onDele
         type="button"
         id={`book-actions-btn-${Math.random()}`}
         onClick={handleToggle}
-        className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border transition-colors duration-150 ${
+        className={`inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors duration-150 ${
           open
             ? isDarkMode
-              ? 'border-zinc-500 bg-zinc-700 text-zinc-100'
-              : 'border-emerald-300 bg-emerald-50 text-emerald-700'
+              ? 'bg-zinc-700 text-zinc-100'
+              : 'bg-emerald-50 text-emerald-700'
             : isDarkMode
-              ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'
-              : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'
+              ? 'text-zinc-300 hover:bg-zinc-800'
+              : 'text-zinc-600 hover:bg-zinc-50'
         }`}
         aria-label="Book actions"
         aria-haspopup="menu"
@@ -190,6 +194,17 @@ function BookActionsMenu({ isDarkMode, isArchived, onViewDetails, onEdit, onDele
             <BookMarked size={15} className="shrink-0 text-emerald-500" />
             Borrow Book
           </button>
+          {!isArchived && (
+            <button
+              type="button"
+              className={`${itemBase} ${itemNormal}`}
+              role="menuitem"
+              onClick={() => { setOpen(false); onReserve(); }}
+            >
+              <Bookmark size={15} className="shrink-0 text-violet-500" />
+              Reserve Book
+            </button>
+          )}
 
           <div className={`my-1.5 border-t ${divider}`} />
 
@@ -219,7 +234,7 @@ function BookActionsMenu({ isDarkMode, isArchived, onViewDetails, onEdit, onDele
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
-export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refreshKey = 0, externalToastMessage = null }: BooksPageProps) {
+export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, onReserveBook, refreshKey = 0, externalToastMessage = null, onExternalToastConsumed }: BooksPageProps) {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
   const [bookList, setBookList] = useState<BookRow[]>(initialBooks)
   const [bookToDelete, setBookToDelete] = useState<BookRow | null>(null)
@@ -238,7 +253,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
         const rows = await listBooks(500)
         const mapped: BookRow[] = rows.map((row) => ({
           id: row.id,
-          cover: row.coverData || '📘',
+          cover: row.coverData || '',
           title: row.title,
           isbn: row.isbn ?? '-',
           author: row.author,
@@ -294,10 +309,6 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
     if (activeStatTab === 'Borrowed' && (book.isArchived || borrowedCopies < 1)) return false
     if (activeStatTab === 'Overdue' && book.status !== 'Overdue') return false
     if (activeStatTab === 'Archived' && book.status !== 'Archived') return false
-    if (activeStatTab === 'All Books' && book.status === 'Archived') {
-      return false
-    }
-
     // 3. Category Dropdown
     if (selectedCategory !== 'All' && book.category !== selectedCategory) return false
 
@@ -437,8 +448,9 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
   useEffect(() => {
     if (externalToastMessage) {
       setShowToast(externalToastMessage)
+      onExternalToastConsumed?.()
     }
-  }, [externalToastMessage])
+  }, [externalToastMessage, onExternalToastConsumed])
 
   const handleDeleteConfirm = async () => {
     if (bookToDelete) {
@@ -661,7 +673,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
         <div className={`mt-5 overflow-x-auto rounded-xl border ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
           <div className={`flex min-w-[880px] items-center gap-2 px-3 py-3 ${isDarkMode ? 'bg-[#18181B]' : 'bg-white'}`}>
             {[
-              { label: 'All Books', value: String(bookList.filter(b => b.status !== 'Archived').length), icon: BookOpen },
+              { label: 'All Books', value: String(bookList.length), icon: BookOpen },
               { label: 'Available', value: String(bookList.filter((book) => !book.isArchived && getBookCopyCounts(book).availableCopies > 0).length), icon: Bookmark },
               { label: 'Borrowed', value: String(bookList.filter((book) => !book.isArchived && getBookCopyCounts(book).borrowedCopies > 0).length), icon: RotateCcw },
               { label: 'Overdue', value: String(bookList.filter(b => b.status === 'Overdue').length), icon: Clock3 },
@@ -845,7 +857,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
                             {book.cover.startsWith('data:') || book.cover.startsWith('http') || book.cover.startsWith('blob:') ? (
                               <img src={book.cover} alt="" className="h-full w-full object-cover" />
                             ) : (
-                              book.cover
+                              <DynamicBookCover title={book.title} author={book.author} seed={book.id} compact />
                             )}
                           </span>
                           <div>
@@ -863,7 +875,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
                       </td>
                       <td className={`px-3 py-3 font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>{getDisplayedCopies(book)}</td>
                       <td className="px-3 py-3 text-right">
-                        <BookActionsMenu isDarkMode={isDarkMode} isArchived={Boolean(book.isArchived)} onViewDetails={() => onOpenBookDetail(book)} onEdit={() => setBookToEdit(book)} onDelete={() => setBookToDelete(book)} onArchive={async () => {
+                        <BookActionsMenu isDarkMode={isDarkMode} isArchived={Boolean(book.isArchived)} onViewDetails={() => onOpenBookDetail(book)} onEdit={() => setBookToEdit(book)} onReserve={() => onReserveBook(book.id)} onDelete={() => setBookToDelete(book)} onArchive={async () => {
                           try {
                             const nextArchived = !book.isArchived
                             const availableCopies = Number(book.available.split(' / ')[0] || '0')
@@ -908,7 +920,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
                       {book.cover.startsWith('data:') || book.cover.startsWith('http') || book.cover.startsWith('blob:') ? (
                         <img src={book.cover} alt="" className="h-full w-full object-cover" />
                       ) : (
-                        book.cover
+                        <DynamicBookCover title={book.title} author={book.author} seed={book.id} />
                       )}
                     </span>
                     <div className="flex flex-col items-end gap-2">
@@ -928,7 +940,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
                   <div className="mt-auto pt-3">
                     <div className="flex items-center justify-between">
                       <span className={`text-sm ${isDarkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>{book.category}</span>
-                      <BookActionsMenu isDarkMode={isDarkMode} isArchived={Boolean(book.isArchived)} onViewDetails={() => onOpenBookDetail(book)} onEdit={() => setBookToEdit(book)} onDelete={() => setBookToDelete(book)} onArchive={async () => {
+                      <BookActionsMenu isDarkMode={isDarkMode} isArchived={Boolean(book.isArchived)} onViewDetails={() => onOpenBookDetail(book)} onEdit={() => setBookToEdit(book)} onReserve={() => onReserveBook(book.id)} onDelete={() => setBookToDelete(book)} onArchive={async () => {
                         try {
                           const nextArchived = !book.isArchived
                           const availableCopies = Number(book.available.split(' / ')[0] || '0')

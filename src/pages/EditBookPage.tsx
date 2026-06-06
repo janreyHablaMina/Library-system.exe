@@ -13,6 +13,7 @@ import {
   X,
   Trash2
 } from 'lucide-react'
+import { DynamicBookCover } from '../components/ui/DynamicBookCover'
 
 type BookStatus = 'Available' | 'Borrowed' | 'Overdue' | 'Archived'
 
@@ -48,50 +49,12 @@ const categories = [
 ]
 
 // ─── Realtime Simulated High-Fidelity Book Cover Component ───────────────────
-function HighFidelityBookCover({ title, author }: { title: string; author: string }) {
-  return (
-    <div className="w-[145px] h-[195px] rounded-lg shadow-md relative overflow-hidden flex flex-col justify-between p-3 text-zinc-800 bg-[#fdecdb] border border-orange-200/60 shrink-0 select-none">
-      {/* 3D Spine shading */}
-      <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-r from-black/10 to-transparent rounded-l" />
-      <div className="absolute top-0 left-2 w-[1px] h-full bg-white/30" />
-      
-      {/* Top logo */}
-      <div className="flex flex-col gap-0.5 z-10 pl-2">
-        <span className="text-[7px] uppercase font-black tracking-widest text-amber-900/60">Rex Bookstore</span>
-      </div>
-
-      {/* Center content */}
-      <div className="flex flex-col items-center justify-center flex-1 z-10 py-2 text-center px-1">
-        <h4 className="text-[12px] font-black leading-tight text-amber-950 font-serif tracking-tight drop-shadow-sm line-clamp-3">
-          {title || 'Sosyolohiya sa Filipino'}
-        </h4>
-        
-        {/* Crown/Diamond abstract graphic */}
-        <div className="mt-2.5 relative w-8 h-8 flex items-center justify-center">
-          <div className="absolute w-6 h-6 rotate-45 border-2 border-emerald-700 bg-emerald-600/10 rounded" />
-          <div className="absolute w-4 h-4 rotate-45 bg-amber-600 rounded-sm" />
-          <div className="absolute w-1.5 h-1.5 rounded-full bg-white" />
-        </div>
-      </div>
-      
-      {/* Footer author */}
-      <div className="z-10 pl-2 flex flex-col items-center text-center">
-        <div className="h-[1.5px] w-6 bg-amber-900/30 rounded mb-1" />
-        <span className="text-[7.5px] font-bold text-amber-900/80 uppercase tracking-wider truncate max-w-full">
-          {author || 'ALICIA H. KAHAYON'}
-        </span>
-      </div>
-    </div>
-  )
-}
-
 export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageProps) {
   // Tab states
   const [activeTab, setActiveTab] = useState<'basic' | 'catalog' | 'inventory' | 'notes'>('basic')
 
   // Cover Upload States & Ref
   const coverInputRef = React.useRef<HTMLInputElement | null>(null)
-  const [coverFile, setCoverFile] = useState<File | null>(null)
   const isRealImage = book.cover.startsWith('http') || book.cover.startsWith('data:') || book.cover.startsWith('blob:')
   const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(isRealImage ? book.cover : null)
 
@@ -151,7 +114,6 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      setCoverFile(file)
       const reader = new FileReader()
       reader.onloadend = () => {
         setCoverPreviewUrl(reader.result as string)
@@ -161,7 +123,6 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
   }
 
   const handleRemoveCover = () => {
-    setCoverFile(null)
     setCoverPreviewUrl(null)
   }
 
@@ -174,7 +135,7 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
       isbn,
       category,
       status,
-      cover: coverPreviewUrl || '📙', // Revert to emoji or custom color spine if no cover is set
+      cover: coverPreviewUrl || '',
       callNumber: catalogCallNumber,
       year: Number(year) || book.year,
       available: `${availableCopies} / ${numberOfCopies}`
@@ -588,7 +549,9 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
                     <img src={coverPreviewUrl} alt="Cover preview" className="w-full h-full object-cover" />
                   </div>
                 ) : (
-                  <HighFidelityBookCover title={title} author={author} />
+                  <div className="h-[195px] w-[145px] shrink-0 rounded-lg shadow-md">
+                    <DynamicBookCover title={title} author={author} seed={book.id} />
+                  </div>
                 )}
                 
                 {/* Upload zone */}

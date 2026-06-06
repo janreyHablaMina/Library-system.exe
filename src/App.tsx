@@ -8,6 +8,7 @@ import { BooksPage } from './pages/BooksPage'
 import type { BookDetailData } from './pages/BooksPage'
 import { AddBookPage } from './pages/AddBookPage'
 import type { AddBookFormData } from './pages/AddBookPage'
+import { EditBookPage } from './pages/EditBookPage'
 import { MembersPage } from './pages/MembersPage'
 import { MemberDetailPage } from './pages/MemberDetailPage'
 import { BorrowReturnPage } from './pages/BorrowReturnPage'
@@ -28,7 +29,7 @@ import NotificationsPage from './pages/NotificationsPage'
 import { Toast } from './components/ui/Toast'
 import { ChangePasswordModal } from './components/ChangePasswordModal'
 import { ForgotPasswordModal } from './components/ForgotPasswordModal'
-import { getSetting, getTrialSecondsRemaining, verifyLicenseKey, getLicenseStatus, createBook, expandMainWindow, getActiveSession, getEmailLogStats, listAuthors, listBooks, listBorrowTransactions, listMembers, listNotifications, listEmailLogs, listSmsLogs, login as loginWithDb, logout as logoutFromDb, markAllNotificationsRead, markNotificationAsRead, restoreLoginWindow, runAutomaticEmailReminders, searchAuthors, searchBooks, searchMembers, syncNotifications, getUserProfile, type UserProfile, type NotificationItem, type EmailLog, type SmsLog } from './lib/tauriApi'
+import { getSetting, getTrialSecondsRemaining, verifyLicenseKey, getLicenseStatus, createBook, deleteBook, updateBook, expandMainWindow, getActiveSession, getEmailLogStats, listAuthors, listBooks, listBorrowTransactions, listMembers, listNotifications, listEmailLogs, listSmsLogs, login as loginWithDb, logout as logoutFromDb, markAllNotificationsRead, markNotificationAsRead, restoreLoginWindow, runAutomaticEmailReminders, searchAuthors, searchBooks, searchMembers, syncNotifications, getUserProfile, type UserProfile, type NotificationItem, type EmailLog, type SmsLog } from './lib/tauriApi'
 
 
 type LoginFormState = {
@@ -175,6 +176,7 @@ function DashboardShell({ onLogout, licenseStatus, trialSeconds }: { onLogout: (
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [activePage, setActivePage] = useState<ActivePage>('Dashboard')
   const [activeSettingsTab, setActiveSettingsTab] = useState('Overview')
+  const [reservationInitialBookId, setReservationInitialBookId] = useState<number | null>(null)
   const [emailLogStatusFilter, setEmailLogStatusFilter] = useState('')
   const [smsLogStatusFilter, setSmsLogStatusFilter] = useState('')
   const [libraryName, setLibraryName] = useState('infoLib')
@@ -211,6 +213,7 @@ function DashboardShell({ onLogout, licenseStatus, trialSeconds }: { onLogout: (
   const [booksRefreshKey, setBooksRefreshKey] = useState(0)
   const [booksToastMessage, setBooksToastMessage] = useState<string | null>(null)
   const [isBookDetailOpen, setIsBookDetailOpen] = useState(false)
+  const [isBookDetailEditing, setIsBookDetailEditing] = useState(false)
   const [selectedBook, setSelectedBook] = useState<BookDetailData | null>(null)
   const [isTransactionDetailOpen, setIsTransactionDetailOpen] = useState(false)
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null)
@@ -220,7 +223,7 @@ function DashboardShell({ onLogout, licenseStatus, trialSeconds }: { onLogout: (
   const [isAuthorDetailOpen, setIsAuthorDetailOpen] = useState(false)
   const [selectedAuthorId, setSelectedAuthorId] = useState<number | null>(null)
   const [transactionActiveTab, setTransactionActiveTab] = useState<'all' | 'borrowed' | 'returned' | 'overdue'>('all')
-  const [borrowPrefill, setBorrowPrefill] = useState<{ memberId: number, bookId: number } | null>(null)
+  const [borrowPrefill, setBorrowPrefill] = useState<{ memberId?: number, bookId: number } | null>(null)
   const [borrowReturnActiveTab, setBorrowReturnActiveTab] = useState<'borrow' | 'return'>('borrow')
 
   const [isEmailMenuOpen, setIsEmailMenuOpen] = useState(false)
@@ -1261,11 +1264,93 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
                 onBack={() => setIsAddBookOpen(false)}
                 onSave={handleSaveBook}
               />
+            ) : isBookDetailOpen && isBookDetailEditing && selectedBook ? (
+              <EditBookPage
+                book={selectedBook}
+                isDarkMode={isDarkMode}
+                onBack={() => setIsBookDetailEditing(false)}
+                onSave={(updatedBook) => {
+                  const available = Number(updatedBook.available.split('/')[0]?.trim() || 0)
+                  const totalCopies = Number(updatedBook.available.split('/')[1]?.trim() || 1)
+                  void updateBook({
+                    id: updatedBook.id,
+                    title: updatedBook.title,
+                    author: updatedBook.author,
+                    category: updatedBook.category === 'Uncategorized' ? null : updatedBook.category,
+                    isbn: updatedBook.isbn === '-' ? null : updatedBook.isbn,
+                    coverData: /^(data:|https?:|blob:)/.test(updatedBook.cover) ? updatedBook.cover : null,
+                    shelfLocation: updatedBook.callNumber,
+                    available,
+                    totalCopies,
+                    isArchived: updatedBook.status === 'Archived',
+                  }).then(() => {
+                    setSelectedBook({
+                      ...selectedBook,
+                      ...updatedBook,
+                      shelfLocation: updatedBook.callNumber,
+                      callNumber: updatedBook.callNumber,
+                      borrowedCopies: Math.max(0, totalCopies - available),
+                      isArchived: updatedBook.status === 'Archived',
+                    })
+                    setBooksRefreshKey((value) => value + 1)
+                    setBooksToastMessage(`Successfully updated "${updatedBook.title}"`)
+                    setIsBookDetailEditing(false)
+                  }).catch((error) => console.error('Failed to update book:', error))
+                }}
+              />
             ) : isBookDetailOpen ? (
               <BookDetailPage
                 isDarkMode={isDarkMode}
                 onBack={() => setIsBookDetailOpen(false)}
                 book={selectedBook}
+                onEditBook={() => setIsBookDetailEditing(true)}
+                onBorrowBook={() => {
+                  if (!selectedBook) return
+                  setBorrowPrefill({ bookId: selectedBook.id })
+                  setBorrowReturnActiveTab('borrow')
+                  setIsBookDetailOpen(false)
+                  setActivePage('Transactions')
+                }}
+                onReserveBook={() => {
+                  if (!selectedBook) return
+                  setReservationInitialBookId(selectedBook.id)
+                  setIsBookDetailOpen(false)
+                  setActivePage('Reservations')
+                }}
+                onToggleArchive={async () => {
+                  if (!selectedBook) return
+                  const available = Number(selectedBook.available.split('/')[0]?.trim() || 0)
+                  const totalCopies = Number(selectedBook.available.split('/')[1]?.trim() || 1)
+                  const nextArchived = !selectedBook.isArchived
+                  await updateBook({
+                    id: selectedBook.id,
+                    title: selectedBook.title,
+                    author: selectedBook.author,
+                    category: selectedBook.category === 'Uncategorized' ? null : selectedBook.category,
+                    isbn: selectedBook.isbn === '-' ? null : selectedBook.isbn,
+                    coverData: /^(data:|https?:|blob:)/.test(selectedBook.cover) ? selectedBook.cover : null,
+                    shelfLocation: selectedBook.shelfLocation,
+                    available,
+                    totalCopies,
+                    isArchived: nextArchived,
+                  })
+                  setSelectedBook({
+                    ...selectedBook,
+                    isArchived: nextArchived,
+                    status: nextArchived ? 'Archived' : available > 0 ? 'Available' : 'Borrowed',
+                  })
+                  setBooksRefreshKey((value) => value + 1)
+                  setBooksToastMessage(`Successfully ${nextArchived ? 'archived' : 'unarchived'} "${selectedBook.title}"`)
+                }}
+                onDeleteBook={async () => {
+                  if (!selectedBook) return
+                  await deleteBook(selectedBook.id)
+                  setBooksRefreshKey((value) => value + 1)
+                  setBooksToastMessage(`Successfully deleted "${selectedBook.title}"`)
+                  setSelectedBook(null)
+                  setIsBookDetailOpen(false)
+                  setIsBookDetailEditing(false)
+                }}
                 onViewAllTransactions={() => {
                   setIsBookDetailOpen(false)
                   setTransactionActiveTab('all')
@@ -1277,15 +1362,21 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
                 isDarkMode={isDarkMode}
                 refreshKey={booksRefreshKey}
                 externalToastMessage={booksToastMessage}
+                onExternalToastConsumed={() => setBooksToastMessage(null)}
                 onOpenBookDetail={(book) => {
                   setSelectedBook(book)
                   setIsAddBookOpen(false)
+                  setIsBookDetailEditing(false)
                   setIsBookDetailOpen(true)
                 }}
                 onOpenAddBook={() => {
                   setIsBookDetailOpen(false)
                   setBooksToastMessage(null)
                   setIsAddBookOpen(true)
+                }}
+                onReserveBook={(bookId) => {
+                  setReservationInitialBookId(bookId)
+                  setActivePage('Reservations')
                 }}
               />
             )
@@ -1370,6 +1461,8 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
           ) : activePage === 'Reservations' ? (
             <ReservationsPage
               isDarkMode={isDarkMode}
+              initialBookId={reservationInitialBookId}
+              onInitialBookConsumed={() => setReservationInitialBookId(null)}
               onOpenTransactionDetail={(id) => {
                 setSelectedTransactionId(id)
                 setIsTransactionDetailOpen(true)

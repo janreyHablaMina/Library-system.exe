@@ -39,6 +39,8 @@ type ReservationsPageProps = {
   isDarkMode: boolean
   onOpenTransactionDetail: (id: string) => void
   onNavigateToBorrow?: (memberId: number, bookId: number) => void
+  initialBookId?: number | null
+  onInitialBookConsumed?: () => void
 }
 
 const stats = [
@@ -526,7 +528,7 @@ function ReservationDetailsViewNew({ reservation, isDarkMode, onBack, onCheckOut
   )
 }
 
-export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNavigateToBorrow }: ReservationsPageProps) {
+export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNavigateToBorrow, initialBookId = null, onInitialBookConsumed }: ReservationsPageProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [activeViewReservationId, setActiveViewReservationId] = useState<string | null>(null)
   const [reservationSearch, setReservationSearch] = useState('')
@@ -586,6 +588,29 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  useEffect(() => {
+    if (!initialBookId || books.length === 0) return
+    const book = books.find((item) => item.id === initialBookId)
+    if (!book) return
+
+    const reservationStart = new Date()
+    const reservationEnd = new Date(reservationStart)
+    reservationEnd.setDate(reservationEnd.getDate() + 7)
+    setSelectedBook(book)
+    setBookSearchQuery(book.title)
+    setSelectedMember(null)
+    setReservationDate(reservationStart.toISOString().slice(0, 10))
+    setExpiresOn(reservationEnd.toISOString().slice(0, 10))
+    setNotes('')
+    setPriority('Normal')
+    setNotifyEmail(true)
+    setNotifySMS(true)
+    setFormError(null)
+    setEditingReservation(null)
+    setIsAddModalOpen(true)
+    onInitialBookConsumed?.()
+  }, [books, initialBookId, onInitialBookConsumed])
 
   useEffect(() => {
     const formatDate = (value: string) => {
