@@ -3,14 +3,13 @@ import { Search, Plus, FileText, BarChart2, RotateCcw, Send, CheckCircle2, XCirc
 import { listSmsLogs, type SmsLog, listMembers, type Member } from '../lib/tauriApi'
 
 import { ComposeSmsModal } from '../components/modals/ComposeSmsModal'
-import { useNavigate } from 'react-router-dom'
 
 type SmsLogsPageProps = {
   isDarkMode: boolean
+  onViewMember?: (memberId: number) => void
 }
 
-function SmsLogsPage({ isDarkMode }: SmsLogsPageProps) {
-  const navigate = useNavigate()
+function SmsLogsPage({ isDarkMode, onViewMember }: SmsLogsPageProps) {
   const [smsLogs, setSmsLogs] = useState<SmsLog[]>([])
   const [membersMap, setMembersMap] = useState<Map<string, Member>>(new Map())
   const [search, setSearch] = useState('')
@@ -457,8 +456,8 @@ function SmsLogsPage({ isDarkMode }: SmsLogsPageProps) {
                   <button 
                     onClick={() => {
                       const member = membersMap.get(selectedLog.borrowerName)
-                      if (member) {
-                        navigate(`/members/${member.id}`)
+                      if (member && onViewMember) {
+                        onViewMember(member.id)
                       } else {
                         alert('Could not locate member details.')
                       }

@@ -1313,7 +1313,14 @@ const greetingName = formatDisplayName(activeUsername)
           ) : activePage === 'EmailLogs' ? (
             <EmailLogsPage isDarkMode={isDarkMode} />
           ) : activePage === 'SmsLogs' ? (
-            <SmsLogsPage isDarkMode={isDarkMode} />
+            <SmsLogsPage 
+              isDarkMode={isDarkMode} 
+              onViewMember={(memberId) => {
+                setSelectedMemberId(memberId)
+                setIsMemberDetailOpen(true)
+                setActivePage('Members')
+              }}
+            />
           ) : activePage === 'Notifications' ? (
             <NotificationsPage isDarkMode={isDarkMode} />
           ) : (
