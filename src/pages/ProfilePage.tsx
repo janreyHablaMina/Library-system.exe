@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { User, Mail, Shield, Key, Bell, Save, Camera, CheckCircle2 } from 'lucide-react'
+import { Camera, Mail, Phone, Calendar, MapPin, User, ShieldCheck, Clock, CheckCircle2, ChevronRight, Lock, BookOpen, RotateCcw, Users } from 'lucide-react'
 
 type ProfilePageProps = {
   isDarkMode: boolean
@@ -7,13 +7,13 @@ type ProfilePageProps = {
 }
 
 export function ProfilePage({ isDarkMode, activeUsername }: ProfilePageProps) {
-  const [activeTab, setActiveTab] = useState<'general' | 'security' | 'notifications'>('general')
+  const [activeTab, setActiveTab] = useState<'info' | 'notifications' | 'security' | 'activity'>('info')
   const [isSaving, setIsSaving] = useState(false)
   
   const textPrimary = isDarkMode ? 'text-zinc-100' : 'text-zinc-900'
   const textSecondary = isDarkMode ? 'text-zinc-400' : 'text-zinc-500'
   const cardClass = isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-200 bg-white'
-  const inputClass = isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200 focus:border-emerald-500' : 'border-zinc-300 bg-white text-zinc-900 focus:border-emerald-500'
+  const inputClass = isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-900 focus:border-emerald-500'
   
   const handleSave = () => {
     setIsSaving(true)
@@ -21,199 +21,294 @@ export function ProfilePage({ isDarkMode, activeUsername }: ProfilePageProps) {
   }
 
   return (
-    <div className={`min-h-0 flex-1 overflow-auto p-4 lg:p-6 ${isDarkMode ? 'bg-transparent text-zinc-100' : 'bg-[#f8fafc] text-zinc-900'}`}>
-      <div className="mx-auto max-w-[1000px] space-y-6">
+    <div className={`min-h-0 flex-1 overflow-auto p-4 lg:p-8 ${isDarkMode ? 'bg-transparent text-zinc-100' : 'bg-[#f8fafc] text-zinc-900'}`}>
+      <div className="mx-auto max-w-[1400px] space-y-6">
         
         {/* Header */}
         <header>
-          <h1 className={`text-2xl font-black ${textPrimary}`}>My Profile</h1>
-          <p className={`mt-1 text-sm ${textSecondary}`}>Manage your personal information and preferences.</p>
+          <h1 className={`text-3xl font-black tracking-tight ${textPrimary}`}>My Profile</h1>
+          <div className="mt-2 flex items-center gap-2 text-sm">
+            <span className={textSecondary}>Dashboard</span>
+            <ChevronRight size={14} className={textSecondary} />
+            <span className={textPrimary}>My Profile</span>
+          </div>
         </header>
 
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+        {/* Main Grid Layout */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           
-          {/* Sidebar Tabs */}
-          <div className="w-full lg:w-64 shrink-0 space-y-1">
-            <button
-              onClick={() => setActiveTab('general')}
-              className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${
-                activeTab === 'general'
-                  ? isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-700'
-                  : isDarkMode ? 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200' : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
-              }`}
-            >
-              <User size={18} /> General Info
-            </button>
-            <button
-              onClick={() => setActiveTab('security')}
-              className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${
-                activeTab === 'security'
-                  ? isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-700'
-                  : isDarkMode ? 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200' : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
-              }`}
-            >
-              <Shield size={18} /> Security
-            </button>
-            <button
-              onClick={() => setActiveTab('notifications')}
-              className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${
-                activeTab === 'notifications'
-                  ? isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-700'
-                  : isDarkMode ? 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200' : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
-              }`}
-            >
-              <Bell size={18} /> Notifications
-            </button>
+          {/* Left Column: Profile Card */}
+          <div className="lg:col-span-3 space-y-6">
+            <div className={`rounded-2xl border p-6 flex flex-col items-center text-center ${cardClass}`}>
+              <div className="relative mb-4">
+                <div className="flex h-28 w-28 items-center justify-center rounded-full bg-indigo-100 text-4xl font-black text-indigo-600 ring-4 ring-white shadow-sm dark:bg-indigo-500/20 dark:text-indigo-400 dark:ring-zinc-800">
+                  {activeUsername ? activeUsername.slice(0, 2).toUpperCase() : 'AD'}
+                </div>
+                <button className="absolute bottom-1 right-1 flex h-8 w-8 items-center justify-center rounded-full bg-white text-emerald-600 shadow-md ring-1 ring-zinc-200 transition-transform hover:scale-110 dark:bg-zinc-800 dark:text-emerald-400 dark:ring-zinc-700">
+                  <Camera size={14} />
+                </button>
+              </div>
+              
+              <h2 className={`text-xl font-bold ${textPrimary}`}>{activeUsername || 'Admin'}</h2>
+              <p className={`text-sm ${textSecondary}`}>Librarian</p>
+              
+              <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
+                Active
+              </div>
+
+              <div className={`mt-6 w-full space-y-4 border-t pt-6 text-sm ${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'}`}>
+                <div className="flex items-center justify-between">
+                  <div className={`flex items-center gap-2 ${textSecondary}`}>
+                    <User size={14} /> Employee ID
+                  </div>
+                  <span className={`font-medium ${textPrimary}`}>LIB-2026-001</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className={`flex items-center gap-2 ${textSecondary}`}>
+                    <Mail size={14} /> Email
+                  </div>
+                  <span className={`font-medium ${textPrimary}`}>admin@primelibrary.com</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className={`flex items-center gap-2 ${textSecondary}`}>
+                    <Phone size={14} /> Phone
+                  </div>
+                  <span className={`font-medium ${textPrimary}`}>+63 912 345 6789</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className={`flex items-center gap-2 ${textSecondary}`}>
+                    <BookOpen size={14} /> Department
+                  </div>
+                  <span className={`font-medium ${textPrimary}`}>Library Administration</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className={`flex items-center gap-2 ${textSecondary}`}>
+                    <User size={14} /> Role
+                  </div>
+                  <span className={`font-medium ${textPrimary}`}>Librarian</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className={`flex items-center gap-2 ${textSecondary}`}>
+                    <Clock size={14} /> Member Since
+                  </div>
+                  <span className={`font-medium ${textPrimary}`}>May 12, 2026</span>
+                </div>
+              </div>
+
+              <button className={`mt-6 w-full flex items-center justify-center gap-2 rounded-xl border-2 py-2.5 text-sm font-bold transition-colors ${
+                isDarkMode 
+                  ? 'border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10' 
+                  : 'border-emerald-100 text-emerald-600 hover:bg-emerald-50'
+              }`}>
+                <Lock size={16} /> Change Password
+              </button>
+            </div>
           </div>
 
-          {/* Content Area */}
-          <div className={`flex-1 rounded-2xl border p-6 ${cardClass}`}>
+          {/* Middle Column: Main Content */}
+          <div className="lg:col-span-6 space-y-6">
             
-            {activeTab === 'general' && (
-              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                <div className="flex items-center gap-6">
-                  <div className="relative group">
-                    <div className="flex h-24 w-24 items-center justify-center rounded-full bg-emerald-100 text-3xl font-bold text-emerald-700 ring-4 ring-emerald-50 dark:bg-emerald-500/20 dark:text-emerald-300 dark:ring-emerald-500/10">
-                      {activeUsername ? activeUsername.slice(0, 2).toUpperCase() : 'AD'}
-                    </div>
-                    <button className="absolute bottom-0 right-0 rounded-full bg-white p-2 text-zinc-700 shadow-lg ring-1 ring-zinc-200 transition-transform hover:scale-110 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-zinc-700">
-                      <Camera size={14} />
-                    </button>
-                  </div>
-                  <div>
-                    <h2 className={`text-xl font-bold ${textPrimary}`}>{activeUsername || 'Admin User'}</h2>
-                    <p className={`text-sm ${textSecondary}`}>Administrator</p>
-                  </div>
-                </div>
+            {/* Tabs Navigation */}
+            <div className={`flex items-center gap-8 border-b ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
+              {[
+                { id: 'info', label: 'Profile Information' },
+                { id: 'notifications', label: 'Notification Preferences' },
+                { id: 'security', label: 'Security' },
+                { id: 'activity', label: 'Activity Log' },
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`relative pb-4 text-sm font-bold transition-colors ${
+                    activeTab === tab.id 
+                      ? 'text-emerald-600 dark:text-emerald-500' 
+                      : `${textSecondary} hover:${textPrimary}`
+                  }`}
+                >
+                  {tab.label}
+                  {activeTab === tab.id && (
+                    <div className="absolute bottom-0 left-0 h-0.5 w-full bg-emerald-600 dark:bg-emerald-500" />
+                  )}
+                </button>
+              ))}
+            </div>
 
-                <div className="space-y-5">
+            {/* Tab Content */}
+            <div className={`rounded-2xl border p-6 ${cardClass}`}>
+              {activeTab === 'info' && (
+                <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                  <h3 className={`mb-6 text-lg font-bold ${textPrimary}`}>Personal Information</h3>
+                  
                   <div className="grid gap-5 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <label className={`text-sm font-bold ${textPrimary}`}>Username</label>
+                    <div className="space-y-1.5">
+                      <label className={`text-xs font-semibold ${textSecondary}`}>Full Name</label>
+                      <input 
+                        type="text" 
+                        defaultValue={activeUsername || 'Admin'}
+                        className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-colors ${inputClass}`} 
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className={`text-xs font-semibold ${textSecondary}`}>Email Address</label>
+                      <input 
+                        type="email" 
+                        defaultValue="admin@primelibrary.com"
+                        className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-colors ${inputClass}`} 
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className={`text-xs font-semibold ${textSecondary}`}>Phone Number</label>
+                      <input 
+                        type="text" 
+                        defaultValue="+63 912 345 6789"
+                        className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-colors ${inputClass}`} 
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className={`text-xs font-semibold ${textSecondary}`}>Date of Birth</label>
                       <div className="relative">
-                        <User size={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${textSecondary}`} />
                         <input 
                           type="text" 
-                          defaultValue={activeUsername || ''}
-                          className={`w-full rounded-xl border py-2.5 pl-10 pr-4 text-sm outline-none transition-colors ${inputClass}`} 
+                          defaultValue="January 1, 1990"
+                          className={`w-full rounded-xl border px-4 py-3 pr-10 text-sm outline-none transition-colors ${inputClass}`} 
                         />
+                        <Calendar size={16} className={`absolute right-4 top-1/2 -translate-y-1/2 ${textSecondary}`} />
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <label className={`text-sm font-bold ${textPrimary}`}>Email Address</label>
-                      <div className="relative">
-                        <Mail size={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${textSecondary}`} />
-                        <input 
-                          type="email" 
-                          defaultValue="admin@library.system"
-                          className={`w-full rounded-xl border py-2.5 pl-10 pr-4 text-sm outline-none transition-colors ${inputClass}`} 
-                        />
-                      </div>
+                    <div className="space-y-1.5">
+                      <label className={`text-xs font-semibold ${textSecondary}`}>Gender</label>
+                      <select className={`w-full appearance-none rounded-xl border px-4 py-3 text-sm outline-none transition-colors ${inputClass}`}>
+                        <option>Male</option>
+                        <option>Female</option>
+                        <option>Other</option>
+                      </select>
                     </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className={`text-sm font-bold ${textPrimary}`}>Bio</label>
-                    <textarea 
-                      rows={4}
-                      defaultValue="System Administrator for infoLib Library System."
-                      className={`w-full resize-none rounded-xl border p-3 text-sm outline-none transition-colors ${inputClass}`}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'security' && (
-              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                <div>
-                  <h3 className={`text-lg font-bold ${textPrimary}`}>Change Password</h3>
-                  <p className={`text-sm ${textSecondary}`}>Ensure your account is using a long, random password to stay secure.</p>
-                </div>
-                
-                <div className="space-y-5 max-w-md">
-                  <div className="space-y-2">
-                    <label className={`text-sm font-bold ${textPrimary}`}>Current Password</label>
-                    <div className="relative">
-                      <Key size={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${textSecondary}`} />
+                    <div className="space-y-1.5">
+                      <label className={`text-xs font-semibold ${textSecondary}`}>Address</label>
                       <input 
-                        type="password" 
-                        placeholder="••••••••"
-                        className={`w-full rounded-xl border py-2.5 pl-10 pr-4 text-sm outline-none transition-colors ${inputClass}`} 
+                        type="text" 
+                        defaultValue="Manila, Philippines"
+                        className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-colors ${inputClass}`} 
                       />
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <label className={`text-sm font-bold ${textPrimary}`}>New Password</label>
-                    <div className="relative">
-                      <Key size={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${textSecondary}`} />
-                      <input 
-                        type="password" 
-                        placeholder="••••••••"
-                        className={`w-full rounded-xl border py-2.5 pl-10 pr-4 text-sm outline-none transition-colors ${inputClass}`} 
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className={`text-sm font-bold ${textPrimary}`}>Confirm New Password</label>
-                    <div className="relative">
-                      <Key size={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${textSecondary}`} />
-                      <input 
-                        type="password" 
-                        placeholder="••••••••"
-                        className={`w-full rounded-xl border py-2.5 pl-10 pr-4 text-sm outline-none transition-colors ${inputClass}`} 
-                      />
-                    </div>
+
+                  <div className="mt-8">
+                    <button 
+                      onClick={handleSave}
+                      disabled={isSaving}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-bold text-white transition-all hover:bg-emerald-700 active:scale-95 disabled:opacity-70"
+                    >
+                      {isSaving ? (
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                      ) : (
+                        <CheckCircle2 size={16} />
+                      )}
+                      {isSaving ? 'Saving...' : 'Save Changes'}
+                    </button>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {activeTab === 'notifications' && (
-              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                <div>
-                  <h3 className={`text-lg font-bold ${textPrimary}`}>Notification Preferences</h3>
-                  <p className={`text-sm ${textSecondary}`}>Choose what updates you want to receive.</p>
+              {/* Placeholders for other tabs */}
+              {activeTab !== 'info' && (
+                <div className="py-12 text-center">
+                  <p className={textSecondary}>This section is currently under development.</p>
                 </div>
-                
-                <div className="space-y-4">
-                  {[
-                    { id: '1', title: 'System Updates', desc: 'Receive notifications about system maintenance and updates.', defaultChecked: true },
-                    { id: '2', title: 'New Member Registrations', desc: 'Get alerted when a new member registers.', defaultChecked: true },
-                    { id: '3', title: 'Overdue Returns', desc: 'Daily summary of overdue books.', defaultChecked: false },
-                    { id: '4', title: 'Low Stock Alerts', desc: 'Notifications when popular books are running low.', defaultChecked: true },
-                  ].map(item => (
-                    <label key={item.id} className="flex cursor-pointer items-start gap-4 rounded-xl border border-transparent p-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
-                      <div className="flex h-5 items-center mt-0.5">
-                        <input type="checkbox" defaultChecked={item.defaultChecked} className="h-4 w-4 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-600" />
-                      </div>
-                      <div className="flex-1">
-                        <p className={`text-sm font-bold ${textPrimary}`}>{item.title}</p>
-                        <p className={`text-xs ${textSecondary}`}>{item.desc}</p>
-                      </div>
-                    </label>
-                  ))}
+              )}
+            </div>
+          </div>
+
+          {/* Right Column: Account Summary */}
+          <div className="lg:col-span-3 space-y-6">
+            <div className={`rounded-2xl border p-6 ${cardClass}`}>
+              <h3 className={`mb-6 text-lg font-bold ${textPrimary}`}>Account Summary</h3>
+              
+              <div className="mb-6 flex flex-col items-center justify-center rounded-xl bg-emerald-50 py-6 px-4 text-center dark:bg-emerald-500/10">
+                <div className="mb-3 rounded-full bg-emerald-100 p-3 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
+                  <ShieldCheck size={28} />
+                </div>
+                <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">Your account is secure and active.</p>
+              </div>
+
+              <div className={`space-y-4 text-sm ${textSecondary}`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2"><Clock size={14} /> Last Login</div>
+                  <span className={`font-medium ${textPrimary}`}>Jun 6, 2026 1:15 PM</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2"><MapPin size={14} /> Login IP</div>
+                  <span className={`font-medium ${textPrimary}`}>192.168.1.100</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2"><User size={14} /> Account Status</div>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">Active</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2"><ShieldCheck size={14} /> Two-Factor Auth</div>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">Enabled</span>
                 </div>
               </div>
-            )}
 
-            {/* Footer Actions */}
-            <div className={`mt-8 flex items-center justify-end gap-3 border-t pt-6 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'}`}>
-              <button className={`px-4 py-2.5 text-sm font-bold transition-colors ${isDarkMode ? 'text-zinc-300 hover:text-white' : 'text-zinc-600 hover:text-zinc-900'}`}>
-                Cancel
+              <button className={`mt-6 w-full flex items-center justify-center gap-2 rounded-xl border-2 py-2.5 text-sm font-bold transition-colors ${
+                isDarkMode 
+                  ? 'border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10' 
+                  : 'border-emerald-100 text-emerald-600 hover:bg-emerald-50'
+              }`}>
+                <ShieldCheck size={16} /> View Security Settings
               </button>
-              <button 
-                onClick={handleSave}
-                disabled={isSaving}
-                className="flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-bold text-white transition-all hover:bg-emerald-700 active:scale-95 disabled:opacity-70 disabled:pointer-events-none"
-              >
-                {isSaving ? (
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                ) : (
-                  <Save size={16} />
-                )}
-                {isSaving ? 'Saving...' : 'Save Changes'}
-              </button>
+            </div>
+          </div>
+
+        </div>
+
+        {/* Bottom Activity Stats */}
+        <div>
+          <h3 className={`mb-4 text-lg font-bold ${textPrimary}`}>Your Library Activity</h3>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            
+            <div className={`flex items-center gap-4 rounded-xl border p-4 ${cardClass}`}>
+              <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${isDarkMode ? 'bg-emerald-500/10' : 'bg-emerald-50'}`}>
+                <BookOpen size={24} className="text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div>
+                <p className={`text-xs ${textSecondary}`}>Books Added</p>
+                <p className={`text-xl font-black ${textPrimary}`}>26</p>
+                <p className={`text-[10px] ${textSecondary}`}>Total books added</p>
+              </div>
+            </div>
+
+            <div className={`flex items-center gap-4 rounded-xl border p-4 ${cardClass}`}>
+              <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${isDarkMode ? 'bg-amber-500/10' : 'bg-amber-50'}`}>
+                <RotateCcw size={24} className="text-amber-500 dark:text-amber-400" />
+              </div>
+              <div>
+                <p className={`text-xs ${textSecondary}`}>Transactions</p>
+                <p className={`text-xl font-black ${textPrimary}`}>152</p>
+                <p className={`text-[10px] ${textSecondary}`}>Total transactions</p>
+              </div>
+            </div>
+
+            <div className={`flex items-center gap-4 rounded-xl border p-4 ${cardClass}`}>
+              <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${isDarkMode ? 'bg-blue-500/10' : 'bg-blue-50'}`}>
+                <Users size={24} className="text-blue-500 dark:text-blue-400" />
+              </div>
+              <div>
+                <p className={`text-xs ${textSecondary}`}>Members Assisted</p>
+                <p className={`text-xl font-black ${textPrimary}`}>48</p>
+                <p className={`text-[10px] ${textSecondary}`}>Total members helped</p>
+              </div>
+            </div>
+
+            <div className={`flex items-center gap-4 rounded-xl border p-4 ${cardClass}`}>
+              <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${isDarkMode ? 'bg-purple-500/10' : 'bg-purple-50'}`}>
+                <Calendar size={24} className="text-purple-500 dark:text-purple-400" />
+              </div>
+              <div>
+                <p className={`text-xs ${textSecondary}`}>Days Active</p>
+                <p className={`text-xl font-black ${textPrimary}`}>25</p>
+                <p className={`text-[10px] ${textSecondary}`}>Days since joined</p>
+              </div>
             </div>
 
           </div>
