@@ -24,6 +24,7 @@ import { StaffPage } from './pages/StaffPage'
 import EmailLogsPage from './pages/EmailLogsPage'
 import SmsLogsPage from './pages/SmsLogsPage'
 import NotificationsPage from './pages/NotificationsPage'
+import { ProfilePage } from './pages/ProfilePage'
 import { getSetting, getTrialDaysRemaining, verifyLicenseKey, getLicenseStatus, createBook, expandMainWindow, getActiveSession, getEmailLogStats, listAuthors, listBooks, listBorrowTransactions, listMembers, listNotifications, listEmailLogs, listSmsLogs, login as loginWithDb, logout as logoutFromDb, markAllNotificationsRead, markNotificationAsRead, restoreLoginWindow, runAutomaticEmailReminders, searchAuthors, searchBooks, searchMembers, syncNotifications, type NotificationItem, type EmailLog, type SmsLog } from './lib/tauriApi'
 
 
@@ -54,7 +55,7 @@ const navItems = [
   { id: 'Settings', icon: Settings2, label: 'Settings' },
 ] as const
 
-type ActivePage = (typeof navItems)[number]['id'] | 'All Transactions'
+type ActivePage = (typeof navItems)[number]['id'] | 'All Transactions' | 'Profile'
 
 
 
@@ -1143,6 +1144,7 @@ const greetingName = formatDisplayName(activeUsername)
                         type="button"
                         onClick={() => {
                           setIsProfileOpen(false)
+                          setActivePage('Profile')
                         }}
                         role="menuitem"
                         className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-semibold transition-colors ${isDarkMode ? 'text-zinc-200 hover:bg-zinc-800/60' : 'text-zinc-700 hover:bg-zinc-50'}`}
@@ -1323,6 +1325,8 @@ const greetingName = formatDisplayName(activeUsername)
             />
           ) : activePage === 'Notifications' ? (
             <NotificationsPage isDarkMode={isDarkMode} />
+          ) : activePage === 'Profile' ? (
+            <ProfilePage isDarkMode={isDarkMode} activeUsername={activeUsername} />
           ) : (
 
           <div className={`min-h-0 flex-1 overflow-auto p-4 ${dashboardTheme.contentBg}`}>

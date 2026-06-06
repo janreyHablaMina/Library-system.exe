@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Search, Plus, Send, CheckCircle2, XCircle, Clock, MoreVertical, Calendar, Copy, User, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
-import { listEmailLogs, type EmailLog } from '../lib/tauriApi'
+import { Search, Send, CheckCircle2, XCircle, Clock, MoreVertical, Calendar, Copy, User, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
+import { listEmailLogs, listMembers, type EmailLog, type Member } from '../lib/tauriApi'
 
 type EmailLogsPageProps = {
   isDarkMode: boolean
@@ -8,6 +8,7 @@ type EmailLogsPageProps = {
 
 function EmailLogsPage({ isDarkMode }: EmailLogsPageProps) {
   const [emailLogs, setEmailLogs] = useState<EmailLog[]>([])
+  const [members, setMembers] = useState<Member[]>([])
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
@@ -47,7 +48,22 @@ function EmailLogsPage({ isDarkMode }: EmailLogsPageProps) {
 
   useEffect(() => {
     void loadEmailLogs()
+    void listMembers(2000)
+      .then(setMembers)
+      .catch((error) => {
+        console.error('Failed to load members for email details:', error)
+        setMembers([])
+      })
   }, [])
+
+  const selectedMember = useMemo(() => {
+    if (!selectedLog) return null
+    const email = selectedLog.emailAddress.trim().toLowerCase()
+    const name = selectedLog.borrowerName.trim().toLowerCase()
+    return members.find((member) => member.email?.trim().toLowerCase() === email)
+      ?? members.find((member) => member.fullName.trim().toLowerCase() === name)
+      ?? null
+  }, [members, selectedLog])
 
   const filteredLogs = useMemo(() => {
     return emailLogs.filter(log => {
@@ -78,7 +94,6 @@ function EmailLogsPage({ isDarkMode }: EmailLogsPageProps) {
   const cardClass = isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-200 bg-white'
   const textPrimary = isDarkMode ? 'text-zinc-100' : 'text-zinc-900'
   const textSecondary = isDarkMode ? 'text-zinc-400' : 'text-zinc-500'
-  const inputClass = isDarkMode ? 'border-zinc-800 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'
 
   const getTypeStyle = (type: string) => {
     if (type.toLowerCase().includes('overdue')) return isDarkMode ? 'bg-orange-500/10 text-orange-400' : 'bg-orange-50 text-orange-600'
@@ -115,7 +130,6 @@ function EmailLogsPage({ isDarkMode }: EmailLogsPageProps) {
               <p className={`text-xs ${textSecondary}`}>Emails Sent Today</p>
               <h3 className={`text-2xl font-black ${textPrimary}`}>{sentToday}</h3>
             </div>
-            <div className="text-[10px] font-bold text-emerald-600 self-end mb-1 cursor-pointer hover:underline">View all</div>
           </div>
           <div className={`flex items-center gap-4 rounded-xl border p-4 ${cardClass}`}>
             <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${isDarkMode ? 'bg-emerald-500/10' : 'bg-emerald-50'}`}>
@@ -135,7 +149,6 @@ function EmailLogsPage({ isDarkMode }: EmailLogsPageProps) {
               <p className={`text-xs ${textSecondary}`}>Failed</p>
               <h3 className={`text-2xl font-black ${textPrimary}`}>{failed}</h3>
             </div>
-            <div className="text-[10px] font-bold text-rose-600 self-end mb-1 text-center">8%</div>
           </div>
         </div>
 
@@ -331,8 +344,16 @@ function EmailLogsPage({ isDarkMode }: EmailLogsPageProps) {
                 <div className="p-6">
                 {/* Profile Header */}
                 <div className="flex items-center gap-3 mb-6">
-                  <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full font-black text-white text-lg ${isDarkMode ? 'bg-zinc-700' : 'bg-zinc-400'}`}>
-                    {selectedLog.borrowerName.charAt(0)}
+                  <div className={`flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full font-black text-white text-lg ${isDarkMode ? 'bg-zinc-700' : 'bg-zinc-400'}`}>
+                    {selectedMember?.profilePhotoData ? (
+                      <img
+                        src={selectedMember.profilePhotoData}
+                        alt={`${selectedLog.borrowerName} profile`}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      selectedLog.borrowerName.charAt(0).toUpperCase()
+                    )}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
