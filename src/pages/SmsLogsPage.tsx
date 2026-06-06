@@ -18,6 +18,8 @@ function SmsLogsPage({ isDarkMode, onViewMember }: SmsLogsPageProps) {
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
   const [selectedLog, setSelectedLog] = useState<SmsLog | null>(null)
   const [isClosing, setIsClosing] = useState(false)
   const [showCompose, setShowCompose] = useState(false)
@@ -70,12 +72,32 @@ function SmsLogsPage({ isDarkMode, onViewMember }: SmsLogsPageProps) {
   const filteredLogs = useMemo(() => {
     return smsLogs.filter(log => {
       const q = search.toLowerCase()
-      const matchesSearch = log.borrowerName.toLowerCase().includes(q) || log.phoneNumber.toLowerCase().includes(q) || log.bookTitle?.toLowerCase().includes(q)
-      const matchesType = typeFilter === '' || log.smsType === typeFilter
-      const matchesStatus = statusFilter === '' || log.status === statusFilter
-      return matchesSearch && matchesType && matchesStatus
+      const matchesSearch = log.borrowerName.toLowerCase().includes(q) || 
+                            log.phoneNumber.includes(q) ||
+                            (log.bookTitle?.toLowerCase().includes(q) ?? false)
+      const matchesType = typeFilter ? log.smsType === typeFilter : true
+      const matchesStatus = statusFilter ? log.status === statusFilter : true
+      
+      let matchesDate = true
+      if (fromDate || toDate) {
+        const logDate = new Date(log.sentAt)
+        logDate.setHours(0, 0, 0, 0)
+        
+        if (fromDate) {
+          const fDate = new Date(fromDate)
+          fDate.setHours(0, 0, 0, 0)
+          if (logDate < fDate) matchesDate = false
+        }
+        if (toDate) {
+          const tDate = new Date(toDate)
+          tDate.setHours(0, 0, 0, 0)
+          if (logDate > tDate) matchesDate = false
+        }
+      }
+
+      return matchesSearch && matchesType && matchesStatus && matchesDate
     })
-  }, [smsLogs, search, typeFilter, statusFilter])
+  }, [smsLogs, search, typeFilter, statusFilter, fromDate, toDate])
 
   const totalPages = Math.ceil(filteredLogs.length / itemsPerPage)
   const paginatedLogs = filteredLogs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
@@ -232,9 +254,22 @@ function SmsLogsPage({ isDarkMode, onViewMember }: SmsLogsPageProps) {
                 <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
               </div>
               
-              <div className={`flex h-11 items-center gap-2 rounded-xl border px-3 text-sm ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'}`}>
-                <span>Jun 1 - Jun 5</span>
-                <Calendar size={16} className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} />
+              <div className="flex items-center gap-2">
+                <input 
+                  type="date"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                  style={{ colorScheme: isDarkMode ? 'dark' : 'light' }}
+                  className={`h-11 rounded-xl border px-3 text-sm outline-none ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'}`}
+                />
+                <span className={`text-sm ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>to</span>
+                <input 
+                  type="date"
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                  style={{ colorScheme: isDarkMode ? 'dark' : 'light' }}
+                  className={`h-11 rounded-xl border px-3 text-sm outline-none ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'}`}
+                />
               </div>
             </div>
 
