@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Search, Plus, FileText, BarChart2, RotateCcw, Send, CheckCircle2, XCircle, Clock, CreditCard, MoreVertical, Calendar, Copy, User, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search, Plus, Send, CheckCircle2, XCircle, Clock, MoreVertical, Calendar, Copy, User, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { listEmailLogs, type EmailLog } from '../lib/tauriApi'
 
 type EmailLogsPageProps = {
@@ -11,6 +11,12 @@ function EmailLogsPage({ isDarkMode }: EmailLogsPageProps) {
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState(() => {
+    const today = new Date()
+    const offset = today.getTimezoneOffset()
+    return new Date(today.getTime() - offset * 60_000).toISOString().slice(0, 10)
+  })
   const [selectedLog, setSelectedLog] = useState<EmailLog | null>(null)
   const [isClosing, setIsClosing] = useState(false)
 
@@ -27,7 +33,7 @@ function EmailLogsPage({ isDarkMode }: EmailLogsPageProps) {
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [search, typeFilter, statusFilter, itemsPerPage])
+  }, [search, typeFilter, statusFilter, fromDate, toDate, itemsPerPage])
 
   const loadEmailLogs = async () => {
     try {
@@ -49,9 +55,17 @@ function EmailLogsPage({ isDarkMode }: EmailLogsPageProps) {
       const matchesSearch = log.borrowerName.toLowerCase().includes(q) || log.emailAddress.toLowerCase().includes(q) || log.bookTitle?.toLowerCase().includes(q)
       const matchesType = typeFilter === '' || log.emailType === typeFilter
       const matchesStatus = statusFilter === '' || log.status === statusFilter
-      return matchesSearch && matchesType && matchesStatus
+      const sentAt = new Date(log.sentAt)
+      const startDate = fromDate ? new Date(`${fromDate}T00:00:00`) : null
+      const endDate = toDate ? new Date(`${toDate}T23:59:59.999`) : null
+      const matchesDate =
+        !Number.isNaN(sentAt.getTime()) &&
+        (!startDate || sentAt >= startDate) &&
+        (!endDate || sentAt <= endDate)
+
+      return matchesSearch && matchesType && matchesStatus && matchesDate
     })
-  }, [emailLogs, search, typeFilter, statusFilter])
+  }, [emailLogs, search, typeFilter, statusFilter, fromDate, toDate])
 
   const totalPages = Math.ceil(filteredLogs.length / itemsPerPage)
   const paginatedLogs = filteredLogs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
@@ -60,8 +74,6 @@ function EmailLogsPage({ isDarkMode }: EmailLogsPageProps) {
   const sentToday = emailLogs.filter(log => new Date(log.sentAt).toDateString() === new Date().toDateString()).length
   const delivered = emailLogs.filter(log => log.status === 'Sent' || log.status === 'Delivered').length
   const failed = emailLogs.filter(log => log.status === 'Failed').length
-  const pending = emailLogs.filter(log => log.status === 'Pending' || log.status === 'Queued').length
-  const credits = "Unlimited"
 
   const cardClass = isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-200 bg-white'
   const textPrimary = isDarkMode ? 'text-zinc-100' : 'text-zinc-900'
@@ -82,7 +94,7 @@ function EmailLogsPage({ isDarkMode }: EmailLogsPageProps) {
         {/* Header */}
         <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h1 className={`text-2xl font-black ${textPrimary}`}>System Messages</h1>
+            <h1 className={`text-2xl font-black ${textPrimary}`}>Email Messages</h1>
             <p className={`mt-1 text-sm ${textSecondary}`}>View and manage all email notifications sent to library members.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -90,23 +102,11 @@ function EmailLogsPage({ isDarkMode }: EmailLogsPageProps) {
               <span className="text-lg leading-none">+</span>
               Send Email
             </button>
-            <button className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-semibold ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
-              <FileText size={15} />
-              Templates
-            </button>
-            <button className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-semibold ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
-              <BarChart2 size={15} />
-              Email Reports
-            </button>
-            <button className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-semibold ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
-              <RotateCcw size={15} />
-              Retry Failed Email
-            </button>
           </div>
         </header>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className={`flex items-center gap-4 rounded-xl border p-4 ${cardClass}`}>
             <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${isDarkMode ? 'bg-emerald-500/10' : 'bg-emerald-50'}`}>
               <Send size={20} className="text-emerald-600 dark:text-emerald-400" />
@@ -136,25 +136,6 @@ function EmailLogsPage({ isDarkMode }: EmailLogsPageProps) {
               <h3 className={`text-2xl font-black ${textPrimary}`}>{failed}</h3>
             </div>
             <div className="text-[10px] font-bold text-rose-600 self-end mb-1 text-center">8%</div>
-          </div>
-          <div className={`flex items-center gap-4 rounded-xl border p-4 ${cardClass}`}>
-            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${isDarkMode ? 'bg-amber-500/10' : 'bg-amber-50'}`}>
-              <Clock size={24} className="text-amber-500 dark:text-amber-400" />
-            </div>
-            <div className="flex-1">
-              <p className={`text-xs ${textSecondary}`}>Pending</p>
-              <h3 className={`text-2xl font-black ${textPrimary}`}>{pending}</h3>
-            </div>
-            <div className="text-[10px] font-bold text-amber-500 self-end mb-1">4%</div>
-          </div>
-          <div className={`flex items-center gap-4 rounded-xl border p-4 ${cardClass}`}>
-            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${isDarkMode ? 'bg-purple-500/10' : 'bg-purple-50'}`}>
-              <CreditCard size={24} className="text-purple-600 dark:text-purple-400" />
-            </div>
-            <div className="flex-1">
-              <p className={`text-xs ${textSecondary}`}>Email Credits</p>
-              <h3 className={`text-2xl font-black ${textPrimary}`}>{credits}</h3>
-            </div>
           </div>
         </div>
 
@@ -205,14 +186,30 @@ function EmailLogsPage({ isDarkMode }: EmailLogsPageProps) {
                   <option value="">All Status</option>
                   <option value="Sent">Delivered</option>
                   <option value="Failed">Failed</option>
-                  <option value="Pending">Pending</option>
                 </select>
                 <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
               </div>
-              
+               
               <div className={`flex h-11 items-center gap-2 rounded-xl border px-3 text-sm ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'}`}>
-                <span>Jun 1 - Jun 5</span>
-                <Calendar size={16} className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} />
+                <span className={`text-xs font-semibold ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>From</span>
+                <input
+                  type="date"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                  style={{ colorScheme: isDarkMode ? 'dark' : 'light' }}
+                  className="w-[118px] bg-transparent text-sm outline-none"
+                  aria-label="Email logs start date"
+                />
+                <span className={`text-xs font-semibold ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>To</span>
+                <input
+                  type="date"
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                  style={{ colorScheme: isDarkMode ? 'dark' : 'light' }}
+                  className="w-[118px] bg-transparent text-sm outline-none"
+                  aria-label="Email logs end date"
+                />
+                <Calendar size={16} className={`shrink-0 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
               </div>
             </div>
 

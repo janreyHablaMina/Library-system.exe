@@ -19,7 +19,11 @@ function SmsLogsPage({ isDarkMode, onViewMember }: SmsLogsPageProps) {
   const [typeFilter, setTypeFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [fromDate, setFromDate] = useState('')
-  const [toDate, setToDate] = useState('')
+  const [toDate, setToDate] = useState(() => {
+    const today = new Date()
+    const offset = today.getTimezoneOffset()
+    return new Date(today.getTime() - offset * 60_000).toISOString().slice(0, 10)
+  })
   const [selectedLog, setSelectedLog] = useState<SmsLog | null>(null)
   const [isClosing, setIsClosing] = useState(false)
   const [showCompose, setShowCompose] = useState(false)
@@ -41,7 +45,7 @@ function SmsLogsPage({ isDarkMode, onViewMember }: SmsLogsPageProps) {
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [search, typeFilter, statusFilter, itemsPerPage])
+  }, [search, typeFilter, statusFilter, fromDate, toDate, itemsPerPage])
 
   const loadSmsLogs = async () => {
     try {
@@ -250,23 +254,27 @@ function SmsLogsPage({ isDarkMode, onViewMember }: SmsLogsPageProps) {
                 </select>
                 <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
               </div>
-              
-              <div className="flex items-center gap-2">
-                <input 
+               
+              <div className={`flex h-11 items-center gap-2 rounded-xl border px-3 text-sm ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'}`}>
+                <span className={`text-xs font-semibold ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>From</span>
+                <input
                   type="date"
                   value={fromDate}
                   onChange={(e) => setFromDate(e.target.value)}
                   style={{ colorScheme: isDarkMode ? 'dark' : 'light' }}
-                  className={`h-11 rounded-xl border px-3 text-sm outline-none ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'}`}
+                  className="w-[118px] bg-transparent text-sm outline-none"
+                  aria-label="SMS logs start date"
                 />
-                <span className={`text-sm ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>to</span>
-                <input 
+                <span className={`text-xs font-semibold ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>To</span>
+                <input
                   type="date"
                   value={toDate}
                   onChange={(e) => setToDate(e.target.value)}
                   style={{ colorScheme: isDarkMode ? 'dark' : 'light' }}
-                  className={`h-11 rounded-xl border px-3 text-sm outline-none ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'}`}
+                  className="w-[118px] bg-transparent text-sm outline-none"
+                  aria-label="SMS logs end date"
                 />
+                <Calendar size={16} className={`shrink-0 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
               </div>
             </div>
 
