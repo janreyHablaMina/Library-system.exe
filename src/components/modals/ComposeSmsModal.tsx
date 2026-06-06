@@ -8,12 +8,15 @@ type ComposeSmsModalProps = {
   onClose: () => void
   onSuccess: () => void
   isDarkMode: boolean
+  initialPhoneNumber?: string
+  initialMemberName?: string
+  initialMessage?: string
 }
 
-export function ComposeSmsModal({ isOpen, onClose, onSuccess, isDarkMode }: ComposeSmsModalProps) {
-  const [phoneNumber, setPhoneNumber] = useState('')
-  const [memberName, setMemberName] = useState('')
-  const [message, setMessage] = useState('')
+export function ComposeSmsModal({ isOpen, onClose, onSuccess, isDarkMode, initialPhoneNumber = '', initialMemberName = '', initialMessage = '' }: ComposeSmsModalProps) {
+  const [phoneNumber, setPhoneNumber] = useState(initialPhoneNumber)
+  const [memberName, setMemberName] = useState(initialMemberName)
+  const [message, setMessage] = useState(initialMessage)
   const [isSending, setIsSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -26,14 +29,14 @@ export function ComposeSmsModal({ isOpen, onClose, onSuccess, isDarkMode }: Comp
 
   useEffect(() => {
     if (isOpen) {
-      setPhoneNumber('')
-      setMemberName('')
-      setMessage('')
+      setPhoneNumber(initialPhoneNumber)
+      setMemberName(initialMemberName)
+      setMessage(initialMessage)
       setSearchQuery('')
       setError(null)
       setShowDropdown(false)
     }
-  }, [isOpen])
+  }, [isOpen, initialPhoneNumber, initialMemberName, initialMessage])
 
   // Click outside to close dropdown
   useEffect(() => {

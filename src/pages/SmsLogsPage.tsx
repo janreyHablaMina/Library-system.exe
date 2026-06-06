@@ -3,12 +3,14 @@ import { Search, Plus, FileText, BarChart2, RotateCcw, Send, CheckCircle2, XCirc
 import { listSmsLogs, type SmsLog, listMembers, type Member } from '../lib/tauriApi'
 
 import { ComposeSmsModal } from '../components/modals/ComposeSmsModal'
+import { useNavigate } from 'react-router-dom'
 
 type SmsLogsPageProps = {
   isDarkMode: boolean
 }
 
 function SmsLogsPage({ isDarkMode }: SmsLogsPageProps) {
+  const navigate = useNavigate()
   const [smsLogs, setSmsLogs] = useState<SmsLog[]>([])
   const [membersMap, setMembersMap] = useState<Map<string, Member>>(new Map())
   const [search, setSearch] = useState('')
@@ -17,6 +19,8 @@ function SmsLogsPage({ isDarkMode }: SmsLogsPageProps) {
   const [selectedLog, setSelectedLog] = useState<SmsLog | null>(null)
   const [isClosing, setIsClosing] = useState(false)
   const [showCompose, setShowCompose] = useState(false)
+  const [composeData, setComposeData] = useState<{ phone?: string, name?: string, message?: string }>({})
+  const [copied, setCopied] = useState(false)
 
   const handleCloseDrawer = () => {
     setIsClosing(true)
@@ -115,11 +119,17 @@ function SmsLogsPage({ isDarkMode }: SmsLogsPageProps) {
         {showCompose && (
           <ComposeSmsModal
             isOpen={showCompose}
-            onClose={() => setShowCompose(false)}
+            onClose={() => {
+              setShowCompose(false)
+              setComposeData({})
+            }}
             onSuccess={() => {
               void loadSmsLogs()
             }}
             isDarkMode={isDarkMode}
+            initialPhoneNumber={composeData.phone}
+            initialMemberName={composeData.name}
+            initialMessage={composeData.message}
           />
         )}
 
@@ -419,14 +429,42 @@ function SmsLogsPage({ isDarkMode }: SmsLogsPageProps) {
                 {/* Action Buttons */}
                 <div className="mt-6 space-y-3">
                   <div className="flex gap-3">
-                    <button className={`flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border text-sm font-bold transition-colors ${isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
+                    <button 
+                      onClick={() => {
+                        setComposeData({
+                          phone: selectedLog.phoneNumber,
+                          name: selectedLog.borrowerName,
+                          message: selectedLog.messageBody || ''
+                        })
+                        setShowCompose(true)
+                      }}
+                      className={`flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border text-sm font-bold transition-colors ${isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}
+                    >
                       <Send size={16} className="text-emerald-600" /> Send Again
                     </button>
-                    <button className={`flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border text-sm font-bold transition-colors ${isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
-                      <Copy size={16} className="text-emerald-600" /> Copy Message
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(selectedLog.messageBody || '')
+                        setCopied(true)
+                        setTimeout(() => setCopied(false), 2000)
+                      }}
+                      className={`flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border text-sm font-bold transition-colors ${isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}
+                    >
+                      {copied ? <CheckCircle2 size={16} className="text-emerald-600" /> : <Copy size={16} className="text-emerald-600" />}
+                      {copied ? 'Copied!' : 'Copy Message'}
                     </button>
                   </div>
-                  <button className={`flex h-11 w-full items-center justify-center gap-2 rounded-xl border text-sm font-bold transition-colors ${isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
+                  <button 
+                    onClick={() => {
+                      const member = membersMap.get(selectedLog.borrowerName)
+                      if (member) {
+                        navigate(`/members/${member.id}`)
+                      } else {
+                        alert('Could not locate member details.')
+                      }
+                    }}
+                    className={`flex h-11 w-full items-center justify-center gap-2 rounded-xl border text-sm font-bold transition-colors ${isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}
+                  >
                     <User size={16} className="text-emerald-600" /> View Member
                   </button>
                 </div>
