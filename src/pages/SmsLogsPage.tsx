@@ -84,7 +84,6 @@ function SmsLogsPage({ isDarkMode, onViewMember }: SmsLogsPageProps) {
   const sentToday = smsLogs.filter(log => new Date(log.sentAt).toDateString() === new Date().toDateString()).length
   const delivered = smsLogs.filter(log => log.status === 'Sent' || log.status === 'Delivered').length
   const failed = smsLogs.filter(log => log.status === 'Failed').length
-  const pending = smsLogs.filter(log => log.status === 'Pending' || log.status === 'Queued').length
   const credits = "4,850"
 
   const cardClass = isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-200 bg-white'
@@ -139,7 +138,7 @@ function SmsLogsPage({ isDarkMode, onViewMember }: SmsLogsPageProps) {
         )}
 
         {/* Stats Row */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className={`flex items-center gap-4 rounded-xl border p-4 ${cardClass}`}>
             <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${isDarkMode ? 'bg-emerald-500/10' : 'bg-emerald-50'}`}>
               <Send size={20} className="text-emerald-600 dark:text-emerald-400" />
@@ -170,16 +169,7 @@ function SmsLogsPage({ isDarkMode, onViewMember }: SmsLogsPageProps) {
             </div>
             <div className="text-[10px] font-bold text-rose-600 self-end mb-1 text-center">8%</div>
           </div>
-          <div className={`flex items-center gap-4 rounded-xl border p-4 ${cardClass}`}>
-            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${isDarkMode ? 'bg-amber-500/10' : 'bg-amber-50'}`}>
-              <Clock size={24} className="text-amber-500 dark:text-amber-400" />
-            </div>
-            <div className="flex-1">
-              <p className={`text-xs ${textSecondary}`}>Pending</p>
-              <h3 className={`text-2xl font-black ${textPrimary}`}>{pending}</h3>
-            </div>
-            <div className="text-[10px] font-bold text-amber-500 self-end mb-1">4%</div>
-          </div>
+
           <div className={`flex items-center gap-4 rounded-xl border p-4 ${cardClass}`}>
             <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${isDarkMode ? 'bg-purple-500/10' : 'bg-purple-50'}`}>
               <CreditCard size={24} className="text-purple-600 dark:text-purple-400" />
@@ -238,7 +228,6 @@ function SmsLogsPage({ isDarkMode, onViewMember }: SmsLogsPageProps) {
                   <option value="">All Status</option>
                   <option value="Sent">Delivered</option>
                   <option value="Failed">Failed</option>
-                  <option value="Pending">Pending</option>
                 </select>
                 <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
               </div>
