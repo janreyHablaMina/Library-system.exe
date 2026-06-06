@@ -5,6 +5,7 @@ import { listSmsLogs, type SmsLog, listMembers, type Member } from '../lib/tauri
 import { ComposeSmsModal } from '../components/modals/ComposeSmsModal'
 
 import { invoke } from '@tauri-apps/api/core'
+import { Toast } from '../components/ui/Toast'
 
 type SmsLogsPageProps = {
   isDarkMode: boolean
@@ -23,6 +24,7 @@ function SmsLogsPage({ isDarkMode, onViewMember }: SmsLogsPageProps) {
   const [composeData, setComposeData] = useState<{ phone?: string, name?: string, message?: string }>({})
   const [copied, setCopied] = useState(false)
   const [isResending, setIsResending] = useState(false)
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
 
   const handleCloseDrawer = () => {
     setIsClosing(true)
@@ -127,6 +129,7 @@ function SmsLogsPage({ isDarkMode, onViewMember }: SmsLogsPageProps) {
             }}
             onSuccess={() => {
               void loadSmsLogs()
+              setToastMessage('Success: Message sent successfully!')
             }}
             isDarkMode={isDarkMode}
             initialPhoneNumber={composeData.phone}
@@ -442,9 +445,9 @@ function SmsLogsPage({ isDarkMode, onViewMember }: SmsLogsPageProps) {
                             message: selectedLog.messageBody,
                           })
                           void loadSmsLogs()
-                          alert('Message resent successfully!')
+                          setToastMessage('Success: Message resent successfully!')
                         } catch (err) {
-                          alert(`Failed to resend: ${err instanceof Error ? err.message : String(err)}`)
+                          setToastMessage(`Error: Failed to resend: ${err instanceof Error ? err.message : String(err)}`)
                         } finally {
                           setIsResending(false)
                         }
@@ -473,7 +476,7 @@ function SmsLogsPage({ isDarkMode, onViewMember }: SmsLogsPageProps) {
                       if (member && onViewMember) {
                         onViewMember(member.id)
                       } else {
-                        alert('Could not locate member details.')
+                        setToastMessage('Error: Could not locate member details.')
                       }
                     }}
                     className={`flex h-11 w-full items-center justify-center gap-2 rounded-xl border text-sm font-bold transition-colors ${isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}
@@ -488,6 +491,11 @@ function SmsLogsPage({ isDarkMode, onViewMember }: SmsLogsPageProps) {
 
         </div>
       </div>
+      <Toast 
+        message={toastMessage} 
+        onClose={() => setToastMessage(null)} 
+        isDarkMode={isDarkMode} 
+      />
     </div>
   )
 }
