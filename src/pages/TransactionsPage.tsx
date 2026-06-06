@@ -20,6 +20,12 @@ import {
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { listBorrowTransactions, listMembers, returnBorrowTransaction, sendManualEmailReminder, type BorrowTransaction, type Member } from '../lib/tauriApi'
+import { SendEmailModal } from '../components/modals/SendEmailModal'
+import { SendSmsModal } from '../components/modals/SendSmsModal'
+
+type TransactionType = 'Borrow' | 'Return'
+type TransactionStatus = 'Borrowed' | 'Returned' | 'Overdue'
+type TransactionTab = 'all' | 'borrowed' | 'returned' | 'overdue'
 type TransactionsPageProps = {
   isDarkMode: boolean
   onBack: () => void
@@ -115,7 +121,7 @@ function toTransactionRow(tx: BorrowTransaction, memberMap: Map<string, Member>)
     fine: `PHP ${fineValue.toFixed(2)}`,
     fineValue,
     memberEmail: memberRecord?.email || null,
-    memberPhone: memberRecord?.phone || null,
+    memberPhone: memberRecord?.contactNumber || null,
   }
 }
 
