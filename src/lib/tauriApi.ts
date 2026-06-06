@@ -40,6 +40,7 @@ export type UpdateBookPayload = {
 export type LoginPayload = {
   username: string
   password: string
+  rememberMe: boolean
 }
 
 export type SessionUser = {
@@ -561,8 +562,8 @@ export async function logout(): Promise<void> {
   return invoke<void>('logout')
 }
 
-export async function getActiveSession(): Promise<SessionUser | null> {
-  return invoke<SessionUser | null>('get_active_session')
+export async function getActiveSession(restoreOnly = false): Promise<SessionUser | null> {
+  return invoke<SessionUser | null>('get_active_session', { restoreOnly })
 }
 
 export async function listLoginTrail(limit?: number): Promise<LoginTrailRow[]> {

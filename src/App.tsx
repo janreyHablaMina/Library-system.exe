@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { listen } from '@tauri-apps/api/event'
-import { AlertTriangle, ArrowLeft, ArrowLeftRight, ArrowRight, BarChart3, Bell, BookOpen, BookPlus, Bookmark, Calendar, ChevronRight, Clock3, Feather, FileText, Grid2x2, LayoutDashboard, Library, Lock, LogOut, Mail, MessageCircle, Moon, RotateCcw, Search, Settings2, Shield, Sun, Undo2, UserCircle, UserPlus, Users, UsersRound, X } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, ArrowLeftRight, ArrowRight, BarChart3, Bell, BookOpen, BookPlus, Bookmark, Calendar, ChevronRight, Clock3, Eye, EyeOff, Feather, FileText, Grid2x2, LayoutDashboard, Library, Lock, LogOut, Mail, MessageCircle, Moon, RotateCcw, Search, Settings2, Shield, Sun, Undo2, UserCircle, UserPlus, Users, UsersRound, X } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import heroImage from './assets/login.avif'
 import { BooksPage } from './pages/BooksPage'
@@ -41,7 +41,7 @@ type LoginFormState = {
 const initialState: LoginFormState = {
   username: '',
   password: '',
-  rememberMe: true,
+  rememberMe: false,
 }
 
 const navItems = [
@@ -1922,7 +1922,7 @@ function App() {
     let mounted = true
     const loadSession = async () => {
       try {
-        const session = await getActiveSession()
+        const session = await getActiveSession(true)
         if (mounted) {
           setIsAuthenticated(Boolean(session))
         }
@@ -1952,7 +1952,7 @@ function App() {
 
     setIsSigningIn(true)
     try {
-      const isValid = await loginWithDb({ username, password })
+      const isValid = await loginWithDb({ username, password, rememberMe: formState.rememberMe })
       if (isValid) {
         setLoginError('')
         setIsAuthenticated(true)
@@ -2049,8 +2049,8 @@ function App() {
                   <label htmlFor="password" className="block text-sm font-semibold text-zinc-700">Password</label>
                   <div className="flex h-10 items-center rounded-xl border border-zinc-300 bg-white px-3 focus-within:border-emerald-600 focus-within:ring-2 focus-within:ring-emerald-100">
                     <input id="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" value={formState.password} onChange={(event) => { setLoginError(''); setFormState((previous) => ({ ...previous, password: event.target.value })) }} placeholder="Enter your password" className="h-full w-full bg-transparent text-sm text-zinc-800 outline-none" required />
-                    <button type="button" onClick={() => setShowPassword((value) => !value)} className="text-zinc-500 hover:text-zinc-700" aria-label={showPassword ? 'Hide password' : 'Show password'}>
-                      {showPassword ? 'Hide' : 'Show'}
+                    <button type="button" onClick={() => setShowPassword((value) => !value)} className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700" aria-label={showPassword ? 'Hide password' : 'Show password'}>
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
                   {loginError ? (
@@ -2063,16 +2063,14 @@ function App() {
 
                 <div className="flex items-center justify-between text-xs">
                   <label className="flex cursor-pointer items-center gap-3 text-zinc-600">
-                    <input type="checkbox" checked={formState.rememberMe} onChange={(event) => setFormState((previous) => ({ ...previous, rememberMe: event.target.checked }))} className="h-4 w-4 rounded border-zinc-300 text-emerald-600" />
+                    <input type="checkbox" checked={formState.rememberMe} onChange={(event) => setFormState((previous) => ({ ...previous, rememberMe: event.target.checked }))} className="app-choice-input" />
                     Remember me
                   </label>
                   <button type="button" className="font-semibold text-emerald-700 hover:text-emerald-800">Forgot password?</button>
                 </div>
 
-                <button type="submit" disabled={isSigningIn} className="flex h-11 w-full items-center justify-between rounded-full bg-gradient-to-r from-emerald-700 to-emerald-500 px-5 text-base font-bold text-white shadow-[0_12px_24px_-12px_rgba(5,150,105,0.7)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70">
-                  <span className="w-8" />
+                <button type="submit" disabled={isSigningIn} className="flex h-11 w-full items-center justify-center rounded-full bg-gradient-to-r from-emerald-700 to-emerald-500 px-5 text-base font-bold text-white shadow-[0_12px_24px_-12px_rgba(5,150,105,0.7)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70">
                   <span>{isSigningIn ? 'Signing In...' : 'Sign In'}</span>
-                  <span className="grid h-7 w-7 place-items-center rounded-full bg-white text-emerald-700">?</span>
                 </button>
               </div>
 

@@ -63,6 +63,7 @@ struct UpdateBookPayload {
 struct LoginPayload {
     username: String,
     password: String,
+    remember_me: bool,
 }
 
 #[derive(Debug, Serialize)]
@@ -776,6 +777,15 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
         let msg = e.to_string();
         if !msg.contains("duplicate column name") {
             return Err(format!("borrow transactions renewal migration failed: {e}"));
+        }
+    }
+    if let Err(e) = conn.execute(
+        "ALTER TABLE sessions ADD COLUMN remember_me INTEGER NOT NULL DEFAULT 0",
+        [],
+    ) {
+        let msg = e.to_string();
+        if !msg.contains("duplicate column name") {
+            return Err(format!("sessions remember-me migration failed: {e}"));
         }
     }
 
@@ -3360,8 +3370,13 @@ fn login(app: tauri::AppHandle, payload: LoginPayload) -> Result<bool, String> {
             )
             .map_err(|e| format!("close previous sessions failed: {e}"))?;
             conn.execute(
-                "INSERT INTO sessions (username, role, login_at, is_active) VALUES (?1, ?2, ?3, 1)",
-                params![username, role, Utc::now().to_rfc3339()],
+                "INSERT INTO sessions (username, role, login_at, is_active, remember_me) VALUES (?1, ?2, ?3, 1, ?4)",
+                params![
+                    username,
+                    role,
+                    Utc::now().to_rfc3339(),
+                    if payload.remember_me { 1 } else { 0 }
+                ],
             )
             .map_err(|e| format!("create session failed: {e}"))?;
             Ok(true)
@@ -3384,22 +3399,40 @@ fn logout(app: tauri::AppHandle) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn get_active_session(app: tauri::AppHandle) -> Result<Option<SessionUser>, String> {
+fn get_active_session(
+    app: tauri::AppHandle,
+    restore_only: Option<bool>,
+) -> Result<Option<SessionUser>, String> {
     let conn = open_db(&database_path(&app)?)?;
     init_schema(&conn)?;
+    let restoring = restore_only.unwrap_or(false);
+
+    if restoring {
+        conn.execute(
+            "
+            UPDATE sessions
+            SET is_active = 0, logout_at = ?1
+            WHERE is_active = 1 AND remember_me = 0
+            ",
+            params![Utc::now().to_rfc3339()],
+        )
+        .map_err(|e| format!("close temporary sessions failed: {e}"))?;
+    }
+
     let mut stmt = conn
         .prepare(
             "
       SELECT username, role, login_at
       FROM sessions
       WHERE is_active = 1
+        AND (?1 = 0 OR remember_me = 1)
       ORDER BY id DESC
       LIMIT 1
       ",
         )
         .map_err(|e| format!("prepare session query failed: {e}"))?;
 
-    let row = stmt.query_row([], |row| {
+    let row = stmt.query_row(params![if restoring { 1 } else { 0 }], |row| {
         Ok(SessionUser {
             username: row.get(0)?,
             role: row.get(1)?,

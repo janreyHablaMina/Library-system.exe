@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react'
-import { Bell, CheckCheck, ChevronDown, ChevronLeft, ChevronRight, Circle, Inbox, RotateCcw } from 'lucide-react'
+import { Bell, CheckCheck, ChevronDown, ChevronLeft, ChevronRight, Circle, Inbox, RotateCcw, X } from 'lucide-react'
 import { listNotifications, markNotificationAsRead, markAllNotificationsRead, type NotificationItem } from '../lib/tauriApi'
 
 type NotificationsPageProps = {
@@ -13,6 +13,7 @@ function NotificationsPage({ isDarkMode, onNotificationsChanged }: Notifications
   const [activeFilter, setActiveFilter] = useState<'all' | 'unread'>('all')
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [selectedNotification, setSelectedNotification] = useState<NotificationItem | null>(null)
 
   const cardClass = isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-200 bg-white'
   const subLabelClass = isDarkMode ? 'text-zinc-400' : 'text-zinc-500'
@@ -44,6 +45,14 @@ function NotificationsPage({ isDarkMode, onNotificationsChanged }: Notifications
       onNotificationsChanged?.()
     } catch (error) {
       console.error('Failed to mark read:', error)
+    }
+  }
+
+  const handleOpenNotification = async (item: NotificationItem) => {
+    setSelectedNotification(item)
+    if (!item.isRead) {
+      await handleMarkAsRead(item.id)
+      setSelectedNotification({ ...item, isRead: true })
     }
   }
 
@@ -133,7 +142,16 @@ function NotificationsPage({ isDarkMode, onNotificationsChanged }: Notifications
               {paginatedNotifications.map((item) => (
                 <div 
                   key={item.id} 
-                  className={`flex items-start justify-between gap-4 p-5 transition-colors ${item.isRead ? (isDarkMode ? 'bg-transparent' : 'bg-transparent') : (isDarkMode ? 'bg-emerald-500/10' : 'bg-emerald-50')} ${isDarkMode ? 'hover:bg-[#27272A]/50' : 'hover:bg-zinc-50'}`}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => void handleOpenNotification(item)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      void handleOpenNotification(item)
+                    }
+                  }}
+                  className={`flex cursor-pointer items-start justify-between gap-4 p-5 transition-colors ${item.isRead ? (isDarkMode ? 'bg-transparent' : 'bg-transparent') : (isDarkMode ? 'bg-emerald-500/10' : 'bg-emerald-50')} ${isDarkMode ? 'hover:bg-[#27272A]/50' : 'hover:bg-zinc-50'}`}
                 >
                   <div className="flex-1">
                     <p className={`text-sm font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{item.title}</p>
@@ -142,7 +160,10 @@ function NotificationsPage({ isDarkMode, onNotificationsChanged }: Notifications
                   </div>
                   {!item.isRead && (
                     <button 
-                      onClick={() => void handleMarkAsRead(item.id)}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        void handleMarkAsRead(item.id)
+                      }}
                       className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${isDarkMode ? 'bg-zinc-800 text-emerald-400 hover:bg-zinc-700' : 'bg-white text-emerald-600 border hover:bg-zinc-50'}`}
                     >
                       Mark Read
@@ -217,6 +238,46 @@ function NotificationsPage({ isDarkMode, onNotificationsChanged }: Notifications
           </div>
         </div>
       </section>
+
+      {selectedNotification && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedNotification(null)} />
+          <div className={`relative w-full max-w-lg overflow-hidden rounded-2xl border shadow-2xl ${isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
+            <div className={`flex items-center justify-between border-b px-6 py-4 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'}`}>
+              <div className="flex items-center gap-3">
+                <span className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-500/10 text-emerald-500">
+                  <Bell size={20} />
+                </span>
+                <div>
+                  <h2 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Notification Details</h2>
+                  <p className={`text-sm capitalize ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{selectedNotification.notificationType}</p>
+                </div>
+              </div>
+              <button type="button" onClick={() => setSelectedNotification(null)} className={`rounded-full p-2 transition-colors ${isDarkMode ? 'text-zinc-400 hover:bg-zinc-800 hover:text-white' : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900'}`} aria-label="Close notification">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6">
+              <div className={`rounded-xl border p-4 ${isDarkMode ? 'border-zinc-700 bg-[#27272A]' : 'border-zinc-200 bg-zinc-50'}`}>
+                <h3 className={`text-base font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{selectedNotification.title}</h3>
+                <p className={`mt-3 whitespace-pre-wrap text-sm leading-6 ${isDarkMode ? 'text-zinc-300' : 'text-zinc-600'}`}>{selectedNotification.message}</p>
+              </div>
+              <div className="mt-4 flex items-center justify-between gap-4">
+                <p className={`text-xs font-medium ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>{formatNotificationTime(selectedNotification.createdAt)}</p>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300">
+                  <CheckCheck size={14} />
+                  Read
+                </span>
+              </div>
+            </div>
+            <div className={`flex justify-end border-t px-6 py-4 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'}`}>
+              <button type="button" onClick={() => setSelectedNotification(null)} className="rounded-xl bg-emerald-500 px-6 py-2.5 font-bold text-white transition-colors hover:bg-emerald-600">
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
