@@ -242,6 +242,7 @@ export type BorrowTransaction = {
   notes: string | null
   status: string
   fine: number
+  renewalCount: number
   createdAt: string
 }
 
@@ -254,8 +255,9 @@ export type CreateBorrowPayload = {
 }
 
 
-export type ExtendDueDatePayload = {
-  transactionId: number
+export type RenewBorrowResult = {
+  renewalCount: number
+  maximumRenewals: number
   newDueDate: string
 }
 
@@ -464,8 +466,8 @@ export async function createBorrowTransaction(payload: CreateBorrowPayload): Pro
 }
 
 
-export async function extendBorrowDueDate(payload: ExtendDueDatePayload): Promise<void> {
-  return invoke<void>('extend_borrow_due_date', { payload })
+export async function renewBorrowTransaction(transactionId: number): Promise<RenewBorrowResult> {
+  return invoke<RenewBorrowResult>('renew_borrow_transaction', { payload: { transactionId } })
 }
 
 export async function returnBorrowTransaction(payload: ReturnBorrowPayload): Promise<void> {

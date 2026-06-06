@@ -261,6 +261,7 @@ struct BorrowTransactionRow {
     notes: Option<String>,
     status: String,
     fine: f64,
+    renewal_count: i64,
     created_at: String,
 }
 
@@ -310,8 +311,15 @@ struct CreateBorrowPayload {
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct ExtendDueDatePayload {
+struct RenewBorrowPayload {
     transaction_id: i64,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct RenewBorrowResult {
+    renewal_count: i64,
+    maximum_renewals: i64,
     new_due_date: String,
 }
 
@@ -760,6 +768,15 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
         let msg = e.to_string();
         if !msg.contains("duplicate column name") {
             return Err(format!("email logs migration failed: {e}"));
+        }
+    }
+    if let Err(e) = conn.execute(
+        "ALTER TABLE borrow_transactions ADD COLUMN renewal_count INTEGER NOT NULL DEFAULT 0",
+        [],
+    ) {
+        let msg = e.to_string();
+        if !msg.contains("duplicate column name") {
+            return Err(format!("borrow transactions renewal migration failed: {e}"));
         }
     }
 
@@ -2017,23 +2034,85 @@ fn create_borrow_transaction(
 }
 
 #[tauri::command]
-fn extend_borrow_due_date(
+fn renew_borrow_transaction(
     app: tauri::AppHandle,
-    payload: ExtendDueDatePayload,
-) -> Result<(), String> {
+    payload: RenewBorrowPayload,
+) -> Result<RenewBorrowResult, String> {
     let conn = open_db(&database_path(&app)?)?;
     init_schema(&conn)?;
 
-    let mut stmt = conn
-        .prepare(
-            "UPDATE borrow_transactions SET due_date = ?1 WHERE id = ?2 AND return_date IS NULL",
+    let maximum_renewals = conn
+        .query_row(
+            "SELECT value FROM settings WHERE key = 'general.maximum_renewals'",
+            [],
+            |row| row.get::<_, String>(0),
         )
-        .map_err(|e| format!("prepare extend due date failed: {e}"))?;
+        .ok()
+        .and_then(|value| value.parse::<i64>().ok())
+        .unwrap_or(2)
+        .max(0);
+    let loan_days = conn
+        .query_row(
+            "SELECT value FROM settings WHERE key = 'general.default_loan_period'",
+            [],
+            |row| row.get::<_, String>(0),
+        )
+        .ok()
+        .and_then(|value| value.parse::<i64>().ok())
+        .unwrap_or(14)
+        .max(1);
 
-    stmt.execute(params![payload.new_due_date, payload.transaction_id])
-        .map_err(|e| format!("execute extend due date failed: {e}"))?;
+    let (due_date, return_date, renewal_count): (String, Option<String>, i64) = conn
+        .query_row(
+            "SELECT due_date, return_date, renewal_count FROM borrow_transactions WHERE id = ?1",
+            params![payload.transaction_id],
+            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
+        )
+        .map_err(|e| format!("fetch borrow transaction for renewal failed: {e}"))?;
 
-    Ok(())
+    if return_date.is_some() {
+        return Err("Returned books cannot be renewed.".to_string());
+    }
+    if renewal_count >= maximum_renewals {
+        return Err(format!("Maximum renewals reached ({maximum_renewals})."));
+    }
+
+    let due_date_part = due_date
+        .get(..10)
+        .ok_or_else(|| "The current due date is invalid.".to_string())?;
+    let current_due = NaiveDate::parse_from_str(due_date_part, "%Y-%m-%d")
+        .map_err(|_| "The current due date is invalid.".to_string())?;
+    let new_due_date = (current_due + Duration::days(loan_days))
+        .format("%Y-%m-%d")
+        .to_string();
+    let next_count = renewal_count + 1;
+
+    let updated = conn
+        .execute(
+            "
+            UPDATE borrow_transactions
+            SET due_date = ?1, renewal_count = ?2
+            WHERE id = ?3 AND return_date IS NULL AND renewal_count = ?4
+            ",
+            params![
+                new_due_date,
+                next_count,
+                payload.transaction_id,
+                renewal_count
+            ],
+        )
+        .map_err(|e| format!("renew borrow transaction failed: {e}"))?;
+    if updated != 1 {
+        return Err(
+            "This transaction changed before it could be renewed. Please try again.".to_string(),
+        );
+    }
+
+    Ok(RenewBorrowResult {
+        renewal_count: next_count,
+        maximum_renewals,
+        new_due_date,
+    })
 }
 
 #[tauri::command]
@@ -2137,6 +2216,7 @@ fn list_book_borrow_transactions(
       t.notes,
       t.status,
       t.fine,
+      t.renewal_count,
       t.created_at
     FROM borrow_transactions t
     INNER JOIN members m ON m.id = t.member_id
@@ -2166,7 +2246,8 @@ fn list_book_borrow_transactions(
                 notes: row.get(11)?,
                 status: row.get(12)?,
                 fine: row.get(13)?,
-                created_at: row.get(14)?,
+                renewal_count: row.get(14)?,
+                created_at: row.get(15)?,
             })
         })
         .map_err(|e| format!("query_map failed: {e}"))?;
@@ -2206,6 +2287,7 @@ fn list_borrow_transactions(
       t.notes,
       t.status,
       t.fine,
+      t.renewal_count,
       t.created_at
     FROM borrow_transactions t
     INNER JOIN members m ON m.id = t.member_id
@@ -2240,7 +2322,8 @@ fn list_borrow_transactions(
                     notes: row.get(11)?,
                     status: row.get(12)?,
                     fine: row.get(13)?,
-                    created_at: row.get(14)?,
+                    renewal_count: row.get(14)?,
+                    created_at: row.get(15)?,
                 })
             })
             .map_err(|e| format!("list borrow transactions failed: {e}"))?;
@@ -2265,7 +2348,8 @@ fn list_borrow_transactions(
                     notes: row.get(11)?,
                     status: row.get(12)?,
                     fine: row.get(13)?,
-                    created_at: row.get(14)?,
+                    renewal_count: row.get(14)?,
+                    created_at: row.get(15)?,
                 })
             })
             .map_err(|e| format!("list borrow transactions failed: {e}"))?;
@@ -3733,7 +3817,7 @@ pub fn run() {
             update_category,
             delete_category,
             create_borrow_transaction,
-            extend_borrow_due_date,
+            renew_borrow_transaction,
             return_borrow_transaction,
             list_borrow_transactions,
             list_book_borrow_transactions,

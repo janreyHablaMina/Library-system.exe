@@ -21,7 +21,8 @@ import {
  listBooks,
  listMembers,
  returnBorrowTransaction,
- extendBorrowDueDate
+ renewBorrowTransaction,
+ getSetting
 } from '../lib/tauriApi'
 
 type TransactionDetailPageProps = {
@@ -35,17 +36,21 @@ export function TransactionDetailPage({ isDarkMode, onBack, transactionId }: Tra
  const [book, setBook] = useState<Book | null>(null)
  const [member, setMember] = useState<Member | null>(null)
  const [loading, setLoading] = useState(true)
+ const [maximumRenewals, setMaximumRenewals] = useState(2)
 
  useEffect(() => {
  async function loadData() {
  if (!transactionId) return
  setLoading(true)
  try {
- const [txs, books, members] = await Promise.all([
+ const [txs, books, members, maximumRenewalsSetting] = await Promise.all([
  listBorrowTransactions(undefined, 1000),
  listBooks(1000),
- listMembers(1000)
+ listMembers(1000),
+ getSetting('general.maximum_renewals')
  ])
+ const parsedMaximumRenewals = Number.parseInt(maximumRenewalsSetting || '2', 10)
+ setMaximumRenewals(Number.isNaN(parsedMaximumRenewals) ? 2 : Math.max(0, parsedMaximumRenewals))
  
  const parsedId = Number(transactionId.split('-').pop())
  const foundTx = txs.find(t => t.id === parsedId)
@@ -82,17 +87,10 @@ export function TransactionDetailPage({ isDarkMode, onBack, transactionId }: Tra
  }
  }
 
- const handleExtendDueDate = async () => {
+ const handleRenew = async () => {
  if (!transaction || transaction.status === 'Returned') return
  try {
- // Extend due date by 7 days
- const currentDue = new Date(transaction.dueDate)
- currentDue.setDate(currentDue.getDate() + 7)
- 
- await extendBorrowDueDate({
- transactionId: transaction.id,
- newDueDate: currentDue.toISOString()
- })
+ await renewBorrowTransaction(transaction.id)
  // Reload to reflect changes
  setLoading(true)
  const txs = await listBorrowTransactions(undefined, 1000)
@@ -101,6 +99,7 @@ export function TransactionDetailPage({ isDarkMode, onBack, transactionId }: Tra
  setLoading(false)
  } catch (e) {
  console.error(e)
+ alert(typeof e === 'string' ? e : 'Failed to renew this book.')
  }
  }
 
@@ -137,12 +136,17 @@ export function TransactionDetailPage({ isDarkMode, onBack, transactionId }: Tra
  )
  }
 
- const status = transaction.status === 'Active' ? 'Borrowed' : transaction.status
- const isReturned = status === 'Returned'
- const isOverdue = status === 'Overdue'
-
  const due = new Date(transaction.dueDate)
  const today = new Date()
+ const isReturned = transaction.status === 'Returned' || !!transaction.returnDate
+ const isOverdue = !isReturned && !isNaN(due.getTime()) && due.getTime() < today.getTime()
+ const status = isReturned
+ ? 'Returned'
+ : isOverdue
+ ? 'Overdue'
+ : transaction.renewalCount > 0
+ ? 'Renewed'
+ : 'Borrowed'
  const daysRemaining = Math.max(0, Math.ceil((due.getTime() - today.getTime()) / (1000 * 3600 * 24)))
 
  const cardClass = isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-200 bg-white'
@@ -274,6 +278,7 @@ export function TransactionDetailPage({ isDarkMode, onBack, transactionId }: Tra
  <span className={`rounded-full px-3 py-1 text-[10px] font-bold ${
  isReturned ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' :
  isOverdue ? 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400' :
+ status === 'Renewed' ? 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400' :
  'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
  }`}>
  {status}
@@ -286,6 +291,13 @@ export function TransactionDetailPage({ isDarkMode, onBack, transactionId }: Tra
  <span className={labelClass}>Borrow Date</span>
  </div>
  <p className={`text-sm font-semibold ${valueClass}`}>{formatDate(transaction.borrowDate)}</p>
+ </div>
+ <div className="flex items-center justify-between">
+ <div className="flex items-center gap-3 text-sm">
+ <RotateCcw size={16} className="opacity-40" />
+ <span className={labelClass}>Renewals Used</span>
+ </div>
+ <p className={`text-sm font-semibold ${valueClass}`}>{transaction.renewalCount} / {maximumRenewals}</p>
  </div>
  <div className="flex items-center justify-between">
  <div className="flex items-center gap-3 text-sm">
@@ -353,7 +365,7 @@ export function TransactionDetailPage({ isDarkMode, onBack, transactionId }: Tra
  onClick={handleReturn}
  disabled={isReturned}
  className={`group flex flex-col items-start gap-2 rounded-xl p-5 transition-all ${
- isReturned 
+ isReturned
  ? (isDarkMode ? 'bg-emerald-500/5 opacity-50 cursor-not-allowed' : 'bg-[#f0fdf4]/50 opacity-50 cursor-not-allowed')
  : (isDarkMode ? 'bg-emerald-500/10 hover:bg-emerald-500/20' : 'bg-[#f0fdf4] hover:bg-emerald-50')
  }`}
@@ -372,10 +384,10 @@ export function TransactionDetailPage({ isDarkMode, onBack, transactionId }: Tra
  </button>
 
  <button 
- onClick={handleExtendDueDate}
- disabled={isReturned}
+ onClick={handleRenew}
+ disabled={isReturned || transaction.renewalCount >= maximumRenewals}
  className={`group flex flex-col items-start gap-2 rounded-xl p-5 transition-all ${
- isReturned 
+ isReturned || transaction.renewalCount >= maximumRenewals
  ? (isDarkMode ? 'bg-blue-500/5 opacity-50 cursor-not-allowed' : 'bg-[#eff6ff]/50 opacity-50 cursor-not-allowed')
  : (isDarkMode ? 'bg-blue-500/10 hover:bg-blue-500/20' : 'bg-[#eff6ff] hover:bg-blue-50')
  }`}
@@ -385,10 +397,12 @@ export function TransactionDetailPage({ isDarkMode, onBack, transactionId }: Tra
  </div>
  <div className="text-left mt-1">
  <p className={`text-base font-bold ${isDarkMode ? 'text-blue-300' : 'text-[#1e3a8a]'}`}>
- Extend Due Date
+ {transaction.renewalCount >= maximumRenewals ? 'Renewal Limit Reached' : 'Renew Book'}
  </p>
  <p className={`text-xs mt-1 ${isDarkMode ? 'text-blue-400/70' : 'text-blue-700/70'}`}>
- Extend the due date for this borrowed book by 7 days.
+ {transaction.renewalCount >= maximumRenewals
+ ? `This book has already been renewed ${maximumRenewals} time(s).`
+ : 'Extend the due date using the configured loan period.'}
  </p>
  </div>
  </button>

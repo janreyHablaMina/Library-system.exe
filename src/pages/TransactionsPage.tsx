@@ -19,12 +19,12 @@ import {
   Send,
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { listBorrowTransactions, listMembers, returnBorrowTransaction, sendManualEmailReminder, type BorrowTransaction, type Member } from '../lib/tauriApi'
+import { getSetting, listBorrowTransactions, listMembers, renewBorrowTransaction, returnBorrowTransaction, type BorrowTransaction, type Member } from '../lib/tauriApi'
 import { SendEmailModal } from '../components/modals/SendEmailModal'
 import { SendSmsModal } from '../components/modals/SendSmsModal'
 
 type TransactionType = 'Borrow' | 'Return'
-type TransactionStatus = 'Borrowed' | 'Returned' | 'Overdue'
+type TransactionStatus = 'Borrowed' | 'Renewed' | 'Returned' | 'Overdue'
 type TransactionTab = 'all' | 'borrowed' | 'returned' | 'overdue'
 type TransactionsPageProps = {
   isDarkMode: boolean
@@ -50,6 +50,7 @@ type TransactionRow = {
   status: TransactionStatus
   fine: string
   fineValue: number
+  renewalCount: number
   memberEmail: string | null
   memberPhone: string | null
 }
@@ -62,6 +63,7 @@ function getTypeClass(type: TransactionType) {
 
 function getStatusClass(status: TransactionStatus) {
   if (status === 'Borrowed') return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
+  if (status === 'Renewed') return 'bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300'
   if (status === 'Returned') return 'bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300'
   return 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
 }
@@ -94,6 +96,7 @@ function inferStatus(tx: BorrowTransaction): TransactionStatus {
   if (tx.status.toLowerCase() === 'returned' || !!tx.returnDate) return 'Returned'
   const due = new Date(tx.dueDate)
   if (!Number.isNaN(due.getTime()) && due.getTime() < Date.now()) return 'Overdue'
+  if (tx.renewalCount > 0) return 'Renewed'
   return 'Borrowed'
 }
 
@@ -120,6 +123,7 @@ function toTransactionRow(tx: BorrowTransaction, memberMap: Map<string, Member>)
     status,
     fine: `PHP ${fineValue.toFixed(2)}`,
     fineValue,
+    renewalCount: tx.renewalCount,
     memberEmail: memberRecord?.email || null,
     memberPhone: memberRecord?.contactNumber || null,
   }
@@ -129,8 +133,11 @@ type TransactionActionsMenuProps = {
   isDarkMode: boolean
   status: TransactionStatus
   hasFine: boolean
+  renewalCount: number
+  maximumRenewals: number
   onViewDetails: () => void
   onMarkReturned: () => void
+  onRenew: () => void
   onSendReminder: () => void
   onSendSmsReminder: () => void
   onRecordPayment: () => void
@@ -141,8 +148,11 @@ function TransactionActionsMenu({
   isDarkMode,
   status,
   hasFine,
+  renewalCount,
+  maximumRenewals,
   onViewDetails,
   onMarkReturned,
+  onRenew,
   onSendReminder,
   onSendSmsReminder,
   onRecordPayment,
@@ -179,6 +189,7 @@ function TransactionActionsMenu({
     'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-100 text-left'
   const itemNormal = isDarkMode ? 'text-zinc-200 hover:bg-zinc-800' : 'text-zinc-700 hover:bg-zinc-50'
   const divider = isDarkMode ? 'border-zinc-700/60' : 'border-zinc-100'
+  const renewalLimitReached = renewalCount >= maximumRenewals
 
   return (
     <div ref={ref} className="relative inline-block" onClick={(e) => e.stopPropagation()}>
@@ -216,7 +227,22 @@ function TransactionActionsMenu({
             View Details
           </button>
 
-          {(status === 'Borrowed' || status === 'Overdue') && (
+          {status !== 'Returned' && (
+            <button
+              type="button"
+              disabled={renewalLimitReached}
+              className={`${itemBase} ${renewalLimitReached ? 'cursor-not-allowed opacity-50' : itemNormal}`}
+              onClick={() => {
+                setOpen(false)
+                onRenew()
+              }}
+            >
+              <RotateCcw size={15} className="shrink-0 text-blue-500" />
+              {renewalLimitReached ? 'Renewal Limit Reached' : `Renew Book (${renewalCount}/${maximumRenewals})`}
+            </button>
+          )}
+
+          {status !== 'Returned' && (
             <button
               type="button"
               className={`${itemBase} ${itemNormal}`}
@@ -230,7 +256,7 @@ function TransactionActionsMenu({
             </button>
           )}
 
-          {(status === 'Borrowed' || status === 'Overdue') && (
+          {status !== 'Returned' && (
             <button
               type="button"
               className={`${itemBase} ${itemNormal}`}
@@ -244,7 +270,7 @@ function TransactionActionsMenu({
             </button>
           )}
 
-          {(status === 'Borrowed' || status === 'Overdue') && (
+          {status !== 'Returned' && (
             <button
               type="button"
               className={`${itemBase} ${itemNormal}`}
@@ -296,6 +322,7 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
   const [transactionList, setTransactionList] = useState<TransactionRow[]>([])
   const [showToast, setShowToast] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [maximumRenewals, setMaximumRenewals] = useState(2)
   const [emailModalData, setEmailModalData] = useState<{
     member: { id: number; fullName: string; email: string | null }
     initialSubject: string
@@ -319,10 +346,13 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
   const loadTransactions = async () => {
     setLoading(true)
     try {
-      const [rows, members] = await Promise.all([
+      const [rows, members, maximumRenewalsSetting] = await Promise.all([
         listBorrowTransactions('All', 1000),
         listMembers(2000),
+        getSetting('general.maximum_renewals'),
       ])
+      const parsedMaximumRenewals = Number.parseInt(maximumRenewalsSetting || '2', 10)
+      setMaximumRenewals(Number.isNaN(parsedMaximumRenewals) ? 2 : Math.max(0, parsedMaximumRenewals))
       const memberMap = new Map<string, Member>(members.map((m) => [m.memberId, m]))
       memberMapRef.current = memberMap
       setTransactionList(rows.map((row) => toTransactionRow(row, memberMap)))
@@ -359,6 +389,19 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
     } catch (error) {
       console.error(error)
       triggerToast('Failed to mark transaction as returned.')
+    }
+  }
+
+  const handleRenew = async (row: TransactionRow) => {
+    try {
+      const result = await renewBorrowTransaction(row.transactionId)
+      await loadTransactions()
+      triggerToast(
+        `Renewed "${row.book}" (${result.renewalCount}/${result.maximumRenewals}). New due date: ${formatDateOnly(result.newDueDate)}.`
+      )
+    } catch (error) {
+      console.error(error)
+      triggerToast(typeof error === 'string' ? error : 'Failed to renew this book.')
     }
   }
 
@@ -541,8 +584,11 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
                         isDarkMode={isDarkMode}
                         status={row.status}
                         hasFine={row.fineValue > 0}
+                        renewalCount={row.renewalCount}
+                        maximumRenewals={maximumRenewals}
                         onViewDetails={() => onOpenTransactionDetail(row.id)}
                         onMarkReturned={() => void handleMarkReturned(row)}
+                        onRenew={() => void handleRenew(row)}
                         onSendReminder={() => handleSendReminder(row)}
                         onSendSmsReminder={() => handleSendSmsReminder(row)}
                         onRecordPayment={() => handleSettleFine(row.id, row.fine)}
