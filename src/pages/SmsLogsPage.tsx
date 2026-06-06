@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from 'react'
 import { Search, Plus, FileText, BarChart2, RotateCcw, Send, CheckCircle2, XCircle, Clock, CreditCard, MoreVertical, Calendar, Copy, User, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { listSmsLogs, type SmsLog } from '../lib/tauriApi'
 
+import { ComposeSmsModal } from '../components/modals/ComposeSmsModal'
+
 type SmsLogsPageProps = {
   isDarkMode: boolean
 }
@@ -13,6 +15,7 @@ function SmsLogsPage({ isDarkMode }: SmsLogsPageProps) {
   const [statusFilter, setStatusFilter] = useState('')
   const [selectedLog, setSelectedLog] = useState<SmsLog | null>(null)
   const [isClosing, setIsClosing] = useState(false)
+  const [showCompose, setShowCompose] = useState(false)
 
   const handleCloseDrawer = () => {
     setIsClosing(true)
@@ -86,12 +89,26 @@ function SmsLogsPage({ isDarkMode }: SmsLogsPageProps) {
             <p className={`mt-1 text-sm ${textSecondary}`}>View and manage all SMS notifications sent to library members.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <button className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-semibold text-white hover:bg-emerald-700">
+            <button 
+              className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-semibold text-white hover:bg-emerald-700"
+              onClick={() => setShowCompose(true)}
+            >
               <span className="text-lg leading-none">+</span>
               Send SMS
             </button>
           </div>
         </header>
+
+        {showCompose && (
+          <ComposeSmsModal
+            isOpen={showCompose}
+            onClose={() => setShowCompose(false)}
+            onSuccess={() => {
+              void loadSmsLogs()
+            }}
+            isDarkMode={isDarkMode}
+          />
+        )}
 
         {/* Stats Row */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
