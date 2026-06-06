@@ -299,7 +299,7 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 
           setShowToast('No active borrow transaction found for this member/book.')
           return
         }
-        await returnBorrowTransaction({ transactionId: tx.id, returnDate, fine: null })
+        await returnBorrowTransaction({ transactionId: tx.id, returnDate })
         setShowToast(`Successfully returned "${selectedBook.title}" from ${selectedMember.name}!`)
       }
 

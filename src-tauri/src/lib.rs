@@ -1,4 +1,4 @@
-use chrono::{Duration, NaiveDate, Utc};
+use chrono::{Duration, Local, NaiveDate, Utc};
 use lettre::{
     message::Mailbox, transport::smtp::authentication::Credentials, Message, SmtpTransport,
     Transport,
@@ -328,7 +328,6 @@ struct RenewBorrowResult {
 struct ReturnBorrowPayload {
     transaction_id: i64,
     return_date: String,
-    fine: Option<f64>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -841,6 +840,101 @@ fn setting_bool(conn: &Connection, key: &str, default_value: bool) -> bool {
     )
     .map(|value| value == "true")
     .unwrap_or(default_value)
+}
+
+fn setting_f64(conn: &Connection, key: &str, default_value: f64) -> f64 {
+    conn.query_row(
+        "SELECT value FROM settings WHERE key = ?1",
+        params![key],
+        |row| row.get::<_, String>(0),
+    )
+    .ok()
+    .and_then(|value| value.parse::<f64>().ok())
+    .unwrap_or(default_value)
+}
+
+fn setting_i64(conn: &Connection, key: &str, default_value: i64) -> i64 {
+    conn.query_row(
+        "SELECT value FROM settings WHERE key = ?1",
+        params![key],
+        |row| row.get::<_, String>(0),
+    )
+    .ok()
+    .and_then(|value| value.parse::<i64>().ok())
+    .unwrap_or(default_value)
+}
+
+fn parse_transaction_date(value: &str) -> Option<NaiveDate> {
+    value
+        .get(..10)
+        .and_then(|date| NaiveDate::parse_from_str(date, "%Y-%m-%d").ok())
+}
+
+fn calculate_overdue_fine(
+    due_date: &str,
+    assessed_date: NaiveDate,
+    fine_per_day: f64,
+    grace_days: i64,
+) -> f64 {
+    let Some(due) = parse_transaction_date(due_date) else {
+        return 0.0;
+    };
+    let chargeable_days = (assessed_date - due).num_days() - grace_days.max(0);
+    if chargeable_days <= 0 {
+        return 0.0;
+    }
+    ((chargeable_days as f64 * fine_per_day.max(0.0)) * 100.0).round() / 100.0
+}
+
+#[cfg(test)]
+mod fine_tests {
+    use super::*;
+
+    #[test]
+    fn fine_starts_after_the_grace_period() {
+        let due = "2026-06-05";
+
+        assert_eq!(
+            calculate_overdue_fine(
+                due,
+                NaiveDate::from_ymd_opt(2026, 6, 6).unwrap(),
+                5.0,
+                1,
+            ),
+            0.0
+        );
+        assert_eq!(
+            calculate_overdue_fine(
+                due,
+                NaiveDate::from_ymd_opt(2026, 6, 7).unwrap(),
+                5.0,
+                1,
+            ),
+            5.0
+        );
+        assert_eq!(
+            calculate_overdue_fine(
+                due,
+                NaiveDate::from_ymd_opt(2026, 6, 8).unwrap(),
+                5.0,
+                1,
+            ),
+            10.0
+        );
+    }
+
+    #[test]
+    fn fine_is_zero_on_or_before_the_due_date() {
+        assert_eq!(
+            calculate_overdue_fine(
+                "2026-06-05",
+                NaiveDate::from_ymd_opt(2026, 6, 5).unwrap(),
+                5.0,
+                0,
+            ),
+            0.0
+        );
+    }
 }
 
 fn email_template(
@@ -2127,11 +2221,11 @@ fn return_borrow_transaction(
         .unchecked_transaction()
         .map_err(|e| format!("start return transaction failed: {e}"))?;
 
-    let (member_id, book_id, status): (i64, i64, String) = tx
+    let (member_id, book_id, status, due_date): (i64, i64, String, String) = tx
         .query_row(
-            "SELECT member_id, book_id, status FROM borrow_transactions WHERE id = ?1",
+            "SELECT member_id, book_id, status, due_date FROM borrow_transactions WHERE id = ?1",
             params![payload.transaction_id],
-            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
+            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?)),
         )
         .map_err(|e| format!("fetch borrow transaction failed: {e}"))?;
 
@@ -2139,17 +2233,22 @@ fn return_borrow_transaction(
         return Err("This transaction is already returned.".to_string());
     }
 
+    let return_date = parse_transaction_date(&payload.return_date)
+        .ok_or_else(|| "The return date is invalid.".to_string())?;
+    let fine = calculate_overdue_fine(
+        &due_date,
+        return_date,
+        setting_f64(&tx, "general.fine_per_day", 5.0),
+        setting_i64(&tx, "general.grace_period", 0),
+    );
+
     tx.execute(
         "
       UPDATE borrow_transactions
       SET return_date = ?1, fine = ?2, status = 'Returned'
       WHERE id = ?3
       ",
-        params![
-            payload.return_date,
-            payload.fine.unwrap_or(0.0),
-            payload.transaction_id
-        ],
+        params![payload.return_date, fine, payload.transaction_id],
     )
     .map_err(|e| format!("update borrow transaction failed: {e}"))?;
 
@@ -2199,6 +2298,9 @@ fn list_book_borrow_transactions(
 ) -> Result<Vec<BorrowTransactionRow>, String> {
     let conn = open_db(&database_path(&app)?)?;
     init_schema(&conn)?;
+    let fine_per_day = setting_f64(&conn, "general.fine_per_day", 5.0);
+    let grace_days = setting_i64(&conn, "general.grace_period", 0);
+    let today = Local::now().date_naive();
 
     let query = "
     SELECT
@@ -2231,6 +2333,14 @@ fn list_book_borrow_transactions(
 
     let rows = stmt
         .query_map(params![book_id], |row| {
+            let due_date: String = row.get(9)?;
+            let return_date: Option<String> = row.get(10)?;
+            let stored_fine: f64 = row.get(13)?;
+            let fine = if return_date.is_some() {
+                stored_fine
+            } else {
+                calculate_overdue_fine(&due_date, today, fine_per_day, grace_days)
+            };
             Ok(BorrowTransactionRow {
                 id: row.get(0)?,
                 member_id: row.get(1)?,
@@ -2241,11 +2351,11 @@ fn list_book_borrow_transactions(
                 book_title: row.get(6)?,
                 book_cover_data: row.get(7)?,
                 borrow_date: row.get(8)?,
-                due_date: row.get(9)?,
-                return_date: row.get(10)?,
+                due_date,
+                return_date,
                 notes: row.get(11)?,
                 status: row.get(12)?,
-                fine: row.get(13)?,
+                fine,
                 renewal_count: row.get(14)?,
                 created_at: row.get(15)?,
             })
@@ -2270,6 +2380,9 @@ fn list_borrow_transactions(
     init_schema(&conn)?;
     let max_rows = limit.unwrap_or(500).clamp(1, 2000);
     let status_filter = status.unwrap_or_else(|| "All".to_string());
+    let fine_per_day = setting_f64(&conn, "general.fine_per_day", 5.0);
+    let grace_days = setting_i64(&conn, "general.grace_period", 0);
+    let today = Local::now().date_naive();
 
     let base_query = "
     SELECT
@@ -2307,6 +2420,14 @@ fn list_borrow_transactions(
     if status_filter.eq_ignore_ascii_case("all") {
         let rows = stmt
             .query_map(params![max_rows], |row| {
+                let due_date: String = row.get(9)?;
+                let return_date: Option<String> = row.get(10)?;
+                let stored_fine: f64 = row.get(13)?;
+                let fine = if return_date.is_some() {
+                    stored_fine
+                } else {
+                    calculate_overdue_fine(&due_date, today, fine_per_day, grace_days)
+                };
                 Ok(BorrowTransactionRow {
                     id: row.get(0)?,
                     member_id: row.get(1)?,
@@ -2317,11 +2438,11 @@ fn list_borrow_transactions(
                     book_title: row.get(6)?,
                     book_cover_data: row.get(7)?,
                     borrow_date: row.get(8)?,
-                    due_date: row.get(9)?,
-                    return_date: row.get(10)?,
+                    due_date,
+                    return_date,
                     notes: row.get(11)?,
                     status: row.get(12)?,
-                    fine: row.get(13)?,
+                    fine,
                     renewal_count: row.get(14)?,
                     created_at: row.get(15)?,
                 })
@@ -2333,6 +2454,14 @@ fn list_borrow_transactions(
     } else {
         let rows = stmt
             .query_map(params![status_filter, max_rows], |row| {
+                let due_date: String = row.get(9)?;
+                let return_date: Option<String> = row.get(10)?;
+                let stored_fine: f64 = row.get(13)?;
+                let fine = if return_date.is_some() {
+                    stored_fine
+                } else {
+                    calculate_overdue_fine(&due_date, today, fine_per_day, grace_days)
+                };
                 Ok(BorrowTransactionRow {
                     id: row.get(0)?,
                     member_id: row.get(1)?,
@@ -2343,11 +2472,11 @@ fn list_borrow_transactions(
                     book_title: row.get(6)?,
                     book_cover_data: row.get(7)?,
                     borrow_date: row.get(8)?,
-                    due_date: row.get(9)?,
-                    return_date: row.get(10)?,
+                    due_date,
+                    return_date,
                     notes: row.get(11)?,
                     status: row.get(12)?,
-                    fine: row.get(13)?,
+                    fine,
                     renewal_count: row.get(14)?,
                     created_at: row.get(15)?,
                 })
@@ -3710,6 +3839,30 @@ fn get_trial_days_remaining(app: tauri::AppHandle) -> Result<i64, String> {
     Ok(7)
 }
 
+#[tauri::command]
+fn get_trial_seconds_remaining(app: tauri::AppHandle) -> Result<i64, String> {
+    let conn = open_db(&database_path(&app)?)?;
+    let install_date: Option<String> = conn
+        .query_row(
+            "SELECT value FROM settings WHERE key = 'license.install_date'",
+            [],
+            |row| row.get(0),
+        )
+        .ok();
+
+    if let Some(date_str) = install_date {
+        if let Ok(parsed_date) = chrono::DateTime::parse_from_rfc3339(&date_str) {
+            let expires_at = parsed_date.with_timezone(&Utc) + Duration::days(7);
+            return Ok(expires_at
+                .signed_duration_since(Utc::now())
+                .num_seconds()
+                .max(0));
+        }
+    }
+
+    Ok(Duration::days(7).num_seconds())
+}
+
 // ==========================================
 // INBOX MESSAGES API
 // ==========================================
@@ -3788,6 +3941,7 @@ pub fn run() {
             get_user_profile,
             update_user_profile,
             get_trial_days_remaining,
+            get_trial_seconds_remaining,
             verify_license_key,
             get_license_status,
             init_db,

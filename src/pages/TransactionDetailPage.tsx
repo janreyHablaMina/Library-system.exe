@@ -11,10 +11,11 @@ import {
  User,
  Info,
  CreditCard,
- Printer,
- MoreVertical,
- RotateCcw
+ RotateCcw,
+ MessageSquare
 } from 'lucide-react'
+import { SendEmailModal } from '../components/modals/SendEmailModal'
+import { SendSmsModal } from '../components/modals/SendSmsModal'
 import type { BorrowTransaction, Book, Member } from '../lib/tauriApi'
 import {
  listBorrowTransactions,
@@ -37,20 +38,30 @@ export function TransactionDetailPage({ isDarkMode, onBack, transactionId }: Tra
  const [member, setMember] = useState<Member | null>(null)
  const [loading, setLoading] = useState(true)
  const [maximumRenewals, setMaximumRenewals] = useState(2)
+ const [finePerDay, setFinePerDay] = useState(5)
+ const [gracePeriod, setGracePeriod] = useState(0)
+ const [showEmailModal, setShowEmailModal] = useState(false)
+ const [showSmsModal, setShowSmsModal] = useState(false)
 
  useEffect(() => {
  async function loadData() {
  if (!transactionId) return
  setLoading(true)
  try {
- const [txs, books, members, maximumRenewalsSetting] = await Promise.all([
+ const [txs, books, members, maximumRenewalsSetting, finePerDaySetting, gracePeriodSetting] = await Promise.all([
  listBorrowTransactions(undefined, 1000),
  listBooks(1000),
  listMembers(1000),
- getSetting('general.maximum_renewals')
+ getSetting('general.maximum_renewals'),
+ getSetting('general.fine_per_day'),
+ getSetting('general.grace_period')
  ])
  const parsedMaximumRenewals = Number.parseInt(maximumRenewalsSetting || '2', 10)
  setMaximumRenewals(Number.isNaN(parsedMaximumRenewals) ? 2 : Math.max(0, parsedMaximumRenewals))
+ const parsedFinePerDay = Number.parseFloat(finePerDaySetting || '5')
+ setFinePerDay(Number.isNaN(parsedFinePerDay) ? 5 : Math.max(0, parsedFinePerDay))
+ const parsedGracePeriod = Number.parseInt(gracePeriodSetting || '0', 10)
+ setGracePeriod(Number.isNaN(parsedGracePeriod) ? 0 : Math.max(0, parsedGracePeriod))
  
  const parsedId = Number(transactionId.split('-').pop())
  const foundTx = txs.find(t => t.id === parsedId)
@@ -73,8 +84,7 @@ export function TransactionDetailPage({ isDarkMode, onBack, transactionId }: Tra
  try {
  await returnBorrowTransaction({
  transactionId: transaction.id,
- returnDate: new Date().toISOString(),
- fine: transaction.fine || 0
+ returnDate: new Date().toISOString()
  })
  // Reload page to reflect changes
  setLoading(true)
@@ -138,6 +148,14 @@ export function TransactionDetailPage({ isDarkMode, onBack, transactionId }: Tra
 
  const due = new Date(transaction.dueDate)
  const today = new Date()
+ const dueDateParts = transaction.dueDate.slice(0, 10).split('-').map(Number)
+ const dueDateLocal = dueDateParts.length === 3
+ ? new Date(dueDateParts[0], dueDateParts[1] - 1, dueDateParts[2])
+ : due
+ const todayLocal = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+ const daysLate = Math.max(0, Math.floor((todayLocal.getTime() - dueDateLocal.getTime()) / (1000 * 3600 * 24)))
+ const fineStartDate = new Date(dueDateLocal)
+ fineStartDate.setDate(fineStartDate.getDate() + gracePeriod + 1)
  const isReturned = transaction.status === 'Returned' || !!transaction.returnDate
  const isOverdue = !isReturned && !isNaN(due.getTime()) && due.getTime() < today.getTime()
  const status = isReturned
@@ -148,6 +166,10 @@ export function TransactionDetailPage({ isDarkMode, onBack, transactionId }: Tra
  ? 'Renewed'
  : 'Borrowed'
  const daysRemaining = Math.max(0, Math.ceil((due.getTime() - today.getTime()) / (1000 * 3600 * 24)))
+ const isInFineGracePeriod = isOverdue && finePerDay > 0 && daysLate <= gracePeriod && transaction.fine <= 0
+ const reminderSubject = `Library Reminder: ${transaction.bookTitle}`
+ const reminderBody = `Hello ${transaction.memberName},\n\nThis is a reminder about "${transaction.bookTitle}", currently due on ${formatDateOnly(transaction.dueDate)}.${isOverdue ? ' This book is overdue.' : ''}\n\nPlease contact the library if you need assistance.\n\nThank you,\nLibrary Management System`
+ const smsBody = `Library reminder: "${transaction.bookTitle}" is ${isOverdue ? 'overdue' : `due on ${formatDateOnly(transaction.dueDate)}`}. Please contact the library if you need assistance.`
 
  const cardClass = isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-200 bg-white'
  const labelClass = isDarkMode ? 'text-zinc-400' : 'text-zinc-500'
@@ -157,7 +179,7 @@ export function TransactionDetailPage({ isDarkMode, onBack, transactionId }: Tra
  <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[transparent] text-zinc-100' : 'bg-[#f8fafc] text-zinc-900'}`}>
  <section className="p-5 space-y-6 max-w-7xl mx-auto">
  {/* Header Actions */}
- <div className="flex flex-wrap items-center justify-between gap-4">
+ <div>
  <div className="space-y-1">
  <button
  onClick={onBack}
@@ -172,16 +194,6 @@ export function TransactionDetailPage({ isDarkMode, onBack, transactionId }: Tra
  ID: {transactionId}
  </span>
  </div>
- </div>
- <div className="flex items-center gap-2">
- <button className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition-all ${isDarkMode ? 'border-zinc-700 bg-zinc-900 hover:bg-zinc-800' : 'border-zinc-200 bg-white hover:bg-zinc-50'}`}>
- <Printer size={16} />
- Print Receipt
- </button>
- <button className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition-all ${isDarkMode ? 'border-zinc-700 bg-zinc-900 hover:bg-zinc-800' : 'border-zinc-200 bg-white hover:bg-zinc-50'}`}>
- <MoreVertical size={16} />
- More Actions
- </button>
  </div>
  </div>
 
@@ -322,14 +334,35 @@ export function TransactionDetailPage({ isDarkMode, onBack, transactionId }: Tra
  {isReturned ? formatDate(transaction.returnDate!) : '-'}
  </p>
  </div>
- <div className="flex items-center justify-between pt-2">
+ <div className="pt-2">
+ <div className="flex items-center justify-between">
  <div className="flex items-center gap-3 text-sm">
  <CreditCard size={16} className="opacity-40" />
  <span className={labelClass}>Fine / Penalty</span>
  </div>
- <p className={`text-sm font-bold ${(transaction.fine || 0) > 0 ? 'text-rose-500' : 'text-emerald-600'}`}>
+ <p className={`text-base font-bold ${(transaction.fine || 0) > 0 ? 'text-rose-500' : 'text-emerald-600'}`}>
  ₱{(transaction.fine || 0).toFixed(2)}
  </p>
+ </div>
+ {isInFineGracePeriod && (
+ <div className={`mt-3 rounded-xl border px-3 py-2.5 ${
+ isDarkMode
+ ? 'border-amber-500/20 bg-amber-500/10'
+ : 'border-amber-200 bg-amber-50/80'
+ }`}>
+ <div className="flex items-start gap-2.5">
+ <Info size={15} className={`mt-0.5 shrink-0 ${isDarkMode ? 'text-amber-400' : 'text-amber-600'}`} />
+ <div>
+ <p className={`text-xs font-bold ${isDarkMode ? 'text-amber-300' : 'text-amber-800'}`}>
+ Grace period active
+ </p>
+ <p className={`mt-0.5 text-[11px] leading-relaxed ${isDarkMode ? 'text-amber-400/80' : 'text-amber-700'}`}>
+ No fine is due today. Charges begin on {formatDateOnly(fineStartDate.toISOString())} at ₱{finePerDay.toFixed(2)} per day.
+ </p>
+ </div>
+ </div>
+ </div>
+ )}
  </div>
  </div>
  
@@ -359,7 +392,55 @@ export function TransactionDetailPage({ isDarkMode, onBack, transactionId }: Tra
  {/* Bottom Row: Quick Actions */}
  <div className={`rounded-2xl border p-6 ${cardClass}`}>
  <h3 className="mb-4 text-sm font-bold uppercase tracking-wider opacity-70">Quick Actions</h3>
- <div className="grid gap-4 md:grid-cols-2">
+ <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+
+ <button
+ type="button"
+ onClick={() => {
+ if (!member?.email) {
+ alert('This member does not have an email address.')
+ return
+ }
+ setShowEmailModal(true)
+ }}
+ className={`group flex h-full w-full flex-col items-start gap-2 rounded-xl p-5 transition-all ${
+ isDarkMode ? 'bg-violet-500/10 hover:bg-violet-500/20' : 'bg-violet-50 hover:bg-violet-100'
+ }`}
+ >
+ <div className={`grid h-10 w-10 place-items-center rounded-full ${isDarkMode ? 'bg-violet-500/30 text-violet-300' : 'bg-violet-100 text-violet-600'}`}>
+ <Mail size={20} />
+ </div>
+ <div className="mt-1 text-left">
+ <p className={`text-base font-bold ${isDarkMode ? 'text-violet-300' : 'text-violet-900'}`}>Send Email</p>
+ <p className={`mt-1 text-xs ${isDarkMode ? 'text-violet-400/70' : 'text-violet-700/70'}`}>
+ Send a reminder to the borrower's email.
+ </p>
+ </div>
+ </button>
+
+ <button
+ type="button"
+ onClick={() => {
+ if (!member?.contactNumber) {
+ alert('This member does not have a phone number.')
+ return
+ }
+ setShowSmsModal(true)
+ }}
+ className={`group flex h-full w-full flex-col items-start gap-2 rounded-xl p-5 transition-all ${
+ isDarkMode ? 'bg-sky-500/10 hover:bg-sky-500/20' : 'bg-sky-50 hover:bg-sky-100'
+ }`}
+ >
+ <div className={`grid h-10 w-10 place-items-center rounded-full ${isDarkMode ? 'bg-sky-500/30 text-sky-300' : 'bg-sky-100 text-sky-600'}`}>
+ <MessageSquare size={20} />
+ </div>
+ <div className="mt-1 text-left">
+ <p className={`text-base font-bold ${isDarkMode ? 'text-sky-300' : 'text-sky-900'}`}>Send SMS</p>
+ <p className={`mt-1 text-xs ${isDarkMode ? 'text-sky-400/70' : 'text-sky-700/70'}`}>
+ Send a reminder to the borrower's phone.
+ </p>
+ </div>
+ </button>
  
  <button 
  onClick={handleReturn}
@@ -411,6 +492,29 @@ export function TransactionDetailPage({ isDarkMode, onBack, transactionId }: Tra
  </div>
 
  </section>
+
+ {member && (
+ <SendEmailModal
+ isOpen={showEmailModal}
+ onClose={() => setShowEmailModal(false)}
+ member={{ id: member.id, fullName: member.fullName, email: member.email }}
+ isDarkMode={isDarkMode}
+ initialSubject={reminderSubject}
+ initialBody={reminderBody}
+ onSuccess={() => alert(`Email sent to ${member.fullName}.`)}
+ />
+ )}
+
+ {member && (
+ <SendSmsModal
+ isOpen={showSmsModal}
+ onClose={() => setShowSmsModal(false)}
+ member={{ id: member.id, fullName: member.fullName, phone: member.contactNumber }}
+ isDarkMode={isDarkMode}
+ initialBody={smsBody}
+ onSuccess={() => alert(`SMS sent to ${member.fullName}.`)}
+ />
+ )}
  </div>
  )
 }

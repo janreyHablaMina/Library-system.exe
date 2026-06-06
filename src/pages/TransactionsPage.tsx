@@ -382,7 +382,6 @@ export function TransactionsPage({ isDarkMode, onBack, onOpenTransactionDetail, 
       await returnBorrowTransaction({
         transactionId: row.transactionId,
         returnDate: new Date().toISOString(),
-        fine: row.fineValue,
       })
       await loadTransactions()
       triggerToast(`Successfully marked "${row.book}" as returned!`)

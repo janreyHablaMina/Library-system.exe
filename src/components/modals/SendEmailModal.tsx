@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { X, Send, Mail } from 'lucide-react'
 import { sendEmailSmtp } from '../../lib/tauriApi'
 
@@ -11,6 +11,7 @@ interface SendEmailModalProps {
     email: string | null
   }
   onSuccess: () => void
+  isDarkMode: boolean
   initialSubject?: string
   initialBody?: string
 }
@@ -49,8 +50,8 @@ export function SendEmailModal({ isOpen, onClose, member, onSuccess, isDarkMode,
       await sendEmailSmtp(member.email, subject, body)
       onSuccess()
       onClose()
-    } catch (err: any) {
-      setError(err.toString())
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
     } finally {
       setIsSubmitting(false)
     }

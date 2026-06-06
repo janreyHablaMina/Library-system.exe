@@ -264,7 +264,6 @@ export type RenewBorrowResult = {
 export type ReturnBorrowPayload = {
   transactionId: number
   returnDate: string
-  fine?: number | null
 }
 
 export type Reservation = {
@@ -637,4 +636,8 @@ export async function getLicenseStatus(): Promise<'checking' | 'active' | 'trial
 
 export async function getTrialDaysRemaining(): Promise<number> {
   return invoke<number>('get_trial_days_remaining')
+}
+
+export async function getTrialSecondsRemaining(): Promise<number> {
+  return invoke<number>('get_trial_seconds_remaining')
 }

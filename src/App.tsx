@@ -24,9 +24,10 @@ import { StaffPage } from './pages/StaffPage'
 import EmailLogsPage from './pages/EmailLogsPage'
 import SmsLogsPage from './pages/SmsLogsPage'
 import { ProfilePage } from './pages/ProfilePage'
+import NotificationsPage from './pages/NotificationsPage'
 import { Toast } from './components/ui/Toast'
 import { ChangePasswordModal } from './components/ChangePasswordModal'
-import { getSetting, getTrialDaysRemaining, verifyLicenseKey, getLicenseStatus, createBook, expandMainWindow, getActiveSession, getEmailLogStats, listAuthors, listBooks, listBorrowTransactions, listMembers, listNotifications, listEmailLogs, listSmsLogs, login as loginWithDb, logout as logoutFromDb, markAllNotificationsRead, markNotificationAsRead, restoreLoginWindow, runAutomaticEmailReminders, searchAuthors, searchBooks, searchMembers, syncNotifications, getUserProfile, type UserProfile, type NotificationItem, type EmailLog, type SmsLog } from './lib/tauriApi'
+import { getSetting, getTrialSecondsRemaining, verifyLicenseKey, getLicenseStatus, createBook, expandMainWindow, getActiveSession, getEmailLogStats, listAuthors, listBooks, listBorrowTransactions, listMembers, listNotifications, listEmailLogs, listSmsLogs, login as loginWithDb, logout as logoutFromDb, markAllNotificationsRead, markNotificationAsRead, restoreLoginWindow, runAutomaticEmailReminders, searchAuthors, searchBooks, searchMembers, syncNotifications, getUserProfile, type UserProfile, type NotificationItem, type EmailLog, type SmsLog } from './lib/tauriApi'
 
 
 type LoginFormState = {
@@ -56,7 +57,7 @@ const navItems = [
   { id: 'Settings', icon: Settings2, label: 'Settings' },
 ] as const
 
-type ActivePage = (typeof navItems)[number]['id'] | 'All Transactions' | 'Profile'
+type ActivePage = (typeof navItems)[number]['id'] | 'All Transactions' | 'Profile' | 'Notifications' | 'EmailLogs' | 'SmsLogs'
 
 
 
@@ -134,7 +135,16 @@ function formatDisplayName(username: string | null) {
     .join(' ') || 'Admin'
 }
 
-function DashboardShell({ onLogout, licenseStatus, trialDays }: { onLogout: () => Promise<void> | void, licenseStatus: string, trialDays: number }) {
+function formatTrialCountdown(totalSeconds: number) {
+  const seconds = Math.max(0, totalSeconds)
+  const days = Math.floor(seconds / 86400)
+  const hours = Math.floor((seconds % 86400) / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const remainingSeconds = seconds % 60
+  return `${days}d ${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ${String(remainingSeconds).padStart(2, '0')}s`
+}
+
+function DashboardShell({ onLogout, licenseStatus, trialSeconds }: { onLogout: () => Promise<void> | void, licenseStatus: string, trialSeconds: number }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false)
@@ -870,7 +880,11 @@ const greetingName = formatDisplayName(activeUsername)
           {licenseStatus === 'trial' && (
           <div className="bg-amber-500 px-4 py-2 text-center text-sm font-semibold text-white shadow-sm flex items-center justify-center gap-2">
             <AlertTriangle size={16} />
-            <span>You are on a free trial. You have {trialDays} {trialDays === 1 ? 'day' : 'days'} remaining before your license expires.</span>
+            <span>You are on a free trial.</span>
+            <span className="rounded-md bg-white/20 px-2.5 py-1 font-mono text-xs font-bold tabular-nums">
+              {formatTrialCountdown(trialSeconds)}
+            </span>
+            <span>remaining</span>
           </div>
         )}
         <header className={`sticky top-0 z-20 flex h-20 items-center border-b px-5 ${dashboardTheme.header}`}>
@@ -1135,6 +1149,22 @@ const greetingName = formatDisplayName(activeUsername)
                             </button>
                           ))}
                         </div>
+                        <div className={`mt-2 border-t px-2 pt-2 ${isDarkMode ? 'border-zinc-700' : 'border-zinc-100'}`}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsNotificationsOpen(false)
+                              setActivePage('Notifications')
+                            }}
+                            className={`w-full rounded-lg px-3 py-2 text-center text-xs font-bold transition-colors ${
+                              isDarkMode
+                                ? 'text-emerald-400 hover:bg-zinc-800'
+                                : 'text-emerald-600 hover:bg-emerald-50'
+                            }`}
+                          >
+                            View all notifications
+                          </button>
+                        </div>
                       </div>
                     ) : null}
                   </div>
@@ -1350,7 +1380,7 @@ const greetingName = formatDisplayName(activeUsername)
               }}
             />
           ) : activePage === 'Notifications' ? (
-            <NotificationsPage isDarkMode={isDarkMode} />
+            <NotificationsPage isDarkMode={isDarkMode} onNotificationsChanged={() => void refreshNotifications()} />
           ) : activePage === 'Profile' ? (
             <ProfilePage 
               isDarkMode={isDarkMode} 
@@ -1829,7 +1859,7 @@ function App() {
   const [isCheckingSession, setIsCheckingSession] = useState(true)
 
   const [licenseStatus, setLicenseStatus] = useState<'checking' | 'active' | 'trial' | 'expired'>('checking')
-  const [trialDays, setTrialDays] = useState(7)
+  const [trialSeconds, setTrialSeconds] = useState(7 * 24 * 60 * 60)
 
   useEffect(() => {
     let mounted = true
@@ -1839,8 +1869,8 @@ function App() {
         if (mounted) {
           setLicenseStatus(status)
           if (status === 'trial') {
-            const days = await getTrialDaysRemaining()
-            setTrialDays(days)
+            const seconds = await getTrialSecondsRemaining()
+            setTrialSeconds(seconds)
           }
         }
       } catch (err) {
@@ -1849,6 +1879,23 @@ function App() {
     }
     checkLicense()
   }, [])
+
+  useEffect(() => {
+    if (licenseStatus !== 'trial') return
+
+    const timer = window.setInterval(() => {
+      setTrialSeconds((seconds) => {
+        if (seconds <= 1) {
+          window.clearInterval(timer)
+          setLicenseStatus('expired')
+          return 0
+        }
+        return seconds - 1
+      })
+    }, 1000)
+
+    return () => window.clearInterval(timer)
+  }, [licenseStatus])
 
 
   useEffect(() => {
@@ -1949,7 +1996,7 @@ function App() {
 
   if (isAuthenticated) {
 
-    return <DashboardShell onLogout={handleLogout} licenseStatus={licenseStatus} trialDays={trialDays} />
+    return <DashboardShell onLogout={handleLogout} licenseStatus={licenseStatus} trialSeconds={trialSeconds} />
   }
 
   return (

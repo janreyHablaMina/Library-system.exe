@@ -1,14 +1,18 @@
-import { useState, useEffect } from 'react'
-import { CheckCheck } from 'lucide-react'
-import { listNotifications, markNotificationAsRead, markAllNotificationsRead, type Notification } from '../lib/tauriApi'
+import { useMemo, useState, useEffect } from 'react'
+import { Bell, CheckCheck, ChevronDown, ChevronLeft, ChevronRight, Circle, Inbox, RotateCcw } from 'lucide-react'
+import { listNotifications, markNotificationAsRead, markAllNotificationsRead, type NotificationItem } from '../lib/tauriApi'
 
 type NotificationsPageProps = {
   isDarkMode: boolean
+  onNotificationsChanged?: () => void
 }
 
-function NotificationsPage({ isDarkMode }: NotificationsPageProps) {
-  const [notifications, setNotifications] = useState<Notification[]>([])
+function NotificationsPage({ isDarkMode, onNotificationsChanged }: NotificationsPageProps) {
+  const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [activeFilter, setActiveFilter] = useState<'all' | 'unread'>('all')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
 
   const cardClass = isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-200 bg-white'
   const subLabelClass = isDarkMode ? 'text-zinc-400' : 'text-zinc-500'
@@ -27,13 +31,17 @@ function NotificationsPage({ isDarkMode }: NotificationsPageProps) {
   }
 
   useEffect(() => {
-    void loadAllNotifications()
+    const timer = window.setTimeout(() => {
+      void loadAllNotifications()
+    }, 0)
+    return () => window.clearTimeout(timer)
   }, [])
 
   const handleMarkAsRead = async (id: number) => {
     try {
       await markNotificationAsRead(id)
       setNotifications((prev) => prev.map(n => n.id === id ? { ...n, isRead: true } : n))
+      onNotificationsChanged?.()
     } catch (error) {
       console.error('Failed to mark read:', error)
     }
@@ -43,6 +51,7 @@ function NotificationsPage({ isDarkMode }: NotificationsPageProps) {
     try {
       await markAllNotificationsRead()
       setNotifications((prev) => prev.map(n => ({ ...n, isRead: true })))
+      onNotificationsChanged?.()
     } catch (error) {
       console.error('Failed to mark all read:', error)
     }
@@ -53,14 +62,27 @@ function NotificationsPage({ isDarkMode }: NotificationsPageProps) {
     if (Number.isNaN(dt.getTime())) return ''
     return dt.toLocaleString()
   }
+  const unreadCount = notifications.filter((item) => !item.isRead).length
+  const filteredNotifications = useMemo(
+    () => activeFilter === 'unread' ? notifications.filter((item) => !item.isRead) : notifications,
+    [activeFilter, notifications],
+  )
+  const totalPages = Math.max(1, Math.ceil(filteredNotifications.length / itemsPerPage))
+  const visiblePage = Math.min(currentPage, totalPages)
+  const paginatedNotifications = filteredNotifications.slice((visiblePage - 1) * itemsPerPage, visiblePage * itemsPerPage)
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setCurrentPage(1), 0)
+    return () => window.clearTimeout(timer)
+  }, [activeFilter, itemsPerPage])
 
   return (
     <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[transparent] text-zinc-100' : 'bg-[#f8fafc] text-zinc-900'}`}>
       <section className="p-5 space-y-6">
         <header className="flex items-center justify-between">
           <div>
-            <h1 className={`text-4xl font-black ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>System Notifications</h1>
-            <p className={`mt-1 text-base ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>View all alerts and system events.</p>
+            <h1 className={`text-4xl font-black ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Notifications</h1>
+            <p className={`mt-1 text-base ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Review library alerts and recent system activity.</p>
           </div>
           <button 
             type="button" 
@@ -71,14 +93,44 @@ function NotificationsPage({ isDarkMode }: NotificationsPageProps) {
           </button>
         </header>
 
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className={`rounded-2xl border p-5 ${cardClass}`}>
+            <div className="flex items-center gap-4">
+              <span className="grid h-11 w-11 place-items-center rounded-full bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-300"><Bell size={19} /></span>
+              <div><p className={subLabelClass}>All notifications</p><p className="text-3xl font-black">{notifications.length}</p></div>
+            </div>
+          </div>
+          <div className={`rounded-2xl border p-5 ${cardClass}`}>
+            <div className="flex items-center gap-4">
+              <span className="grid h-11 w-11 place-items-center rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300"><Circle size={19} fill="currentColor" /></span>
+              <div><p className={subLabelClass}>Unread</p><p className="text-3xl font-black">{unreadCount}</p></div>
+            </div>
+          </div>
+        </div>
+
         <div className={`overflow-hidden rounded-2xl border ${cardClass}`}>
+          <div className={`flex items-center justify-between gap-3 border-b p-3 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'}`}>
+            <div className="flex gap-2">
+              {(['all', 'unread'] as const).map((filter) => (
+                <button key={filter} type="button" onClick={() => setActiveFilter(filter)} className={`rounded-lg px-4 py-2 text-sm font-bold capitalize ${activeFilter === filter ? 'bg-emerald-600 text-white' : isDarkMode ? 'text-zinc-300 hover:bg-zinc-800' : 'text-zinc-600 hover:bg-zinc-50'}`}>
+                  {filter} {filter === 'unread' ? `(${unreadCount})` : `(${notifications.length})`}
+                </button>
+              ))}
+            </div>
+            <button type="button" onClick={() => void loadAllNotifications()} className={`grid h-9 w-9 place-items-center rounded-lg ${isDarkMode ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'}`} aria-label="Refresh notifications">
+              <RotateCcw size={16} />
+            </button>
+          </div>
           {isLoading ? (
             <div className={`px-6 py-10 text-center ${subLabelClass}`}>Loading notifications...</div>
-          ) : notifications.length === 0 ? (
-            <div className={`px-6 py-10 text-center ${subLabelClass}`}>No notifications found.</div>
+          ) : filteredNotifications.length === 0 ? (
+            <div className={`flex flex-col items-center px-6 py-14 text-center ${subLabelClass}`}>
+              <Inbox size={32} className="mb-3 opacity-40" />
+              <p className="font-semibold">{activeFilter === 'unread' ? 'No unread notifications.' : 'No notifications found.'}</p>
+            </div>
           ) : (
             <div className={`divide-y ${isDarkMode ? 'divide-zinc-800' : 'divide-zinc-100'}`}>
-              {notifications.map((item) => (
+              {paginatedNotifications.map((item) => (
                 <div 
                   key={item.id} 
                   className={`flex items-start justify-between gap-4 p-5 transition-colors ${item.isRead ? (isDarkMode ? 'bg-transparent' : 'bg-transparent') : (isDarkMode ? 'bg-emerald-500/10' : 'bg-emerald-50')} ${isDarkMode ? 'hover:bg-[#27272A]/50' : 'hover:bg-zinc-50'}`}
@@ -100,6 +152,69 @@ function NotificationsPage({ isDarkMode }: NotificationsPageProps) {
               ))}
             </div>
           )}
+          <div className={`relative z-0 flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm ${isDarkMode ? 'border-zinc-700 bg-[#18181B] text-zinc-300' : 'border-zinc-200 bg-white text-zinc-600'}`}>
+            <p>
+              Showing {filteredNotifications.length > 0 ? (visiblePage - 1) * itemsPerPage + 1 : 0} to {Math.min(visiblePage * itemsPerPage, filteredNotifications.length)} of {filteredNotifications.length} notifications
+            </p>
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                  className={`h-10 min-w-[150px] appearance-none rounded-lg border py-2 pl-4 pr-10 text-sm font-medium outline-none transition-colors ${
+                    isDarkMode
+                      ? 'border-zinc-700 bg-[#27272A] text-zinc-200 hover:bg-zinc-800 focus:border-emerald-500'
+                      : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 focus:border-emerald-500'
+                  }`}
+                >
+                  <option value={10}>10 per page</option>
+                  <option value={20}>20 per page</option>
+                  <option value={50}>50 per page</option>
+                </select>
+                <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+              </div>
+              <button
+                type="button"
+                onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                disabled={visiblePage === 1}
+                className={`grid h-10 w-10 place-items-center rounded-lg border transition-colors disabled:cursor-not-allowed ${
+                  isDarkMode
+                    ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800 disabled:border-zinc-800 disabled:text-zinc-600 disabled:hover:bg-transparent'
+                    : 'border-zinc-200 text-zinc-500 hover:bg-zinc-50 disabled:border-zinc-100 disabled:text-zinc-300 disabled:hover:bg-white'
+                }`}
+                aria-label="Previous page"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+                  <button
+                    key={page}
+                    type="button"
+                    onClick={() => setCurrentPage(page)}
+                    className={page === visiblePage
+                      ? 'grid h-10 w-10 place-items-center rounded-lg bg-emerald-50 font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
+                      : `grid h-10 w-10 place-items-center rounded-lg border transition-colors ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800' : 'border-zinc-200 hover:bg-zinc-50'}`}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                disabled={visiblePage === totalPages || filteredNotifications.length === 0}
+                className={`grid h-10 w-10 place-items-center rounded-lg border transition-colors disabled:cursor-not-allowed ${
+                  isDarkMode
+                    ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800 disabled:border-zinc-800 disabled:text-zinc-600 disabled:hover:bg-transparent'
+                    : 'border-zinc-200 text-zinc-500 hover:bg-zinc-50 disabled:border-zinc-100 disabled:text-zinc-300 disabled:hover:bg-white'
+                }`}
+                aria-label="Next page"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          </div>
         </div>
       </section>
     </div>
