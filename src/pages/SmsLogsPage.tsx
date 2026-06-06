@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Search, Plus, FileText, BarChart2, RotateCcw, Send, CheckCircle2, XCircle, Clock, CreditCard, MoreVertical, Calendar, Copy, User, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search, Plus, FileText, BarChart2, RotateCcw, Send, CheckCircle2, XCircle, Clock, CreditCard, Eye, Calendar, Copy, User, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { listSmsLogs, type SmsLog, listMembers, type Member } from '../lib/tauriApi'
 
 import { ComposeSmsModal } from '../components/modals/ComposeSmsModal'
@@ -169,7 +169,6 @@ function SmsLogsPage({ isDarkMode, onViewMember }: SmsLogsPageProps) {
               <p className={`text-xs ${textSecondary}`}>SMS Sent Today</p>
               <h3 className={`text-2xl font-black ${textPrimary}`}>{sentToday}</h3>
             </div>
-            <div className="text-[10px] font-bold text-emerald-600 self-end mb-1 cursor-pointer hover:underline">View all</div>
           </div>
           <div className={`flex items-center gap-4 rounded-xl border p-4 ${cardClass}`}>
             <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${isDarkMode ? 'bg-emerald-500/10' : 'bg-emerald-50'}`}>
@@ -179,7 +178,6 @@ function SmsLogsPage({ isDarkMode, onViewMember }: SmsLogsPageProps) {
               <p className={`text-xs ${textSecondary}`}>Delivered</p>
               <h3 className={`text-2xl font-black ${textPrimary}`}>{delivered}</h3>
             </div>
-            <div className="text-[10px] font-bold text-emerald-600 self-end mb-1 cursor-pointer hover:underline">View all</div>
           </div>
           <div className={`flex items-center gap-4 rounded-xl border p-4 ${cardClass}`}>
             <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${isDarkMode ? 'bg-rose-500/10' : 'bg-rose-50'}`}>
@@ -189,7 +187,6 @@ function SmsLogsPage({ isDarkMode, onViewMember }: SmsLogsPageProps) {
               <p className={`text-xs ${textSecondary}`}>Failed</p>
               <h3 className={`text-2xl font-black ${textPrimary}`}>{failed}</h3>
             </div>
-            <div className="text-[10px] font-bold text-rose-600 self-end mb-1 text-center">8%</div>
           </div>
 
           <div className={`flex items-center gap-4 rounded-xl border p-4 ${cardClass}`}>
@@ -316,7 +313,21 @@ function SmsLogsPage({ isDarkMode, onViewMember }: SmsLogsPageProps) {
                         </td>
                         <td className={`whitespace-nowrap px-6 py-3.5 ${textSecondary}`}>Admin</td>
                         <td className="whitespace-nowrap px-6 py-3.5 text-right">
-                          <button className={`p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-700 ${textSecondary}`}><MoreVertical size={16} /></button>
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              setSelectedLog(log)
+                            }}
+                            className={`inline-grid h-8 w-8 place-items-center transition-colors ${
+                              isDarkMode
+                                ? 'text-zinc-400 hover:text-emerald-400'
+                                : 'text-zinc-500 hover:text-emerald-600'
+                            }`}
+                            aria-label={`View SMS details for ${log.borrowerName}`}
+                          >
+                            <Eye size={15} />
+                          </button>
                         </td>
                       </tr>
                     )
