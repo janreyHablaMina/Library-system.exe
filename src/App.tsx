@@ -23,8 +23,9 @@ import { ReservationsPage } from './pages/ReservationsPage'
 import { StaffPage } from './pages/StaffPage'
 import EmailLogsPage from './pages/EmailLogsPage'
 import SmsLogsPage from './pages/SmsLogsPage'
-import NotificationsPage from './pages/NotificationsPage'
 import { ProfilePage } from './pages/ProfilePage'
+import { Toast } from './components/ui/Toast'
+import { ChangePasswordModal } from './components/ChangePasswordModal'
 import { getSetting, getTrialDaysRemaining, verifyLicenseKey, getLicenseStatus, createBook, expandMainWindow, getActiveSession, getEmailLogStats, listAuthors, listBooks, listBorrowTransactions, listMembers, listNotifications, listEmailLogs, listSmsLogs, login as loginWithDb, logout as logoutFromDb, markAllNotificationsRead, markNotificationAsRead, restoreLoginWindow, runAutomaticEmailReminders, searchAuthors, searchBooks, searchMembers, syncNotifications, getUserProfile, type UserProfile, type NotificationItem, type EmailLog, type SmsLog } from './lib/tauriApi'
 
 
@@ -136,9 +137,18 @@ function formatDisplayName(username: string | null) {
 function DashboardShell({ onLogout, licenseStatus, trialDays }: { onLogout: () => Promise<void> | void, licenseStatus: string, trialDays: number }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(false)
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false)
+  const [dashboardToast, setDashboardToast] = useState<string | null>(null)
   const [currentTime, setCurrentTime] = useState(() => new Date())
   const [activeUsername, setActiveUsername] = useState<string | null>(null)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
+
+  useEffect(() => {
+    if (dashboardToast) {
+      const timer = setTimeout(() => setDashboardToast(null), 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [dashboardToast])
 
   useEffect(() => {
     if (activeUsername) {
@@ -713,6 +723,7 @@ const greetingName = formatDisplayName(activeUsername)
 
   return (
     <main className={`h-screen overflow-hidden p-0 ${dashboardTheme.main} ${isDarkMode ? 'dashboard-dark' : ''}`}>
+      <Toast message={dashboardToast} onClose={() => setDashboardToast(null)} isDarkMode={isDarkMode} />
       <div className={`flex h-full w-full overflow-hidden ${dashboardTheme.frame}`}>
         <aside className={`hidden h-full shrink-0 border-r transition-all duration-200 lg:flex lg:flex-col ${dashboardTheme.aside} ${sidebarCollapsed ? 'w-20' : 'w-64'}`}>
           {/* Subtle glow for dark mode */}
@@ -1170,6 +1181,7 @@ const greetingName = formatDisplayName(activeUsername)
                         type="button"
                         onClick={() => {
                           setIsProfileOpen(false)
+                          setIsChangePasswordOpen(true)
                         }}
                         role="menuitem"
                         className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-semibold transition-colors ${isDarkMode ? 'text-zinc-200 hover:bg-zinc-800/60' : 'text-zinc-700 hover:bg-zinc-50'}`}
@@ -1343,6 +1355,7 @@ const greetingName = formatDisplayName(activeUsername)
             <ProfilePage 
               isDarkMode={isDarkMode} 
               activeUsername={activeUsername} 
+              onOpenChangePassword={() => setIsChangePasswordOpen(true)}
               onProfileUpdate={() => {
                 if (activeUsername) {
                   getUserProfile(activeUsername).then(setUserProfile).catch(() => {})
@@ -1722,6 +1735,16 @@ const greetingName = formatDisplayName(activeUsername)
           </div>
         </div>
       )}
+      
+      {isChangePasswordOpen && (
+        <ChangePasswordModal 
+          isDarkMode={isDarkMode} 
+          onClose={() => setIsChangePasswordOpen(false)} 
+          onSuccess={(msg) => {
+            setDashboardToast(msg)
+          }} 
+        />
+      )}
     </main>
   )
 }
@@ -2016,7 +2039,6 @@ function App() {
 }
 
 export default App
-
 
 
 

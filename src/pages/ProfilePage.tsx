@@ -1,14 +1,16 @@
+import { Toast } from '../components/ui/Toast'
 import { useState, useEffect, useRef } from 'react'
-import { Mail, Phone, Calendar, MapPin, User, ShieldCheck, Clock, ChevronRight, Lock, BookOpen, LogIn, Users, Building, IdCard, Pencil, Save, CheckCircle2, Camera } from 'lucide-react'
+import { Mail, Phone, Calendar, MapPin, User, ShieldCheck, Clock, ChevronRight, Lock, BookOpen, LogIn, Users, Building, IdCard, Pencil, Save, CheckCircle2, Camera, X } from 'lucide-react'
 import { getUserProfile, updateUserProfile, type UserProfile } from '../lib/tauriApi'
 
 type ProfilePageProps = {
   isDarkMode: boolean
   activeUsername: string | null
   onProfileUpdate?: () => void
+  onOpenChangePassword?: () => void
 }
 
-export function ProfilePage({ isDarkMode, activeUsername, onProfileUpdate }: ProfilePageProps) {
+export function ProfilePage({ isDarkMode, activeUsername, onProfileUpdate, onOpenChangePassword }: ProfilePageProps) {
   const textPrimary = isDarkMode ? 'text-zinc-100' : 'text-zinc-900'
   const textSecondary = isDarkMode ? 'text-zinc-400' : 'text-zinc-500'
   const cardClass = isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-200 bg-white'
@@ -17,7 +19,7 @@ export function ProfilePage({ isDarkMode, activeUsername, onProfileUpdate }: Pro
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
-  const [showToast, setShowToast] = useState(false)
+  const [showToast, setShowToast] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Editable fields
@@ -51,6 +53,14 @@ export function ProfilePage({ isDarkMode, activeUsername, onProfileUpdate }: Pro
     }
   }
 
+  // Auto-dismiss toast
+  useEffect(() => {
+    if (showToast) {
+      const t = setTimeout(() => setShowToast(null), 3000)
+      return () => clearTimeout(t)
+    }
+  }, [showToast])
+
   const handleSave = async () => {
     if (!activeUsername) return
     setIsSaving(true)
@@ -68,8 +78,7 @@ export function ProfilePage({ isDarkMode, activeUsername, onProfileUpdate }: Pro
       await loadProfile(activeUsername)
       onProfileUpdate?.()
       setIsEditing(false)
-      setShowToast(true)
-      setTimeout(() => setShowToast(false), 3000)
+      setShowToast('Profile updated successfully!')
     } catch (e) {
       console.error('Failed to update profile', e)
     } finally {
@@ -91,13 +100,7 @@ export function ProfilePage({ isDarkMode, activeUsername, onProfileUpdate }: Pro
   return (
     <div className={`min-h-0 flex-1 overflow-auto p-4 lg:p-8 ${isDarkMode ? 'bg-transparent text-zinc-100' : 'bg-[#f8fafc] text-zinc-900'}`}>
       
-      {/* Toast Notification */}
-      {showToast && (
-        <div className="fixed top-6 right-6 z-50 flex items-center gap-3 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white shadow-xl animate-in slide-in-from-top-2 fade-in">
-          <CheckCircle2 size={18} />
-          Profile updated successfully!
-        </div>
-      )}
+      <Toast message={showToast} onClose={() => setShowToast(null)} isDarkMode={isDarkMode} />
 
       <div className="mx-auto max-w-[1200px] space-y-6">
         
@@ -115,11 +118,9 @@ export function ProfilePage({ isDarkMode, activeUsername, onProfileUpdate }: Pro
             {!isEditing ? (
               <button 
                 onClick={() => setIsEditing(true)}
-                className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold transition-colors ${
-                  isDarkMode ? 'bg-zinc-800 text-white hover:bg-zinc-700' : 'bg-white border shadow-sm text-zinc-700 hover:bg-zinc-50'
-                }`}
+                className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-semibold transition-colors duration-150 ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}
               >
-                <Pencil size={16} /> Edit Profile
+                <Pencil size={15} /> Edit Profile
               </button>
             ) : (
               <div className="flex items-center gap-3">
@@ -128,16 +129,16 @@ export function ProfilePage({ isDarkMode, activeUsername, onProfileUpdate }: Pro
                     setIsEditing(false)
                     if (profile) loadProfile(profile.username) // reset
                   }}
-                  className={`px-4 py-2.5 text-sm font-bold transition-colors ${textSecondary} hover:${textPrimary}`}
+                  className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-semibold transition-colors duration-150 ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}
                 >
-                  Cancel
+                  <X size={15} /> Cancel
                 </button>
                 <button 
                   onClick={handleSave}
                   disabled={isSaving}
-                  className="flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-emerald-700 active:scale-95 disabled:opacity-70"
+                  className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-semibold text-white transition-colors duration-150 hover:bg-emerald-700 disabled:opacity-70"
                 >
-                  {isSaving ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" /> : <Save size={16} />}
+                  {isSaving ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" /> : <Save size={15} />}
                   Save Changes
                 </button>
               </div>
@@ -296,11 +297,15 @@ export function ProfilePage({ isDarkMode, activeUsername, onProfileUpdate }: Pro
               <p className={`text-sm ${textSecondary}`}>Manage your password and keep your account secure.</p>
             </div>
           </div>
-          <button className={`shrink-0 flex items-center justify-center gap-2 rounded-xl border py-2.5 px-5 text-sm font-bold transition-colors ${
-            isDarkMode 
-              ? 'border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10' 
-              : 'border-emerald-200 text-emerald-600 hover:bg-emerald-50'
-          }`}>
+          <button 
+            type="button"
+            onClick={onOpenChangePassword}
+            className={`shrink-0 flex items-center justify-center gap-2 rounded-xl border py-2.5 px-5 text-sm font-bold transition-colors ${
+              isDarkMode 
+                ? 'border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10' 
+                : 'border-emerald-200 text-emerald-600 hover:bg-emerald-50'
+            }`}
+          >
             <Lock size={16} /> Change Password
           </button>
         </div>
