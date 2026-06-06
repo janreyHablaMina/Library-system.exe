@@ -4,6 +4,8 @@ import { listSmsLogs, type SmsLog, listMembers, type Member } from '../lib/tauri
 
 import { ComposeSmsModal } from '../components/modals/ComposeSmsModal'
 
+import { invoke } from '@tauri-apps/api/core'
+
 type SmsLogsPageProps = {
   isDarkMode: boolean
   onViewMember?: (memberId: number) => void
@@ -20,6 +22,7 @@ function SmsLogsPage({ isDarkMode, onViewMember }: SmsLogsPageProps) {
   const [showCompose, setShowCompose] = useState(false)
   const [composeData, setComposeData] = useState<{ phone?: string, name?: string, message?: string }>({})
   const [copied, setCopied] = useState(false)
+  const [isResending, setIsResending] = useState(false)
 
   const handleCloseDrawer = () => {
     setIsClosing(true)
@@ -429,17 +432,28 @@ function SmsLogsPage({ isDarkMode, onViewMember }: SmsLogsPageProps) {
                 <div className="mt-6 space-y-3">
                   <div className="flex gap-3">
                     <button 
-                      onClick={() => {
-                        setComposeData({
-                          phone: selectedLog.phoneNumber,
-                          name: selectedLog.borrowerName,
-                          message: selectedLog.messageBody || ''
-                        })
-                        setShowCompose(true)
+                      onClick={async () => {
+                        if (!selectedLog.messageBody) return
+                        setIsResending(true)
+                        try {
+                          await invoke('send_manual_sms', {
+                            phoneNumber: selectedLog.phoneNumber,
+                            memberName: selectedLog.borrowerName,
+                            message: selectedLog.messageBody,
+                          })
+                          void loadSmsLogs()
+                          alert('Message resent successfully!')
+                        } catch (err) {
+                          alert(`Failed to resend: ${err instanceof Error ? err.message : String(err)}`)
+                        } finally {
+                          setIsResending(false)
+                        }
                       }}
-                      className={`flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border text-sm font-bold transition-colors ${isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}
+                      disabled={isResending || !selectedLog.messageBody}
+                      className={`flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border text-sm font-bold transition-colors disabled:opacity-50 disabled:pointer-events-none ${isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}
                     >
-                      <Send size={16} className="text-emerald-600" /> Send Again
+                      <Send size={16} className={`text-emerald-600 ${isResending ? 'animate-pulse' : ''}`} /> 
+                      {isResending ? 'Sending...' : 'Send Again'}
                     </button>
                     <button 
                       onClick={() => {
