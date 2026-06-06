@@ -1,5 +1,4 @@
-import { useState } from 'react'
-import { Camera, Mail, Phone, Calendar, MapPin, User, ShieldCheck, Clock, CheckCircle2, ChevronRight, Lock, BookOpen, RotateCcw, Users } from 'lucide-react'
+import { Mail, Phone, Calendar, MapPin, User, ShieldCheck, Clock, ChevronRight, Lock, BookOpen, LogIn, Users, Building, IdCard, Pencil } from 'lucide-react'
 
 type ProfilePageProps = {
   isDarkMode: boolean
@@ -7,310 +6,199 @@ type ProfilePageProps = {
 }
 
 export function ProfilePage({ isDarkMode, activeUsername }: ProfilePageProps) {
-  const [activeTab, setActiveTab] = useState<'info' | 'notifications' | 'security' | 'activity'>('info')
-  const [isSaving, setIsSaving] = useState(false)
-  
   const textPrimary = isDarkMode ? 'text-zinc-100' : 'text-zinc-900'
   const textSecondary = isDarkMode ? 'text-zinc-400' : 'text-zinc-500'
   const cardClass = isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-200 bg-white'
-  const inputClass = isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-900 focus:border-emerald-500'
-  
-  const handleSave = () => {
-    setIsSaving(true)
-    setTimeout(() => setIsSaving(false), 1000)
-  }
 
   return (
     <div className={`min-h-0 flex-1 overflow-auto p-4 lg:p-8 ${isDarkMode ? 'bg-transparent text-zinc-100' : 'bg-[#f8fafc] text-zinc-900'}`}>
-      <div className="mx-auto max-w-[1400px] space-y-6">
+      <div className="mx-auto max-w-[1200px] space-y-6">
         
         {/* Header */}
         <header>
           <h1 className={`text-3xl font-black tracking-tight ${textPrimary}`}>My Profile</h1>
-          <div className="mt-2 flex items-center gap-2 text-sm">
+          <div className="mt-2 flex items-center gap-2 text-sm font-medium">
             <span className={textSecondary}>Dashboard</span>
             <ChevronRight size={14} className={textSecondary} />
             <span className={textPrimary}>My Profile</span>
           </div>
         </header>
 
-        {/* Main Grid Layout */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        {/* Top Profile Card */}
+        <div className={`flex flex-col lg:flex-row rounded-2xl border ${cardClass}`}>
           
-          {/* Left Column: Profile Card */}
-          <div className="lg:col-span-3 space-y-6">
-            <div className={`rounded-2xl border p-6 flex flex-col items-center text-center ${cardClass}`}>
-              <div className="relative mb-4">
-                <div className="flex h-28 w-28 items-center justify-center rounded-full bg-indigo-100 text-4xl font-black text-indigo-600 ring-4 ring-white shadow-sm dark:bg-indigo-500/20 dark:text-indigo-400 dark:ring-zinc-800">
-                  {activeUsername ? activeUsername.slice(0, 2).toUpperCase() : 'AD'}
-                </div>
-                <button className="absolute bottom-1 right-1 flex h-8 w-8 items-center justify-center rounded-full bg-white text-emerald-600 shadow-md ring-1 ring-zinc-200 transition-transform hover:scale-110 dark:bg-zinc-800 dark:text-emerald-400 dark:ring-zinc-700">
-                  <Camera size={14} />
-                </button>
+          {/* Avatar Section */}
+          <div className={`flex flex-col items-center justify-center p-8 lg:w-[300px] lg:border-r ${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'}`}>
+            <div className="relative mb-4">
+              <div className="flex h-28 w-28 items-center justify-center rounded-full bg-emerald-500 text-4xl font-black text-white ring-8 ring-emerald-50 dark:ring-emerald-500/10">
+                {activeUsername ? activeUsername.slice(0, 2).toUpperCase() : 'AD'}
               </div>
-              
-              <h2 className={`text-xl font-bold ${textPrimary}`}>{activeUsername || 'Admin'}</h2>
-              <p className={`text-sm ${textSecondary}`}>Librarian</p>
-              
-              <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
-                Active
-              </div>
-
-              <div className={`mt-6 w-full space-y-4 border-t pt-6 text-sm ${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'}`}>
-                <div className="flex items-center justify-between">
-                  <div className={`flex items-center gap-2 ${textSecondary}`}>
-                    <User size={14} /> Employee ID
-                  </div>
-                  <span className={`font-medium ${textPrimary}`}>LIB-2026-001</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className={`flex items-center gap-2 ${textSecondary}`}>
-                    <Mail size={14} /> Email
-                  </div>
-                  <span className={`font-medium ${textPrimary}`}>admin@primelibrary.com</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className={`flex items-center gap-2 ${textSecondary}`}>
-                    <Phone size={14} /> Phone
-                  </div>
-                  <span className={`font-medium ${textPrimary}`}>+63 912 345 6789</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className={`flex items-center gap-2 ${textSecondary}`}>
-                    <BookOpen size={14} /> Department
-                  </div>
-                  <span className={`font-medium ${textPrimary}`}>Library Administration</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className={`flex items-center gap-2 ${textSecondary}`}>
-                    <User size={14} /> Role
-                  </div>
-                  <span className={`font-medium ${textPrimary}`}>Librarian</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className={`flex items-center gap-2 ${textSecondary}`}>
-                    <Clock size={14} /> Member Since
-                  </div>
-                  <span className={`font-medium ${textPrimary}`}>May 12, 2026</span>
-                </div>
-              </div>
-
-              <button className={`mt-6 w-full flex items-center justify-center gap-2 rounded-xl border-2 py-2.5 text-sm font-bold transition-colors ${
-                isDarkMode 
-                  ? 'border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10' 
-                  : 'border-emerald-100 text-emerald-600 hover:bg-emerald-50'
-              }`}>
-                <Lock size={16} /> Change Password
+              <button className="absolute bottom-1 right-1 flex h-8 w-8 items-center justify-center rounded-full bg-white text-zinc-600 shadow-sm ring-1 ring-zinc-200 transition-transform hover:scale-110 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-zinc-700">
+                <Pencil size={14} />
               </button>
+            </div>
+            <h2 className={`text-xl font-black ${textPrimary}`}>{activeUsername || 'Admin'}</h2>
+            <p className={`text-sm ${textSecondary}`}>Librarian</p>
+            <div className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
+              Active
             </div>
           </div>
 
-          {/* Middle Column: Main Content */}
-          <div className="lg:col-span-6 space-y-6">
+          {/* Details Section */}
+          <div className={`grid flex-1 grid-cols-1 sm:grid-cols-2 p-8 gap-y-8 gap-x-12 lg:border-r ${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'}`}>
             
-            {/* Tabs Navigation */}
-            <div className={`flex items-center gap-8 border-b ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
-              {[
-                { id: 'info', label: 'Profile Information' },
-                { id: 'notifications', label: 'Notification Preferences' },
-                { id: 'security', label: 'Security' },
-                { id: 'activity', label: 'Activity Log' },
-              ].map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
-                  className={`relative pb-4 text-sm font-bold transition-colors ${
-                    activeTab === tab.id 
-                      ? 'text-emerald-600 dark:text-emerald-500' 
-                      : `${textSecondary} hover:${textPrimary}`
-                  }`}
-                >
-                  {tab.label}
-                  {activeTab === tab.id && (
-                    <div className="absolute bottom-0 left-0 h-0.5 w-full bg-emerald-600 dark:bg-emerald-500" />
-                  )}
-                </button>
-              ))}
+            {/* Column 1 */}
+            <div className="space-y-6">
+              <div className="flex items-start gap-4">
+                <div className={`mt-0.5 ${textSecondary}`}><Mail size={18} /></div>
+                <div>
+                  <p className={`text-xs font-medium ${textSecondary}`}>Email</p>
+                  <p className={`text-sm font-semibold ${textPrimary}`}>admin@primelibrary.com</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-4">
+                <div className={`mt-0.5 ${textSecondary}`}><Phone size={18} /></div>
+                <div>
+                  <p className={`text-xs font-medium ${textSecondary}`}>Phone</p>
+                  <p className={`text-sm font-semibold ${textPrimary}`}>+63 912 345 6789</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-4">
+                <div className={`mt-0.5 ${textSecondary}`}><Calendar size={18} /></div>
+                <div>
+                  <p className={`text-xs font-medium ${textSecondary}`}>Date of Birth</p>
+                  <p className={`text-sm font-semibold ${textPrimary}`}>January 1, 1990</p>
+                </div>
+              </div>
             </div>
 
-            {/* Tab Content */}
-            <div className={`rounded-2xl border p-6 ${cardClass}`}>
-              {activeTab === 'info' && (
-                <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-                  <h3 className={`mb-6 text-lg font-bold ${textPrimary}`}>Personal Information</h3>
-                  
-                  <div className="grid gap-5 md:grid-cols-2">
-                    <div className="space-y-1.5">
-                      <label className={`text-xs font-semibold ${textSecondary}`}>Full Name</label>
-                      <input 
-                        type="text" 
-                        defaultValue={activeUsername || 'Admin'}
-                        className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-colors ${inputClass}`} 
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className={`text-xs font-semibold ${textSecondary}`}>Email Address</label>
-                      <input 
-                        type="email" 
-                        defaultValue="admin@primelibrary.com"
-                        className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-colors ${inputClass}`} 
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className={`text-xs font-semibold ${textSecondary}`}>Phone Number</label>
-                      <input 
-                        type="text" 
-                        defaultValue="+63 912 345 6789"
-                        className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-colors ${inputClass}`} 
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className={`text-xs font-semibold ${textSecondary}`}>Date of Birth</label>
-                      <div className="relative">
-                        <input 
-                          type="text" 
-                          defaultValue="January 1, 1990"
-                          className={`w-full rounded-xl border px-4 py-3 pr-10 text-sm outline-none transition-colors ${inputClass}`} 
-                        />
-                        <Calendar size={16} className={`absolute right-4 top-1/2 -translate-y-1/2 ${textSecondary}`} />
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className={`text-xs font-semibold ${textSecondary}`}>Gender</label>
-                      <select className={`w-full appearance-none rounded-xl border px-4 py-3 text-sm outline-none transition-colors ${inputClass}`}>
-                        <option>Male</option>
-                        <option>Female</option>
-                        <option>Other</option>
-                      </select>
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className={`text-xs font-semibold ${textSecondary}`}>Address</label>
-                      <input 
-                        type="text" 
-                        defaultValue="Manila, Philippines"
-                        className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-colors ${inputClass}`} 
-                      />
-                    </div>
-                  </div>
-
-                  <div className="mt-8">
-                    <button 
-                      onClick={handleSave}
-                      disabled={isSaving}
-                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-bold text-white transition-all hover:bg-emerald-700 active:scale-95 disabled:opacity-70"
-                    >
-                      {isSaving ? (
-                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                      ) : (
-                        <CheckCircle2 size={16} />
-                      )}
-                      {isSaving ? 'Saving...' : 'Save Changes'}
-                    </button>
-                  </div>
+            {/* Column 2 */}
+            <div className="space-y-6">
+              <div className="flex items-start gap-4">
+                <div className={`mt-0.5 ${textSecondary}`}><IdCard size={18} /></div>
+                <div>
+                  <p className={`text-xs font-medium ${textSecondary}`}>Employee ID</p>
+                  <p className={`text-sm font-semibold ${textPrimary}`}>LIB-2026-001</p>
                 </div>
-              )}
-
-              {/* Placeholders for other tabs */}
-              {activeTab !== 'info' && (
-                <div className="py-12 text-center">
-                  <p className={textSecondary}>This section is currently under development.</p>
+              </div>
+              <div className="flex items-start gap-4">
+                <div className={`mt-0.5 ${textSecondary}`}><Building size={18} /></div>
+                <div>
+                  <p className={`text-xs font-medium ${textSecondary}`}>Department</p>
+                  <p className={`text-sm font-semibold ${textPrimary}`}>Library Administration</p>
                 </div>
-              )}
+              </div>
+              <div className="flex items-start gap-4">
+                <div className={`mt-0.5 ${textSecondary}`}><User size={18} /></div>
+                <div>
+                  <p className={`text-xs font-medium ${textSecondary}`}>Role</p>
+                  <p className={`text-sm font-semibold ${textPrimary}`}>Librarian</p>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Right Column: Account Summary */}
-          <div className="lg:col-span-3 space-y-6">
-            <div className={`rounded-2xl border p-6 ${cardClass}`}>
-              <h3 className={`mb-6 text-lg font-bold ${textPrimary}`}>Account Summary</h3>
-              
-              <div className="mb-6 flex flex-col items-center justify-center rounded-xl bg-emerald-50 py-6 px-4 text-center dark:bg-emerald-500/10">
-                <div className="mb-3 rounded-full bg-emerald-100 p-3 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
-                  <ShieldCheck size={28} />
-                </div>
-                <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">Your account is secure and active.</p>
+          {/* Account Status Section */}
+          <div className="flex flex-col justify-center p-8 lg:w-[320px]">
+            <h3 className={`mb-4 text-sm font-bold ${textPrimary}`}>Account Status</h3>
+            <div className="mb-6 flex flex-col items-center text-center">
+              <div className="mb-3 rounded-full bg-emerald-50 p-3 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
+                <ShieldCheck size={28} />
               </div>
-
-              <div className={`space-y-4 text-sm ${textSecondary}`}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2"><Clock size={14} /> Last Login</div>
-                  <span className={`font-medium ${textPrimary}`}>Jun 6, 2026 1:15 PM</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2"><MapPin size={14} /> Login IP</div>
-                  <span className={`font-medium ${textPrimary}`}>192.168.1.100</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2"><User size={14} /> Account Status</div>
-                  <span className="font-bold text-emerald-600 dark:text-emerald-400">Active</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2"><ShieldCheck size={14} /> Two-Factor Auth</div>
-                  <span className="font-bold text-emerald-600 dark:text-emerald-400">Enabled</span>
-                </div>
+              <p className="text-base font-bold text-emerald-600 dark:text-emerald-400">Active</p>
+              <p className={`mt-1 text-xs ${textSecondary}`}>Your account is secure and active.</p>
+            </div>
+            
+            <div className={`space-y-3 text-xs border-t pt-5 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'}`}>
+              <div className="flex items-center justify-between">
+                <div className={`flex items-center gap-1.5 ${textSecondary}`}><Clock size={12} /> Last Login</div>
+                <span className={`font-medium ${textPrimary}`}>Jun 6, 2026 1:15 PM</span>
               </div>
-
-              <button className={`mt-6 w-full flex items-center justify-center gap-2 rounded-xl border-2 py-2.5 text-sm font-bold transition-colors ${
-                isDarkMode 
-                  ? 'border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10' 
-                  : 'border-emerald-100 text-emerald-600 hover:bg-emerald-50'
-              }`}>
-                <ShieldCheck size={16} /> View Security Settings
-              </button>
+              <div className="flex items-center justify-between">
+                <div className={`flex items-center gap-1.5 ${textSecondary}`}><MapPin size={12} /> Login IP</div>
+                <span className={`font-medium ${textPrimary}`}>192.168.1.100</span>
+              </div>
             </div>
           </div>
-
         </div>
 
-        {/* Bottom Activity Stats */}
-        <div>
-          <h3 className={`mb-4 text-lg font-bold ${textPrimary}`}>Your Library Activity</h3>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Security Card */}
+        <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border p-5 ${cardClass}`}>
+          <div className="flex items-start gap-4">
+            <div className={`mt-1 ${textSecondary}`}>
+              <Lock size={20} />
+            </div>
+            <div>
+              <h3 className={`text-base font-bold ${textPrimary}`}>Security</h3>
+              <p className={`text-sm ${textSecondary}`}>Manage your password and keep your account secure.</p>
+            </div>
+          </div>
+          <button className={`shrink-0 flex items-center justify-center gap-2 rounded-xl border py-2.5 px-5 text-sm font-bold transition-colors ${
+            isDarkMode 
+              ? 'border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10' 
+              : 'border-emerald-200 text-emerald-600 hover:bg-emerald-50'
+          }`}>
+            <Lock size={16} /> Change Password
+          </button>
+        </div>
+
+        {/* Recent Activity Card */}
+        <div className={`rounded-2xl border ${cardClass}`}>
+          <div className={`flex items-center justify-between border-b p-5 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'}`}>
+            <div className="flex items-center gap-3">
+              <Clock size={20} className={textSecondary} />
+              <h3 className={`text-base font-bold ${textPrimary}`}>Recent Activity</h3>
+            </div>
+            <button className="flex items-center gap-1 text-xs font-bold text-emerald-600 hover:underline dark:text-emerald-400">
+              View all activity <ChevronRight size={14} />
+            </button>
+          </div>
+          
+          <div className="p-2">
+            {/* Activity Item 1 */}
+            <div className={`flex items-start gap-4 rounded-xl p-3 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50`}>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
+                <LogIn size={18} />
+              </div>
+              <div>
+                <p className={`text-sm font-semibold ${textPrimary}`}>Logged in to the system</p>
+                <div className={`mt-0.5 flex items-center gap-2 text-xs ${textSecondary}`}>
+                  <span>Jun 6, 2026 1:15 PM</span>
+                  <span className="h-1 w-1 rounded-full bg-zinc-300 dark:bg-zinc-700"></span>
+                  <span>192.168.1.100</span>
+                </div>
+              </div>
+            </div>
             
-            <div className={`flex items-center gap-4 rounded-xl border p-4 ${cardClass}`}>
-              <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${isDarkMode ? 'bg-emerald-500/10' : 'bg-emerald-50'}`}>
-                <BookOpen size={24} className="text-emerald-600 dark:text-emerald-400" />
+            {/* Activity Item 2 */}
+            <div className={`flex items-start gap-4 rounded-xl p-3 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50`}>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-orange-50 text-orange-500 dark:bg-orange-500/10 dark:text-orange-400">
+                <BookOpen size={18} />
               </div>
               <div>
-                <p className={`text-xs ${textSecondary}`}>Books Added</p>
-                <p className={`text-xl font-black ${textPrimary}`}>26</p>
-                <p className={`text-[10px] ${textSecondary}`}>Total books added</p>
+                <p className={`text-sm font-semibold ${textPrimary}`}>Added new book</p>
+                <div className={`mt-0.5 flex items-center gap-2 text-xs ${textSecondary}`}>
+                  <span>Jun 6, 2026 10:20 AM</span>
+                  <span className="h-1 w-1 rounded-full bg-zinc-300 dark:bg-zinc-700"></span>
+                  <span>The Clean Code</span>
+                </div>
               </div>
             </div>
 
-            <div className={`flex items-center gap-4 rounded-xl border p-4 ${cardClass}`}>
-              <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${isDarkMode ? 'bg-amber-500/10' : 'bg-amber-50'}`}>
-                <RotateCcw size={24} className="text-amber-500 dark:text-amber-400" />
+            {/* Activity Item 3 */}
+            <div className={`flex items-start gap-4 rounded-xl p-3 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50`}>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-500 dark:bg-blue-500/10 dark:text-blue-400">
+                <Users size={18} />
               </div>
               <div>
-                <p className={`text-xs ${textSecondary}`}>Transactions</p>
-                <p className={`text-xl font-black ${textPrimary}`}>152</p>
-                <p className={`text-[10px] ${textSecondary}`}>Total transactions</p>
+                <p className={`text-sm font-semibold ${textPrimary}`}>Updated member information</p>
+                <div className={`mt-0.5 flex items-center gap-2 text-xs ${textSecondary}`}>
+                  <span>Jun 5, 2026 4:45 PM</span>
+                  <span className="h-1 w-1 rounded-full bg-zinc-300 dark:bg-zinc-700"></span>
+                  <span>Juan Dela Cruz</span>
+                </div>
               </div>
             </div>
-
-            <div className={`flex items-center gap-4 rounded-xl border p-4 ${cardClass}`}>
-              <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${isDarkMode ? 'bg-blue-500/10' : 'bg-blue-50'}`}>
-                <Users size={24} className="text-blue-500 dark:text-blue-400" />
-              </div>
-              <div>
-                <p className={`text-xs ${textSecondary}`}>Members Assisted</p>
-                <p className={`text-xl font-black ${textPrimary}`}>48</p>
-                <p className={`text-[10px] ${textSecondary}`}>Total members helped</p>
-              </div>
-            </div>
-
-            <div className={`flex items-center gap-4 rounded-xl border p-4 ${cardClass}`}>
-              <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${isDarkMode ? 'bg-purple-500/10' : 'bg-purple-50'}`}>
-                <Calendar size={24} className="text-purple-500 dark:text-purple-400" />
-              </div>
-              <div>
-                <p className={`text-xs ${textSecondary}`}>Days Active</p>
-                <p className={`text-xl font-black ${textPrimary}`}>25</p>
-                <p className={`text-[10px] ${textSecondary}`}>Days since joined</p>
-              </div>
-            </div>
-
           </div>
         </div>
 
