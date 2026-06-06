@@ -397,10 +397,6 @@ function SmsLogsPage({ isDarkMode }: SmsLogsPageProps) {
                     )}
                   </div>
                   <div className="flex justify-between">
-                    <span className={textSecondary}>Gateway</span>
-                    <span className={`font-medium ${textPrimary}`}>TxtBox</span>
-                  </div>
-                  <div className="flex justify-between">
                     <span className={textSecondary}>Message ID</span>
                     <span className={`font-medium ${textPrimary}`}>MSG-{selectedLog.id.toString().padStart(7, '0')}</span>
                   </div>
