@@ -34,6 +34,7 @@ type BooksPageProps = {
   onOpenBookDetail: (book: BookDetailData) => void
   onOpenAddBook: () => void
   onReserveBook: (bookId: number) => void
+  onBorrowBook: (bookId: number) => void
   refreshKey?: number
   externalToastMessage?: string | null
   onExternalToastConsumed?: () => void
@@ -82,11 +83,12 @@ type BookActionsMenuProps = {
   onViewDetails: () => void
   onEdit: () => void
   onReserve: () => void
+  onBorrow: () => void
   onDelete: () => void
   onArchive: () => void
 }
 
-function BookActionsMenu({ isDarkMode, isArchived, onViewDetails, onEdit, onReserve, onDelete, onArchive }: BookActionsMenuProps) {
+function BookActionsMenu({ isDarkMode, isArchived, onViewDetails, onEdit, onReserve, onBorrow, onDelete, onArchive }: BookActionsMenuProps) {
   const [open, setOpen] = useState(false)
   const [openUpward, setOpenUpward] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -185,25 +187,27 @@ function BookActionsMenu({ isDarkMode, isArchived, onViewDetails, onEdit, onRese
             <Pencil size={15} className="shrink-0 text-violet-500" />
             Edit Book
           </button>
-          <button
-            type="button"
-            className={`${itemBase} ${itemNormal}`}
-            role="menuitem"
-            onClick={() => setOpen(false)}
-          >
-            <BookMarked size={15} className="shrink-0 text-emerald-500" />
-            Borrow Book
-          </button>
-          {!isArchived && (
-            <button
-              type="button"
-              className={`${itemBase} ${itemNormal}`}
-              role="menuitem"
-              onClick={() => { setOpen(false); onReserve(); }}
-            >
-              <Bookmark size={15} className="shrink-0 text-violet-500" />
-              Reserve Book
-            </button>
+                    {!isArchived && (
+            <>
+              <button
+                type="button"
+                className={`${itemBase} ${itemNormal}`}
+                role="menuitem"
+                onClick={() => { setOpen(false); onBorrow(); }}
+              >
+                <BookMarked size={15} className="shrink-0 text-emerald-500" />
+                Borrow Book
+              </button>
+              <button
+                type="button"
+                className={`${itemBase} ${itemNormal}`}
+                role="menuitem"
+                onClick={() => { setOpen(false); onReserve(); }}
+              >
+                <Bookmark size={15} className="shrink-0 text-violet-500" />
+                Reserve Book
+              </button>
+            </>
           )}
 
           <div className={`my-1.5 border-t ${divider}`} />
@@ -234,7 +238,7 @@ function BookActionsMenu({ isDarkMode, isArchived, onViewDetails, onEdit, onRese
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
-export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, onReserveBook, refreshKey = 0, externalToastMessage = null, onExternalToastConsumed }: BooksPageProps) {
+export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, onReserveBook, onBorrowBook, refreshKey = 0, externalToastMessage = null, onExternalToastConsumed }: BooksPageProps) {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
   const [bookList, setBookList] = useState<BookRow[]>(initialBooks)
   const [bookToDelete, setBookToDelete] = useState<BookRow | null>(null)
@@ -875,7 +879,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, onReser
                       </td>
                       <td className={`px-3 py-3 font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>{getDisplayedCopies(book)}</td>
                       <td className="px-3 py-3 text-right">
-                        <BookActionsMenu isDarkMode={isDarkMode} isArchived={Boolean(book.isArchived)} onViewDetails={() => onOpenBookDetail(book)} onEdit={() => setBookToEdit(book)} onReserve={() => onReserveBook(book.id)} onDelete={() => setBookToDelete(book)} onArchive={async () => {
+                        <BookActionsMenu isDarkMode={isDarkMode} isArchived={Boolean(book.isArchived)} onViewDetails={() => onOpenBookDetail(book)} onEdit={() => setBookToEdit(book)} onReserve={() => onReserveBook(book.id)} onBorrow={() => onBorrowBook(book.id)} onDelete={() => setBookToDelete(book)} onArchive={async () => {
                           try {
                             const nextArchived = !book.isArchived
                             const availableCopies = Number(book.available.split(' / ')[0] || '0')
@@ -940,7 +944,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, onReser
                   <div className="mt-auto pt-3">
                     <div className="flex items-center justify-between">
                       <span className={`text-sm ${isDarkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>{book.category}</span>
-                      <BookActionsMenu isDarkMode={isDarkMode} isArchived={Boolean(book.isArchived)} onViewDetails={() => onOpenBookDetail(book)} onEdit={() => setBookToEdit(book)} onReserve={() => onReserveBook(book.id)} onDelete={() => setBookToDelete(book)} onArchive={async () => {
+                      <BookActionsMenu isDarkMode={isDarkMode} isArchived={Boolean(book.isArchived)} onViewDetails={() => onOpenBookDetail(book)} onEdit={() => setBookToEdit(book)} onReserve={() => onReserveBook(book.id)} onBorrow={() => onBorrowBook(book.id)} onDelete={() => setBookToDelete(book)} onArchive={async () => {
                         try {
                           const nextArchived = !book.isArchived
                           const availableCopies = Number(book.available.split(' / ')[0] || '0')

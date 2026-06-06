@@ -1380,6 +1380,11 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
                   setReservationInitialBookId(bookId)
                   setActivePage('Reservations')
                 }}
+                onBorrowBook={(bookId) => {
+                  setBorrowPrefill({ bookId })
+                  setBorrowReturnActiveTab('borrow')
+                  setActivePage('Transactions')
+                }}
               />
             )
           ) : activePage === 'Members' ? (
