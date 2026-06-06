@@ -1388,21 +1388,23 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
       ) : (
         <section className="mx-auto w-full max-w-[1650px] px-2 pt-2 pb-0">
           {/* Form Header with Circular Back Button */}
-          <div className="mb-6 flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => { setIsAddModalOpen(false); setEditingReservation(null) }}
-              className={`grid h-10 w-10 place-items-center rounded-xl border transition-all ${
-                isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'
-              }`}
-            >
-              <ArrowLeft size={18} />
-            </button>
-            <div>
-              <h2 className={`text-xl font-bold tracking-tight ${isDarkMode ? 'text-zinc-100' : 'text-[#0a1b4f]'}`}>{editingReservation ? 'Edit Reservation' : 'Add New Reservation'}</h2>
-              <p className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} mt-0.5`}>{editingReservation ? `Update reservation ${editingReservation.id}` : 'Create a reservation for a book'}</p>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-xs">
+              <button
+                type="button"
+                onClick={() => { setIsAddModalOpen(false); setEditingReservation(null) }}
+                className={`inline-flex items-center gap-1.5 font-semibold ${isDarkMode ? 'text-zinc-300 hover:text-zinc-100' : 'text-zinc-500 hover:text-zinc-700'}`}
+              >
+                <ArrowLeft size={15} />
+                Reservations
+              </button>
+              <span className={isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}>{'>'}</span>
+              <span className={isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}>{editingReservation ? 'Edit Reservation' : 'Add New Reservation'}</span>
             </div>
           </div>
+
+          <h2 className={`text-[38px] font-black leading-tight tracking-tight ${isDarkMode ? 'text-zinc-100' : 'text-[#0a1b4f]'}`}>{editingReservation ? 'Edit Reservation' : 'Add New Reservation'}</h2>
+          <p className={`mt-1 text-sm font-medium ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{editingReservation ? `Update reservation ${editingReservation.id}` : 'Create a reservation for a book'}</p>
 
           <form className="mt-4" onSubmit={(e) => e.preventDefault()}>
             {/* 60 / 40 Responsive Desktop Grid */}
