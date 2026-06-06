@@ -3,8 +3,10 @@ use lettre::{
     message::Mailbox, transport::smtp::authentication::Credentials, Message, SmtpTransport,
     Transport,
 };
+use rand::{distributions::Alphanumeric, rngs::OsRng, Rng};
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::{fs, path::PathBuf, sync::Mutex};
 use tauri::{AppHandle, Emitter, Manager};
 use log::{info, error, warn};
@@ -314,6 +316,26 @@ struct CreateBorrowPayload {
 #[serde(rename_all = "camelCase")]
 struct RenewBorrowPayload {
     transaction_id: i64,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct RequestPasswordResetPayload {
+    identifier: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct VerifyPasswordResetPayload {
+    identifier: String,
+    code: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct CompletePasswordResetPayload {
+    reset_token: String,
+    new_password: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -667,6 +689,19 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
         read INTEGER DEFAULT 0,
         thread_id TEXT
       );
+      CREATE TABLE IF NOT EXISTS password_reset_requests (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT NOT NULL,
+        email TEXT NOT NULL,
+        account_source TEXT NOT NULL DEFAULT 'users',
+        code_hash TEXT NOT NULL,
+        reset_token_hash TEXT,
+        expires_at TEXT NOT NULL,
+        verified_at TEXT,
+        used_at TEXT,
+        attempts INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL
+      );
       ",
     )
     .map_err(|e| format!("init schema failed: {e}"))?;
@@ -874,6 +909,22 @@ fn setting_i64(conn: &Connection, key: &str, default_value: i64) -> i64 {
     .unwrap_or(default_value)
 }
 
+fn hash_password_reset_secret(secret: &str) -> String {
+    format!("{:x}", Sha256::digest(secret.as_bytes()))
+}
+
+fn generate_password_reset_code() -> String {
+    format!("{:06}", OsRng.gen_range(0..1_000_000))
+}
+
+fn generate_password_reset_token() -> String {
+    OsRng
+        .sample_iter(&Alphanumeric)
+        .take(48)
+        .map(char::from)
+        .collect()
+}
+
 fn parse_transaction_date(value: &str) -> Option<NaiveDate> {
     value
         .get(..10)
@@ -944,6 +995,18 @@ mod fine_tests {
             ),
             0.0
         );
+    }
+
+    #[test]
+    fn password_reset_secrets_have_expected_shapes() {
+        let code = generate_password_reset_code();
+        let token = generate_password_reset_token();
+
+        assert_eq!(code.len(), 6);
+        assert!(code.chars().all(|ch| ch.is_ascii_digit()));
+        assert_eq!(token.len(), 48);
+        assert_ne!(hash_password_reset_secret(&code), code);
+        assert_ne!(hash_password_reset_secret(&token), token);
     }
 }
 
@@ -3483,6 +3546,231 @@ fn list_login_trail(
 }
 
 #[tauri::command]
+fn request_password_reset(
+    app: tauri::AppHandle,
+    payload: RequestPasswordResetPayload,
+) -> Result<(), String> {
+    let conn = open_db(&database_path(&app)?)?;
+    init_schema(&conn)?;
+    let identifier = payload.identifier.trim();
+    if identifier.is_empty() {
+        return Err("Username or email is required.".to_string());
+    }
+
+    let user_account = conn
+        .query_row(
+            "
+            SELECT username, email, 'users'
+            FROM users
+            WHERE is_active = 1
+              AND (LOWER(username) = LOWER(?1) OR LOWER(email) = LOWER(?1))
+              AND TRIM(email) <> ''
+            LIMIT 1
+            ",
+            params![identifier],
+            |row| Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?, row.get::<_, String>(2)?)),
+        )
+        .ok();
+    let account = user_account.or_else(|| {
+        conn.query_row(
+            "
+            SELECT username, email, 'staff_members'
+            FROM staff_members
+            WHERE status = 'Active'
+              AND username IS NOT NULL
+              AND (LOWER(username) = LOWER(?1) OR LOWER(email) = LOWER(?1))
+              AND TRIM(email) <> ''
+            LIMIT 1
+            ",
+            params![identifier],
+            |row| Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?, row.get::<_, String>(2)?)),
+        )
+        .ok()
+    });
+    let Some((username, email, account_source)) = account else {
+        return Ok(());
+    };
+
+    let now = Utc::now();
+    let recent_request: Option<String> = conn
+        .query_row(
+            "SELECT created_at FROM password_reset_requests WHERE username = ?1 AND used_at IS NULL ORDER BY id DESC LIMIT 1",
+            params![username],
+            |row| row.get(0),
+        )
+        .ok();
+    if recent_request
+        .and_then(|value| chrono::DateTime::parse_from_rfc3339(&value).ok())
+        .map(|created| now.signed_duration_since(created.with_timezone(&Utc)).num_seconds() < 60)
+        .unwrap_or(false)
+    {
+        return Ok(());
+    }
+
+    let code = generate_password_reset_code();
+    let expires_at = now + Duration::minutes(10);
+    conn.execute(
+        "UPDATE password_reset_requests SET used_at = ?1 WHERE username = ?2 AND used_at IS NULL",
+        params![now.to_rfc3339(), username],
+    )
+    .map_err(|e| format!("invalidate previous reset requests failed: {e}"))?;
+    conn.execute(
+        "
+        INSERT INTO password_reset_requests (
+          username, email, account_source, code_hash, expires_at, created_at
+        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+        ",
+        params![
+            username,
+            email,
+            account_source,
+            hash_password_reset_secret(&code),
+            expires_at.to_rfc3339(),
+            now.to_rfc3339()
+        ],
+    )
+    .map_err(|e| format!("create password reset request failed: {e}"))?;
+    let request_id = conn.last_insert_rowid();
+    let body = format!(
+        "Hello {username},\n\nYour password reset verification code is:\n\n{code}\n\nThis code expires in 10 minutes. If you did not request this reset, you can ignore this email.\n\nFor your security, do not share this code with anyone."
+    );
+    if let Err(error) = send_email_from_settings(
+        &conn,
+        &email,
+        "Your Library System Password Reset Code",
+        &body,
+    ) {
+        let _ = conn.execute(
+            "DELETE FROM password_reset_requests WHERE id = ?1",
+            params![request_id],
+        );
+        return Err(error);
+    }
+    Ok(())
+}
+
+#[tauri::command]
+fn verify_password_reset_code(
+    app: tauri::AppHandle,
+    payload: VerifyPasswordResetPayload,
+) -> Result<String, String> {
+    let conn = open_db(&database_path(&app)?)?;
+    init_schema(&conn)?;
+    let identifier = payload.identifier.trim();
+    let code = payload.code.trim();
+    if identifier.is_empty() || code.len() != 6 || !code.chars().all(|ch| ch.is_ascii_digit()) {
+        return Err("Enter the six-digit verification code.".to_string());
+    }
+
+    let (request_id, stored_hash, expires_at, attempts): (i64, String, String, i64) = conn
+        .query_row(
+            "
+            SELECT id, code_hash, expires_at, attempts
+            FROM password_reset_requests
+            WHERE used_at IS NULL
+              AND (LOWER(username) = LOWER(?1) OR LOWER(email) = LOWER(?1))
+            ORDER BY id DESC LIMIT 1
+            ",
+            params![identifier],
+            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?)),
+        )
+        .map_err(|_| "The verification code is invalid or expired.".to_string())?;
+    let expiry = chrono::DateTime::parse_from_rfc3339(&expires_at)
+        .map_err(|_| "The verification code is invalid or expired.".to_string())?
+        .with_timezone(&Utc);
+    if Utc::now() > expiry || attempts >= 5 {
+        return Err("The verification code is invalid or expired.".to_string());
+    }
+    if hash_password_reset_secret(code) != stored_hash {
+        conn.execute(
+            "UPDATE password_reset_requests SET attempts = attempts + 1 WHERE id = ?1",
+            params![request_id],
+        )
+        .map_err(|e| format!("update password reset attempts failed: {e}"))?;
+        return Err("The verification code is invalid or expired.".to_string());
+    }
+
+    let reset_token = generate_password_reset_token();
+    conn.execute(
+        "UPDATE password_reset_requests SET verified_at = ?1, reset_token_hash = ?2 WHERE id = ?3",
+        params![
+            Utc::now().to_rfc3339(),
+            hash_password_reset_secret(&reset_token),
+            request_id
+        ],
+    )
+    .map_err(|e| format!("verify password reset code failed: {e}"))?;
+    Ok(reset_token)
+}
+
+#[tauri::command]
+fn complete_password_reset(
+    app: tauri::AppHandle,
+    payload: CompletePasswordResetPayload,
+) -> Result<(), String> {
+    let conn = open_db(&database_path(&app)?)?;
+    init_schema(&conn)?;
+    let new_password = payload.new_password.trim();
+    if new_password.len() < 8 {
+        return Err("New password must be at least 8 characters.".to_string());
+    }
+    let token_hash = hash_password_reset_secret(payload.reset_token.trim());
+    let (request_id, username, account_source, expires_at): (i64, String, String, String) = conn
+        .query_row(
+            "
+            SELECT id, username, account_source, expires_at
+            FROM password_reset_requests
+            WHERE reset_token_hash = ?1
+              AND verified_at IS NOT NULL
+              AND used_at IS NULL
+            ORDER BY id DESC LIMIT 1
+            ",
+            params![token_hash],
+            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?)),
+        )
+        .map_err(|_| "This password reset session is invalid or expired.".to_string())?;
+    let expiry = chrono::DateTime::parse_from_rfc3339(&expires_at)
+        .map_err(|_| "This password reset session is invalid or expired.".to_string())?
+        .with_timezone(&Utc);
+    if Utc::now() > expiry {
+        return Err("This password reset session is invalid or expired.".to_string());
+    }
+
+    let tx = conn
+        .unchecked_transaction()
+        .map_err(|e| format!("start password reset transaction failed: {e}"))?;
+    let updated = if account_source == "staff_members" {
+        tx.execute(
+            "UPDATE staff_members SET temp_password = ?1 WHERE username = ?2",
+            params![new_password, username],
+        )
+    } else {
+        tx.execute(
+            "UPDATE users SET password = ?1 WHERE username = ?2",
+            params![new_password, username],
+        )
+    }
+    .map_err(|e| format!("update reset password failed: {e}"))?;
+    if updated != 1 {
+        return Err("The account could not be updated.".to_string());
+    }
+    let now = Utc::now().to_rfc3339();
+    tx.execute(
+        "UPDATE password_reset_requests SET used_at = ?1 WHERE id = ?2",
+        params![now, request_id],
+    )
+    .map_err(|e| format!("complete password reset request failed: {e}"))?;
+    tx.execute(
+        "UPDATE sessions SET is_active = 0, logout_at = ?1 WHERE username = ?2 AND is_active = 1",
+        params![now, username],
+    )
+    .map_err(|e| format!("close reset account sessions failed: {e}"))?;
+    tx.commit()
+        .map_err(|e| format!("commit password reset failed: {e}"))?;
+    Ok(())
+}
+
+#[tauri::command]
 fn change_password(app: tauri::AppHandle, payload: ChangePasswordPayload) -> Result<(), String> {
     let conn = open_db(&database_path(&app)?)?;
     init_schema(&conn)?;
@@ -4024,6 +4312,9 @@ pub fn run() {
             get_active_session,
             list_login_trail,
             change_password,
+            request_password_reset,
+            verify_password_reset_code,
+            complete_password_reset,
             expand_main_window,
             restore_login_window,
             send_email_smtp,

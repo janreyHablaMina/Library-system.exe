@@ -27,6 +27,7 @@ import { ProfilePage } from './pages/ProfilePage'
 import NotificationsPage from './pages/NotificationsPage'
 import { Toast } from './components/ui/Toast'
 import { ChangePasswordModal } from './components/ChangePasswordModal'
+import { ForgotPasswordModal } from './components/ForgotPasswordModal'
 import { getSetting, getTrialSecondsRemaining, verifyLicenseKey, getLicenseStatus, createBook, expandMainWindow, getActiveSession, getEmailLogStats, listAuthors, listBooks, listBorrowTransactions, listMembers, listNotifications, listEmailLogs, listSmsLogs, login as loginWithDb, logout as logoutFromDb, markAllNotificationsRead, markNotificationAsRead, restoreLoginWindow, runAutomaticEmailReminders, searchAuthors, searchBooks, searchMembers, syncNotifications, getUserProfile, type UserProfile, type NotificationItem, type EmailLog, type SmsLog } from './lib/tauriApi'
 
 
@@ -1856,6 +1857,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [loginError, setLoginError] = useState('')
   const [isSigningIn, setIsSigningIn] = useState(false)
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false)
   const [isCheckingSession, setIsCheckingSession] = useState(true)
 
   const [licenseStatus, setLicenseStatus] = useState<'checking' | 'active' | 'trial' | 'expired'>('checking')
@@ -2066,7 +2068,7 @@ function App() {
                     <input type="checkbox" checked={formState.rememberMe} onChange={(event) => setFormState((previous) => ({ ...previous, rememberMe: event.target.checked }))} className="app-choice-input" />
                     Remember me
                   </label>
-                  <button type="button" className="font-semibold text-emerald-700 hover:text-emerald-800">Forgot password?</button>
+                  <button type="button" onClick={() => setIsForgotPasswordOpen(true)} className="font-semibold text-emerald-700 hover:text-emerald-800">Forgot password?</button>
                 </div>
 
                 <button type="submit" disabled={isSigningIn} className="flex h-11 w-full items-center justify-center rounded-full bg-gradient-to-r from-emerald-700 to-emerald-500 px-5 text-base font-bold text-white shadow-[0_12px_24px_-12px_rgba(5,150,105,0.7)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70">
@@ -2079,6 +2081,17 @@ function App() {
           </section>
         </div>
       </div>
+      {isForgotPasswordOpen && (
+        <ForgotPasswordModal
+          initialIdentifier={formState.username}
+          onClose={() => setIsForgotPasswordOpen(false)}
+          onCompleted={() => {
+            setIsForgotPasswordOpen(false)
+            setFormState((previous) => ({ ...previous, password: '' }))
+            setLoginError('')
+          }}
+        />
+      )}
     </main>
   )
 }

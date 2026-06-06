@@ -574,6 +574,18 @@ export async function changePassword(payload: ChangePasswordPayload): Promise<vo
   return invoke<void>('change_password', { payload })
 }
 
+export async function requestPasswordReset(identifier: string): Promise<void> {
+  return invoke<void>('request_password_reset', { payload: { identifier } })
+}
+
+export async function verifyPasswordResetCode(identifier: string, code: string): Promise<string> {
+  return invoke<string>('verify_password_reset_code', { payload: { identifier, code } })
+}
+
+export async function completePasswordReset(resetToken: string, newPassword: string): Promise<void> {
+  return invoke<void>('complete_password_reset', { payload: { resetToken, newPassword } })
+}
+
 export async function listSystemUsers(limit?: number): Promise<SystemUser[]> {
   return invoke<SystemUser[]>('list_system_users', { limit })
 }
