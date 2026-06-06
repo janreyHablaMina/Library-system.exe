@@ -90,18 +90,6 @@ function SmsLogsPage({ isDarkMode }: SmsLogsPageProps) {
               <span className="text-lg leading-none">+</span>
               Send SMS
             </button>
-            <button className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-semibold ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
-              <FileText size={15} />
-              Templates
-            </button>
-            <button className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-semibold ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
-              <BarChart2 size={15} />
-              SMS Reports
-            </button>
-            <button className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-semibold ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
-              <RotateCcw size={15} />
-              Retry Failed SMS
-            </button>
           </div>
         </header>
 
