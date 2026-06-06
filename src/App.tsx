@@ -1410,6 +1410,7 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
                 isDarkMode={isDarkMode}
                 initialTab={borrowReturnActiveTab}
                 prefillBorrowData={borrowPrefill}
+                onClearPrefill={() => setBorrowPrefill(null)}
                 onOpenTransactions={(tab) => {
                   setTransactionActiveTab(tab)
                   setActivePage('All Transactions')

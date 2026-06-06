@@ -20,6 +20,7 @@ type BorrowReturnPageProps = {
   onOpenTransactions: (tab: 'all' | 'borrowed' | 'returned' | 'overdue') => void
   initialTab?: 'borrow' | 'return'
   prefillBorrowData?: { memberId?: number, bookId: number } | null
+  onClearPrefill?: () => void
 }
 
 type MemberItem = {
@@ -83,7 +84,7 @@ function getFineClass(type: ReturnedRow['fineType']) {
     : 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
 }
 
-export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 'borrow', prefillBorrowData }: BorrowReturnPageProps) {
+export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 'borrow', prefillBorrowData, onClearPrefill }: BorrowReturnPageProps) {
   const [activeTab, setActiveTab] = useState<'borrow' | 'return'>(initialTab)
   const today = new Date().toISOString().slice(0, 10)
   const plus14 = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
@@ -293,6 +294,7 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 
         }
         
         setShowToast(`Successfully borrowed "${selectedBook.title}" to ${selectedMember.name}!`)
+        onClearPrefill?.()
       } else {
         const tx = (await listBorrowTransactions('Active', 500)).find(
           (item) => item.memberId === selectedMember.id && item.bookId === selectedBook.id,
