@@ -441,6 +441,36 @@ struct UpdateStaffPayload {
     profile_photo_data: Option<String>,
 }
 
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct UserProfile {
+    id: i64,
+    username: String,
+    full_name: Option<String>,
+    role: String,
+    is_active: bool,
+    email: Option<String>,
+    phone: Option<String>,
+    date_of_birth: Option<String>,
+    employee_id: Option<String>,
+    department: Option<String>,
+    profile_photo_data: Option<String>,
+    created_at: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct UserProfilePayload {
+    username: String,
+    full_name: Option<String>,
+    email: Option<String>,
+    phone: Option<String>,
+    date_of_birth: Option<String>,
+    employee_id: Option<String>,
+    department: Option<String>,
+    profile_photo_data: Option<String>,
+}
+
 fn open_db(path: &PathBuf) -> Result<Connection, String> {
     Connection::open(path).map_err(|e| format!("open db failed: {e}"))
 }
@@ -483,8 +513,15 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT NOT NULL UNIQUE,
         password TEXT NOT NULL,
+        full_name TEXT,
         role TEXT NOT NULL DEFAULT 'Admin',
         is_active INTEGER NOT NULL DEFAULT 1,
+        email TEXT,
+        phone TEXT,
+        date_of_birth TEXT,
+        employee_id TEXT,
+        department TEXT,
+        profile_photo_data TEXT,
         created_at TEXT NOT NULL
       );
       CREATE TABLE IF NOT EXISTS sessions (
@@ -629,6 +666,13 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
     // Schema migrations
     let _ = conn.execute("ALTER TABLE books ADD COLUMN shelf_location TEXT", []);
     let _ = conn.execute("ALTER TABLE sms_logs ADD COLUMN message_body TEXT", []);
+    let _ = conn.execute("ALTER TABLE users ADD COLUMN full_name TEXT", []);
+    let _ = conn.execute("ALTER TABLE users ADD COLUMN email TEXT", []);
+    let _ = conn.execute("ALTER TABLE users ADD COLUMN phone TEXT", []);
+    let _ = conn.execute("ALTER TABLE users ADD COLUMN date_of_birth TEXT", []);
+    let _ = conn.execute("ALTER TABLE users ADD COLUMN employee_id TEXT", []);
+    let _ = conn.execute("ALTER TABLE users ADD COLUMN department TEXT", []);
+    let _ = conn.execute("ALTER TABLE users ADD COLUMN profile_photo_data TEXT", []);
 
     // Backward-compatible migration for older local DBs created before cover_data existed.
     if let Err(e) = conn.execute("ALTER TABLE books ADD COLUMN cover_data TEXT", []) {
@@ -2992,6 +3036,60 @@ fn send_sms_gateway(
 }
 
 #[tauri::command]
+fn get_user_profile(app: tauri::AppHandle, username: String) -> Result<UserProfile, String> {
+    let conn = open_db(&database_path(&app)?)?;
+    let mut stmt = conn
+        .prepare("SELECT id, username, full_name, role, is_active, email, phone, date_of_birth, employee_id, department, profile_photo_data, created_at FROM users WHERE username = ?1")
+        .map_err(|e| format!("prepare failed: {e}"))?;
+
+    let profile = stmt
+        .query_row(params![username.trim()], |row| {
+            Ok(UserProfile {
+                id: row.get(0)?,
+                username: row.get(1)?,
+                full_name: row.get(2)?,
+                role: row.get(3)?,
+                is_active: {
+                    let a: i32 = row.get(4)?;
+                    a == 1
+                },
+                email: row.get(5)?,
+                phone: row.get(6)?,
+                date_of_birth: row.get(7)?,
+                employee_id: row.get(8)?,
+                department: row.get(9)?,
+                profile_photo_data: row.get(10)?,
+                created_at: row.get(11)?,
+            })
+        })
+        .map_err(|e| format!("user not found or db error: {e}"))?;
+
+    Ok(profile)
+}
+
+#[tauri::command]
+fn update_user_profile(app: tauri::AppHandle, payload: UserProfilePayload) -> Result<bool, String> {
+    let conn = open_db(&database_path(&app)?)?;
+    conn.execute(
+        "UPDATE users 
+         SET full_name = ?1, email = ?2, phone = ?3, date_of_birth = ?4, employee_id = ?5, department = ?6, profile_photo_data = ?7 
+         WHERE username = ?8",
+        params![
+            payload.full_name,
+            payload.email,
+            payload.phone,
+            payload.date_of_birth,
+            payload.employee_id,
+            payload.department,
+            payload.profile_photo_data,
+            payload.username.trim()
+        ],
+    ).map_err(|e| format!("failed to update user profile: {e}"))?;
+
+    Ok(true)
+}
+
+#[tauri::command]
 fn export_report(format: String, name: String) -> Result<String, String> {
     let normalized = format.to_ascii_lowercase();
     if normalized != "pdf" && normalized != "excel" {
@@ -3603,6 +3701,8 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            get_user_profile,
+            update_user_profile,
             get_trial_days_remaining,
             verify_license_key,
             get_license_status,

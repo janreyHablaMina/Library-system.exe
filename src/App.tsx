@@ -25,7 +25,7 @@ import EmailLogsPage from './pages/EmailLogsPage'
 import SmsLogsPage from './pages/SmsLogsPage'
 import NotificationsPage from './pages/NotificationsPage'
 import { ProfilePage } from './pages/ProfilePage'
-import { getSetting, getTrialDaysRemaining, verifyLicenseKey, getLicenseStatus, createBook, expandMainWindow, getActiveSession, getEmailLogStats, listAuthors, listBooks, listBorrowTransactions, listMembers, listNotifications, listEmailLogs, listSmsLogs, login as loginWithDb, logout as logoutFromDb, markAllNotificationsRead, markNotificationAsRead, restoreLoginWindow, runAutomaticEmailReminders, searchAuthors, searchBooks, searchMembers, syncNotifications, type NotificationItem, type EmailLog, type SmsLog } from './lib/tauriApi'
+import { getSetting, getTrialDaysRemaining, verifyLicenseKey, getLicenseStatus, createBook, expandMainWindow, getActiveSession, getEmailLogStats, listAuthors, listBooks, listBorrowTransactions, listMembers, listNotifications, listEmailLogs, listSmsLogs, login as loginWithDb, logout as logoutFromDb, markAllNotificationsRead, markNotificationAsRead, restoreLoginWindow, runAutomaticEmailReminders, searchAuthors, searchBooks, searchMembers, syncNotifications, getUserProfile, type UserProfile, type NotificationItem, type EmailLog, type SmsLog } from './lib/tauriApi'
 
 
 type LoginFormState = {
@@ -138,6 +138,16 @@ function DashboardShell({ onLogout, licenseStatus, trialDays }: { onLogout: () =
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [currentTime, setCurrentTime] = useState(() => new Date())
   const [activeUsername, setActiveUsername] = useState<string | null>(null)
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
+
+  useEffect(() => {
+    if (activeUsername) {
+      getUserProfile(activeUsername).then(setUserProfile).catch(() => {})
+    } else {
+      setUserProfile(null)
+    }
+  }, [activeUsername])
+
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -1119,12 +1129,16 @@ const greetingName = formatDisplayName(activeUsername)
                   </div>
                 </div>
                 <div ref={profileMenuRef} className={`relative hidden items-center gap-3 border-l pl-4 md:flex ${dashboardTheme.profileBorder}`}>
-                  <div className={`grid h-11 w-11 place-items-center rounded-full font-bold uppercase tracking-wider shrink-0 ${isDarkMode ? 'bg-indigo-500/20 text-indigo-300' : 'bg-indigo-100 text-indigo-700'}`}>
-                    {activeUsername ? activeUsername.slice(0, 2) : 'AD'}
+                  <div className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full font-bold uppercase tracking-wider overflow-hidden ${isDarkMode ? 'bg-indigo-500/20 text-indigo-300' : 'bg-indigo-100 text-indigo-700'}`}>
+                    {userProfile?.profilePhotoData ? (
+                      <img src={userProfile.profilePhotoData} alt="Avatar" className="h-full w-full object-cover" />
+                    ) : (
+                      activeUsername ? activeUsername.slice(0, 2) : 'AD'
+                    )}
                   </div>
                   <div>
-                    <p className={`text-sm font-semibold truncate max-w-[120px] ${dashboardTheme.profileName}`}>{formatDisplayName(activeUsername)}</p>
-                    <p className={`text-xs ${dashboardTheme.profileRole}`}>Librarian</p>
+                    <p className={`text-sm font-semibold truncate max-w-[120px] ${dashboardTheme.profileName}`}>{userProfile?.fullName || formatDisplayName(activeUsername)}</p>
+                    <p className={`text-xs ${dashboardTheme.profileRole}`}>{userProfile?.role || 'Librarian'}</p>
                   </div>
                   <button
                     type="button"
@@ -1326,7 +1340,15 @@ const greetingName = formatDisplayName(activeUsername)
           ) : activePage === 'Notifications' ? (
             <NotificationsPage isDarkMode={isDarkMode} />
           ) : activePage === 'Profile' ? (
-            <ProfilePage isDarkMode={isDarkMode} activeUsername={activeUsername} />
+            <ProfilePage 
+              isDarkMode={isDarkMode} 
+              activeUsername={activeUsername} 
+              onProfileUpdate={() => {
+                if (activeUsername) {
+                  getUserProfile(activeUsername).then(setUserProfile).catch(() => {})
+                }
+              }} 
+            />
           ) : (
 
           <div className={`min-h-0 flex-1 overflow-auto p-4 ${dashboardTheme.contentBg}`}>

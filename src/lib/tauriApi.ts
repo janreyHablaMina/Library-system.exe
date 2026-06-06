@@ -130,6 +130,21 @@ export type EmailLogStats = {
   pending: number
 }
 
+export type UserProfile = {
+  id: number
+  username: string
+  fullName: string | null
+  role: string
+  isActive: boolean
+  email: string | null
+  phone: string | null
+  dateOfBirth: string | null
+  employeeId: string | null
+  department: string | null
+  profilePhotoData: string | null
+  createdAt: string
+}
+
 export type Member = {
   id: number
   fullName: string
@@ -582,7 +597,15 @@ export async function expandMainWindow(): Promise<void> {
 }
 
 export async function restoreLoginWindow(): Promise<void> {
-  return invoke<void>('restore_login_window')
+  await invoke('restore_login_window')
+}
+
+export async function getUserProfile(username: string): Promise<UserProfile> {
+  return await invoke('get_user_profile', { username })
+}
+
+export async function updateUserProfile(payload: Omit<UserProfile, 'id' | 'role' | 'isActive' | 'createdAt'>): Promise<boolean> {
+  return await invoke('update_user_profile', { payload })
 }
 
 export async function syncNotifications(): Promise<void> {
