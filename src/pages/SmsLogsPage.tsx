@@ -10,14 +10,15 @@ import { Toast } from '../components/ui/Toast'
 type SmsLogsPageProps = {
   isDarkMode: boolean
   onViewMember?: (memberId: number) => void
+  initialStatusFilter?: string
 }
 
-function SmsLogsPage({ isDarkMode, onViewMember }: SmsLogsPageProps) {
+function SmsLogsPage({ isDarkMode, onViewMember, initialStatusFilter = '' }: SmsLogsPageProps) {
   const [smsLogs, setSmsLogs] = useState<SmsLog[]>([])
   const [membersMap, setMembersMap] = useState<Map<string, Member>>(new Map())
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
+  const [statusFilter, setStatusFilter] = useState(initialStatusFilter)
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState(() => {
     const today = new Date()

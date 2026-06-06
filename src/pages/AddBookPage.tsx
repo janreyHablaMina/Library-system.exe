@@ -1,18 +1,23 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { FormEvent } from 'react'
+import type { ChangeEvent, FormEvent } from 'react'
 import {
   ArrowLeft,
   BookOpen,
+  Calendar,
   ChevronDown,
   CloudUpload,
+  Globe,
   ImagePlus,
+  Mail,
   Package,
   Save,
   Tag,
   UserPlus,
+  Users,
   X,
 } from 'lucide-react'
 import { createAuthor, createCategory, listAuthors, listBooks, listCategories } from '../lib/tauriApi'
+import { Toast } from '../components/ui/Toast'
 
 type AddBookPageProps = {
   isDarkMode: boolean
@@ -122,13 +127,21 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false)
   const [newAuthorName, setNewAuthorName] = useState('')
   const [newAuthorEmail, setNewAuthorEmail] = useState('')
+  const [newAuthorNationality, setNewAuthorNationality] = useState('')
+  const [newAuthorDob, setNewAuthorDob] = useState('')
+  const [newAuthorBiography, setNewAuthorBiography] = useState('')
+  const [newAuthorStatus, setNewAuthorStatus] = useState('Active')
+  const [newAuthorPhoto, setNewAuthorPhoto] = useState<string | null>(null)
+  const [newAuthorPhotoName, setNewAuthorPhotoName] = useState('')
   const [newCategoryName, setNewCategoryName] = useState('')
   const [newCategoryDescription, setNewCategoryDescription] = useState('')
   const [isCreatingAuthor, setIsCreatingAuthor] = useState(false)
   const [isCreatingCategory, setIsCreatingCategory] = useState(false)
   const [authorCreateError, setAuthorCreateError] = useState('')
   const [categoryCreateError, setCategoryCreateError] = useState('')
+  const [showToast, setShowToast] = useState<string | null>(null)
   const coverInputRef = useRef<HTMLInputElement | null>(null)
+  const authorPhotoInputRef = useRef<HTMLInputElement | null>(null)
   const authorDropdownRef = useRef<HTMLDivElement | null>(null)
   const categoryDropdownRef = useRef<HTMLDivElement | null>(null)
 
@@ -157,6 +170,12 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
     document.addEventListener('mousedown', handleOutside)
     return () => document.removeEventListener('mousedown', handleOutside)
   }, [])
+
+  useEffect(() => {
+    if (!showToast) return
+    const timer = window.setTimeout(() => setShowToast(null), 3000)
+    return () => window.clearTimeout(timer)
+  }, [showToast])
 
   useEffect(() => {
     const loadAuthors = async () => {
@@ -271,7 +290,11 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
       await createAuthor({
         name,
         email: newAuthorEmail.trim() || null,
-        status: 'Active',
+        nationality: newAuthorNationality.trim() || null,
+        dob: newAuthorDob || null,
+        profilePhotoData: newAuthorPhoto,
+        status: newAuthorStatus,
+        biography: newAuthorBiography.trim() || null,
       })
       const rows = await listAuthors(1000)
       const options = rows.map((row) => ({
@@ -285,11 +308,56 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
       setIsAddAuthorOpen(false)
       setNewAuthorName('')
       setNewAuthorEmail('')
+      setNewAuthorNationality('')
+      setNewAuthorDob('')
+      setNewAuthorBiography('')
+      setNewAuthorStatus('Active')
+      setNewAuthorPhoto(null)
+      setNewAuthorPhotoName('')
+      setAuthorDropdownOpen(false)
+      setShowToast(`Successfully added ${name} as a new author.`)
     } catch (error) {
       setAuthorCreateError(error instanceof Error ? error.message : 'Failed to create author.')
     } finally {
       setIsCreatingAuthor(false)
     }
+  }
+
+  const closeAddAuthorModal = () => {
+    setIsAddAuthorOpen(false)
+    setAuthorCreateError('')
+    setNewAuthorName('')
+    setNewAuthorEmail('')
+    setNewAuthorNationality('')
+    setNewAuthorDob('')
+    setNewAuthorBiography('')
+    setNewAuthorStatus('Active')
+    setNewAuthorPhoto(null)
+    setNewAuthorPhotoName('')
+    if (authorPhotoInputRef.current) authorPhotoInputRef.current.value = ''
+  }
+
+  const handleAuthorPhotoChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    if (!['image/jpeg', 'image/png'].includes(file.type)) {
+      setAuthorCreateError('Only JPG and PNG files are allowed.')
+      event.target.value = ''
+      return
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setAuthorCreateError('Photo must be 2MB or smaller.')
+      event.target.value = ''
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = () => {
+      setNewAuthorPhoto(typeof reader.result === 'string' ? reader.result : null)
+      setNewAuthorPhotoName(file.name)
+      setAuthorCreateError('')
+    }
+    reader.onerror = () => setAuthorCreateError('Failed to read photo file.')
+    reader.readAsDataURL(file)
   }
 
   const handleCreateCategory = async (event: FormEvent<HTMLFormElement>) => {
@@ -325,11 +393,10 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
+    <div
       className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[transparent] text-zinc-100' : 'bg-[#f8fafc] text-zinc-900'}`}
     >
-      <section className="p-5">
+      <form onSubmit={handleSubmit} className="p-5">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-xs">
             <button
@@ -716,45 +783,82 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
             </button>
           </div>
         </div>
-      </section>
+      </form>
 
       {isAddAuthorOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/60 p-4 backdrop-blur-sm">
-          <section className={`w-full max-w-md rounded-2xl border shadow-2xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
-            <div className={`flex items-start justify-between border-b px-5 py-4 ${isDarkMode ? 'border-zinc-700' : 'border-zinc-200'}`}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-900/45 p-4 backdrop-blur-[1px]">
+          <section className={`w-full max-w-4xl rounded-2xl border shadow-2xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
+            <div className={`flex items-start justify-between border-b px-6 py-5 ${isDarkMode ? 'border-zinc-700' : 'border-zinc-200'}`}>
               <div>
-                <h3 className={`text-xl font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Add New Author</h3>
-                <p className={`mt-1 text-sm ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Create an author and use it for this book.</p>
+                <h3 className={`text-3xl font-black ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Add New Author</h3>
+                <p className={`mt-1 text-sm ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Create a new library author profile.</p>
               </div>
-              <button type="button" onClick={() => setIsAddAuthorOpen(false)} className={`grid h-9 w-9 place-items-center rounded-lg border ${isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'}`}>
-                <X size={16} />
+              <button type="button" onClick={closeAddAuthorModal} className={`grid h-10 w-10 place-items-center rounded-xl border ${isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'}`}>
+                <X size={18} />
               </button>
             </div>
-            <form onSubmit={handleCreateAuthor} className="space-y-4 px-5 py-4">
-              <div>
-                <label className={`text-sm font-semibold ${labelClass}`}>Author Name *</label>
-                <input
-                  value={newAuthorName}
-                  onChange={(e) => setNewAuthorName(e.target.value)}
-                  className={`mt-1 h-11 w-full rounded-xl border px-4 outline-none focus:border-emerald-500 ${inputClass}`}
-                  placeholder="Enter full name"
-                />
+            <form onSubmit={handleCreateAuthor} className="space-y-5 px-6 py-5">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className={`mb-1 block text-sm font-semibold ${labelClass}`}>Author Name <span className="text-rose-500">*</span></label>
+                  <input value={newAuthorName} onChange={(e) => setNewAuthorName(e.target.value)} placeholder="Enter full name" className={`h-11 w-full rounded-xl border px-3 text-sm outline-none focus:border-emerald-500 ${inputClass}`} required />
+                </div>
+                <div>
+                  <label className={`mb-1 block text-sm font-semibold ${labelClass}`}>Email Address</label>
+                  <div className={`flex h-11 items-center rounded-xl border px-3 ${inputClass}`}>
+                    <Mail size={15} className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} />
+                    <input value={newAuthorEmail} onChange={(e) => setNewAuthorEmail(e.target.value)} placeholder="Enter email address" className="ml-2 w-full bg-transparent text-sm outline-none" />
+                  </div>
+                </div>
+                <div>
+                  <label className={`mb-1 block text-sm font-semibold ${labelClass}`}>Nationality</label>
+                  <div className={`flex h-11 items-center rounded-xl border px-3 ${inputClass}`}>
+                    <Globe size={15} className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} />
+                    <input value={newAuthorNationality} onChange={(e) => setNewAuthorNationality(e.target.value)} placeholder="Enter nationality" className="ml-2 w-full bg-transparent text-sm outline-none" />
+                  </div>
+                </div>
+                <div>
+                  <label className={`mb-1 block text-sm font-semibold ${labelClass}`}>Date of Birth</label>
+                  <div className={`flex h-11 items-center rounded-xl border px-3 ${inputClass}`}>
+                    <Calendar size={15} className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} />
+                    <input type="date" value={newAuthorDob} onChange={(e) => setNewAuthorDob(e.target.value)} className="ml-2 w-full bg-transparent text-sm outline-none" />
+                  </div>
+                </div>
               </div>
               <div>
-                <label className={`text-sm font-semibold ${labelClass}`}>Email (Optional)</label>
-                <input
-                  value={newAuthorEmail}
-                  onChange={(e) => setNewAuthorEmail(e.target.value)}
-                  className={`mt-1 h-11 w-full rounded-xl border px-4 outline-none focus:border-emerald-500 ${inputClass}`}
-                  placeholder="Enter email address"
-                />
+                <label className={`mb-1 block text-sm font-semibold ${labelClass}`}>Biography / Description</label>
+                <textarea value={newAuthorBiography} onChange={(e) => setNewAuthorBiography(e.target.value)} maxLength={200} placeholder="Enter author's short biography or description" className={`min-h-24 w-full rounded-xl border px-3 py-2 text-sm outline-none focus:border-emerald-500 ${inputClass}`} />
+                <p className={`mt-1 text-right text-xs ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>{newAuthorBiography.length} / 200</p>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className={`mb-1 block text-sm font-semibold ${labelClass}`}>Author Photo</label>
+                  <input ref={authorPhotoInputRef} type="file" accept="image/jpeg,image/png" className="hidden" onChange={handleAuthorPhotoChange} />
+                  <div className="flex items-center gap-3">
+                    <div className={`grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full ${isDarkMode ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-100 text-zinc-600'}`}>
+                      {newAuthorPhoto ? <img src={newAuthorPhoto} alt="Author preview" className="h-full w-full object-cover" /> : <Users size={16} />}
+                    </div>
+                    <button type="button" onClick={() => authorPhotoInputRef.current?.click()} className={`h-10 rounded-lg border px-4 text-sm font-semibold ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>Upload Photo</button>
+                    <span className={`truncate text-xs ${isDarkMode ? 'text-zinc-500' : 'text-zinc-500'}`}>{newAuthorPhotoName || 'JPG, PNG (Max 2MB)'}</span>
+                  </div>
+                </div>
+                <div>
+                  <label className={`mb-1 block text-sm font-semibold ${labelClass}`}>Status <span className="text-rose-500">*</span></label>
+                  <div className="relative">
+                    <select value={newAuthorStatus} onChange={(e) => setNewAuthorStatus(e.target.value)} className={`h-11 w-full appearance-none rounded-xl border pl-3 pr-10 text-sm outline-none focus:border-emerald-500 ${inputClass}`}>
+                      <option value="Active">Active</option>
+                      <option value="Inactive">Inactive</option>
+                    </select>
+                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+                  </div>
+                </div>
               </div>
               {authorCreateError ? <p className="text-xs font-semibold text-rose-600">{authorCreateError}</p> : null}
-              <div className="grid grid-cols-2 gap-3 pt-1">
-                <button type="button" onClick={() => setIsAddAuthorOpen(false)} className={`h-10 rounded-xl border text-sm font-semibold ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-300 text-zinc-700 hover:bg-zinc-100'}`}>
+              <div className="grid gap-3 pt-1 sm:grid-cols-2">
+                <button type="button" onClick={closeAddAuthorModal} className={`h-11 rounded-xl border text-sm font-semibold ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
                   Cancel
                 </button>
-                <button type="submit" disabled={isCreatingAuthor} className="h-10 rounded-xl bg-emerald-700 text-sm font-semibold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-70">
+                <button type="submit" disabled={isCreatingAuthor} className="h-11 rounded-xl bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-70">
                   {isCreatingAuthor ? 'Saving...' : 'Save Author'}
                 </button>
               </div>
@@ -827,6 +931,7 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
           </section>
         </div>
       ) : null}
-    </form>
+      <Toast message={showToast} onClose={() => setShowToast(null)} isDarkMode={isDarkMode} />
+    </div>
   )
 }

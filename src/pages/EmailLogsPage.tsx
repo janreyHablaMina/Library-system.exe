@@ -4,14 +4,15 @@ import { listEmailLogs, listMembers, type EmailLog, type Member } from '../lib/t
 
 type EmailLogsPageProps = {
   isDarkMode: boolean
+  initialStatusFilter?: string
 }
 
-function EmailLogsPage({ isDarkMode }: EmailLogsPageProps) {
+function EmailLogsPage({ isDarkMode, initialStatusFilter = '' }: EmailLogsPageProps) {
   const [emailLogs, setEmailLogs] = useState<EmailLog[]>([])
   const [members, setMembers] = useState<Member[]>([])
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
+  const [statusFilter, setStatusFilter] = useState(initialStatusFilter)
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState(() => {
     const today = new Date()

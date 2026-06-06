@@ -71,7 +71,8 @@ type DashboardStats = {
   totalAuthors: number
   emailsSentToday: number
   failedEmails: number
-  pendingEmails: number
+  smsSentToday: number
+  failedSms: number
 }
 type RecentBorrowedItem = {
   id: number
@@ -174,6 +175,8 @@ function DashboardShell({ onLogout, licenseStatus, trialSeconds }: { onLogout: (
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [activePage, setActivePage] = useState<ActivePage>('Dashboard')
   const [activeSettingsTab, setActiveSettingsTab] = useState('Overview')
+  const [emailLogStatusFilter, setEmailLogStatusFilter] = useState('')
+  const [smsLogStatusFilter, setSmsLogStatusFilter] = useState('')
   const [libraryName, setLibraryName] = useState('infoLib')
   const [libraryLogo, setLibraryLogo] = useState<string | null>(null)
 
@@ -240,7 +243,8 @@ function DashboardShell({ onLogout, licenseStatus, trialSeconds }: { onLogout: (
     totalAuthors: 0,
     emailsSentToday: 0,
     failedEmails: 0,
-    pendingEmails: 0,
+    smsSentToday: 0,
+    failedSms: 0,
   })
   const [recentBorrowedItems, setRecentBorrowedItems] = useState<RecentBorrowedItem[]>([])
   const [overdueReturnItems, setOverdueReturnItems] = useState<OverdueReturnItem[]>([])
@@ -458,14 +462,23 @@ function DashboardShell({ onLogout, licenseStatus, trialSeconds }: { onLogout: (
 
     const loadDashboardStats = async () => {
       try {
-        const [books, members, authors, transactions, emailStats] = await Promise.all([
+        const [books, members, authors, transactions, emailStats, smsLogs] = await Promise.all([
           listBooks(5000),
           listMembers(5000),
           listAuthors(5000),
           listBorrowTransactions(undefined, 5000),
           getEmailLogStats(),
+          listSmsLogs(undefined, undefined, 1000),
         ])
         const now = Date.now()
+        const today = new Date()
+        const isToday = (value: string) => {
+          const date = new Date(value)
+          return !Number.isNaN(date.getTime())
+            && date.getFullYear() === today.getFullYear()
+            && date.getMonth() === today.getMonth()
+            && date.getDate() === today.getDate()
+        }
         const activeBorrowTx = transactions.filter((tx) => tx.status === 'Active' || tx.status === 'Borrowed')
         const overdueActiveTx = activeBorrowTx.filter((tx) => {
           const due = new Date(tx.dueDate).getTime()
@@ -481,7 +494,8 @@ function DashboardShell({ onLogout, licenseStatus, trialSeconds }: { onLogout: (
           totalAuthors: authors.length,
           emailsSentToday: emailStats.sentToday,
           failedEmails: emailStats.failed,
-          pendingEmails: emailStats.pending,
+          smsSentToday: smsLogs.filter((log) => log.status.toLowerCase() === 'sent' && isToday(log.sentAt)).length,
+          failedSms: smsLogs.filter((log) => log.status.toLowerCase() === 'failed').length,
         })
         setRecentBorrowedItems(
           activeBorrowTx
@@ -594,7 +608,7 @@ function DashboardShell({ onLogout, licenseStatus, trialSeconds }: { onLogout: (
   }, [activePage, booksRefreshKey])
 const unreadNotifications = notifications.filter((item) => !item.isRead).length
 const greetingText = getGreetingForDate(currentTime)
-const greetingName = formatDisplayName(activeUsername)
+const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUsername)
 
   const formatNotificationTime = (isoDate: string) => {
     const dt = new Date(isoDate)
@@ -1087,7 +1101,7 @@ const greetingName = formatDisplayName(activeUsername)
                   <div className="relative">
                     <button 
                       type="button" 
-                      onClick={() => setActivePage('SmsLogs')}
+                      onClick={() => { setSmsLogStatusFilter(''); setActivePage('SmsLogs') }}
                       className={`relative rounded-lg p-2 ${activePage === 'SmsLogs' ? 'bg-sky-500/10 text-sky-500' : dashboardTheme.iconBtn}`} 
                       aria-label="Open SMS logs"
                     >
@@ -1098,7 +1112,7 @@ const greetingName = formatDisplayName(activeUsername)
                   <div className="relative">
                     <button 
                       type="button" 
-                      onClick={() => setActivePage('EmailLogs')}
+                      onClick={() => { setEmailLogStatusFilter(''); setActivePage('EmailLogs') }}
                       className={`relative rounded-lg p-2 ${activePage === 'EmailLogs' ? 'bg-emerald-500/10 text-emerald-500' : dashboardTheme.iconBtn}`} 
                       aria-label="Open email logs"
                     >
@@ -1370,10 +1384,11 @@ const greetingName = formatDisplayName(activeUsername)
           ) : activePage === 'Staff' ? (
             <StaffPage isDarkMode={isDarkMode} />
           ) : activePage === 'EmailLogs' ? (
-            <EmailLogsPage isDarkMode={isDarkMode} />
+            <EmailLogsPage isDarkMode={isDarkMode} initialStatusFilter={emailLogStatusFilter} />
           ) : activePage === 'SmsLogs' ? (
             <SmsLogsPage 
-              isDarkMode={isDarkMode} 
+              isDarkMode={isDarkMode}
+              initialStatusFilter={smsLogStatusFilter}
               onViewMember={(memberId) => {
                 setSelectedMemberId(memberId)
                 setIsMemberDetailOpen(true)
@@ -1399,7 +1414,9 @@ const greetingName = formatDisplayName(activeUsername)
             <section className="p-5">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div>
-                  <h2 className={`text-3xl font-black ${dashboardTheme.greetingTitle}`}>{greetingText}, {greetingName}! ðŸ‘‹</h2>
+                  <h2 className={`text-3xl font-black ${dashboardTheme.greetingTitle}`}>
+                    {greetingText}, {greetingName}! <span aria-hidden="true">{'\u{1F44B}'}</span>
+                  </h2>
                   <p className={`mt-1 text-sm ${dashboardTheme.greetingSub}`}>Here&apos;s what&apos;s happening in your library today.</p>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -1500,9 +1517,9 @@ const greetingName = formatDisplayName(activeUsername)
             </section>
 
             <section className="px-5 pb-3 mt-2">
-              <h3 className={`text-sm font-bold uppercase tracking-wider ${dashboardTheme.cardTitle} mb-3`}>Email Activity</h3>
-              <div className="grid gap-3 sm:grid-cols-1 md:grid-cols-3">
-                <button type="button" onClick={() => { setActivePage('Settings'); setActiveSettingsTab('Email Logs') }} className={`rounded-xl border p-4 text-left shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+              <h3 className={`text-sm font-bold uppercase tracking-wider ${dashboardTheme.cardTitle} mb-3`}>Communication Activity</h3>
+              <div className="grid gap-3 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-4">
+                <button type="button" onClick={() => { setEmailLogStatusFilter(''); setActivePage('EmailLogs') }} className={`rounded-xl border p-4 text-left shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                   <div className="mb-2 flex items-center gap-3">
                     <div className="rounded-lg bg-sky-50 p-2"><Mail size={18} className="text-sky-600" /></div>
                     <p className="text-sm font-semibold text-zinc-600">Emails Sent Today</p>
@@ -1510,7 +1527,7 @@ const greetingName = formatDisplayName(activeUsername)
                   <p className="text-3xl font-extrabold text-zinc-900">{dashboardStats.emailsSentToday.toLocaleString('en-US')}</p>
                   <p className="mt-1 text-sm font-semibold text-sky-600">View email logs</p>
                 </button>
-                <button type="button" onClick={() => { setActivePage('Settings'); setActiveSettingsTab('Email Logs') }} className={`rounded-xl border p-4 text-left shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+                <button type="button" onClick={() => { setEmailLogStatusFilter('Failed'); setActivePage('EmailLogs') }} className={`rounded-xl border p-4 text-left shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                   <div className="mb-2 flex items-center gap-3">
                     <div className="rounded-lg bg-rose-50 p-2"><AlertTriangle size={18} className="text-rose-500" /></div>
                     <p className="text-sm font-semibold text-zinc-600">Failed Emails</p>
@@ -1518,13 +1535,21 @@ const greetingName = formatDisplayName(activeUsername)
                   <p className="text-3xl font-extrabold text-zinc-900">{dashboardStats.failedEmails.toLocaleString('en-US')}</p>
                   <p className="mt-1 text-sm font-semibold text-rose-500">Needs attention</p>
                 </button>
-                <button type="button" onClick={() => { setActivePage('Settings'); setActiveSettingsTab('Email Logs') }} className={`rounded-xl border p-4 text-left shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+                <button type="button" onClick={() => { setSmsLogStatusFilter(''); setActivePage('SmsLogs') }} className={`rounded-xl border p-4 text-left shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                   <div className="mb-2 flex items-center gap-3">
-                    <div className="rounded-lg bg-amber-50 p-2"><Clock3 size={18} className="text-amber-500" /></div>
-                    <p className="text-sm font-semibold text-zinc-600">Pending Emails</p>
+                    <div className="rounded-lg bg-violet-50 p-2"><MessageCircle size={18} className="text-violet-600" /></div>
+                    <p className="text-sm font-semibold text-zinc-600">SMS Sent Today</p>
                   </div>
-                  <p className="text-3xl font-extrabold text-zinc-900">{dashboardStats.pendingEmails.toLocaleString('en-US')}</p>
-                  <p className="mt-1 text-sm font-semibold text-amber-500">Queued reminders</p>
+                  <p className="text-3xl font-extrabold text-zinc-900">{dashboardStats.smsSentToday.toLocaleString('en-US')}</p>
+                  <p className="mt-1 text-sm font-semibold text-violet-600">View SMS logs</p>
+                </button>
+                <button type="button" onClick={() => { setSmsLogStatusFilter('Failed'); setActivePage('SmsLogs') }} className={`rounded-xl border p-4 text-left shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
+                  <div className="mb-2 flex items-center gap-3">
+                    <div className="rounded-lg bg-rose-50 p-2"><AlertTriangle size={18} className="text-rose-500" /></div>
+                    <p className="text-sm font-semibold text-zinc-600">Failed SMS</p>
+                  </div>
+                  <p className="text-3xl font-extrabold text-zinc-900">{dashboardStats.failedSms.toLocaleString('en-US')}</p>
+                  <p className="mt-1 text-sm font-semibold text-rose-500">Needs attention</p>
                 </button>
               </div>
             </section>
@@ -1533,7 +1558,7 @@ const greetingName = formatDisplayName(activeUsername)
               <article className={`overflow-hidden rounded-2xl border shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="flex items-center justify-between px-4 py-3">
                   <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Recent Borrowed Books</h3>
-                  <button type="button" onClick={() => openTransactionsPage('borrowed')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all â†’</button>
+                  <button type="button" onClick={() => openTransactionsPage('borrowed')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all &rarr;</button>
                 </div>
                 <div>
                   {recentBorrowedItems.map((item, idx) => (
@@ -1564,7 +1589,7 @@ const greetingName = formatDisplayName(activeUsername)
               <article className={`overflow-hidden rounded-2xl border shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="flex items-center justify-between px-4 py-3">
                   <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Overdue Returns</h3>
-                  <button type="button" onClick={() => openTransactionsPage('overdue')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all â†’</button>
+                  <button type="button" onClick={() => openTransactionsPage('overdue')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all &rarr;</button>
                 </div>
                 <div>
                   {overdueReturnItems.map((item, idx) => (
@@ -1595,7 +1620,7 @@ const greetingName = formatDisplayName(activeUsername)
               <article className={`rounded-2xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-3 flex items-center justify-between pb-3">
                   <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Today&apos;s Activity</h3>
-                  <button type="button" onClick={() => setActivePage('Reports')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all â†’</button>
+                  <button type="button" onClick={() => setActivePage('Notifications')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all &rarr;</button>
                 </div>
                 <div className="space-y-0">
                   {notifications.slice(0, 6).map((item, idx) => {
@@ -1628,7 +1653,7 @@ const greetingName = formatDisplayName(activeUsername)
               <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Most Borrowed Categories</h3>
-                  <button type="button" onClick={() => setActivePage('Reports')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all â†’</button>
+                  <button type="button" onClick={() => setActivePage('Reports')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all &rarr;</button>
                 </div>
                 <div className="flex min-h-[220px] items-center">
                   {(() => {
@@ -1668,7 +1693,7 @@ const greetingName = formatDisplayName(activeUsername)
               <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Low Stock / Missing Copies</h3>
-                  <button type="button" onClick={() => setActivePage('Books')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all â†’</button>
+                  <button type="button" onClick={() => setActivePage('Books')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all &rarr;</button>
                 </div>
                 <div className="space-y-0 text-xs">
                   {lowStockItems.map((item, idx) => (
@@ -1698,7 +1723,7 @@ const greetingName = formatDisplayName(activeUsername)
               <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Upcoming Due Dates</h3>
-                  <button type="button" onClick={() => openTransactionsPage('overdue')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all â†’</button>
+                  <button type="button" onClick={() => openTransactionsPage('overdue')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all &rarr;</button>
                 </div>
                 <div className="space-y-0">
                   {upcomingDueItems.map((item, idx) => (
@@ -2076,7 +2101,7 @@ function App() {
                 </button>
               </div>
 
-              <p className="mt-auto pt-3 text-center text-xs text-zinc-500">Â© 2026 infoLib. All rights reserved.</p>
+              <p className="mt-auto pt-3 text-center text-xs text-zinc-500">&copy; 2026 infoLib. All rights reserved.</p>
             </form>
           </section>
         </div>

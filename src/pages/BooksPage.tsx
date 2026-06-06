@@ -22,6 +22,7 @@ type BookRow = {
   year: number
   status: BookStatus
   available: string
+  borrowedCopies?: number
   isArchived?: boolean
 }
 
@@ -74,13 +75,14 @@ function getStatusClass(status: BookStatus, isDarkMode: boolean) {
 // ─── Book Actions Dropdown Menu ───────────────────────────────────────────────
 type BookActionsMenuProps = {
   isDarkMode: boolean
+  isArchived: boolean
   onViewDetails: () => void
   onEdit: () => void
   onDelete: () => void
   onArchive: () => void
 }
 
-function BookActionsMenu({ isDarkMode, onViewDetails, onEdit, onDelete, onArchive }: BookActionsMenuProps) {
+function BookActionsMenu({ isDarkMode, isArchived, onViewDetails, onEdit, onDelete, onArchive }: BookActionsMenuProps) {
   const [open, setOpen] = useState(false)
   const [openUpward, setOpenUpward] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -199,7 +201,7 @@ function BookActionsMenu({ isDarkMode, onViewDetails, onEdit, onDelete, onArchiv
             onClick={() => { setOpen(false); onArchive(); }}
           >
             <Archive size={15} className="shrink-0 text-amber-500" />
-            Archive Book
+            {isArchived ? 'Unarchive Book' : 'Archive Book'}
           </button>
           <button
             type="button"
@@ -246,6 +248,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
           year: new Date(row.createdAt).getFullYear() || new Date().getFullYear(),
           status: row.isArchived ? 'Archived' : (row.available > 0 ? 'Available' : 'Borrowed'),
           available: `${row.available} / ${row.totalCopies}`,
+          borrowedCopies: Math.max(0, row.totalCopies - row.available),
           isArchived: row.isArchived,
         }))
         setBookList(mapped.length > 0 ? mapped : [])
@@ -283,9 +286,12 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
 
   // Filter dynamic helper
   const filteredBooks = bookList.filter((book) => {
+    const [availableCopies = 0, totalCopies = 0] = book.available.split('/').map((value) => Number(value.trim()) || 0)
+    const borrowedCopies = book.borrowedCopies ?? Math.max(0, totalCopies - availableCopies)
+
     // 1. Stat Tab Filter
-    if (activeStatTab === 'Available' && book.status !== 'Available') return false
-    if (activeStatTab === 'Borrowed' && book.status !== 'Borrowed') return false
+    if (activeStatTab === 'Available' && (book.isArchived || availableCopies < 1)) return false
+    if (activeStatTab === 'Borrowed' && (book.isArchived || borrowedCopies < 1)) return false
     if (activeStatTab === 'Overdue' && book.status !== 'Overdue') return false
     if (activeStatTab === 'Archived' && book.status !== 'Archived') return false
     if (activeStatTab === 'All Books' && book.status === 'Archived') {
@@ -310,6 +316,29 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
 
     return true
   })
+
+  const getBookCopyCounts = (book: BookRow) => {
+    const [availableCopies = 0, totalCopies = 0] = book.available.split('/').map((value) => Number(value.trim()) || 0)
+    return {
+      availableCopies,
+      totalCopies,
+      borrowedCopies: book.borrowedCopies ?? Math.max(0, totalCopies - availableCopies),
+    }
+  }
+
+  const getDisplayedStatus = (book: BookRow): BookStatus => {
+    if (book.isArchived) return 'Archived'
+    if (activeStatTab === 'Borrowed') return 'Borrowed'
+    if (activeStatTab === 'Overdue') return 'Overdue'
+    if (activeStatTab === 'Available') return 'Available'
+    return book.status
+  }
+
+  const getDisplayedCopies = (book: BookRow) => {
+    const counts = getBookCopyCounts(book)
+    if (activeStatTab === 'Borrowed') return `${counts.borrowedCopies} / ${counts.totalCopies}`
+    return `${counts.availableCopies} / ${counts.totalCopies}`
+  }
 
   const totalPages = Math.ceil(filteredBooks.length / itemsPerPage)
   const paginatedBooks = filteredBooks.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
@@ -338,6 +367,63 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
     setSelectedCategory('All')
     setSelectedAuthor('All')
     setActiveStatTab('All Books')
+  }
+
+  const handleExportBooks = () => {
+    if (filteredBooks.length === 0) {
+      setShowToast('No books match the current filters.')
+      return
+    }
+
+    const escapeCsvValue = (value: string | number) => {
+      const text = String(value)
+      return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text
+    }
+
+    const headers = [
+      'ID',
+      'Title',
+      'Author',
+      'ISBN',
+      'Category',
+      'Shelf Location',
+      'Call Number',
+      'Year',
+      'Status',
+      'Available Copies',
+      'Borrowed Copies',
+      'Total Copies',
+    ]
+    const rows = filteredBooks.map((book) => {
+      const [availableCopies = '', totalCopies = ''] = book.available.split('/').map((value) => value.trim())
+      return [
+        book.id,
+        book.title,
+        book.author,
+        book.isbn,
+        book.category,
+        book.shelfLocation,
+        book.callNumber,
+        book.year,
+        book.status,
+        availableCopies,
+        Math.max(0, Number(totalCopies) - Number(availableCopies)),
+        totalCopies,
+      ].map(escapeCsvValue).join(',')
+    })
+    const csv = `\uFEFF${headers.map(escapeCsvValue).join(',')}\r\n${rows.join('\r\n')}`
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    const date = new Date().toISOString().slice(0, 10)
+
+    link.href = url
+    link.download = `books-export-${date}.csv`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+    setShowToast(`Exported ${filteredBooks.length} book${filteredBooks.length === 1 ? '' : 's'} to CSV.`)
   }
 
   // Auto-dismiss toast
@@ -436,6 +522,10 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
             shelfLocation: updatedBook.callNumber,
             callNumber: updatedBook.callNumber,
             status: updatedBook.status as BookStatus,
+            borrowedCopies: Math.max(
+              0,
+              Number(updatedBook.available.split(' / ')[1] || '0') - Number(updatedBook.available.split(' / ')[0] || '0'),
+            ),
           }
           const persist = async () => {
             try {
@@ -561,7 +651,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
               <span className="text-lg leading-none">+</span>
               Add Book
             </button>
-            <button type="button" className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-semibold ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
+            <button type="button" onClick={handleExportBooks} className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-semibold ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
               <Download size={15} />
               Export
             </button>
@@ -572,8 +662,8 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
           <div className={`flex min-w-[880px] items-center gap-2 px-3 py-3 ${isDarkMode ? 'bg-[#18181B]' : 'bg-white'}`}>
             {[
               { label: 'All Books', value: String(bookList.filter(b => b.status !== 'Archived').length), icon: BookOpen },
-              { label: 'Available', value: String(bookList.filter(b => b.status === 'Available').length), icon: Bookmark },
-              { label: 'Borrowed', value: String(bookList.filter(b => b.status === 'Borrowed').length), icon: RotateCcw },
+              { label: 'Available', value: String(bookList.filter((book) => !book.isArchived && getBookCopyCounts(book).availableCopies > 0).length), icon: Bookmark },
+              { label: 'Borrowed', value: String(bookList.filter((book) => !book.isArchived && getBookCopyCounts(book).borrowedCopies > 0).length), icon: RotateCcw },
               { label: 'Overdue', value: String(bookList.filter(b => b.status === 'Overdue').length), icon: Clock3 },
               { label: 'Archived', value: String(bookList.filter(b => b.status === 'Archived').length), icon: Filter },
             ].map((item) => {
@@ -733,7 +823,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
                     <th className="px-3 py-3 font-semibold">Author</th>
                     <th className="px-3 py-3 font-semibold">Category</th>
                     <th className="px-3 py-3 font-semibold">Status</th>
-                    <th className="px-3 py-3 font-semibold">Available Copies</th>
+                    <th className="px-3 py-3 font-semibold">{activeStatTab === 'Borrowed' ? 'Borrowed Copies' : 'Available Copies'}</th>
                     <th className="px-3 py-3 font-semibold text-right">Actions</th>
                   </tr>
                 </thead>
@@ -769,12 +859,14 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
                         <span className={`text-sm ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>{book.category}</span>
                       </td>
                       <td className="px-3 py-3">
-                        <span className={`rounded-md px-2 py-1 text-xs font-semibold ${getStatusClass(book.status, isDarkMode)}`}>{book.status}</span>
+                        <span className={`rounded-md px-2 py-1 text-xs font-semibold ${getStatusClass(getDisplayedStatus(book), isDarkMode)}`}>{getDisplayedStatus(book)}</span>
                       </td>
-                      <td className={`px-3 py-3 font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>{book.available}</td>
+                      <td className={`px-3 py-3 font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>{getDisplayedCopies(book)}</td>
                       <td className="px-3 py-3 text-right">
-                        <BookActionsMenu isDarkMode={isDarkMode} onViewDetails={() => onOpenBookDetail(book)} onEdit={() => setBookToEdit(book)} onDelete={() => setBookToDelete(book)} onArchive={async () => {
+                        <BookActionsMenu isDarkMode={isDarkMode} isArchived={Boolean(book.isArchived)} onViewDetails={() => onOpenBookDetail(book)} onEdit={() => setBookToEdit(book)} onDelete={() => setBookToDelete(book)} onArchive={async () => {
                           try {
+                            const nextArchived = !book.isArchived
+                            const availableCopies = Number(book.available.split(' / ')[0] || '0')
                             await updateBook({
                               id: book.id,
                               title: book.title,
@@ -782,14 +874,19 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
                               category: book.category === 'Uncategorized' ? null : book.category,
                               isbn: book.isbn === '-' ? null : book.isbn,
                               coverData: book.cover.startsWith('data:') ? book.cover : null,
-                              available: Number(book.available.split(' / ')[0] || '0'),
+                              available: availableCopies,
                               totalCopies: Number(book.available.split(' / ')[1] || '1'),
-                              isArchived: true,
+                              isArchived: nextArchived,
                             })
-                            setBookList(prev => prev.map(b => b.id === book.id ? { ...b, status: 'Archived', isArchived: true } : b))
-                            setShowToast(`Successfully archived "${book.title}"`)
+                            setBookList(prev => prev.map(b => b.id === book.id ? {
+                              ...b,
+                              status: nextArchived ? 'Archived' : (availableCopies > 0 ? 'Available' : 'Borrowed'),
+                              isArchived: nextArchived,
+                            } : b))
+                            setShowToast(`Successfully ${nextArchived ? 'archived' : 'unarchived'} "${book.title}"`)
                           } catch (error) {
-                            console.error('Failed to archive book:', error)
+                            console.error('Failed to update book archive status:', error)
+                            setShowToast('Failed to update the book archive status.')
                           }
                         }} />
                       </td>
@@ -815,8 +912,10 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
                       )}
                     </span>
                     <div className="flex flex-col items-end gap-2">
-                      <span className={`rounded-md px-2.5 py-1 text-xs font-semibold ${getStatusClass(book.status, isDarkMode)}`}>{book.status}</span>
-                      <p className={`text-xs font-semibold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>{book.available} copies</p>
+                      <span className={`rounded-md px-2.5 py-1 text-xs font-semibold ${getStatusClass(getDisplayedStatus(book), isDarkMode)}`}>{getDisplayedStatus(book)}</span>
+                      <p className={`text-xs font-semibold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>
+                        {getDisplayedCopies(book)} {activeStatTab === 'Borrowed' ? 'borrowed' : 'available'}
+                      </p>
                     </div>
                   </div>
 
@@ -829,8 +928,10 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
                   <div className="mt-auto pt-3">
                     <div className="flex items-center justify-between">
                       <span className={`text-sm ${isDarkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>{book.category}</span>
-                      <BookActionsMenu isDarkMode={isDarkMode} onViewDetails={() => onOpenBookDetail(book)} onEdit={() => setBookToEdit(book)} onDelete={() => setBookToDelete(book)} onArchive={async () => {
+                      <BookActionsMenu isDarkMode={isDarkMode} isArchived={Boolean(book.isArchived)} onViewDetails={() => onOpenBookDetail(book)} onEdit={() => setBookToEdit(book)} onDelete={() => setBookToDelete(book)} onArchive={async () => {
                         try {
+                          const nextArchived = !book.isArchived
+                          const availableCopies = Number(book.available.split(' / ')[0] || '0')
                           await updateBook({
                             id: book.id,
                             title: book.title,
@@ -838,14 +939,19 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, refresh
                             category: book.category === 'Uncategorized' ? null : book.category,
                             isbn: book.isbn === '-' ? null : book.isbn,
                             coverData: book.cover.startsWith('data:') ? book.cover : null,
-                            available: Number(book.available.split(' / ')[0] || '0'),
+                            available: availableCopies,
                             totalCopies: Number(book.available.split(' / ')[1] || '1'),
-                            isArchived: true,
+                            isArchived: nextArchived,
                           })
-                          setBookList(prev => prev.map(b => b.id === book.id ? { ...b, status: 'Archived', isArchived: true } : b))
-                          setShowToast(`Successfully archived "${book.title}"`)
+                          setBookList(prev => prev.map(b => b.id === book.id ? {
+                            ...b,
+                            status: nextArchived ? 'Archived' : (availableCopies > 0 ? 'Available' : 'Borrowed'),
+                            isArchived: nextArchived,
+                          } : b))
+                          setShowToast(`Successfully ${nextArchived ? 'archived' : 'unarchived'} "${book.title}"`)
                         } catch (error) {
-                          console.error('Failed to archive book:', error)
+                          console.error('Failed to update book archive status:', error)
+                          setShowToast('Failed to update the book archive status.')
                         }
                       }} />
                     </div>
