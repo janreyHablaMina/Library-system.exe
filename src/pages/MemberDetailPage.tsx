@@ -45,6 +45,8 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
       const dateJoined = dbMember.createdAt
         ? new Date(dbMember.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
         : 'N/A'
+
+
       return {
         name: dbMember.fullName,
         memberId: dbMember.memberId,
@@ -62,7 +64,7 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
         department: dbMember.department || 'General',
         status: (dbMember.status as 'Active' | 'Inactive' | 'Suspended') || 'Active',
         dateJoined,
-        memberSince: 'N/A',
+        memberSince: dateJoined,
         lastUpdated: 'Synced from database',
         totalLoans: dbMember.borrowed,
         currentLoans: currentLoans.length,
@@ -318,8 +320,6 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
                 </div>
 
                 <div className={`mt-5 space-y-2 text-sm ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>
-                  <p className="flex items-center gap-2.5"><Mail size={15} className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} />{member.email}</p>
-                  <p className="flex items-center gap-2.5"><Phone size={15} className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} />{member.phone}</p>
                   <p className="flex items-start gap-2.5"><MapPin size={15} className={`${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} mt-0.5`} /><span>{member.address}</span></p>
                 </div>
               </div>
@@ -332,8 +332,8 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
             </div>
             <div className="space-y-4">
               <Meta icon={<Calendar size={15} className="text-emerald-500" />} label="Date Joined" value={member.dateJoined} isDarkMode={isDarkMode} />
-              <Meta icon={<Clock size={15} className="text-emerald-500" />} label="Member Since" value={member.memberSince} isDarkMode={isDarkMode} />
-              <Meta icon={<RefreshCw size={15} className="text-emerald-500" />} label="Last Updated" value={member.lastUpdated} isDarkMode={isDarkMode} />
+              <Meta icon={<Mail size={15} className="text-emerald-500" />} label="Email Address" value={member.email} isDarkMode={isDarkMode} />
+              <Meta icon={<Phone size={15} className="text-emerald-500" />} label="Contact Number" value={member.phone} isDarkMode={isDarkMode} />
             </div>
 
           </div>
@@ -342,10 +342,11 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
         <section className={cardClass}>
           <CardHeader title="Membership Summary" isDarkMode={isDarkMode} />
           <div className="px-6 pb-5">
-            <div className={`grid grid-cols-1 sm:grid-cols-3 ${isDarkMode ? 'divide-zinc-800' : 'divide-zinc-200'} sm:divide-x`}>
+            <div className={`grid grid-cols-2 sm:grid-cols-4 ${isDarkMode ? 'divide-zinc-800' : 'divide-zinc-200'} divide-x`}>
               <Summary icon={<BookOpen size={17} className="text-emerald-500" />} value={String(d.totalLoans)} label="Total Loans" sub="(All Time)" />
               <Summary icon={<Bookmark size={17} className="text-indigo-500" />} value={String(d.currentLoans)} label="Books Currently" sub="Borrowed" />
               <Summary icon={<Calendar size={17} className="text-amber-500" />} value={String(d.reservationsCount)} label="Reservations" />
+              <Summary icon={<Activity size={17} className="text-rose-500" />} value={d.fines} label="Fines & Penalties" />
             </div>
           </div>
         </section>
@@ -480,7 +481,7 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
 
       {isEditOpen ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-zinc-900/45 p-4">
-          <section className={`w-full max-w-5xl rounded-2xl border shadow-2xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
+          <section className={`w-full max-w-2xl rounded-2xl border shadow-2xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
             <div className={`flex items-start justify-between border-b px-6 py-5 ${isDarkMode ? 'border-zinc-700' : 'border-zinc-200'}`}>
               <div>
                 <h3 className={`text-3xl font-black ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Edit Member</h3>

@@ -1016,7 +1016,7 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
 
       {isAddModalOpen ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-zinc-900/45 p-4 backdrop-blur-[1px]">
-          <section className={`w-full max-w-4xl rounded-2xl border shadow-2xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
+          <section className={`w-full max-w-2xl rounded-2xl border shadow-2xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
             <div className={`flex items-start justify-between border-b px-6 py-5 ${isDarkMode ? 'border-zinc-700' : 'border-zinc-200'}`}>
               <div>
                 <h3 className={`text-3xl font-black ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{memberToEdit ? 'Edit Member Profile' : 'Add New Member'}</h3>
