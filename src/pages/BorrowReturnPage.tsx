@@ -251,10 +251,17 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 
     return () => clearTimeout(timer)
   }, [showToast])
 
-  const filteredMembersList = useMemo(() => members.filter((m) =>
-    m.name.toLowerCase().includes(memberSearchQuery.toLowerCase()) ||
-    m.memberId.toLowerCase().includes(memberSearchQuery.toLowerCase()),
-  ), [members, memberSearchQuery])
+  const filteredMembersList = useMemo(() => {
+    let source = members
+    if (activeTab === 'return') {
+      const activeMemberIds = new Set(activeRows.map(r => r.memberId))
+      source = source.filter(m => activeMemberIds.has(m.memberId))
+    }
+    return source.filter((m) =>
+      m.name.toLowerCase().includes(memberSearchQuery.toLowerCase()) ||
+      m.memberId.toLowerCase().includes(memberSearchQuery.toLowerCase()),
+    )
+  }, [members, memberSearchQuery, activeTab, activeRows])
 
   const borrowModeBooks = useMemo(() => books.filter((b) => b.available), [books])
 
@@ -385,28 +392,42 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 
                   </div>
                 )}
 
-                {selectedMember ? (
-                  <div className={`rounded-xl border p-3 ${isDarkMode ? 'border-emerald-500/30 bg-emerald-500/10' : 'border-emerald-200 bg-emerald-50/40'}`}>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <span className={`grid h-10 w-10 place-items-center overflow-hidden rounded-full ${isDarkMode ? 'bg-zinc-800' : 'bg-white'}`}>
+                {selectedMember && (
+                  <div className={`relative rounded-xl border p-3 animate-[fadeIn_0.15s_ease-out] ${isDarkMode ? 'border-zinc-700 bg-[#27272A]' : 'border-zinc-200 bg-zinc-50/40'}`}>
+                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <span className={`grid h-10 w-10 place-items-center overflow-hidden rounded-full text-base ${isDarkMode ? 'bg-zinc-800' : 'bg-white border'}`}>
                           {getMemberPhotoSrc(selectedMember.profilePhotoData) ? (
-                            <img src={getMemberPhotoSrc(selectedMember.profilePhotoData) as string} alt={`${selectedMember.name} avatar`} className="h-full w-full object-cover" />
+                            <img src={getMemberPhotoSrc(selectedMember.profilePhotoData) as string} alt={`${selectedMember.name} profile`} className="h-full w-full object-cover" />
                           ) : (
                             selectedMember.avatar
                           )}
                         </span>
-                        <div>
-                          <p className={`font-semibold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{selectedMember.name}</p>
-                          <p className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{selectedMember.memberId} • {selectedMember.type}</p>
+                        <div className="min-w-0">
+                          <p className={`truncate font-semibold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{selectedMember.name}</p>
+                          <p className={`truncate text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{selectedMember.memberId} • {selectedMember.type}</p>
                         </div>
                       </div>
-                      <button type="button" onClick={() => setSelectedMember(null)} className={`grid h-8 w-8 place-items-center rounded-lg border ${isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-600 hover:bg-zinc-100'}`}>
-                        <X size={14} />
-                      </button>
+                      <div className="flex items-center gap-4 md:gap-6">
+                        <div className="text-xs md:text-center">
+                          <p className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}>Borrowed Books</p>
+                          <p className={`text-base font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-800'}`}>{selectedMember.borrowedCount}</p>
+                        </div>
+                        <div className="text-xs md:text-center">
+                          <p className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}>Available Limit</p>
+                          <p className={`text-base font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-800'}`}>{selectedMember.limit}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedMember(null)}
+                          className={`grid h-8 w-8 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200' : 'border-zinc-200 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700'}`}
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                ) : null}
+                )}
               </div>
 
               <div className="relative space-y-2" ref={bookDropdownRef}>
@@ -456,30 +477,39 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 
                   </div>
                 )}
 
-                {selectedBook ? (
-                  <div className={`rounded-xl border p-3 ${isDarkMode ? 'border-emerald-500/30 bg-emerald-500/10' : 'border-emerald-200 bg-emerald-50/40'}`}>
-                    <div className="flex items-center justify-between">
+                {selectedBook && (
+                  <div className={`relative rounded-xl border p-3 animate-[fadeIn_0.15s_ease-out] ${isDarkMode ? 'border-zinc-700 bg-[#27272A]' : 'border-zinc-200 bg-zinc-50/40'}`}>
+                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                       <div className="flex items-center gap-3">
-                        <span className={`grid h-12 w-9 place-items-center overflow-hidden rounded ${isDarkMode ? 'bg-zinc-800' : 'bg-white'}`}>
-                          {getBookCoverSrc(selectedBook.coverData) ? (
-                            <img src={getBookCoverSrc(selectedBook.coverData) as string} alt={`${selectedBook.title} cover`} className="h-full w-full object-cover" />
-                          ) : (
-                            selectedBook.icon
-                          )}
-                        </span>
+                        {getBookCoverSrc(selectedBook.coverData) ? (
+                          <img src={getBookCoverSrc(selectedBook.coverData) as string} alt={selectedBook.title} className="w-11 h-16 rounded object-cover border border-zinc-200 dark:border-zinc-800 shrink-0" />
+                        ) : (
+                          <span className={`grid w-11 h-16 place-items-center overflow-hidden rounded border shrink-0 ${isDarkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-white border-zinc-200'}`}>
+                            {selectedBook.icon}
+                          </span>
+                        )}
                         <div>
                           <p className={`font-semibold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{selectedBook.title}</p>
                           <p className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Author: {selectedBook.author}</p>
-                          <p className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>ISBN: {selectedBook.isbn}</p>
-                          <p className={`text-xs font-bold ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>Available: {selectedBook.availableCopies} / {selectedBook.totalCopies}</p>
+                          <p className={`mt-1 text-xs ${isDarkMode ? 'text-zinc-300' : 'text-zinc-600'}`}>ISBN: {selectedBook.isbn} • Copy ID: {selectedBook.copyId}</p>
                         </div>
                       </div>
-                      <button type="button" onClick={() => setSelectedBook(null)} className={`grid h-8 w-8 place-items-center rounded-lg border ${isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-600 hover:bg-zinc-100'}`}>
-                        <X size={14} />
-                      </button>
+                      <div className="flex items-center gap-4 md:gap-6">
+                        <div className="text-right text-xs">
+                          <p className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}>Available Copies</p>
+                          <p className={`text-xl font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-800'}`}>{selectedBook.availableCopies}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedBook(null)}
+                          className={`grid h-8 w-8 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200' : 'border-zinc-200 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700'}`}
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                ) : null}
+                )}
               </div>
 
               {activeTab === 'borrow' ? (
@@ -523,7 +553,7 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 
             <article className={`overflow-hidden rounded-xl border ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
               <div className={`flex items-center justify-between border-b p-4 ${isDarkMode ? 'border-zinc-700' : 'border-zinc-200'}`}>
                 <div>
-                  <h3 className={`text-[18px] font-medium ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Current Borrowed Books ({activeRows.length})</h3>
+                  <h3 className={`text-[18px] font-medium ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Current Borrowed Books</h3>
                   <p className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Books currently borrowed by members.</p>
                 </div>
                 <button type="button" onClick={() => onOpenTransactions('borrowed')} className="text-sm font-semibold text-emerald-700 hover:underline">View all →</button>
@@ -532,17 +562,17 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 
                 <table className="w-full text-left text-sm">
                   <thead className={isDarkMode ? 'bg-[#27272A]/50 text-zinc-400' : 'bg-zinc-50 text-zinc-600'}>
                     <tr>
-                      <th className="px-3 py-3 text-xs font-semibold uppercase">Member</th>
-                      <th className="px-3 py-3 text-xs font-semibold uppercase">Book</th>
-                      <th className="px-3 py-3 text-xs font-semibold uppercase">Borrow Date</th>
-                      <th className="px-3 py-3 text-xs font-semibold uppercase">Due Date</th>
-                      <th className="px-3 py-3 text-xs font-semibold uppercase">Status</th>
+                      <th className="px-3 py-3 text-xs font-semibold uppercase whitespace-nowrap">Member</th>
+                      <th className="px-3 py-3 text-xs font-semibold uppercase whitespace-nowrap">Book</th>
+                      <th className="px-3 py-3 text-xs font-semibold uppercase whitespace-nowrap">Borrow Date</th>
+                      <th className="px-3 py-3 text-xs font-semibold uppercase whitespace-nowrap">Due Date</th>
+                      <th className="px-3 py-3 text-xs font-semibold uppercase whitespace-nowrap">Status</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {activeRows.map((row) => (
+                    {activeRows.slice(0, 4).map((row) => (
                       <tr key={row.id} className={`border-t ${isDarkMode ? 'border-zinc-700' : 'border-zinc-100'}`}>
-                        <td className="px-3 py-3">
+                        <td className="px-3 py-3 whitespace-nowrap">
                           <div className="flex items-center gap-2.5">
                             <span className={`grid h-8 w-8 place-items-center overflow-hidden rounded-full ${isDarkMode ? 'bg-zinc-800' : 'bg-zinc-100'}`}>
                               {getMemberPhotoSrc(row.profilePhotoData) ? (
@@ -557,13 +587,13 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 
                             </span>
                           </div>
                         </td>
-                        <td className="px-3 py-3">
+                        <td className="px-3 py-3 whitespace-nowrap">
                           <p className={`font-semibold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{row.book}</p>
                           <p className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Copy ID: {row.copyId}</p>
                         </td>
-                        <td className={`px-3 py-3 ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>{row.borrowDate}</td>
-                        <td className={`px-3 py-3 ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>{row.dueDate}</td>
-                        <td className="px-3 py-3"><span className={`rounded-md px-2.5 py-1 text-xs font-semibold ${getStatusClass(row.status)}`}>{row.status}</span></td>
+                        <td className={`px-3 py-3 whitespace-nowrap ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>{row.borrowDate}</td>
+                        <td className={`px-3 py-3 whitespace-nowrap ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>{row.dueDate}</td>
+                        <td className="px-3 py-3 whitespace-nowrap"><span className={`rounded-md px-2.5 py-1 text-xs font-semibold ${getStatusClass(row.status)}`}>{row.status}</span></td>
                       </tr>
                     ))}
                   </tbody>
@@ -574,7 +604,7 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 
             <article className={`overflow-hidden rounded-xl border ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
               <div className={`flex items-center justify-between border-b p-4 ${isDarkMode ? 'border-zinc-700' : 'border-zinc-200'}`}>
                 <div>
-                  <h3 className={`text-[18px] font-medium ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Recent Returned ({returnedRows.length})</h3>
+                  <h3 className={`text-[18px] font-medium ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Recent Returned</h3>
                   <p className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Recently returned books.</p>
                 </div>
                 <button type="button" onClick={() => onOpenTransactions('returned')} className="text-sm font-semibold text-emerald-700 hover:underline">View all →</button>
@@ -583,16 +613,16 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 
                 <table className="w-full text-left text-sm">
                   <thead className={isDarkMode ? 'bg-[#27272A]/50 text-zinc-400' : 'bg-zinc-50 text-zinc-600'}>
                     <tr>
-                      <th className="px-3 py-3 text-xs font-semibold uppercase">Member</th>
-                      <th className="px-3 py-3 text-xs font-semibold uppercase">Book</th>
-                      <th className="px-3 py-3 text-xs font-semibold uppercase">Returned Date</th>
-                      <th className="px-3 py-3 text-xs font-semibold uppercase">Fine</th>
+                      <th className="px-3 py-3 text-xs font-semibold uppercase whitespace-nowrap">Member</th>
+                      <th className="px-3 py-3 text-xs font-semibold uppercase whitespace-nowrap">Book</th>
+                      <th className="px-3 py-3 text-xs font-semibold uppercase whitespace-nowrap">Returned Date</th>
+                      <th className="px-3 py-3 text-xs font-semibold uppercase whitespace-nowrap">Fine</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {returnedRows.map((row) => (
+                    {returnedRows.slice(0, 3).map((row) => (
                       <tr key={row.id} className={`border-t ${isDarkMode ? 'border-zinc-700' : 'border-zinc-100'}`}>
-                        <td className="px-3 py-3">
+                        <td className="px-3 py-3 whitespace-nowrap">
                           <div className="flex items-center gap-2.5">
                             <span className={`grid h-8 w-8 place-items-center overflow-hidden rounded-full ${isDarkMode ? 'bg-zinc-800' : 'bg-zinc-100'}`}>
                               {getMemberPhotoSrc(row.profilePhotoData) ? (
@@ -607,12 +637,12 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 
                             </span>
                           </div>
                         </td>
-                        <td className="px-3 py-3">
+                        <td className="px-3 py-3 whitespace-nowrap">
                           <p className={`font-semibold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{row.book}</p>
                           <p className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Copy ID: {row.copyId}</p>
                         </td>
-                        <td className={`px-3 py-3 ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>{row.returnedDate}</td>
-                        <td className="px-3 py-3"><span className={`rounded-md px-2.5 py-1 text-xs font-semibold ${getFineClass(row.fineType)}`}>{row.fine}</span></td>
+                        <td className={`px-3 py-3 whitespace-nowrap ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>{row.returnedDate}</td>
+                        <td className="px-3 py-3 whitespace-nowrap"><span className={`rounded-md px-2.5 py-1 text-xs font-semibold ${getFineClass(row.fineType)}`}>{row.fine}</span></td>
                       </tr>
                     ))}
                   </tbody>
