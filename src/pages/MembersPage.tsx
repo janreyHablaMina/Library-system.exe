@@ -79,6 +79,8 @@ type MemberActionsMenuProps = {
   onViewDetails: () => void
   onEdit: () => void
   onDelete: () => void
+  onSendEmail?: () => void
+  onSendSms?: () => void
 }
 
 function MemberActionsMenu({ isDarkMode, onViewDetails, onEdit, onDelete, onSendEmail, onSendSms }: MemberActionsMenuProps) {
@@ -124,14 +126,14 @@ function MemberActionsMenu({ isDarkMode, onViewDetails, onEdit, onDelete, onSend
         type="button"
         id={`member-actions-btn-${Math.random()}`}
         onClick={handleToggle}
-        className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border transition-colors duration-150 ${
+        className={`inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors duration-150 ${
           open
             ? isDarkMode
-              ? 'border-zinc-500 bg-zinc-700 text-zinc-100'
-              : 'border-emerald-300 bg-emerald-50 text-emerald-700'
+              ? 'bg-zinc-700 text-zinc-100'
+              : 'bg-emerald-50 text-emerald-700'
             : isDarkMode
-              ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'
-              : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'
+              ? 'text-zinc-300 hover:bg-zinc-800'
+              : 'text-zinc-600 hover:bg-zinc-50'
         }`}
         aria-label="Member actions"
         aria-haspopup="menu"
@@ -179,6 +181,28 @@ function MemberActionsMenu({ isDarkMode, onViewDetails, onEdit, onDelete, onSend
             <Pencil size={15} className="shrink-0 text-violet-500" />
             Edit Profile
           </button>
+          {onSendEmail && (
+            <button
+              type="button"
+              className={`${itemBase} ${itemNormal}`}
+              role="menuitem"
+              onClick={() => { setOpen(false); onSendEmail(); }}
+            >
+              <Mail size={15} className="shrink-0 text-blue-500" />
+              Send Email
+            </button>
+          )}
+          {onSendSms && (
+            <button
+              type="button"
+              className={`${itemBase} ${itemNormal}`}
+              role="menuitem"
+              onClick={() => { setOpen(false); onSendSms(); }}
+            >
+              <Phone size={15} className="shrink-0 text-amber-500" />
+              Send SMS
+            </button>
+          )}
 
           <div className={`my-1.5 border-t ${divider}`} />
 
@@ -346,6 +370,60 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
     setSelectedStatus('All')
     setselectedType('All')
     setActiveStatTab('All Members')
+  }
+
+  const handleExportMembers = () => {
+    if (filteredMembers.length === 0) {
+      setShowToast('No members match the current filters.')
+      return
+    }
+
+    const escapeCsvValue = (value: string | number) => {
+      const text = String(value)
+      return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text
+    }
+
+    const headers = [
+      'ID',
+      'Name',
+      'Email',
+      'Member ID',
+      'Type',
+      'Department',
+      'Year/Role',
+      'Contact',
+      'Borrowed Books',
+      'Status',
+    ]
+
+    const rows = filteredMembers.map((member) => {
+      return [
+        member.id,
+        member.name,
+        member.email,
+        member.memberId,
+        member.type,
+        member.department,
+        member.yearOrRole,
+        member.contact,
+        member.borrowed,
+        member.status,
+      ].map(escapeCsvValue).join(',')
+    })
+
+    const csv = `\uFEFF${headers.map(escapeCsvValue).join(',')}\r\n${rows.join('\r\n')}`
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    const date = new Date().toISOString().slice(0, 10)
+
+    link.href = url
+    link.download = `members-export-${date}.csv`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+    setShowToast(`Exported ${filteredMembers.length} member${filteredMembers.length === 1 ? '' : 's'} to CSV.`)
   }
 
   const handleMemberFormChange = (field: keyof MemberFormState, value: string) => {
@@ -592,7 +670,7 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
             <SendSmsModal
         isOpen={!!smsMember}
         onClose={() => setSmsMember(null)}
-        member={smsMember ? { id: smsMember.id, fullName: smsMember.name, phone: smsMember.phone !== 'n/a' ? smsMember.phone : null } : { id: 0, fullName: '', phone: null }}
+        member={smsMember ? { id: smsMember.id, fullName: smsMember.name, phone: smsMember.contact !== 'n/a' ? smsMember.contact : null } : { id: 0, fullName: '', phone: null }}
         onSuccess={() => setShowToast('SMS sent successfully!')}
         isDarkMode={isDarkMode}
       />
@@ -608,7 +686,7 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
               <UserPlus size={15} />
               Add Member
             </button>
-            <button type="button" className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-semibold ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
+            <button type="button" onClick={handleExportMembers} className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-semibold ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
               <Download size={15} />
               Export
             </button>
@@ -825,6 +903,8 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
                           onViewDetails={() => onOpenMemberDetail(member.id)}
                           onEdit={() => handleOpenEditModal(member)}
                           onDelete={() => setMemberToDelete(member)}
+                          onSendEmail={() => setEmailMember(member)}
+                          onSendSms={() => setSmsMember(member)}
                         />
                       </td>
                     </tr>
@@ -873,6 +953,8 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
                         onViewDetails={() => onOpenMemberDetail(member.id)}
                         onEdit={() => handleOpenEditModal(member)}
                         onDelete={() => setMemberToDelete(member)}
+                        onSendEmail={() => setEmailMember(member)}
+                        onSendSms={() => setSmsMember(member)}
                       />
                     </div>
                   </div>
@@ -1005,23 +1087,20 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
                     onChange={handleProfilePhotoChange}
                   />
                   <div className="flex items-center gap-3">
-                    <div className={`grid h-10 w-10 place-items-center overflow-hidden rounded-full ${isDarkMode ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-100 text-zinc-600'}`}>
+                    <div className={`grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-full border border-dashed ${isDarkMode ? 'border-zinc-700 bg-zinc-800/50 text-zinc-300' : 'border-zinc-300 bg-zinc-50 text-zinc-500'}`}>
                       {profilePhotoPreview ? (
                         <img src={profilePhotoPreview} alt="Profile preview" className="h-full w-full object-cover" />
                       ) : (
-                        <Users size={16} />
+                        <Users size={24} />
                       )}
                     </div>
                     <button
                       type="button"
                       onClick={() => photoInputRef.current?.click()}
-                      className={`h-10 rounded-lg border px-4 text-sm font-semibold ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}
+                      className={`h-10 shrink-0 rounded-lg border px-4 text-sm font-semibold ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}
                     >
                       Upload Photo
                     </button>
-                    <span className={`text-xs ${isDarkMode ? 'text-zinc-500' : 'text-zinc-500'}`}>
-                      {profilePhotoName || 'JPG, PNG (Max 2MB)'}
-                    </span>
                   </div>
                 </div>
                 <div>
