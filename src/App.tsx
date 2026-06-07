@@ -175,6 +175,7 @@ function DashboardShell({ onLogout, licenseStatus, trialSeconds }: { onLogout: (
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [activePage, setActivePage] = useState<ActivePage>('Dashboard')
+  const [booksInitialCategory, setBooksInitialCategory] = useState<string | null>(null)
   const [activeSettingsTab, setActiveSettingsTab] = useState('Overview')
   const [reservationInitialBookId, setReservationInitialBookId] = useState<number | null>(null)
   const [emailLogStatusFilter, setEmailLogStatusFilter] = useState('')
@@ -813,6 +814,7 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
                         key={item.id}
                         onClick={() => {
                           setActivePage(item.id as any)
+                          if (item.id === 'Books') setBooksInitialCategory(null)
                           if (item.id === 'Members') setMemberAddModalTrigger(0)
                         }}
                         className={`group flex w-full items-center gap-3 rounded-xl py-2.5 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-1' : 'px-3'} ${
@@ -958,6 +960,7 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
                                     onClick={() => {
                                       setIsSearchFocused(false);
                                       setSearchQuery('');
+                                      setBooksInitialCategory(null);
                                       setActivePage('Books');
                                       setIsAddBookOpen(false);
                                       listBooks().then(books => {
@@ -1385,6 +1388,7 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
                   setBorrowReturnActiveTab('borrow')
                   setActivePage('Transactions')
                 }}
+                initialCategoryFilter={booksInitialCategory}
               />
             )
           ) : activePage === 'Members' ? (
@@ -1465,7 +1469,13 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
               />
             )
           ) : activePage === 'Categories' ? (
-            <CategoriesPage isDarkMode={isDarkMode} />
+            <CategoriesPage 
+              isDarkMode={isDarkMode} 
+              onViewBooks={(categoryName) => {
+                setBooksInitialCategory(categoryName)
+                setActivePage('Books')
+              }}
+            />
           ) : activePage === 'Reservations' ? (
             <ReservationsPage
               isDarkMode={isDarkMode}

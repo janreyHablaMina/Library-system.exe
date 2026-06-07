@@ -38,6 +38,7 @@ type BooksPageProps = {
   refreshKey?: number
   externalToastMessage?: string | null
   onExternalToastConsumed?: () => void
+  initialCategoryFilter?: string | null
 }
 
 const initialBooks: BookRow[] = [
@@ -238,7 +239,7 @@ function BookActionsMenu({ isDarkMode, isArchived, onViewDetails, onEdit, onRese
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
-export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, onReserveBook, onBorrowBook, refreshKey = 0, externalToastMessage = null, onExternalToastConsumed }: BooksPageProps) {
+export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, onReserveBook, onBorrowBook, refreshKey = 0, externalToastMessage = null, onExternalToastConsumed, initialCategoryFilter = null }: BooksPageProps) {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
   const [bookList, setBookList] = useState<BookRow[]>(initialBooks)
   const [bookToDelete, setBookToDelete] = useState<BookRow | null>(null)
@@ -281,8 +282,14 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, onReser
 
   // Filter States
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('All')
+  const [selectedCategory, setSelectedCategory] = useState(initialCategoryFilter || 'All')
   const [selectedAuthor, setSelectedAuthor] = useState('All')
+
+  useEffect(() => {
+    if (initialCategoryFilter) {
+      setSelectedCategory(initialCategoryFilter)
+    }
+  }, [initialCategoryFilter])
 
   // Dynamically compute unique categories and authors
   const uniqueCategories = useMemo(() => {

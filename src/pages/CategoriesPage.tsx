@@ -11,7 +11,6 @@ type CategoryRow = {
   icon: LucideIcon
   description: string
   books: number
-  status: 'Active' | 'Inactive'
   createdOn: string
   createdTime: string
   color: string
@@ -19,18 +18,17 @@ type CategoryRow = {
 
 type CategoriesPageProps = {
   isDarkMode: boolean
+  onViewBooks?: (categoryName: string) => void
 }
 
 type CategoryFormState = {
   name: string
   description: string
-  status: string
 }
 
 const initialFormState: CategoryFormState = {
   name: '',
   description: '',
-  status: 'Active',
 }
 
 const stats = [
@@ -42,14 +40,14 @@ const stats = [
 ]
 
 const categoriesData: CategoryRow[] = [
-  { id: 1, name: 'Fiction', icon: BookOpen, description: 'Novels and fictional works', books: 2317, status: 'Active', createdOn: 'May 10, 2026', createdTime: '10:15 AM', color: 'text-emerald-600' },
-  { id: 2, name: 'Science', icon: Atom, description: 'Books related to natural and applied sciences', books: 1850, status: 'Active', createdOn: 'May 8, 2026', createdTime: '02:30 PM', color: 'text-blue-600' },
-  { id: 3, name: 'Technology', icon: Monitor, description: 'Technology, IT and computer related books', books: 1245, status: 'Active', createdOn: 'May 7, 2026', createdTime: '11:20 AM', color: 'text-orange-500' },
-  { id: 4, name: 'History', icon: Library, description: 'Historical events and civilizations', books: 794, status: 'Active', createdOn: 'May 6, 2026', createdTime: '09:45 AM', color: 'text-violet-600' },
-  { id: 5, name: 'Education', icon: GraduationCap, description: 'Teaching, learning and educational resources', books: 1125, status: 'Active', createdOn: 'May 5, 2026', createdTime: '03:10 PM', color: 'text-emerald-500' },
-  { id: 6, name: 'Language', icon: Globe, description: 'Languages, dictionaries and reference', books: 533, status: 'Active', createdOn: 'May 2, 2026', createdTime: '10:50 AM', color: 'text-amber-500' },
-  { id: 7, name: 'Arts & Recreation', icon: Palette, description: 'Art, music, sports and hobbies', books: 410, status: 'Inactive', createdOn: 'Apr 30, 2026', createdTime: '01:25 PM', color: 'text-zinc-600' },
-  { id: 8, name: 'Business', icon: Briefcase, description: 'Business, management and finance', books: 345, status: 'Active', createdOn: 'Apr 28, 2026', createdTime: '09:05 AM', color: 'text-rose-500' },
+  { id: 1, name: 'Fiction', icon: BookOpen, description: 'Novels and fictional works', books: 2317, createdOn: 'May 10, 2026', createdTime: '10:15 AM', color: 'text-emerald-600' },
+  { id: 2, name: 'Science', icon: Atom, description: 'Books related to natural and applied sciences', books: 1850, createdOn: 'May 8, 2026', createdTime: '02:30 PM', color: 'text-blue-600' },
+  { id: 3, name: 'Technology', icon: Monitor, description: 'Technology, IT and computer related books', books: 1245, createdOn: 'May 7, 2026', createdTime: '11:20 AM', color: 'text-orange-500' },
+  { id: 4, name: 'History', icon: Library, description: 'Historical events and civilizations', books: 794, createdOn: 'May 6, 2026', createdTime: '09:45 AM', color: 'text-violet-600' },
+  { id: 5, name: 'Education', icon: GraduationCap, description: 'Teaching, learning and educational resources', books: 1125, createdOn: 'May 5, 2026', createdTime: '03:10 PM', color: 'text-emerald-500' },
+  { id: 6, name: 'Language', icon: Globe, description: 'Languages, dictionaries and reference', books: 533, createdOn: 'May 2, 2026', createdTime: '10:50 AM', color: 'text-amber-500' },
+  { id: 7, name: 'Arts & Recreation', icon: Palette, description: 'Art, music, sports and hobbies', books: 410, createdOn: 'Apr 30, 2026', createdTime: '01:25 PM', color: 'text-zinc-600' },
+  { id: 8, name: 'Business', icon: Briefcase, description: 'Business, management and finance', books: 345, createdOn: 'Apr 28, 2026', createdTime: '09:05 AM', color: 'text-rose-500' },
 ]
 
 type CategoryActionsMenuProps = {
@@ -57,10 +55,11 @@ type CategoryActionsMenuProps = {
   onViewDetails: (category: CategoryRow) => void
   onEdit: (category: CategoryRow) => void
   onDelete: (category: CategoryRow) => void
+  onViewBooks?: (categoryName: string) => void
   isDarkMode: boolean
 }
 
-function CategoryActionsMenu({ category, onEdit, onDelete, isDarkMode }: CategoryActionsMenuProps) {
+function CategoryActionsMenu({ category, onEdit, onDelete, onViewBooks, isDarkMode }: CategoryActionsMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -88,10 +87,10 @@ function CategoryActionsMenu({ category, onEdit, onDelete, isDarkMode }: Categor
       <button
         onClick={handleToggle}
         type="button"
-        className={`grid h-8 w-8 place-items-center rounded-lg border transition-all ${
+        className={`grid h-8 w-8 place-items-center rounded-lg transition-all ${
           isDarkMode
-            ? 'border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
-            : 'border-zinc-200 text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700'
+            ? 'text-zinc-400 hover:bg-zinc-800/80 hover:text-zinc-200'
+            : 'text-zinc-500 hover:bg-zinc-100/80 hover:text-zinc-700'
         }`}
       >
         <MoreHorizontal size={16} />
@@ -115,6 +114,19 @@ function CategoryActionsMenu({ category, onEdit, onDelete, isDarkMode }: Categor
             <Pencil size={13} className="text-emerald-500" />
             Edit Info
           </button>
+          
+          {onViewBooks && (
+            <button
+              onClick={() => { setIsOpen(false); onViewBooks(category.name) }}
+              type="button"
+              className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors ${
+                isDarkMode ? 'hover:bg-zinc-800' : 'hover:bg-zinc-50'
+              }`}
+            >
+              <BookOpen size={13} className="text-sky-500" />
+              View Books
+            </button>
+          )}
 
           <div className={`my-1 border-t ${isDarkMode ? 'border-zinc-700' : 'border-zinc-100'}`} />
 
@@ -134,7 +146,7 @@ function CategoryActionsMenu({ category, onEdit, onDelete, isDarkMode }: Categor
   )
 }
 
-export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
+export function CategoriesPage({ isDarkMode, onViewBooks }: CategoriesPageProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [categoryForm, setCategoryForm] = useState<CategoryFormState>(initialFormState)
   const [categoryToEdit, setCategoryToEdit] = useState<CategoryRow | null>(null)
@@ -144,7 +156,8 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
   const [categoriesList, setCategoriesList] = useState<CategoryRow[]>(categoriesData)
   const [showToast, setShowToast] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState('All')
+  const [nameSort, setNameSort] = useState('None')
+  const [bookSort, setBookSort] = useState('None')
   const selectAllRef = useRef<HTMLInputElement>(null)
 
   const [currentPage, setCurrentPage] = useState(1)
@@ -152,19 +165,20 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchTerm, statusFilter, itemsPerPage])
+  }, [searchTerm, nameSort, bookSort, itemsPerPage])
 
   const [booksCount, setBooksCount] = useState(0)
 
-  const toCategoryRow = (category: DbCategory): CategoryRow => {
+  const toCategoryRow = (category: DbCategory, booksList: any[]): CategoryRow => {
     const created = category.createdAt ? new Date(category.createdAt) : new Date()
+    const catNameStr = (category.name || '').toLowerCase().trim()
+    const count = booksList.filter(b => (b.category || '').toLowerCase().trim() === catNameStr).length
     return {
       id: category.id,
       name: category.name,
       icon: BookOpen,
       description: category.description || '',
-      books: 0,
-      status: (category.status === 'Inactive' ? 'Inactive' : 'Active') as 'Active' | 'Inactive',
+      books: count,
       createdOn: created.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       createdTime: created.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
       color: 'text-emerald-600',
@@ -174,7 +188,7 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
   const loadCategoriesFromDb = async () => {
     try {
       const [rows, books] = await Promise.all([listCategories(500), listBooks(2000)])
-      setCategoriesList(rows.map(toCategoryRow))
+      setCategoriesList(rows.map(row => toCategoryRow(row, books)))
       setBooksCount(books.length)
     } catch {
       // Keep local seeded list as fallback.
@@ -193,12 +207,21 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
   }, [])
 
   const filteredCategories = useMemo(() => {
-    return categoriesList.filter(cat => {
-      const matchesSearch = cat.name.toLowerCase().includes(searchTerm.toLowerCase())
-      const matchesStatus = statusFilter === 'All' || cat.status === statusFilter
-      return matchesSearch && matchesStatus
+    let result = categoriesList.filter(cat => {
+      return cat.name.toLowerCase().includes(searchTerm.toLowerCase())
     })
-  }, [categoriesList, searchTerm, statusFilter])
+
+    result = result.sort((a, b) => {
+      if (nameSort !== 'None') {
+        return nameSort === 'A-Z' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
+      } else if (bookSort !== 'None') {
+        return bookSort === 'Highest' ? b.books - a.books : a.books - b.books
+      }
+      return 0
+    })
+
+    return result
+  }, [categoriesList, searchTerm, nameSort, bookSort])
 
   const totalPages = Math.ceil(filteredCategories.length / itemsPerPage)
   const paginatedCategories = filteredCategories.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
@@ -260,7 +283,6 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
     setCategoryForm({
       name: category.name,
       description: category.description,
-      status: category.status,
     })
     setIsAddModalOpen(true)
   }
@@ -273,14 +295,14 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
           id: categoryToEdit.id,
           name: categoryForm.name.trim(),
           description: categoryForm.description.trim() || null,
-          status: categoryForm.status,
-        })
+          status: 'Active',
+        } as any)
         setShowToast(`Successfully updated ${categoryForm.name}!`)
       } else {
         await createCategory({
           name: categoryForm.name.trim(),
           description: categoryForm.description.trim() || null,
-          status: categoryForm.status,
+          status: 'Active',
         })
         setShowToast(`Successfully added ${categoryForm.name}!`)
       }
@@ -323,15 +345,14 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
 
   const stats = useMemo(() => {
     const totalCategories = categoriesList.length
-    const activeCategories = categoriesList.filter((c) => c.status === 'Active').length
-    const activePct = totalCategories > 0 ? ((activeCategories / totalCategories) * 100).toFixed(1) : '0.0'
-    const topCategory = categoriesList[0]?.name || 'N/A'
+    const topCategoryObj = categoriesList.length > 0 ? categoriesList.reduce((prev, current) => (prev.books > current.books) ? prev : current) : null
+    const topCategoryName = topCategoryObj?.name || 'N/A'
+    const topCategoryBooks = topCategoryObj?.books || 0
+
     return [
       { label: 'Total Categories', value: totalCategories.toLocaleString('en-US'), subValue: 'From database records', icon: Layers, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-      { label: 'Active Categories', value: activeCategories.toLocaleString('en-US'), subValue: `${activePct}% of total`, icon: BookOpen, color: 'text-blue-600', bg: 'bg-blue-50' },
+      { label: 'Top Category', value: topCategoryName, subValue: topCategoryBooks > 0 ? `${topCategoryBooks} books` : 'No books yet', icon: BookOpen, color: 'text-blue-600', bg: 'bg-blue-50' },
       { label: 'Books in Categories', value: booksCount.toLocaleString('en-US'), subValue: 'Total books', icon: Briefcase, color: 'text-amber-600', bg: 'bg-amber-50' },
-      
-      
     ]
   }, [categoriesList, booksCount])
 
@@ -381,19 +402,29 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
             </label>
             
             <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-zinc-500">Status</span>
-                <div className="relative">
-                  <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={`h-11 min-w-[120px] appearance-none rounded-xl border py-2 pl-4 pr-10 text-xs font-bold outline-none ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'}`}>
-                    <option value="All">All</option>
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                  </select>
-                  <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
-                </div>
+              <div className="relative">
+                <select value={nameSort} onChange={(e) => {
+                  setNameSort(e.target.value)
+                  if (e.target.value !== 'None') setBookSort('None')
+                }} className={`h-11 min-w-[140px] appearance-none rounded-xl border py-2 pl-4 pr-10 text-xs font-bold outline-none ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-700 focus:border-emerald-500'}`}>
+                  <option value="None">Name: None</option>
+                  <option value="A-Z">Name: A - Z</option>
+                  <option value="Z-A">Name: Z - A</option>
+                </select>
+                <ChevronDown size={14} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`} />
               </div>
 
-              
+              <div className="relative">
+                <select value={bookSort} onChange={(e) => {
+                  setBookSort(e.target.value)
+                  if (e.target.value !== 'None') setNameSort('None')
+                }} className={`h-11 min-w-[140px] appearance-none rounded-xl border py-2 pl-4 pr-10 text-xs font-bold outline-none ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-700 focus:border-emerald-500'}`}>
+                  <option value="None">Sort Books: None</option>
+                  <option value="Highest">Books: Highest</option>
+                  <option value="Lowest">Books: Lowest</option>
+                </select>
+                <ChevronDown size={14} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`} />
+              </div>
             </div>
           </div>
 
@@ -444,7 +475,6 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Category Name</th>
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Description</th>
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider text-center">Books</th>
-                  <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Status</th>
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider text-center">Actions</th>
                 </tr>
               </thead>
@@ -475,20 +505,12 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
                         <span className={`text-xs font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>{cat.books.toLocaleString()}</span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`rounded-md px-3 py-1 text-[11px] font-semibold tracking-wide ${
-                          cat.status === 'Active' 
-                            ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' 
-                            : 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400'
-                        }`}>
-                          {cat.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
                         <CategoryActionsMenu
                           category={cat}
                           onViewDetails={handleOpenEditModal}
                           onEdit={handleOpenEditModal}
                           onDelete={setCategoryToDelete}
+                          onViewBooks={onViewBooks}
                           isDarkMode={isDarkMode}
                         />
                       </td>
@@ -564,40 +586,19 @@ export function CategoriesPage({ isDarkMode }: CategoriesPageProps) {
             </div>
 
             <form onSubmit={handleSave} className="space-y-5 px-6 py-5">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Category Name <span className="text-rose-500">*</span></label>
-                  <input
-                    value={categoryForm.name}
-                    onChange={(e) => handleFormChange('name', e.target.value)}
-                    placeholder="e.g. Science Fiction"
-                    className={`h-11 w-full rounded-xl border px-3 text-sm outline-none ${
-                      isDarkMode
-                        ? 'border-zinc-700 bg-[#27272A] text-zinc-100 placeholder:text-zinc-500 focus:border-emerald-500'
-                        : 'border-zinc-200 bg-white text-zinc-700 placeholder:text-zinc-400 focus:border-emerald-500'
-                    }`}
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Status <span className="text-rose-500">*</span></label>
-                  <div className="relative">
-                    <select
-                      value={categoryForm.status}
-                      onChange={(e) => handleFormChange('status', e.target.value)}
-                      className={`h-11 w-full appearance-none rounded-xl border pl-3 pr-10 text-sm outline-none ${
-                        isDarkMode
-                          ? 'border-zinc-700 bg-[#27272A] text-zinc-100 focus:border-emerald-500'
-                          : 'border-zinc-200 bg-white text-zinc-700 focus:border-emerald-500'
-                      }`}
-                    >
-                      <option value="Active">Active</option>
-                      <option value="Inactive">Inactive</option>
-                    </select>
-                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
-                  </div>
-                </div>
+              <div>
+                <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Category Name <span className="text-rose-500">*</span></label>
+                <input
+                  value={categoryForm.name}
+                  onChange={(e) => handleFormChange('name', e.target.value)}
+                  placeholder="e.g. Science Fiction"
+                  className={`h-11 w-full rounded-xl border px-3 text-sm outline-none ${
+                    isDarkMode
+                      ? 'border-zinc-700 bg-[#27272A] text-zinc-100 placeholder:text-zinc-500 focus:border-emerald-500'
+                      : 'border-zinc-200 bg-white text-zinc-700 placeholder:text-zinc-400 focus:border-emerald-500'
+                  }`}
+                  required
+                />
               </div>
 
               <div>
