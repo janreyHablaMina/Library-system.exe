@@ -88,9 +88,6 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
 
   const [member, setMember] = useState({ ...d, profileImage: bookCover })
   const [copied, setCopied] = useState(false)
-  const [notes, setNotes] = useState(member.notes)
-  const [newNote, setNewNote] = useState('')
-  const [addingNote, setAddingNote] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [isSavingEdit, setIsSavingEdit] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
@@ -175,7 +172,6 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
       ...d,
       profileImage: dbMember?.profilePhotoData || bookCover,
     })
-    setNotes(d.notes)
   }, [d, dbMember])
 
   const copyId = async () => {
@@ -194,13 +190,6 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
     window.setTimeout(() => setToast(''), 3000)
   }
 
-  const saveNote = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!newNote.trim()) return
-    setNotes((p) => [...p, newNote.trim()])
-    setNewNote('')
-    setAddingNote(false)
-  }
 
   const openEditModal = () => {
     setEditError(null)
@@ -350,6 +339,17 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
           </div>
         </section>
 
+        <section className={cardClass}>
+          <CardHeader title="Membership Summary" isDarkMode={isDarkMode} />
+          <div className="px-6 pb-5">
+            <div className={`grid grid-cols-1 sm:grid-cols-3 ${isDarkMode ? 'divide-zinc-800' : 'divide-zinc-200'} sm:divide-x`}>
+              <Summary icon={<BookOpen size={17} className="text-emerald-500" />} value={String(d.totalLoans)} label="Total Loans" sub="(All Time)" />
+              <Summary icon={<Bookmark size={17} className="text-indigo-500" />} value={String(d.currentLoans)} label="Books Currently" sub="Borrowed" />
+              <Summary icon={<Calendar size={17} className="text-amber-500" />} value={String(d.reservationsCount)} label="Reservations" />
+            </div>
+          </div>
+        </section>
+
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
           <section className={cardClass}>
             <CardHeader title="Current Loans" count={`${d.loansList.length} Item(s)`} isDarkMode={isDarkMode} />
@@ -407,21 +407,7 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
             </div>
           </section>
 
-          <section className={cardClass}>
-            <CardHeader title="Membership Summary" isDarkMode={isDarkMode} />
-            <div className="px-6 pb-5">
-              <div className={`grid grid-cols-2 sm:grid-cols-4 ${isDarkMode ? 'divide-zinc-800' : 'divide-zinc-200'} divide-x`}>
-                <Summary icon={<BookOpen size={17} className="text-emerald-500" />} value={String(d.totalLoans)} label="Total Loans" sub="(All Time)" />
-                <Summary icon={<Bookmark size={17} className="text-indigo-500" />} value={String(d.currentLoans)} label="Books Currently" sub="Borrowed" />
-                <Summary icon={<Calendar size={17} className="text-amber-500" />} value={String(d.reservationsCount)} label="Reservations" />
-                <Summary icon={<Activity size={17} className="text-rose-500" />} value={d.fines} label="Fines & Penalties" />
-              </div>
-              <div className={`mt-5 rounded-xl border px-4 py-3 flex justify-between ${isDarkMode ? 'border-zinc-800 text-zinc-300' : 'border-zinc-200 text-zinc-600'}`}>
-                <span className="text-sm">Payments Made</span>
-                <span className="text-sm font-bold">PHP 0.00</span>
-              </div>
-            </div>
-          </section>
+
 
           <section className={cardClass}>
             <CardHeader title="Recent Reservations" count={`${d.reservationsList.length} Item(s)`} isDarkMode={isDarkMode} />
@@ -471,79 +457,10 @@ export function MemberDetailPage({ isDarkMode, onBack, memberId }: Props) {
             </div>
           </section>
 
-          <section className={cardClass}>
-            <CardHeader title="Notes" isDarkMode={isDarkMode} />
-            <div className="px-6 pt-5 pb-5">
-              {notes.length === 0 && !addingNote ? (
-                <div className={`rounded-xl border p-5 ${isDarkMode ? 'border-emerald-950 bg-emerald-950/20' : 'border-emerald-100 bg-emerald-50/60'}`}>
-                  <p className={isDarkMode ? 'text-zinc-300' : 'text-zinc-600'}>No notes added yet.</p>
-                  <button
-                    onClick={() => setAddingNote(true)}
-                    className="mt-3 inline-flex items-center gap-1.5 rounded-xl px-4 h-9 text-sm font-semibold border border-emerald-500/35 text-emerald-600 bg-white"
-                  >
-                    <Plus size={14} />
-                    Add Note
-                  </button>
-                </div>
-              ) : null}
 
-              {notes.length > 0 ? (
-                <div className="space-y-2 max-h-44 overflow-y-auto">
-                  {notes.map((note, index) => (
-                    <div key={`${note}-${index}`} className={`p-3 rounded-xl border text-sm ${isDarkMode ? 'border-zinc-800 bg-zinc-900/40' : 'border-zinc-200 bg-zinc-50'}`}>
-                      {note}
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-
-              {addingNote ? (
-                <form onSubmit={saveNote} className="mt-3 space-y-2">
-                  <textarea
-                    value={newNote}
-                    onChange={(e) => setNewNote(e.target.value)}
-                    rows={3}
-                    className={`w-full rounded-xl border p-3 text-sm outline-none ${isDarkMode ? 'border-zinc-700 bg-zinc-900 text-zinc-100' : 'border-zinc-200 bg-white text-zinc-700'}`}
-                    placeholder="Type your note here..."
-                  />
-                  <div className="flex justify-end gap-2">
-                    <button type="button" onClick={() => setAddingNote(false)} className={`h-9 px-4 rounded-xl border text-sm ${isDarkMode ? 'border-zinc-700 text-zinc-300' : 'border-zinc-200 text-zinc-600'}`}>Cancel</button>
-                    <button type="submit" className="h-9 px-4 rounded-xl bg-emerald-600 text-white text-sm font-semibold">Save Note</button>
-                  </div>
-                </form>
-              ) : null}
-            </div>
-          </section>
         </div>
 
-        <section className={cardClass}>
-          <CardHeader title="Recent Activity" isDarkMode={isDarkMode} />
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] text-sm">
-              <thead>
-                <tr className={isDarkMode ? 'bg-zinc-900/40 text-zinc-400' : 'bg-zinc-50 text-zinc-600'}>
-                  <th className="text-left px-6 py-3 font-semibold">Date & Time</th>
-                  <th className="text-left px-6 py-3 font-semibold">Activity</th>
-                  <th className="text-left px-6 py-3 font-semibold">Description</th>
-                  <th className="text-left px-6 py-3 font-semibold">Performed By</th>
-                </tr>
-              </thead>
-              <tbody>
-                {d.activities.map((act, i) => (
-                  <tr key={`${act.activity}-${i}`} className={isDarkMode ? 'border-t border-zinc-800' : 'border-t border-zinc-100'}>
-                    <td className={isDarkMode ? 'px-6 py-3 text-zinc-400' : 'px-6 py-3 text-zinc-500'}>{act.dateTime}</td>
-                    <td className="px-6 py-3">{act.activity}</td>
-                    <td className="px-6 py-3">{act.description}</td>
-                    <td className="px-6 py-3">{act.performedBy}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="p-4 text-right">
-            <button className="inline-flex items-center gap-1 text-sm font-semibold text-emerald-600 hover:text-emerald-700">View full activity log <ArrowUpRight size={14} /></button>
-          </div>
-        </section>
+
       </div>
       <SendEmailModal
         isOpen={isEmailModalOpen}
