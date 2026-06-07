@@ -86,13 +86,14 @@ export function AuthorActionsMenu({ isDarkMode, onViewDetails, onEdit, onDelete 
       <button
         type="button"
         onClick={handleToggle}
-        className={`grid h-8 w-8 place-items-center rounded-lg border transition-all ${
+        className={`grid h-8 w-8 place-items-center rounded-lg transition-all duration-200 ${
           open 
-            ? 'bg-emerald-50 text-emerald-600 border-emerald-300 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30' 
-            : isDarkMode 
-              ? 'border-zinc-700 text-zinc-400 hover:bg-zinc-800' 
-              : 'border-zinc-200 text-zinc-500 hover:bg-white hover:text-emerald-600'
+            ? isDarkMode ? 'bg-zinc-800 text-zinc-200' : 'bg-zinc-100 text-zinc-900'
+            : isDarkMode ? 'text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200' : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700'
         }`}
+        aria-haspopup="true"
+        aria-expanded={open}
+        aria-label="Actions"
       >
         <MoreHorizontal size={14} />
       </button>
@@ -212,7 +213,6 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
   // Filter States
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedNationality, setSelectedNationality] = useState('All')
-  const [selectedStatus, setSelectedStatus] = useState('All')
   const [sortBy, setSortBy] = useState('Name (A-Z)')
 
   const [currentPage, setCurrentPage] = useState(1)
@@ -220,7 +220,7 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchTerm, selectedStatus, sortBy, itemsPerPage])
+  }, [searchTerm, sortBy, itemsPerPage])
 
 
   // Auto-expiring toast effect
@@ -371,10 +371,6 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
       result = result.filter(a => a.nationality === selectedNationality)
     }
 
-    if (selectedStatus !== 'All') {
-      result = result.filter(a => a.status === selectedStatus)
-    }
-
     if (sortBy === 'Name (A-Z)') {
       result.sort((a, b) => a.name.localeCompare(b.name))
     } else if (sortBy === 'Name (Z-A)') {
@@ -384,7 +380,7 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
     }
 
     return result
-  }, [authorsList, searchTerm, selectedNationality, selectedStatus, sortBy])
+  }, [authorsList, searchTerm, selectedNationality, sortBy])
 
   const totalPages = Math.ceil(filteredAuthors.length / itemsPerPage)
   const paginatedAuthors = filteredAuthors.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
@@ -470,7 +466,7 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
 
     return [
       { label: 'Total Authors', value: totalAuthors.toLocaleString('en-US'), subValue: 'From database records', icon: Users, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-      { label: 'Active Authors', value: activeAuthors.toLocaleString('en-US'), subValue: `${activePct}% of total`, icon: Pencil, color: 'text-blue-600', bg: 'bg-blue-50' },
+      { label: 'Top Nationality', value: topNationality, subValue: `${topNationalityCount} author${topNationalityCount !== 1 ? 's' : ''}`, icon: Globe, color: 'text-sky-600', bg: 'bg-sky-50' },
       { label: 'Books by Authors', value: allBooksCount.toLocaleString('en-US'), subValue: 'Total books written', icon: BookOpen, color: 'text-amber-600', bg: 'bg-amber-50' },
       
       
@@ -486,13 +482,13 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
             <p className={`mt-1 text-base font-medium ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Manage and organize all authors in your library.</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button type="button" className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-bold transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
-              <Download size={16} />
-              Export
-            </button>
             <button type="button" onClick={() => setIsAddModalOpen(true)} className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white hover:bg-emerald-700 transition-all shadow-sm">
               <Plus size={18} />
               Add Author
+            </button>
+            <button type="button" className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-bold transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
+              <Download size={16} />
+              Export
             </button>
           </div>
         </div>
@@ -527,18 +523,6 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
             </label>
             
             <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-zinc-500">Status</span>
-                <div className="relative">
-                  <select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)} className={`h-11 min-w-[120px] appearance-none rounded-xl border py-2 pl-4 pr-10 text-xs font-bold outline-none ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'}`}>
-                    <option value="All">All</option>
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                  </select>
-                  <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
-                </div>
-              </div>
-
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold text-zinc-500">Sort By</span>
                 <div className="relative">
@@ -602,7 +586,6 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Author</th>
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Nationality</th>
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider text-center">Books</th>
-                  <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Status</th>
                   <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider text-center">Actions</th>
                 </tr>
               </thead>
@@ -634,22 +617,10 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                       <div className="flex items-center gap-2 font-medium text-zinc-600 dark:text-zinc-300">
-                         <Globe size={14} className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} />
-                         <span className="text-xs">{author.nationality}</span>
-                       </div>
+                      <span className={`text-xs font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>{author.nationality}</span>
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span className={`text-xs font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>{author.books}</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`rounded-md px-3 py-1 text-[11px] font-semibold tracking-wide ${
-                        author.status === 'Active' 
-                          ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' 
-                          : 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400'
-                      }`}>
-                        {author.status}
-                      </span>
                     </td>
                     <td className="px-6 py-4 text-center">
                       <AuthorActionsMenu
@@ -773,31 +744,20 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
                     onChange={handleAuthorPhotoChange}
                   />
                   <div className="flex items-center gap-3">
-                    <div className={`grid h-10 w-10 place-items-center overflow-hidden rounded-full ${isDarkMode ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-100 text-zinc-600'}`}>
+                    <div className={`grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-full border border-dashed ${isDarkMode ? 'border-zinc-700 bg-zinc-800/50 text-zinc-300' : 'border-zinc-300 bg-zinc-50 text-zinc-500'}`}>
                       {authorPhotoPreview ? (
                         <img src={authorPhotoPreview} alt="Author preview" className="h-full w-full object-cover" />
                       ) : (
-                        <Users size={16} />
+                        <Users size={24} />
                       )}
                     </div>
                     <button
                       type="button"
                       onClick={() => authorPhotoInputRef.current?.click()}
-                      className={`h-10 rounded-lg border px-4 text-sm font-semibold ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}
+                      className={`h-10 shrink-0 rounded-lg border px-4 text-sm font-semibold ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}
                     >
                       Upload Photo
                     </button>
-                    <span className={`text-xs ${isDarkMode ? 'text-zinc-500' : 'text-zinc-500'}`}>{authorPhotoName || 'JPG, PNG (Max 2MB)'}</span>
-                  </div>
-                </div>
-                <div>
-                  <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Status <span className="text-rose-500">*</span></label>
-                  <div className="relative">
-                    <select value={authorForm.status} onChange={(e) => handleFormChange('status', e.target.value)} className={`h-11 w-full appearance-none rounded-xl border pl-3 pr-10 text-sm outline-none ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-100 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-700 focus:border-emerald-500'}`}>
-                      <option value="Active">Active</option>
-                      <option value="Inactive">Inactive</option>
-                    </select>
-                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
                   </div>
                 </div>
               </div>
