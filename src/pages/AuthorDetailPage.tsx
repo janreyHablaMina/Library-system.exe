@@ -1,6 +1,6 @@
 import { Toast } from '../components/ui/Toast'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { AlertTriangle, ArrowLeft, BookMarked, BookOpen, Calendar, Clock, Copy, Eye, Feather, Globe, Mail, MoreHorizontal, Pencil, Quote, RefreshCw, Trash2, UserCheck, Archive } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, BookMarked, BookOpen, Calendar, Clock, Copy, Eye, Feather, Globe, Mail, MoreHorizontal, Pencil, Quote, RefreshCw, Trash2, Archive, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react'
 import { deleteBook, listAuthors, listBooks, updateBook, type Author as DbAuthor, type Book } from '../lib/tauriApi'
 import bookCover from '../assets/login.avif'
 import { EditBookPage } from './EditBookPage'
@@ -21,6 +21,12 @@ export function AuthorDetailPage({ isDarkMode, onBack, authorId }: Props) {
   const [bookToEdit, setBookToEdit] = useState<BookRow | null>(null)
   const [bookToView, setBookToView] = useState<BookRow | null>(null)
   const [bookToDelete, setBookToDelete] = useState<BookRow | null>(null)
+
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
+
+  const totalPages = Math.ceil(works.length / itemsPerPage)
+  const paginatedWorks = works.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   useEffect(() => {
     let mounted = true
@@ -74,10 +80,9 @@ export function AuthorDetailPage({ isDarkMode, onBack, authorId }: Props) {
       dob: author.dob
         ? new Date(author.dob).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
         : 'N/A',
-      status: author.status || 'Active',
       biography: author.biography || 'No biography available.',
       createdAt: author.createdAt
-        ? new Date(author.createdAt).toLocaleString('en-US')
+        ? new Date(author.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
         : 'N/A',
       avatar: author.name.charAt(0).toUpperCase() || 'A',
       profilePhotoData: author.profilePhotoData || null,
@@ -108,7 +113,7 @@ export function AuthorDetailPage({ isDarkMode, onBack, authorId }: Props) {
     title: book.title,
     isbn: book.isbn || '-',
     author: book.author,
-    category: 'Uncategorized',
+    category: book.category || 'Uncategorized',
     callNumber: '-',
     year: new Date(book.createdAt).getFullYear() || new Date().getFullYear(),
     status: book.isArchived ? 'Archived' : (book.available > 0 ? 'Available' : 'Borrowed'),
@@ -240,7 +245,7 @@ export function AuthorDetailPage({ isDarkMode, onBack, authorId }: Props) {
         </div>
 
         <section className={cardClass}>
-          <div className="p-6 xl:p-8 grid grid-cols-1 xl:grid-cols-[1.33fr_1fr_1fr] gap-8">
+          <div className="p-6 xl:p-8 grid grid-cols-1 xl:grid-cols-[1.5fr_1fr] gap-8">
             <div className="flex flex-col sm:flex-row sm:items-center gap-8 min-w-0">
               <div className="flex flex-col items-center gap-3 shrink-0">
                 <div className={`h-32 w-32 rounded-full overflow-hidden ${isDarkMode ? 'bg-zinc-800' : 'bg-zinc-100'}`}>
@@ -269,15 +274,10 @@ export function AuthorDetailPage({ isDarkMode, onBack, authorId }: Props) {
               </div>
             </div>
 
-            <div className={`space-y-4 xl:px-8 ${isDarkMode ? 'xl:border-x xl:border-zinc-800' : 'xl:border-x xl:border-zinc-200'}`}>
-              <Meta icon={<BookOpen size={15} className="text-emerald-500" />} label="Books Published" value="0" isDarkMode={isDarkMode} />
+            <div className={`space-y-4 xl:px-8 ${isDarkMode ? 'xl:border-l xl:border-zinc-800' : 'xl:border-l xl:border-zinc-200'}`}>
+              <Meta icon={<BookOpen size={15} className="text-emerald-500" />} label="Books Published" value={works.length.toString()} isDarkMode={isDarkMode} />
               <Meta icon={<Calendar size={15} className="text-emerald-500" />} label="Date of Birth" value={detail.dob} isDarkMode={isDarkMode} />
-              <Meta icon={<UserCheck size={15} className="text-emerald-500" />} label="Status" value={detail.status} isDarkMode={isDarkMode} asBadge />
-            </div>
-
-            <div className="space-y-4">
               <Meta icon={<Clock size={15} className="text-emerald-500" />} label="Record Created" value={detail.createdAt} isDarkMode={isDarkMode} />
-              <Meta icon={<RefreshCw size={15} className="text-emerald-500" />} label="Last Updated" value="Synced from database" isDarkMode={isDarkMode} />
             </div>
           </div>
         </section>
@@ -285,7 +285,7 @@ export function AuthorDetailPage({ isDarkMode, onBack, authorId }: Props) {
         <section className="grid grid-cols-1 xl:grid-cols-[320px_1fr] gap-4">
           <div className={cardClass}>
             <div className={`px-5 py-4 border-b ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
-              <h3 className={`text-[28px] font-semibold tracking-tight ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Biography</h3>
+              <h3 className={`text-[22px] font-semibold tracking-tight ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Biography</h3>
               <div className="mt-2 h-1 w-10 rounded-full bg-emerald-500" />
             </div>
             <div className="p-5">
@@ -299,7 +299,7 @@ export function AuthorDetailPage({ isDarkMode, onBack, authorId }: Props) {
           <div className={cardClass}>
             <div className={`px-5 py-4 border-b flex items-center justify-between ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
               <div>
-                <h3 className={`text-[30px] font-semibold tracking-tight ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Works by This Author</h3>
+                <h3 className={`text-[22px] font-semibold tracking-tight ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Author Works</h3>
                 <div className="mt-2 h-1 w-10 rounded-full bg-emerald-500" />
               </div>
               <span className="text-xs font-semibold px-3 py-1 rounded-full bg-emerald-100 text-emerald-700">
@@ -308,7 +308,8 @@ export function AuthorDetailPage({ isDarkMode, onBack, authorId }: Props) {
             </div>
             <div className={`${isDarkMode ? 'bg-[#18181B]' : 'bg-white'}`}>
               {works.length > 0 ? (
-                <table className="w-full text-left text-sm border-collapse">
+                <>
+                  <table className="w-full text-left text-sm border-collapse">
                   <thead className={isDarkMode ? 'bg-[#18181B] text-zinc-300' : 'bg-zinc-50 text-zinc-600'}>
                     <tr>
                       <th className="px-4 py-4 font-semibold text-[11px] uppercase tracking-wider">Book</th>
@@ -320,7 +321,7 @@ export function AuthorDetailPage({ isDarkMode, onBack, authorId }: Props) {
                     </tr>
                   </thead>
                   <tbody>
-                    {works.map((book) => (
+                    {paginatedWorks.map((book) => (
                       <tr key={book.id} className={`border-t ${isDarkMode ? 'border-zinc-700 hover:bg-[#3F3F46]' : 'border-zinc-100 hover:bg-zinc-50'}`}>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
@@ -332,7 +333,7 @@ export function AuthorDetailPage({ isDarkMode, onBack, authorId }: Props) {
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          <span className={`text-sm ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>Uncategorized</span>
+                          <span className={`text-sm ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>{book.category || 'Uncategorized'}</span>
                         </td>
                         <td className={`px-4 py-3 ${isDarkMode ? 'text-zinc-300' : 'text-zinc-600'}`}>{new Date(book.createdAt).getFullYear()}</td>
                         <td className="px-4 py-3">
@@ -384,6 +385,62 @@ export function AuthorDetailPage({ isDarkMode, onBack, authorId }: Props) {
                     ))}
                   </tbody>
                 </table>
+                <div className={`relative z-0 flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm rounded-b-xl ${isDarkMode ? 'border-zinc-700 bg-[#18181B] text-zinc-300' : 'border-zinc-200 bg-white text-zinc-600'}`}>
+                  <p>Showing {works.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to {Math.min(currentPage * itemsPerPage, works.length)} of {works.length} books</p>
+                  <div className="flex items-center gap-2">
+                    <div className="relative">
+                      <select value={itemsPerPage} onChange={(e) => setItemsPerPage(Number(e.target.value))} className={`h-10 min-w-[150px] appearance-none rounded-lg border py-2 pl-4 pr-10 text-sm font-medium outline-none transition-colors ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200 hover:bg-zinc-800 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 focus:border-emerald-500'}`}>
+                        <option value={10}>10 per page</option>
+                        <option value={20}>20 per page</option>
+                        <option value={50}>50 per page</option>
+                      </select>
+                      <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className={`grid h-10 w-10 place-items-center rounded-lg border transition-colors disabled:cursor-not-allowed ${
+                        isDarkMode
+                          ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800 disabled:border-zinc-800 disabled:text-zinc-600 disabled:hover:bg-transparent'
+                          : 'border-zinc-200 text-zinc-500 hover:bg-zinc-50 disabled:border-zinc-100 disabled:text-zinc-300 disabled:hover:bg-white'
+                      }`}
+                      aria-label="Previous page"
+                    >
+                      <ChevronLeft size={16} />
+                    </button>
+                    
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                        <button 
+                          key={page}
+                          type="button" 
+                          onClick={() => setCurrentPage(page)}
+                          className={page === currentPage 
+                            ? "grid h-10 w-10 place-items-center rounded-lg bg-emerald-50 font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" 
+                            : `grid h-10 w-10 place-items-center rounded-lg border transition-colors ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800' : 'border-zinc-200 hover:bg-zinc-50'}`}
+                        >
+                          {page}
+                        </button>
+                      ))}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages || totalPages === 0}
+                      className={`grid h-10 w-10 place-items-center rounded-lg border transition-colors disabled:cursor-not-allowed ${
+                        isDarkMode
+                          ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800 disabled:border-zinc-800 disabled:text-zinc-600 disabled:hover:bg-transparent'
+                          : 'border-zinc-200 text-zinc-500 hover:bg-zinc-50 disabled:border-zinc-100 disabled:text-zinc-300 disabled:hover:bg-white'
+                      }`}
+                      aria-label="Next page"
+                    >
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                </div>
+                </>
               ) : (
                 <div className={`m-4 rounded-xl border p-5 ${isDarkMode ? 'border-zinc-800 bg-zinc-900/35' : 'border-zinc-200 bg-zinc-50/60'}`}>
                   <p className={`text-sm font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>No works found yet</p>
@@ -480,14 +537,14 @@ function BookActionsMenu({ isDarkMode, onViewDetails, onEdit, onDelete, onArchiv
       <button
         type="button"
         onClick={handleToggle}
-        className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border transition-colors duration-150 ${
+        className={`inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors duration-150 ${
           open
             ? isDarkMode
-              ? 'border-zinc-500 bg-zinc-700 text-zinc-100'
-              : 'border-emerald-300 bg-emerald-50 text-emerald-700'
+              ? 'bg-zinc-700 text-zinc-100'
+              : 'bg-emerald-50 text-emerald-700'
             : isDarkMode
-              ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'
-              : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'
+              ? 'text-zinc-400 hover:bg-zinc-800'
+              : 'text-zinc-500 hover:bg-zinc-100'
         }`}
         aria-label="Book actions"
         aria-haspopup="menu"
