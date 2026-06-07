@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { Calendar, Clock3, CheckCircle2, XCircle, MapPin, Eye, Trash2, Download, Plus, Search, ChevronDown, Filter, ChevronLeft, ChevronRight, MoreHorizontal, BookOpen, UserRound, ArrowLeft, Info, X, Check, Mail, Smartphone, Printer, Pencil, AlertTriangle , Zap } from 'lucide-react'
 import { createReservation, deleteReservation, listBooks, listMembers, listReservations, updateReservation, updateReservationStatus } from '../lib/tauriApi'
 
@@ -43,13 +43,7 @@ type ReservationsPageProps = {
   onInitialBookConsumed?: () => void
 }
 
-const stats = [
-  { label: 'Total Reservations', value: '56', subValue: '↑ 12 this month', icon: Calendar, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-  { label: 'Reserved', value: '24', subValue: '42.9% of total', icon: Clock3, color: 'text-blue-600', bg: 'bg-blue-50' },
-  { label: 'Ready for Pickup', value: '18', subValue: '32.1% of total', icon: MapPin, color: 'text-amber-600', bg: 'bg-amber-50' },
-  { label: 'Expired', value: '12', subValue: '21.4% of total', icon: XCircle, color: 'text-rose-600', bg: 'bg-rose-50' },
-  { label: 'Cancelled', value: '2', subValue: '3.6% of total', icon: XCircle, color: 'text-rose-600', bg: 'bg-rose-50' },
-]
+
 
 const reservationsData: ReservationRow[] = [
   { id: 'RES-00056', book: { title: 'The Alchemist', author: 'Paulo Coelho', cover: '📙' }, member: { name: 'Maria Santos', id: 'MS-00125', avatar: '👩🏽' }, pickupBranch: 'Central Library', reservedOn: 'May 14, 2026', reservedTime: '10:15 AM', status: 'Reserved', expiresOn: 'May 21, 2026', expiresTime: '10:15 AM' },
@@ -560,9 +554,21 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
   const [members, setMembers] = useState<MemberItem[]>([])
   const [reservations, setReservations] = useState<ReservationRow[]>([])
 
-    
-  
+  const dynamicStats = useMemo(() => {
+    const total = reservations.length
+    const reserved = reservations.filter(r => r.status === 'Reserved').length
+    const expired = reservations.filter(r => r.status === 'Expired').length
+    const cancelled = reservations.filter(r => r.status === 'Cancelled').length
 
+    const getPercentage = (count: number) => total > 0 ? ((count / total) * 100).toFixed(1) + '% of total' : '0% of total'
+
+    return [
+      { label: 'Total Reservations', value: total.toString(), subValue: 'All time', icon: Calendar, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+      { label: 'Reserved', value: reserved.toString(), subValue: getPercentage(reserved), icon: Clock3, color: 'text-blue-600', bg: 'bg-blue-50' },
+      { label: 'Expired', value: expired.toString(), subValue: getPercentage(expired), icon: XCircle, color: 'text-rose-600', bg: 'bg-rose-50' },
+      { label: 'Cancelled', value: cancelled.toString(), subValue: getPercentage(cancelled), icon: XCircle, color: 'text-rose-600', bg: 'bg-rose-50' },
+    ]
+  }, [reservations])
   const [selectedBook, setSelectedBook] = useState<BookItem | null>(null)
   const [selectedMember, setSelectedMember] = useState<MemberItem | null>(null)
 
@@ -1021,6 +1027,32 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
     setFormError(null)
     setIsAddModalOpen(true)
   }
+  const handleExport = () => {
+    const headers = ['ID', 'Book Title', 'Book Author', 'Member Name', 'Member ID', 'Reserved On', 'Expires On', 'Status', 'Pickup Branch']
+    const csvContent = [
+      headers.join(','),
+      ...filteredReservations.map(res => [
+        res.id,
+        `"${res.book.title.replace(/"/g, '""')}"`,
+        `"${res.book.author.replace(/"/g, '""')}"`,
+        `"${res.member.name.replace(/"/g, '""')}"`,
+        res.member.id,
+        `"${res.reservedOn}"`,
+        `"${res.expiresOn}"`,
+        res.status,
+        `"${res.pickupBranch}"`
+      ].join(','))
+    ].join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `reservations_export_${new Date().toISOString().slice(0, 10)}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
 
   return (
     <div className={`min-h-0 flex-1 overflow-auto ${isAddModalOpen || activeViewReservationId ? 'px-4 pt-4 pb-0' : 'p-4'} ${isDarkMode ? 'bg-[transparent] text-zinc-100' : 'bg-[#f8fafc] text-zinc-900'}`}>
@@ -1117,19 +1149,19 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
               <p className={`mt-1 text-base font-medium ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>View and manage all book reservations.</p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <button type="button" className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-bold transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
-                <Download size={16} />
-                Export
-              </button>
               <button type="button" onClick={() => { setIsAddModalOpen(true); setEditingReservation(null); setSelectedBook(null); setSelectedMember(null); const now = new Date(); setReservationDate(now.toISOString().slice(0, 10)); now.setDate(now.getDate() + 7); setExpiresOn(now.toISOString().slice(0, 10)); setNotes(''); setPriority('Normal'); setNotifyEmail(true); setNotifySMS(true); setFormError(null); }} className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white hover:bg-emerald-700 transition-all shadow-sm">
                 <Plus size={18} />
                 New Reservation
               </button>
+              <button type="button" onClick={handleExport} className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-bold transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
+                <Download size={16} />
+                Export
+              </button>
             </div>
           </div>
 
-          <section className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-            {stats.map((stat) => {
+          <section className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {dynamicStats.map((stat) => {
               const Icon = stat.icon
               return (
                 <article key={stat.label} className={`rounded-xl border p-5 transition-all duration-200 hover:-translate-y-0.5 ${isDarkMode ? 'border-zinc-700 bg-[#18181B] hover:border-emerald-500/60 hover:shadow-[0_12px_24px_-16px_rgba(16,185,129,0.45)]' : 'border-zinc-200 bg-white hover:border-emerald-200 hover:shadow-[0_12px_24px_-16px_rgba(15,23,42,0.35)]'}`}>
@@ -1173,7 +1205,6 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                     >
                       <option value="All">All</option>
                       <option value="Reserved">Reserved</option>
-                      <option value="Ready for Pickup">Ready for Pickup</option>
                       <option value="Expired">Expired</option>
                       <option value="Cancelled">Cancelled</option>
                     </select>
