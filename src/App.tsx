@@ -1509,6 +1509,16 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
               initialNotificationId={notificationToOpen}
               onInitialNotificationConsumed={() => setNotificationToOpen(null)}
               onNotificationsChanged={() => void refreshNotifications()}
+              onViewMember={(memberId) => {
+                setSelectedMemberId(memberId)
+                setIsMemberDetailOpen(true)
+                setActivePage('Members')
+              }}
+              onViewTransaction={(transactionId) => {
+                setSelectedTransactionId(transactionId)
+                setIsTransactionDetailOpen(true)
+                setActivePage('All Transactions')
+              }}
             />
           ) : activePage === 'Profile' ? (
             <ProfilePage 

@@ -1,12 +1,14 @@
-import { useMemo, useState, useEffect } from 'react'
-import { Bell, Building2, CheckCheck, ChevronDown, ChevronLeft, ChevronRight, Circle, IdCard, Inbox, Mail, Phone, RotateCcw, UserRound, X } from 'lucide-react'
-import { listMembers, listNotifications, markNotificationAsRead, markAllNotificationsRead, type Member, type NotificationItem } from '../lib/tauriApi'
+import { useCallback, useMemo, useState, useEffect } from 'react'
+import { Bell, BookOpen, Building2, CalendarClock, CheckCheck, ChevronDown, ChevronLeft, ChevronRight, Circle, IdCard, Inbox, Mail, Phone, RotateCcw, UserRound, X } from 'lucide-react'
+import { listBorrowTransactions, listMembers, listNotifications, markNotificationAsRead, markAllNotificationsRead, type BorrowTransaction, type Member, type NotificationItem } from '../lib/tauriApi'
 
 type NotificationsPageProps = {
   isDarkMode: boolean
   initialNotificationId?: number | null
   onInitialNotificationConsumed?: () => void
   onNotificationsChanged?: () => void
+  onViewMember?: (memberId: number) => void
+  onViewTransaction?: (transactionId: string) => void
 }
 
 function NotificationsPage({
@@ -14,6 +16,8 @@ function NotificationsPage({
   initialNotificationId = null,
   onInitialNotificationConsumed,
   onNotificationsChanged,
+  onViewMember,
+  onViewTransaction,
 }: NotificationsPageProps) {
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -22,7 +26,9 @@ function NotificationsPage({
   const [itemsPerPage, setItemsPerPage] = useState(10)
   const [selectedNotification, setSelectedNotification] = useState<NotificationItem | null>(null)
   const [notificationMembers, setNotificationMembers] = useState<Member[]>([])
+  const [overdueTransactions, setOverdueTransactions] = useState<BorrowTransaction[]>([])
   const [isLoadingNotificationDetails, setIsLoadingNotificationDetails] = useState(false)
+  const [detailReferenceTime] = useState(() => Date.now())
 
   const cardClass = isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-200 bg-white'
   const subLabelClass = isDarkMode ? 'text-zinc-400' : 'text-zinc-500'
@@ -47,7 +53,7 @@ function NotificationsPage({
     return () => window.clearTimeout(timer)
   }, [])
 
-  const handleMarkAsRead = async (id: number) => {
+  const handleMarkAsRead = useCallback(async (id: number) => {
     try {
       await markNotificationAsRead(id)
       setNotifications((prev) => prev.map(n => n.id === id ? { ...n, isRead: true } : n))
@@ -55,15 +61,58 @@ function NotificationsPage({
     } catch (error) {
       console.error('Failed to mark read:', error)
     }
-  }
+  }, [onNotificationsChanged])
 
-  const handleOpenNotification = async (item: NotificationItem) => {
-    setSelectedNotification(item)
+  const getMembersRegisteredToday = useCallback(async () => {
+    const today = new Date().toISOString().slice(0, 10)
+    return (await listMembers(500))
+      .filter((member) => member.createdAt.slice(0, 10) === today)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+  }, [])
+
+  const getOverdueTransactions = useCallback(async () => {
+    const now = Date.now()
+    return (await listBorrowTransactions(undefined, 1000))
+      .filter((transaction) => (
+        !transaction.returnDate
+        && new Date(transaction.dueDate).getTime() < now
+      ))
+      .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
+  }, [])
+
+  const handleOpenNotification = useCallback(async (item: NotificationItem) => {
     if (!item.isRead) {
       await handleMarkAsRead(item.id)
-      setSelectedNotification({ ...item, isRead: true })
     }
-  }
+
+    if (item.notificationType === 'member' && onViewMember) {
+      try {
+        const members = await getMembersRegisteredToday()
+        if (members.length === 1) {
+          onViewMember(members[0].id)
+          return
+        }
+        setNotificationMembers(members)
+      } catch (error) {
+        console.error('Failed to resolve member notification:', error)
+      }
+    }
+
+    if (item.notificationType === 'overdue' && onViewTransaction) {
+      try {
+        const transactions = await getOverdueTransactions()
+        if (transactions.length === 1) {
+          onViewTransaction(String(transactions[0].id))
+          return
+        }
+        setOverdueTransactions(transactions)
+      } catch (error) {
+        console.error('Failed to resolve overdue notification:', error)
+      }
+    }
+
+    setSelectedNotification({ ...item, isRead: true })
+  }, [getMembersRegisteredToday, getOverdueTransactions, handleMarkAsRead, onViewMember, onViewTransaction])
 
   useEffect(() => {
     if (isLoading || initialNotificationId === null) return
@@ -72,25 +121,12 @@ function NotificationsPage({
     const timer = window.setTimeout(() => {
       onInitialNotificationConsumed?.()
       if (item) {
-        setSelectedNotification(item)
-        if (!item.isRead) {
-          void markNotificationAsRead(item.id)
-            .then(() => {
-              setNotifications((prev) => prev.map((notification) => (
-                notification.id === item.id ? { ...notification, isRead: true } : notification
-              )))
-              setSelectedNotification({ ...item, isRead: true })
-              onNotificationsChanged?.()
-            })
-            .catch((error) => {
-              console.error('Failed to mark read:', error)
-            })
-        }
+        void handleOpenNotification(item)
       }
     }, 0)
 
     return () => window.clearTimeout(timer)
-  }, [initialNotificationId, isLoading, notifications, onInitialNotificationConsumed, onNotificationsChanged])
+  }, [handleOpenNotification, initialNotificationId, isLoading, notifications, onInitialNotificationConsumed])
 
   const handleMarkAllRead = async () => {
     try {
@@ -103,20 +139,23 @@ function NotificationsPage({
   }
 
   useEffect(() => {
-    if (selectedNotification?.notificationType !== 'member') return
+    if (selectedNotification?.notificationType !== 'member' && selectedNotification?.notificationType !== 'overdue') return
 
     let cancelled = false
     const timer = window.setTimeout(() => {
       setIsLoadingNotificationDetails(true)
-      listMembers(500)
-        .then((members) => {
+      const detailsRequest = selectedNotification.notificationType === 'member'
+        ? getMembersRegisteredToday()
+        : getOverdueTransactions()
+
+      detailsRequest
+        .then((details) => {
           if (cancelled) return
-          const today = new Date().toISOString().slice(0, 10)
-          setNotificationMembers(
-            members
-              .filter((member) => member.createdAt.slice(0, 10) === today)
-              .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
-          )
+          if (selectedNotification.notificationType === 'member') {
+            setNotificationMembers(details as Member[])
+          } else {
+            setOverdueTransactions(details as BorrowTransaction[])
+          }
         })
         .catch((error) => {
           console.error('Failed to load notification member details:', error)
@@ -131,7 +170,7 @@ function NotificationsPage({
       cancelled = true
       window.clearTimeout(timer)
     }
-  }, [selectedNotification])
+  }, [getMembersRegisteredToday, getOverdueTransactions, selectedNotification])
 
   const formatNotificationTime = (isoDate: string) => {
     const dt = new Date(isoDate)
@@ -354,7 +393,16 @@ function NotificationsPage({
                   ) : (
                     <div className="space-y-3">
                       {notificationMembers.map((member) => (
-                        <article key={member.id} className={`rounded-xl border p-4 ${isDarkMode ? 'border-zinc-700 bg-[#27272A]' : 'border-zinc-200 bg-white'}`}>
+                        <button
+                          key={member.id}
+                          type="button"
+                          onClick={() => onViewMember?.(member.id)}
+                          className={`w-full rounded-xl border p-4 text-left transition-colors ${
+                            isDarkMode
+                              ? 'border-zinc-700 bg-[#27272A] hover:border-emerald-500/50'
+                              : 'border-zinc-200 bg-white hover:border-emerald-300 hover:bg-emerald-50/30'
+                          }`}
+                        >
                           <div className="flex items-start gap-3">
                             {member.profilePhotoData ? (
                               <img src={member.profilePhotoData} alt="" className="h-11 w-11 shrink-0 rounded-full object-cover" />
@@ -384,8 +432,87 @@ function NotificationsPage({
                               </p>
                             </div>
                           </div>
-                        </article>
+                        </button>
                       ))}
+                    </div>
+                  )}
+                </div>
+              )}
+              {selectedNotification.notificationType === 'overdue' && (
+                <div className="mt-4">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div>
+                      <h4 className={`text-sm font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Overdue Loans</h4>
+                      <p className={`mt-0.5 text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Select a loan to open its full transaction details.</p>
+                    </div>
+                    {!isLoadingNotificationDetails && (
+                      <span className="rounded-full bg-rose-500/10 px-2.5 py-1 text-xs font-bold text-rose-600 dark:text-rose-300">
+                        {overdueTransactions.length}
+                      </span>
+                    )}
+                  </div>
+
+                  {isLoadingNotificationDetails ? (
+                    <div className={`rounded-xl border px-4 py-8 text-center text-sm ${isDarkMode ? 'border-zinc-700 text-zinc-400' : 'border-zinc-200 text-zinc-500'}`}>
+                      Loading overdue loan details...
+                    </div>
+                  ) : overdueTransactions.length === 0 ? (
+                    <div className={`rounded-xl border px-4 py-8 text-center text-sm ${isDarkMode ? 'border-zinc-700 text-zinc-400' : 'border-zinc-200 text-zinc-500'}`}>
+                      No overdue transactions were found.
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {overdueTransactions.map((transaction) => {
+                        const dueDate = new Date(transaction.dueDate)
+                        const daysOverdue = Number.isNaN(dueDate.getTime())
+                          ? 0
+                          : Math.max(1, Math.ceil((detailReferenceTime - dueDate.getTime()) / 86_400_000))
+
+                        return (
+                          <button
+                            key={transaction.id}
+                            type="button"
+                            onClick={() => onViewTransaction?.(String(transaction.id))}
+                            className={`w-full rounded-xl border p-4 text-left transition-colors ${
+                              isDarkMode
+                                ? 'border-zinc-700 bg-[#27272A] hover:border-rose-500/50'
+                                : 'border-zinc-200 bg-white hover:border-rose-300 hover:bg-rose-50/30'
+                            }`}
+                          >
+                            <div className="flex items-start gap-3">
+                              {transaction.bookCoverData ? (
+                                <img src={transaction.bookCoverData} alt="" className="h-16 w-11 shrink-0 rounded-md object-cover" />
+                              ) : (
+                                <span className="grid h-16 w-11 shrink-0 place-items-center rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-300">
+                                  <BookOpen size={18} />
+                                </span>
+                              )}
+                              <div className="min-w-0 flex-1">
+                                <div className="flex flex-wrap items-start justify-between gap-2">
+                                  <div className="min-w-0">
+                                    <p className={`truncate font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{transaction.bookTitle}</p>
+                                    <p className={`mt-0.5 text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                                      Borrowed by {transaction.memberName} ({transaction.memberCode})
+                                    </p>
+                                  </div>
+                                  <span className="rounded-full bg-rose-500/10 px-2.5 py-1 text-[10px] font-bold uppercase text-rose-600 dark:text-rose-300">
+                                    {daysOverdue} day{daysOverdue === 1 ? '' : 's'} overdue
+                                  </span>
+                                </div>
+                                <div className={`mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs ${isDarkMode ? 'text-zinc-300' : 'text-zinc-600'}`}>
+                                  <p className="flex items-center gap-2">
+                                    <CalendarClock size={14} className="text-zinc-400" />
+                                    Due {Number.isNaN(dueDate.getTime()) ? transaction.dueDate : dueDate.toLocaleDateString()}
+                                  </p>
+                                  <p className="font-semibold text-rose-600 dark:text-rose-300">
+                                    Fine: PHP {transaction.fine.toFixed(2)}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </button>
+                        )
+                      })}
                     </div>
                   )}
                 </div>
