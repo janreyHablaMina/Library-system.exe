@@ -52,6 +52,7 @@ type ReservationsPageProps = {
   onNavigateToBorrow?: (memberId: number, bookId: number) => void
   initialBookId?: number | null
   onInitialBookConsumed?: () => void
+  onShowToast?: (message: string) => void
 }
 type MemberItem = {
   id: number
@@ -523,7 +524,7 @@ function ReservationDetailsViewNew({ reservation, isDarkMode, onBack, onCheckOut
   )
 }
 
-export function ReservationsPage({ isDarkMode, onOpenTransactionDetail: _onOpenTransactionDetail, onNavigateToBorrow, initialBookId = null, onInitialBookConsumed }: ReservationsPageProps) {
+export function ReservationsPage({ isDarkMode, onOpenTransactionDetail: _onOpenTransactionDetail, onNavigateToBorrow, initialBookId = null, onInitialBookConsumed, onShowToast }: ReservationsPageProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [activeViewReservationId, setActiveViewReservationId] = useState<string | null>(null)
   const [reservationSearch, setReservationSearch] = useState('')
@@ -959,6 +960,9 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail: _onOpenT
     try {
       setFormError(null)
       setIsSavingReservation(true)
+      const wasEditing = Boolean(editingReservation)
+      const memberName = selectedMember.name
+      const bookTitle = selectedBook.title
       const queueDateIso = editingReservation
         ? new Date(reservationDate).toISOString()
         : new Date().toISOString()
@@ -997,6 +1001,11 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail: _onOpenT
         })
       }
       await refreshReservations()
+      onShowToast?.(
+        wasEditing
+          ? `Successfully updated the reservation for ${memberName}.`
+          : `Successfully created a reservation for ${memberName}: "${bookTitle}".`,
+      )
       setIsAddModalOpen(false)
       setEditingReservation(null)
       setSelectedBook(null)

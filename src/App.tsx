@@ -627,6 +627,31 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
     return `${Math.floor(diffMs / day)}d ago`
   }
 
+  const getNotificationAppearance = (type: string) => {
+    switch (type) {
+      case 'overdue':
+        return {
+          icon: AlertTriangle,
+          iconClass: isDarkMode ? 'bg-rose-500/15 text-rose-300' : 'bg-rose-50 text-rose-600',
+        }
+      case 'member':
+        return {
+          icon: UserPlus,
+          iconClass: isDarkMode ? 'bg-blue-500/15 text-blue-300' : 'bg-blue-50 text-blue-600',
+        }
+      case 'reservation':
+        return {
+          icon: Bookmark,
+          iconClass: isDarkMode ? 'bg-amber-500/15 text-amber-300' : 'bg-amber-50 text-amber-600',
+        }
+      default:
+        return {
+          icon: Bell,
+          iconClass: isDarkMode ? 'bg-emerald-500/15 text-emerald-300' : 'bg-emerald-50 text-emerald-600',
+        }
+    }
+  }
+
   const handleOpenNotifications = async () => {
     setIsNotificationsOpen((v) => !v)
     await refreshNotifications()
@@ -1142,46 +1167,84 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
                       ) : null}
                     </button>
                     {isNotificationsOpen ? (
-                      <div className={`absolute right-0 top-11 z-30 w-80 rounded-xl border p-2 shadow-xl ${isDarkMode ? 'border-zinc-700 bg-[#27272A]' : 'border-zinc-200 bg-white'}`}>
-                        <div className="mb-2 flex items-center justify-between border-b px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <h3 className={`text-sm font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Notifications</h3>
-                            <button type="button" onClick={() => void handleReadAllNotifications()} className="text-[11px] font-semibold text-emerald-600 hover:underline">Mark all read</button>
+                      <div className={`absolute right-0 top-12 z-30 w-[380px] overflow-hidden rounded-xl border shadow-md ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
+                        <div className={`flex items-start justify-between border-b px-5 py-4 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'}`}>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h3 className={`text-base font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Notifications</h3>
+                              {unreadNotifications > 0 && (
+                                <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-300">
+                                  {unreadNotifications} unread
+                                </span>
+                              )}
+                            </div>
+                            <p className={`mt-1 text-xs ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>Recent library alerts and activity</p>
                           </div>
-                          <button type="button" onClick={() => setIsNotificationsOpen(false)} className={`rounded-md p-1 transition-colors ${isDarkMode ? 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200' : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800'}`}>
+                          <button type="button" onClick={() => setIsNotificationsOpen(false)} className={`rounded-lg p-1.5 transition-colors ${isDarkMode ? 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200' : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700'}`} aria-label="Close notifications">
                             <X size={16} />
                           </button>
                         </div>
-                        <div className="max-h-80 overflow-auto">
-                          {notifications.length === 0 ? (
-                            <p className={`px-2 py-6 text-center text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>No notifications yet.</p>
-                          ) : notifications.map((item) => (
-                            <button
-                              key={item.id}
-                              type="button"
-                              onClick={() => handleOpenNotificationDetail(item.id)}
-                              className={`mb-1 w-full rounded-lg px-2 py-2 text-left transition ${item.isRead ? (isDarkMode ? 'bg-transparent hover:bg-zinc-800/60' : 'bg-transparent hover:bg-zinc-50') : (isDarkMode ? 'bg-emerald-500/10 hover:bg-emerald-500/15' : 'bg-emerald-50 hover:bg-emerald-100')}`}
-                            >
-                              <p className={`text-xs font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{item.title}</p>
-                              <p className={`mt-0.5 text-[11px] ${isDarkMode ? 'text-zinc-300' : 'text-zinc-600'}`}>{item.message}</p>
-                              <p className={`mt-1 text-[10px] ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>{formatNotificationTime(item.createdAt)}</p>
+                        {unreadNotifications > 0 && (
+                          <div className={`flex items-center justify-between border-b px-5 py-2.5 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'}`}>
+                            <p className={`text-[11px] font-semibold ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>You have new activity</p>
+                            <button type="button" onClick={() => void handleReadAllNotifications()} className="text-[11px] font-bold text-emerald-600 transition-colors hover:text-emerald-700">
+                              Mark all as read
                             </button>
-                          ))}
+                          </div>
+                        )}
+                        <div className="max-h-[390px] overflow-y-auto p-2">
+                          {notifications.length === 0 ? (
+                            <div className="flex flex-col items-center px-5 py-12 text-center">
+                              <span className={`grid h-12 w-12 place-items-center rounded-full ${isDarkMode ? 'bg-zinc-800 text-zinc-500' : 'bg-zinc-100 text-zinc-400'}`}>
+                                <Bell size={20} />
+                              </span>
+                              <p className={`mt-3 text-sm font-bold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>You’re all caught up</p>
+                              <p className={`mt-1 text-xs ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>New library activity will appear here.</p>
+                            </div>
+                          ) : notifications.map((item) => {
+                            const appearance = getNotificationAppearance(item.notificationType)
+                            const NotificationIcon = appearance.icon
+                            return (
+                              <button
+                                key={item.id}
+                                type="button"
+                                onClick={() => handleOpenNotificationDetail(item.id)}
+                                className={`group relative mb-1 flex w-full items-start gap-3 rounded-xl p-3 text-left transition-colors ${
+                                  item.isRead
+                                    ? isDarkMode ? 'hover:bg-zinc-800/70' : 'hover:bg-zinc-50'
+                                    : isDarkMode ? 'bg-zinc-800/60 hover:bg-zinc-800' : 'bg-zinc-50 hover:bg-zinc-100/70'
+                                }`}
+                              >
+                                <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${appearance.iconClass}`}>
+                                  <NotificationIcon size={17} />
+                                </span>
+                                <span className="min-w-0 flex-1">
+                                  <span className="flex items-start justify-between gap-3">
+                                    <span className={`truncate text-xs font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{item.title}</span>
+                                    <span className={`shrink-0 text-[10px] font-medium ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>{formatNotificationTime(item.createdAt)}</span>
+                                  </span>
+                                  <span className={`mt-1 block line-clamp-2 text-[11px] leading-4 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{item.message}</span>
+                                </span>
+                                {!item.isRead && <span className="absolute right-3 top-9 h-2 w-2 rounded-full bg-emerald-500" />}
+                              </button>
+                            )
+                          })}
                         </div>
-                        <div className={`mt-2 border-t px-2 pt-2 ${isDarkMode ? 'border-zinc-700' : 'border-zinc-100'}`}>
+                        <div className={`border-t p-3 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'}`}>
                           <button
                             type="button"
                             onClick={() => {
                               setIsNotificationsOpen(false)
                               setActivePage('Notifications')
                             }}
-                            className={`w-full rounded-lg px-3 py-2 text-center text-xs font-bold transition-colors ${
+                            className={`flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-center text-xs font-bold transition-colors ${
                               isDarkMode
                                 ? 'text-emerald-400 hover:bg-zinc-800'
-                                : 'text-emerald-600 hover:bg-emerald-50'
+                                : 'text-emerald-600 hover:bg-zinc-50'
                             }`}
                           >
                             View all notifications
+                            <ArrowRight size={14} />
                           </button>
                         </div>
                       </div>
@@ -1488,6 +1551,7 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
                 setBorrowReturnActiveTab('borrow')
                 setActivePage('Transactions')
               }}
+              onShowToast={setDashboardToast}
             />
           ) : activePage === 'Staff' ? (
             <StaffPage isDarkMode={isDarkMode} />
