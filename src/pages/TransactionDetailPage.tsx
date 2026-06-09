@@ -177,25 +177,18 @@ export function TransactionDetailPage({ isDarkMode, onBack, transactionId }: Tra
 
  return (
  <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[transparent] text-zinc-100' : 'bg-[#f8fafc] text-zinc-900'}`}>
- <section className="p-5 space-y-6 max-w-7xl mx-auto">
+ <section className="space-y-6 p-5">
  {/* Header Actions */}
- <div>
- <div className="space-y-1">
+ <header className="flex items-center justify-between gap-4">
  <button
+ type="button"
  onClick={onBack}
- className={`flex items-center gap-2 text-sm font-semibold transition-colors ${isDarkMode ? 'text-zinc-400 hover:text-zinc-200' : 'text-zinc-500 hover:text-zinc-800'}`}
+ className={`inline-flex items-center gap-2 text-sm font-semibold ${isDarkMode ? 'text-zinc-300 hover:text-white' : 'text-zinc-600 hover:text-zinc-900'}`}
  >
  <ArrowLeft size={16} />
  Back to Transactions
  </button>
- <div className="flex items-center gap-3">
- <h2 className="text-2xl font-bold tracking-tight">Borrow Transaction Details</h2>
- <span className={`rounded-md px-2 py-0.5 text-xs font-bold ${isDarkMode ? 'bg-indigo-500/20 text-indigo-300' : 'bg-indigo-50 text-indigo-600'}`}>
- ID: {transactionId}
- </span>
- </div>
- </div>
- </div>
+ </header>
 
  {/* Top Row: 3 Cards */}
  <div className="grid gap-6 lg:grid-cols-3">
