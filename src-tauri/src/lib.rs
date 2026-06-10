@@ -3143,11 +3143,11 @@ fn update_reservation_status(
             )
         }
     };
-    let book_id = conn
+    let (book_id, previous_status) = conn
         .query_row(
-            "SELECT book_id FROM reservations WHERE id = ?1",
+            "SELECT book_id, status FROM reservations WHERE id = ?1",
             params![payload.id],
-            |row| row.get::<_, i64>(0),
+            |row| Ok((row.get::<_, i64>(0)?, row.get::<_, String>(1)?)),
         )
         .map_err(|e| format!("find reservation failed: {e}"))?;
     if status == "Notified" {
@@ -3178,7 +3178,11 @@ fn update_reservation_status(
     .map_err(|e| format!("update reservation status failed: {e}"))?;
     recalculate_reservation_positions(&conn, Some(book_id))?;
     if status == "Cancelled" || status == "Expired" {
-        process_reservation_queues(&app, &conn, Some(book_id))?;
+        if previous_status == "Notified" {
+            notify_next_reservation(&app, &conn, book_id, true)?;
+        } else {
+            process_reservation_queues(&app, &conn, Some(book_id))?;
+        }
     }
     emit_notifications_refresh(&app);
     Ok(())
@@ -3256,18 +3260,22 @@ fn update_reservation(
 fn delete_reservation(app: tauri::AppHandle, id: i64) -> Result<(), String> {
     let conn = open_db(&database_path(&app)?)?;
     init_schema(&conn)?;
-    let book_id = conn
+    let reservation = conn
         .query_row(
-            "SELECT book_id FROM reservations WHERE id = ?1",
+            "SELECT book_id, status FROM reservations WHERE id = ?1",
             params![id],
-            |row| row.get::<_, i64>(0),
+            |row| Ok((row.get::<_, i64>(0)?, row.get::<_, String>(1)?)),
         )
         .ok();
     conn.execute("DELETE FROM reservations WHERE id = ?1", params![id])
         .map_err(|e| format!("delete reservation failed: {e}"))?;
-    if let Some(book_id) = book_id {
+    if let Some((book_id, previous_status)) = reservation {
         recalculate_reservation_positions(&conn, Some(book_id))?;
-        process_reservation_queues(&app, &conn, Some(book_id))?;
+        if previous_status == "Notified" {
+            notify_next_reservation(&app, &conn, book_id, true)?;
+        } else {
+            process_reservation_queues(&app, &conn, Some(book_id))?;
+        }
     }
     emit_notifications_refresh(&app);
     Ok(())
