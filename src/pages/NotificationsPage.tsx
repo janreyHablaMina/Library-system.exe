@@ -85,6 +85,14 @@ function NotificationsPage({
       await handleMarkAsRead(item.id)
     }
 
+    if ((item.notificationType === 'borrow' || item.notificationType === 'return') && onViewTransaction) {
+      const transactionId = item.uniqueKey?.match(/^tx:(?:borrow|return):(\d+)$/)?.[1]
+      if (transactionId) {
+        onViewTransaction(transactionId)
+        return
+      }
+    }
+
     if (item.notificationType === 'member' && onViewMember) {
       try {
         const members = await getMembersRegisteredToday()

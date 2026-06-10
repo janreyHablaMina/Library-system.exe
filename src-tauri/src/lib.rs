@@ -141,6 +141,7 @@ struct NotificationRow {
     title: String,
     message: String,
     is_read: bool,
+    unique_key: Option<String>,
     created_at: String,
 }
 
@@ -4395,7 +4396,7 @@ fn list_notifications(
     let mut stmt = conn
         .prepare(
             "
-      SELECT id, notification_type, title, message, is_read, created_at
+      SELECT id, notification_type, title, message, is_read, unique_key, created_at
       FROM notifications
       ORDER BY datetime(created_at) DESC, id DESC
       LIMIT ?1
@@ -4411,7 +4412,8 @@ fn list_notifications(
                 title: row.get(2)?,
                 message: row.get(3)?,
                 is_read: row.get::<_, i64>(4)? == 1,
-                created_at: row.get(5)?,
+                unique_key: row.get(5)?,
+                created_at: row.get(6)?,
             })
         })
         .map_err(|e| format!("list notifications failed: {e}"))?;

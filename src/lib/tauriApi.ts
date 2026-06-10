@@ -102,6 +102,7 @@ export type NotificationItem = {
   title: string
   message: string
   isRead: boolean
+  uniqueKey: string | null
   createdAt: string
 }
 
