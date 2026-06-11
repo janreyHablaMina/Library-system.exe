@@ -3,13 +3,13 @@ use lettre::{
     message::Mailbox, transport::smtp::authentication::Credentials, Message, SmtpTransport,
     Transport,
 };
+use log::{error, info, warn};
 use rand::{distributions::Alphanumeric, rngs::OsRng, Rng};
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::{fs, path::PathBuf, sync::Mutex};
 use tauri::{AppHandle, Emitter, Manager};
-use log::{info, error, warn};
 
 pub mod imap_client;
 
@@ -368,6 +368,10 @@ struct ReservationRow {
     book_author: String,
     reservation_date: String,
     expires_on: String,
+    queue_date: String,
+    queue_position: Option<i64>,
+    notification_sent_at: Option<String>,
+    claim_expires_at: Option<String>,
     status: String,
     branch: String,
     priority: String,
@@ -389,6 +393,12 @@ struct CreateReservationPayload {
     notes: Option<String>,
     notify_email: Option<bool>,
     notify_sms: Option<bool>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ProcessReservationQueuePayload {
+    book_id: Option<i64>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -618,7 +628,11 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
         book_id INTEGER NOT NULL,
         reservation_date TEXT NOT NULL,
         expires_on TEXT NOT NULL,
-        status TEXT NOT NULL DEFAULT 'Pending',
+        queue_date TEXT NOT NULL,
+        queue_position INTEGER,
+        notification_sent_at TEXT,
+        claim_expires_at TEXT,
+        status TEXT NOT NULL DEFAULT 'Queued',
         branch TEXT NOT NULL DEFAULT 'Central Library',
         priority TEXT NOT NULL DEFAULT 'Normal',
         notes TEXT,
@@ -819,6 +833,67 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
             return Err(format!("borrow transactions renewal migration failed: {e}"));
         }
     }
+    for (sql, label) in [
+        (
+            "ALTER TABLE reservations ADD COLUMN queue_date TEXT",
+            "reservations queue_date",
+        ),
+        (
+            "ALTER TABLE reservations ADD COLUMN queue_position INTEGER",
+            "reservations queue_position",
+        ),
+        (
+            "ALTER TABLE reservations ADD COLUMN notification_sent_at TEXT",
+            "reservations notification_sent_at",
+        ),
+        (
+            "ALTER TABLE reservations ADD COLUMN claim_expires_at TEXT",
+            "reservations claim_expires_at",
+        ),
+    ] {
+        if let Err(e) = conn.execute(sql, []) {
+            let msg = e.to_string();
+            if !msg.contains("duplicate column name") {
+                return Err(format!("{label} migration failed: {e}"));
+            }
+        }
+    }
+    conn.execute(
+        "
+        UPDATE reservations
+        SET queue_date = COALESCE(queue_date, reservation_date),
+            status = CASE status
+                WHEN 'Pending' THEN 'Queued'
+                WHEN 'Reserved' THEN 'Queued'
+                WHEN 'Ready for Pickup' THEN 'Notified'
+                WHEN 'Completed' THEN 'Claimed'
+                ELSE status
+            END,
+            claim_expires_at = CASE
+                WHEN status IN ('Ready for Pickup', 'Notified') THEN COALESCE(claim_expires_at, expires_on)
+                ELSE claim_expires_at
+            END
+        ",
+        [],
+    )
+    .map_err(|e| format!("backfill reservation queue fields failed: {e}"))?;
+    conn.execute(
+        "
+        WITH ranked AS (
+          SELECT id, ROW_NUMBER() OVER (
+            PARTITION BY book_id
+            ORDER BY CASE WHEN status = 'Notified' THEN 0 ELSE 1 END, queue_date, id
+          ) AS position
+          FROM reservations
+          WHERE status IN ('Queued', 'Notified')
+        )
+        UPDATE reservations
+        SET queue_position = (SELECT position FROM ranked WHERE ranked.id = reservations.id)
+        WHERE id IN (SELECT id FROM ranked)
+        ",
+        [],
+    )
+    .map_err(|e| format!("backfill reservation queue positions failed: {e}"))?;
     if let Err(e) = conn.execute(
         "ALTER TABLE sessions ADD COLUMN remember_me INTEGER NOT NULL DEFAULT 0",
         [],
@@ -838,6 +913,36 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
         params!["admin", "admin", Utc::now().to_rfc3339()],
     )
     .map_err(|e| format!("seed admin user failed: {e}"))?;
+    let now = Utc::now().to_rfc3339();
+    conn.execute(
+        "
+        INSERT INTO settings (key, value, updated_at)
+        SELECT 'reservations.claim_period_days', value, ?1
+        FROM settings
+        WHERE key = 'general.reservation_expiry_days'
+        ON CONFLICT(key) DO NOTHING
+        ",
+        params![now],
+    )
+    .map_err(|e| format!("migrate reservation claim period setting failed: {e}"))?;
+    for (key, value) in [
+        ("reservations.enable_queue", "true"),
+        ("reservations.maximum_queue_length", "0"),
+        ("reservations.claim_period_days", "3"),
+        ("reservations.auto_notify_next_user", "true"),
+        ("reservations.auto_expire_unclaimed", "true"),
+        ("reservations.send_email_notifications", "true"),
+    ] {
+        conn.execute(
+            "
+            INSERT INTO settings (key, value, updated_at)
+            VALUES (?1, ?2, ?3)
+            ON CONFLICT(key) DO NOTHING
+            ",
+            params![key, value, Utc::now().to_rfc3339()],
+        )
+        .map_err(|e| format!("seed reservation setting failed: {e}"))?;
+    }
     conn
     .execute(
       "UPDATE users SET full_name = CASE WHEN TRIM(full_name) = '' THEN username ELSE full_name END, email = CASE WHEN TRIM(email) = '' THEN username || '@local.library' ELSE email END",
@@ -961,30 +1066,15 @@ mod fine_tests {
         let due = "2026-06-05";
 
         assert_eq!(
-            calculate_overdue_fine(
-                due,
-                NaiveDate::from_ymd_opt(2026, 6, 6).unwrap(),
-                5.0,
-                1,
-            ),
+            calculate_overdue_fine(due, NaiveDate::from_ymd_opt(2026, 6, 6).unwrap(), 5.0, 1,),
             0.0
         );
         assert_eq!(
-            calculate_overdue_fine(
-                due,
-                NaiveDate::from_ymd_opt(2026, 6, 7).unwrap(),
-                5.0,
-                1,
-            ),
+            calculate_overdue_fine(due, NaiveDate::from_ymd_opt(2026, 6, 7).unwrap(), 5.0, 1,),
             5.0
         );
         assert_eq!(
-            calculate_overdue_fine(
-                due,
-                NaiveDate::from_ymd_opt(2026, 6, 8).unwrap(),
-                5.0,
-                1,
-            ),
+            calculate_overdue_fine(due, NaiveDate::from_ymd_opt(2026, 6, 8).unwrap(), 5.0, 1,),
             10.0
         );
     }
@@ -1079,14 +1169,14 @@ fn log_email(
     Ok(())
 }
 
-
 fn wrap_in_onyx_html(subject: &str, body_text: &str) -> String {
     let mut body_html = body_text.replace("\n\n", "</p><p>").replace("\n", "<br/>");
     if !body_html.starts_with("<p>") {
         body_html = format!("<p>{}</p>", body_html);
     }
-    
-    format!(r#"
+
+    format!(
+        r#"
 <!DOCTYPE html>
 <html>
 <head>
@@ -1159,7 +1249,9 @@ fn wrap_in_onyx_html(subject: &str, body_text: &str) -> String {
     </div>
 </body>
 </html>
-"#, body_html)
+"#,
+        body_html
+    )
 }
 
 fn send_email_from_settings(
@@ -1239,9 +1331,10 @@ fn send_email_from_settings(
         .header(lettre::message::header::ContentType::TEXT_HTML)
         .body(html_body)
         .map_err(|e| format!("build email failed: {e}"))?;
-    let tls_params = lettre::transport::smtp::client::TlsParameters::builder(smtp_host.trim().to_string())
-        .build()
-        .map_err(|e| format!("tls builder failed: {e}"))?;
+    let tls_params =
+        lettre::transport::smtp::client::TlsParameters::builder(smtp_host.trim().to_string())
+            .build()
+            .map_err(|e| format!("tls builder failed: {e}"))?;
 
     let tls_config = if port == 465 {
         lettre::transport::smtp::client::Tls::Wrapper(tls_params)
@@ -2151,6 +2244,25 @@ fn create_borrow_transaction(
     if available < 1 {
         return Err("Book is not available for borrowing.".to_string());
     }
+    let notified_member = tx
+        .query_row(
+            "
+            SELECT member_id
+            FROM reservations
+            WHERE book_id = ?1 AND status = 'Notified'
+            ORDER BY queue_date, id
+            LIMIT 1
+            ",
+            params![payload.book_id],
+            |row| row.get::<_, i64>(0),
+        )
+        .ok();
+    if notified_member.is_some_and(|member_id| member_id != payload.member_id) {
+        return Err(
+            "This book is being held for the first notified member in the reservation queue."
+                .to_string(),
+        );
+    }
 
     tx
     .execute(
@@ -2183,6 +2295,21 @@ fn create_borrow_transaction(
     )
     .map_err(|e| format!("update member borrowed count failed: {e}"))?;
 
+    tx.execute(
+        "
+        UPDATE reservations
+        SET status = 'Claimed', queue_position = NULL
+        WHERE id = (
+          SELECT id FROM reservations
+          WHERE member_id = ?1 AND book_id = ?2 AND status = 'Notified'
+          ORDER BY queue_date, id
+          LIMIT 1
+        )
+        ",
+        params![payload.member_id, payload.book_id],
+    )
+    .map_err(|e| format!("mark reservation claimed failed: {e}"))?;
+
     tx.commit()
         .map_err(|e| format!("commit borrow transaction failed: {e}"))?;
     let member_name = conn
@@ -2206,6 +2333,8 @@ fn create_borrow_transaction(
         &format!("{member_name} borrowed \"{book_title}\"."),
         &format!("tx:borrow:{borrow_id}"),
     )?;
+    recalculate_reservation_positions(&conn, Some(payload.book_id))?;
+    process_reservation_queues(&app, &conn, Some(payload.book_id))?;
     emit_notifications_refresh(&app);
     Ok(borrow_id)
 }
@@ -2370,6 +2499,7 @@ fn return_borrow_transaction(
         &format!("{member_name} returned \"{book_title}\"."),
         &format!("tx:return:{}", payload.transaction_id),
     )?;
+    process_reservation_queues(&app, &conn, Some(book_id))?;
     emit_notifications_refresh(&app);
     Ok(())
 }
@@ -2571,6 +2701,220 @@ fn list_borrow_transactions(
     }
 }
 
+fn recalculate_reservation_positions(
+    conn: &Connection,
+    book_id: Option<i64>,
+) -> Result<(), String> {
+    let book_filter = book_id.map(|_| " AND book_id = ?1").unwrap_or("");
+    let sql = format!(
+        "
+        UPDATE reservations SET queue_position = NULL
+        WHERE status NOT IN ('Queued', 'Notified'){book_filter};
+        WITH ranked AS (
+          SELECT id, ROW_NUMBER() OVER (
+            PARTITION BY book_id
+            ORDER BY CASE WHEN status = 'Notified' THEN 0 ELSE 1 END, queue_date, id
+          ) AS position
+          FROM reservations
+          WHERE status IN ('Queued', 'Notified'){book_filter}
+        )
+        UPDATE reservations
+        SET queue_position = (SELECT position FROM ranked WHERE ranked.id = reservations.id)
+        WHERE id IN (SELECT id FROM ranked);
+        "
+    );
+    if let Some(id) = book_id {
+        conn.execute_batch(&sql.replace("?1", &id.to_string()))
+            .map_err(|e| format!("recalculate reservation positions failed: {e}"))?;
+    } else {
+        conn.execute_batch(&sql)
+            .map_err(|e| format!("recalculate reservation positions failed: {e}"))?;
+    }
+    Ok(())
+}
+
+fn notify_next_reservation(
+    app: &tauri::AppHandle,
+    conn: &Connection,
+    book_id: i64,
+    force: bool,
+) -> Result<bool, String> {
+    if !force && !setting_bool(conn, "reservations.auto_notify_next_user", true) {
+        return Ok(false);
+    }
+    let available = conn
+        .query_row(
+            "SELECT available FROM books WHERE id = ?1",
+            params![book_id],
+            |row| row.get::<_, i64>(0),
+        )
+        .unwrap_or(0);
+    if available < 1 {
+        return Ok(false);
+    }
+    let notified_count = conn
+        .query_row(
+            "SELECT COUNT(*) FROM reservations WHERE book_id = ?1 AND status = 'Notified'",
+            params![book_id],
+            |row| row.get::<_, i64>(0),
+        )
+        .unwrap_or(0);
+    if notified_count > 0 {
+        return Ok(false);
+    }
+
+    let next = conn.query_row(
+        "
+        SELECT r.id, r.member_id, m.full_name, m.email, b.title, r.notify_email
+        FROM reservations r
+        INNER JOIN members m ON m.id = r.member_id
+        INNER JOIN books b ON b.id = r.book_id
+        WHERE r.book_id = ?1 AND r.status = 'Queued'
+        ORDER BY r.queue_date, r.id
+        LIMIT 1
+        ",
+        params![book_id],
+        |row| {
+            Ok((
+                row.get::<_, i64>(0)?,
+                row.get::<_, i64>(1)?,
+                row.get::<_, String>(2)?,
+                row.get::<_, Option<String>>(3)?,
+                row.get::<_, String>(4)?,
+                row.get::<_, i64>(5)? == 1,
+            ))
+        },
+    );
+    let (reservation_id, _member_id, member_name, email, book_title, notify_email) = match next {
+        Ok(value) => value,
+        Err(rusqlite::Error::QueryReturnedNoRows) => return Ok(false),
+        Err(e) => return Err(format!("find next reservation failed: {e}")),
+    };
+
+    let now = Utc::now();
+    let claim_days = setting_i64(conn, "reservations.claim_period_days", 3).max(1);
+    let claim_expires_at = (now + Duration::days(claim_days)).to_rfc3339();
+    conn.execute(
+        "
+        UPDATE reservations
+        SET status = 'Notified',
+            notification_sent_at = ?1,
+            claim_expires_at = ?2,
+            expires_on = ?2
+        WHERE id = ?3 AND status = 'Queued'
+        ",
+        params![now.to_rfc3339(), claim_expires_at, reservation_id],
+    )
+    .map_err(|e| format!("notify reservation failed: {e}"))?;
+
+    if notify_email
+        && setting_bool(conn, "reservations.send_email_notifications", true)
+        && email
+            .as_deref()
+            .is_some_and(|value| !value.trim().is_empty())
+    {
+        let email_address = email.unwrap_or_default();
+        let subject = "Your Reserved Book is Ready for Pickup";
+        let body = format!(
+            "Hello {member_name},\n\nThe book you reserved, \"{book_title}\", is now available. Please claim it before {claim_expires_at} to avoid losing your queue position."
+        );
+        let automatic_key = format!("reservation:ready:{reservation_id}");
+        match send_email_from_settings(conn, &email_address, subject, &body) {
+            Ok(()) => log_email(
+                conn,
+                None,
+                &member_name,
+                &email_address,
+                &book_title,
+                "Reservation Ready",
+                "Sent",
+                None,
+                Some(&automatic_key),
+            )?,
+            Err(error) => log_email(
+                conn,
+                None,
+                &member_name,
+                &email_address,
+                &book_title,
+                "Reservation Ready",
+                "Failed",
+                Some(&error),
+                Some(&automatic_key),
+            )?,
+        }
+    }
+    recalculate_reservation_positions(conn, Some(book_id))?;
+    emit_notifications_refresh(app);
+    Ok(true)
+}
+
+fn process_reservation_queues(
+    app: &tauri::AppHandle,
+    conn: &Connection,
+    book_id: Option<i64>,
+) -> Result<(), String> {
+    if !setting_bool(conn, "reservations.enable_queue", true) {
+        return Ok(());
+    }
+    if setting_bool(conn, "reservations.auto_expire_unclaimed", true) {
+        let now = Utc::now().to_rfc3339();
+        if let Some(id) = book_id {
+            conn.execute(
+                "
+                UPDATE reservations
+                SET status = 'Expired', queue_position = NULL
+                WHERE book_id = ?1 AND status = 'Notified'
+                  AND claim_expires_at IS NOT NULL AND claim_expires_at <= ?2
+                ",
+                params![id, now],
+            )
+            .map_err(|e| format!("expire reservations failed: {e}"))?;
+        } else {
+            conn.execute(
+                "
+                UPDATE reservations
+                SET status = 'Expired', queue_position = NULL
+                WHERE status = 'Notified'
+                  AND claim_expires_at IS NOT NULL AND claim_expires_at <= ?1
+                ",
+                params![now],
+            )
+            .map_err(|e| format!("expire reservations failed: {e}"))?;
+        }
+    }
+    recalculate_reservation_positions(conn, book_id)?;
+
+    let book_ids = if let Some(id) = book_id {
+        vec![id]
+    } else {
+        let mut stmt = conn
+            .prepare(
+                "SELECT DISTINCT book_id FROM reservations WHERE status IN ('Queued', 'Notified')",
+            )
+            .map_err(|e| format!("prepare reservation books failed: {e}"))?;
+        let rows = stmt
+            .query_map([], |row| row.get::<_, i64>(0))
+            .map_err(|e| format!("list reservation books failed: {e}"))?;
+        rows.collect::<Result<Vec<_>, _>>()
+            .map_err(|e| format!("collect reservation books failed: {e}"))?
+    };
+    for id in book_ids {
+        notify_next_reservation(app, conn, id, false)?;
+    }
+    Ok(())
+}
+
+#[tauri::command]
+fn process_reservation_queue(
+    app: tauri::AppHandle,
+    payload: ProcessReservationQueuePayload,
+) -> Result<(), String> {
+    let conn = open_db(&database_path(&app)?)?;
+    init_schema(&conn)?;
+    process_reservation_queues(&app, &conn, payload.book_id)
+}
+
 #[tauri::command]
 fn create_reservation(
     app: tauri::AppHandle,
@@ -2600,6 +2944,41 @@ fn create_reservation(
     if book_exists == 0 {
         return Err("Selected book does not exist.".to_string());
     }
+    let duplicate = conn
+        .query_row(
+            "
+            SELECT COUNT(*) FROM reservations
+            WHERE member_id = ?1 AND book_id = ?2 AND status IN ('Queued', 'Notified')
+            ",
+            params![payload.member_id, payload.book_id],
+            |row| row.get::<_, i64>(0),
+        )
+        .map_err(|e| format!("check duplicate reservation failed: {e}"))?;
+    if duplicate > 0 {
+        return Err("This member is already in the reservation queue for this book.".to_string());
+    }
+    let active_queue_length = conn
+        .query_row(
+            "
+            SELECT COUNT(*) FROM reservations
+            WHERE book_id = ?1 AND status IN ('Queued', 'Notified')
+            ",
+            params![payload.book_id],
+            |row| row.get::<_, i64>(0),
+        )
+        .map_err(|e| format!("check reservation queue length failed: {e}"))?;
+    let maximum_queue_length = setting_i64(&conn, "reservations.maximum_queue_length", 0);
+    if maximum_queue_length > 0 && active_queue_length >= maximum_queue_length {
+        return Err(format!(
+            "This book's reservation queue has reached its limit of {maximum_queue_length}."
+        ));
+    }
+    let queue_date = if payload.reservation_date.trim().is_empty() {
+        Utc::now().to_rfc3339()
+    } else {
+        payload.reservation_date.clone()
+    };
+    let queue_position = active_queue_length + 1;
 
     conn.execute(
         "
@@ -2608,6 +2987,8 @@ fn create_reservation(
         book_id,
         reservation_date,
         expires_on,
+        queue_date,
+        queue_position,
         status,
         branch,
         priority,
@@ -2616,13 +2997,13 @@ fn create_reservation(
         notify_sms,
         created_at
       )
-      VALUES (?1, ?2, ?3, ?4, 'Pending', ?5, ?6, ?7, ?8, ?9, ?10)
+      VALUES (?1, ?2, ?3, ?3, ?3, ?4, 'Queued', ?5, ?6, ?7, ?8, ?9, ?10)
       ",
         params![
             payload.member_id,
             payload.book_id,
-            payload.reservation_date,
-            payload.expires_on,
+            queue_date,
+            queue_position,
             payload
                 .branch
                 .map(|v| v.trim().to_string())
@@ -2652,7 +3033,9 @@ fn create_reservation(
     )
     .map_err(|e| format!("create reservation failed: {e}"))?;
 
-    Ok(conn.last_insert_rowid())
+    let reservation_id = conn.last_insert_rowid();
+    process_reservation_queues(&app, &conn, Some(payload.book_id))?;
+    Ok(reservation_id)
 }
 
 #[tauri::command]
@@ -2663,6 +3046,7 @@ fn list_reservations(
 ) -> Result<Vec<ReservationRow>, String> {
     let conn = open_db(&database_path(&app)?)?;
     init_schema(&conn)?;
+    process_reservation_queues(&app, &conn, None)?;
     let max_rows = limit.unwrap_or(500).clamp(1, 2000);
     let status_filter = status.unwrap_or_else(|| "All".to_string());
 
@@ -2677,6 +3061,10 @@ fn list_reservations(
       b.author,
       r.reservation_date,
       r.expires_on,
+      COALESCE(r.queue_date, r.reservation_date),
+      r.queue_position,
+      r.notification_sent_at,
+      r.claim_expires_at,
       r.status,
       r.branch,
       r.priority,
@@ -2710,13 +3098,17 @@ fn list_reservations(
             book_author: row.get(6)?,
             reservation_date: row.get(7)?,
             expires_on: row.get(8)?,
-            status: row.get(9)?,
-            branch: row.get(10)?,
-            priority: row.get(11)?,
-            notes: row.get(12)?,
-            notify_email: row.get::<_, i64>(13)? == 1,
-            notify_sms: row.get::<_, i64>(14)? == 1,
-            created_at: row.get(15)?,
+            queue_date: row.get(9)?,
+            queue_position: row.get(10)?,
+            notification_sent_at: row.get(11)?,
+            claim_expires_at: row.get(12)?,
+            status: row.get(13)?,
+            branch: row.get(14)?,
+            priority: row.get(15)?,
+            notes: row.get(16)?,
+            notify_email: row.get::<_, i64>(17)? == 1,
+            notify_sms: row.get::<_, i64>(18)? == 1,
+            created_at: row.get(19)?,
         })
     };
 
@@ -2740,18 +3132,54 @@ fn update_reservation_status(
     app: tauri::AppHandle,
     payload: UpdateReservationStatusPayload,
 ) -> Result<(), String> {
-    let status = payload.status.trim();
-    if status.is_empty() {
-        return Err("status is required".to_string());
-    }
-
     let conn = open_db(&database_path(&app)?)?;
     init_schema(&conn)?;
+    let status = match payload.status.trim() {
+        "Queued" | "Notified" | "Claimed" | "Expired" | "Cancelled" => payload.status.trim(),
+        _ => {
+            return Err(
+                "Reservation status must be Queued, Notified, Claimed, Expired, or Cancelled."
+                    .to_string(),
+            )
+        }
+    };
+    let book_id = conn
+        .query_row(
+            "SELECT book_id FROM reservations WHERE id = ?1",
+            params![payload.id],
+            |row| row.get::<_, i64>(0),
+        )
+        .map_err(|e| format!("find reservation failed: {e}"))?;
+    if status == "Notified" {
+        conn.execute(
+            "UPDATE reservations SET status = 'Queued' WHERE id = ?1",
+            params![payload.id],
+        )
+        .map_err(|e| format!("queue reservation for notification failed: {e}"))?;
+        let notified = notify_next_reservation(&app, &conn, book_id, true)?;
+        if !notified {
+            return Err(
+                "The next member cannot be notified until a copy is available and no other member is in the claim period."
+                    .to_string(),
+            );
+        }
+        return Ok(());
+    }
+
     conn.execute(
-        "UPDATE reservations SET status = ?1 WHERE id = ?2",
+        "
+        UPDATE reservations
+        SET status = ?1,
+            queue_position = CASE WHEN ?1 IN ('Queued', 'Notified') THEN queue_position ELSE NULL END
+        WHERE id = ?2
+        ",
         params![status, payload.id],
     )
     .map_err(|e| format!("update reservation status failed: {e}"))?;
+    recalculate_reservation_positions(&conn, Some(book_id))?;
+    if status == "Cancelled" || status == "Expired" {
+        process_reservation_queues(&app, &conn, Some(book_id))?;
+    }
     emit_notifications_refresh(&app);
     Ok(())
 }
@@ -2792,7 +3220,8 @@ fn update_reservation(
       SET member_id = ?1,
           book_id = ?2,
           reservation_date = ?3,
-          expires_on = ?4,
+          queue_date = ?3,
+          expires_on = CASE WHEN status = 'Notified' THEN ?4 ELSE expires_on END,
           status = ?5,
           branch = ?6,
           priority = ?7,
@@ -2827,8 +3256,19 @@ fn update_reservation(
 fn delete_reservation(app: tauri::AppHandle, id: i64) -> Result<(), String> {
     let conn = open_db(&database_path(&app)?)?;
     init_schema(&conn)?;
+    let book_id = conn
+        .query_row(
+            "SELECT book_id FROM reservations WHERE id = ?1",
+            params![id],
+            |row| row.get::<_, i64>(0),
+        )
+        .ok();
     conn.execute("DELETE FROM reservations WHERE id = ?1", params![id])
         .map_err(|e| format!("delete reservation failed: {e}"))?;
+    if let Some(book_id) = book_id {
+        recalculate_reservation_positions(&conn, Some(book_id))?;
+        process_reservation_queues(&app, &conn, Some(book_id))?;
+    }
     emit_notifications_refresh(&app);
     Ok(())
 }
@@ -3033,7 +3473,12 @@ fn delete_staff(app: tauri::AppHandle, id: i64) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn send_email_smtp(app: tauri::AppHandle, to: String, subject: String, body: String) -> Result<String, String> {
+fn send_email_smtp(
+    app: tauri::AppHandle,
+    to: String,
+    subject: String,
+    body: String,
+) -> Result<String, String> {
     let conn = open_db(&database_path(&app)?)?;
     init_schema(&conn)?;
     match send_email_from_settings(&conn, &to, &subject, &body) {
@@ -3322,12 +3767,12 @@ fn send_sms_gateway(
     init_schema(&conn)?;
     let b_name = borrower_name.unwrap_or_else(|| "Unknown".to_string());
     let s_type = sms_type.unwrap_or_else(|| "Notification".to_string());
-    
+
     conn.execute(
         "INSERT INTO sms_logs (borrower_name, phone_number, book_title, sms_type, status, sent_at, error_message, message_body) VALUES (?, ?, ?, ?, ?, datetime('now', 'localtime'), ?, ?)",
         params![b_name, phone, "N/A", s_type, "Sent", None::<String>, message],
     ).map_err(|e| format!("failed to insert sms log: {e}"))?;
-    
+
     Ok(summary)
 }
 
@@ -3578,7 +4023,13 @@ fn request_password_reset(
             LIMIT 1
             ",
             params![identifier],
-            |row| Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?, row.get::<_, String>(2)?)),
+            |row| {
+                Ok((
+                    row.get::<_, String>(0)?,
+                    row.get::<_, String>(1)?,
+                    row.get::<_, String>(2)?,
+                ))
+            },
         )
         .ok();
     let account = user_account.or_else(|| {
@@ -3593,7 +4044,13 @@ fn request_password_reset(
             LIMIT 1
             ",
             params![identifier],
-            |row| Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?, row.get::<_, String>(2)?)),
+            |row| {
+                Ok((
+                    row.get::<_, String>(0)?,
+                    row.get::<_, String>(1)?,
+                    row.get::<_, String>(2)?,
+                ))
+            },
         )
         .ok()
     });
@@ -3611,7 +4068,11 @@ fn request_password_reset(
         .ok();
     if recent_request
         .and_then(|value| chrono::DateTime::parse_from_rfc3339(&value).ok())
-        .map(|created| now.signed_duration_since(created.with_timezone(&Utc)).num_seconds() < 60)
+        .map(|created| {
+            now.signed_duration_since(created.with_timezone(&Utc))
+                .num_seconds()
+                < 60
+        })
         .unwrap_or(false)
     {
         return Ok(());
@@ -3840,6 +4301,7 @@ fn change_password(app: tauri::AppHandle, payload: ChangePasswordPayload) -> Res
 fn sync_notifications(app: tauri::AppHandle) -> Result<(), String> {
     let conn = open_db(&database_path(&app)?)?;
     init_schema(&conn)?;
+    process_reservation_queues(&app, &conn, None)?;
 
     let now = Utc::now().to_rfc3339();
 
@@ -4010,20 +4472,13 @@ fn restore_login_window(app: tauri::AppHandle) -> Result<(), String> {
     Ok(())
 }
 
-
-async fn send_sms_txtbox(
-    api_key: &str,
-    to: &str,
-    message: &str,
-) -> Result<(), String> {
+async fn send_sms_txtbox(api_key: &str, to: &str, message: &str) -> Result<(), String> {
     let client = reqwest::Client::new();
-    
-    let params = [
-        ("number", to),
-        ("message", message),
-    ];
 
-    let res = client.post("https://ws-v2.txtbox.com/messaging/v1/sms/push")
+    let params = [("number", to), ("message", message)];
+
+    let res = client
+        .post("https://ws-v2.txtbox.com/messaging/v1/sms/push")
         .header("X-TXTBOX-Auth", api_key)
         .form(&params)
         .send()
@@ -4039,19 +4494,22 @@ async fn send_sms_txtbox(
 }
 
 #[tauri::command]
-async fn test_sms_configuration(
-    app: tauri::AppHandle,
-    to: String,
-) -> Result<String, String> {
+async fn test_sms_configuration(app: tauri::AppHandle, to: String) -> Result<String, String> {
     let conn = open_db(&database_path(&app)?)?;
-    let api_key: String = conn.query_row("SELECT value FROM settings WHERE key = 'sms.txtbox_api_key'", [], |row| row.get(0)).unwrap_or_default();
-    
+    let api_key: String = conn
+        .query_row(
+            "SELECT value FROM settings WHERE key = 'sms.txtbox_api_key'",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap_or_default();
+
     if api_key.trim().is_empty() {
         return Err("TxtBox API key is missing.".to_string());
     }
 
     send_sms_txtbox(&api_key, &to, "Test SMS").await?;
-    
+
     conn.execute(
         "INSERT INTO sms_logs (borrower_name, phone_number, book_title, sms_type, status, sent_at, error_message, message_body) VALUES (?, ?, ?, ?, ?, datetime('now', 'localtime'), ?, ?)",
         ["Admin Test", &to, "N/A", "SMS Test", "Sent", "", "Test SMS"],
@@ -4068,13 +4526,19 @@ async fn send_manual_sms(
     message: String,
 ) -> Result<String, String> {
     let conn = open_db(&database_path(&app)?)?;
-    
+
     let enabled = setting_bool(&conn, "sms.enabled", false);
     if !enabled {
         return Err("SMS notifications are disabled in settings.".to_string());
     }
 
-    let api_key: String = conn.query_row("SELECT value FROM settings WHERE key = 'sms.txtbox_api_key'", [], |row| row.get(0)).unwrap_or_default();
+    let api_key: String = conn
+        .query_row(
+            "SELECT value FROM settings WHERE key = 'sms.txtbox_api_key'",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap_or_default();
     if api_key.trim().is_empty() {
         return Err("TxtBox API key is missing.".to_string());
     }
@@ -4089,8 +4553,6 @@ async fn send_manual_sms(
     Ok("SMS sent successfully!".to_string())
 }
 
-
-
 fn is_valid_license(key: &str) -> bool {
     let clean_key = key.replace("-", "").to_uppercase();
     if !clean_key.starts_with("LIB") || clean_key.len() != 15 {
@@ -4098,13 +4560,13 @@ fn is_valid_license(key: &str) -> bool {
     }
     let payload = &clean_key[3..13];
     let expected_checksum = &clean_key[13..15];
-    
+
     let mut sum: u32 = 0;
     for (i, c) in payload.chars().enumerate() {
         let val = c.to_digit(36).unwrap_or(0);
         sum += val * (i as u32 + 1);
     }
-    
+
     let checksum = format!("{:02X}", sum % 256);
     checksum == expected_checksum
 }
@@ -4124,16 +4586,28 @@ fn verify_license_key(app: tauri::AppHandle, key: String) -> Result<bool, String
 #[tauri::command]
 fn get_license_status(app: tauri::AppHandle) -> Result<String, String> {
     let conn = open_db(&database_path(&app)?)?;
-    let status: String = conn.query_row("SELECT value FROM settings WHERE key = 'license.status'", [], |r| r.get(0)).unwrap_or_else(|_| "trial".to_string());
-    
+    let status: String = conn
+        .query_row(
+            "SELECT value FROM settings WHERE key = 'license.status'",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap_or_else(|_| "trial".to_string());
+
     if status == "active" {
         return Ok("active".to_string());
     }
-    
-    let install_date: Option<String> = conn.query_row("SELECT value FROM settings WHERE key = 'license.install_date'", [], |r| r.get(0)).ok();
-    
+
+    let install_date: Option<String> = conn
+        .query_row(
+            "SELECT value FROM settings WHERE key = 'license.install_date'",
+            [],
+            |r| r.get(0),
+        )
+        .ok();
+
     let now = Utc::now();
-    
+
     if let Some(date_str) = install_date {
         if let Ok(parsed_date) = chrono::DateTime::parse_from_rfc3339(&date_str) {
             let parsed_utc = parsed_date.with_timezone(&Utc);
@@ -4149,15 +4623,21 @@ fn get_license_status(app: tauri::AppHandle) -> Result<String, String> {
         let _ = conn.execute("INSERT INTO settings (key, value, updated_at) VALUES ('license.install_date', ?, datetime('now', 'localtime')) ON CONFLICT(key) DO NOTHING", [&date_str]);
         let _ = conn.execute("INSERT INTO settings (key, value, updated_at) VALUES ('license.status', 'trial', datetime('now', 'localtime')) ON CONFLICT(key) DO NOTHING", []);
     }
-    
+
     Ok("trial".to_string())
 }
 
 #[tauri::command]
 fn get_trial_days_remaining(app: tauri::AppHandle) -> Result<i64, String> {
     let conn = open_db(&database_path(&app)?)?;
-    let install_date: Option<String> = conn.query_row("SELECT value FROM settings WHERE key = 'license.install_date'", [], |r| r.get(0)).ok();
-    
+    let install_date: Option<String> = conn
+        .query_row(
+            "SELECT value FROM settings WHERE key = 'license.install_date'",
+            [],
+            |r| r.get(0),
+        )
+        .ok();
+
     if let Some(date_str) = install_date {
         if let Ok(parsed_date) = chrono::DateTime::parse_from_rfc3339(&date_str) {
             let parsed_utc = parsed_date.with_timezone(&Utc);
@@ -4201,12 +4681,36 @@ fn get_trial_seconds_remaining(app: tauri::AppHandle) -> Result<i64, String> {
 #[tauri::command]
 fn sync_inbox(app: tauri::AppHandle) -> Result<usize, String> {
     let conn = open_db(&database_path(&app)?)?;
-    
-    let imap_host = conn.query_row("SELECT value FROM settings WHERE key = 'email.imap_host'", [], |row| row.get::<_, String>(0)).unwrap_or_default();
-    let imap_port_str = conn.query_row("SELECT value FROM settings WHERE key = 'email.imap_port'", [], |row| row.get::<_, String>(0)).unwrap_or_default();
+
+    let imap_host = conn
+        .query_row(
+            "SELECT value FROM settings WHERE key = 'email.imap_host'",
+            [],
+            |row| row.get::<_, String>(0),
+        )
+        .unwrap_or_default();
+    let imap_port_str = conn
+        .query_row(
+            "SELECT value FROM settings WHERE key = 'email.imap_port'",
+            [],
+            |row| row.get::<_, String>(0),
+        )
+        .unwrap_or_default();
     let imap_port = imap_port_str.parse::<u16>().unwrap_or(993);
-    let username = conn.query_row("SELECT value FROM settings WHERE key = 'email.smtp_username'", [], |row| row.get::<_, String>(0)).unwrap_or_default();
-    let password = conn.query_row("SELECT value FROM settings WHERE key = 'email.smtp_password'", [], |row| row.get::<_, String>(0)).unwrap_or_default();
+    let username = conn
+        .query_row(
+            "SELECT value FROM settings WHERE key = 'email.smtp_username'",
+            [],
+            |row| row.get::<_, String>(0),
+        )
+        .unwrap_or_default();
+    let password = conn
+        .query_row(
+            "SELECT value FROM settings WHERE key = 'email.smtp_password'",
+            [],
+            |row| row.get::<_, String>(0),
+        )
+        .unwrap_or_default();
 
     if imap_host.is_empty() || username.is_empty() || password.is_empty() {
         return Err("IMAP host, username, and password are required in settings.".to_string());
@@ -4232,19 +4736,21 @@ struct InboxMessage {
 fn list_inbox_messages(app: tauri::AppHandle) -> Result<Vec<InboxMessage>, String> {
     let conn = open_db(&database_path(&app)?)?;
     let mut stmt = conn.prepare("SELECT id, message_type, sender_address, sender_name, subject, body, received_at, read, thread_id FROM inbox_messages ORDER BY received_at DESC").map_err(|e| e.to_string())?;
-    let rows = stmt.query_map([], |row| {
-        Ok(InboxMessage {
-            id: row.get(0)?,
-            message_type: row.get(1)?,
-            sender_address: row.get(2)?,
-            sender_name: row.get(3)?,
-            subject: row.get(4)?,
-            body: row.get(5)?,
-            received_at: row.get(6)?,
-            read: row.get(7)?,
-            thread_id: row.get(8)?,
+    let rows = stmt
+        .query_map([], |row| {
+            Ok(InboxMessage {
+                id: row.get(0)?,
+                message_type: row.get(1)?,
+                sender_address: row.get(2)?,
+                sender_name: row.get(3)?,
+                subject: row.get(4)?,
+                body: row.get(5)?,
+                received_at: row.get(6)?,
+                read: row.get(7)?,
+                thread_id: row.get(8)?,
+            })
         })
-    }).map_err(|e| e.to_string())?;
+        .map_err(|e| e.to_string())?;
 
     let mut messages = Vec::new();
     for row in rows {
@@ -4308,6 +4814,7 @@ pub fn run() {
             list_book_borrow_transactions,
             create_reservation,
             list_reservations,
+            process_reservation_queue,
             update_reservation_status,
             update_reservation,
             delete_reservation,

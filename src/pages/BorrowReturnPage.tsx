@@ -6,8 +6,6 @@ import {
   listBooks,
   listBorrowTransactions,
   listMembers,
-  listReservations,
-  deleteReservation,
   returnBorrowTransaction,
   getSetting,
   type Book,
@@ -292,14 +290,6 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 
           dueDate,
           notes: notes.trim() || null,
         })
-        
-        // Find and delete matching reservation
-        const allRes = await listReservations('All', 500)
-        const matchingRes = allRes.find(r => r.memberId === selectedMember.id && r.bookId === selectedBook.id)
-        if (matchingRes) {
-          await deleteReservation(matchingRes.id)
-        }
-        
         setShowToast(`Successfully borrowed "${selectedBook.title}" to ${selectedMember.name}!`)
         onClearPrefill?.()
       } else {

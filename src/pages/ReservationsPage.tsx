@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
-import { Calendar, Clock3, CheckCircle2, XCircle, MapPin, Eye, Trash2, Download, Plus, Search, ChevronDown, Filter, ChevronLeft, ChevronRight, MoreHorizontal, BookOpen, UserRound, ArrowLeft, Info, X, Check, Mail, Smartphone, Printer, Pencil, AlertTriangle , Zap } from 'lucide-react'
+import { Calendar, Clock3, CheckCircle2, XCircle, MapPin, Eye, Trash2, Download, Plus, Search, ChevronDown, Filter, ChevronLeft, ChevronRight, MoreHorizontal, BookOpen, UserRound, ArrowLeft, Info, X, Check, Mail, Smartphone, Pencil, AlertTriangle , Zap } from 'lucide-react'
 import { createReservation, deleteReservation, listBooks, listMembers, listReservations, updateReservation, updateReservationStatus } from '../lib/tauriApi'
 
-type ReservationStatus = 'Reserved' | 'Ready for Pickup' | 'Expired' | 'Cancelled'
+type ReservationStatus = 'Queued' | 'Notified' | 'Claimed' | 'Expired' | 'Cancelled'
 
 type ReservationRow = {
   id: string
@@ -10,6 +10,10 @@ type ReservationRow = {
   memberId?: number
   reservationDateRaw?: string
   expiresOnRaw?: string
+  queueDateRaw?: string
+  notificationSentAtRaw?: string | null
+  claimExpiresAtRaw?: string | null
+  queuePosition?: number | null
   statusRaw?: string
   priority?: string
   notes?: string | null
@@ -33,6 +37,8 @@ type ReservationRow = {
   status: ReservationStatus
   expiresOn: string
   expiresTime: string
+  notificationSentAt: string
+  daysRemaining: string
 }
 
 type ReservationsPageProps = {
@@ -42,20 +48,6 @@ type ReservationsPageProps = {
   initialBookId?: number | null
   onInitialBookConsumed?: () => void
 }
-
-
-
-const reservationsData: ReservationRow[] = [
-  { id: 'RES-00056', book: { title: 'The Alchemist', author: 'Paulo Coelho', cover: '📙' }, member: { name: 'Maria Santos', id: 'MS-00125', avatar: '👩🏽' }, pickupBranch: 'Central Library', reservedOn: 'May 14, 2026', reservedTime: '10:15 AM', status: 'Reserved', expiresOn: 'May 21, 2026', expiresTime: '10:15 AM' },
-  { id: 'RES-00055', book: { title: 'Atomic Habits', author: 'James Clear', cover: '📕' }, member: { name: 'Juan Dela Cruz', id: 'JD-00098', avatar: '👨🏻' }, pickupBranch: 'North Branch', reservedOn: 'May 14, 2026', reservedTime: '09:45 AM', status: 'Ready for Pickup', expiresOn: 'May 17, 2026', expiresTime: '09:45 AM' },
-  { id: 'RES-00054', book: { title: 'Thinking, Fast and Slow', author: 'Daniel Kahneman', cover: '📘' }, member: { name: 'Ana Lim', id: 'AL-00076', avatar: '👩🏻' }, pickupBranch: 'Central Library', reservedOn: 'May 13, 2026', reservedTime: '04:30 PM', status: 'Ready for Pickup', expiresOn: 'May 16, 2026', expiresTime: '04:30 PM' },
-  { id: 'RES-00053', book: { title: 'The 5 AM Club', author: 'Robin Sharma', cover: '📗' }, member: { name: 'Pedro Reyes', id: 'PR-00045', avatar: '👨🏼' }, pickupBranch: 'West Branch', reservedOn: 'May 13, 2026', reservedTime: '11:20 AM', status: 'Reserved', expiresOn: 'May 20, 2026', expiresTime: '11:20 AM' },
-  { id: 'RES-00052', book: { title: 'Rich Dad Poor Dad', author: 'Robert Kiyosaki', cover: '📒' }, member: { name: 'Sarah Wilson', id: 'SW-00102', avatar: '👩🏼' }, pickupBranch: 'Central Library', reservedOn: 'May 12, 2026', reservedTime: '03:10 PM', status: 'Expired', expiresOn: 'May 13, 2026', expiresTime: '(Picked up)' },
-  { id: 'RES-00051', book: { title: 'The Power of Habit', author: 'Charles Duhigg', cover: '📙' }, member: { name: 'Carlo Garcia', id: 'CG-00063', avatar: '👨🏻' }, pickupBranch: 'South Branch', reservedOn: 'May 12, 2026', reservedTime: '10:05 AM', status: 'Cancelled', expiresOn: 'May 12, 2026', expiresTime: '10:30 AM' },
-  { id: 'RES-00050', book: { title: 'Sapiens', author: 'Yuval Noah Harari', cover: '📓' }, member: { name: 'Alicia H.', id: 'AH-00055', avatar: '👩🏻' }, pickupBranch: 'North Branch', reservedOn: 'May 11, 2026', reservedTime: '02:25 PM', status: 'Ready for Pickup', expiresOn: 'May 14, 2026', expiresTime: '02:25 PM' },
-  { id: 'RES-00049', book: { title: 'The Subtle Art of Not Caring', author: 'Mark Manson', cover: '📙' }, member: { name: 'John Doe', id: 'JD-00012', avatar: '👨🏼' }, pickupBranch: 'Central Library', reservedOn: 'May 11, 2026', reservedTime: '09:15 AM', status: 'Reserved', expiresOn: 'May 18, 2026', expiresTime: '09:15 AM' },
-]
-
 type MemberItem = {
   id: number
   name: string
@@ -82,69 +74,19 @@ type BookItem = {
   copyId: string
 }
 
-const mockMembers: MemberItem[] = [
-  { id: 1, name: 'Maria Santos', memberId: 'MS-00125', type: 'Student', phone: '0917 123 4567', email: 'maria.santos@email.com', borrowedCount: 2, limit: '3 / 5', avatar: 'MS', profilePhotoData: null, outstandingFines: '$0.00', status: 'Active' },
-  { id: 2, name: 'Juan Dela Cruz', memberId: 'JD-00098', type: 'Student', phone: '0912 345 6789', email: 'juan.delacruz@email.com', borrowedCount: 2, limit: '3 / 5', avatar: 'JD', profilePhotoData: null, outstandingFines: '$0.00', status: 'Active' },
-  { id: 3, name: 'Ana Lim', memberId: 'AL-00076', type: 'Student', phone: '0934 567 8901', email: 'ana.lim@email.com', borrowedCount: 3, limit: '2 / 5', avatar: 'AL', profilePhotoData: null, outstandingFines: '$0.00', status: 'Active' },
-  { id: 4, name: 'Carlo Garcia', memberId: 'CG-00063', type: 'Student', phone: '0945 678 9012', email: 'carlo.garcia@email.com', borrowedCount: 1, limit: '4 / 5', avatar: 'CG', profilePhotoData: null, outstandingFines: '$120.00', status: 'Suspended' },
-]
-const mockBooks: BookItem[] = [
-  { 
-    id: 1,
-    title: 'The Alchemist', 
-    author: 'Paulo Coelho', 
-    isbn: '978-0061122415', 
-    availableCopies: 1, 
-    category: 'Fiction', 
-    publisher: 'HarperOne', 
-    coverUrl: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=150&auto=format&fit=crop&q=80',
-    copyId: 'BK-2026-0007'
-  },
-  { 
-    id: 2,
-    title: 'Atomic Habits', 
-    author: 'James Clear', 
-    isbn: '978-0735211292', 
-    availableCopies: 5, 
-    category: 'Self-Help', 
-    publisher: 'Avery', 
-    coverUrl: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=150&auto=format&fit=crop&q=80',
-    copyId: 'BK-2026-0001'
-  },
-  { 
-    id: 3,
-    title: 'Thinking, Fast and Slow', 
-    author: 'Daniel Kahneman', 
-    isbn: '978-0374275631', 
-    availableCopies: 2, 
-    category: 'Psychology', 
-    publisher: 'Farrar, Straus and Giroux', 
-    coverUrl: 'https://images.unsplash.com/photo-1506880018603-83d5b814b5a6?w=150&auto=format&fit=crop&q=80',
-    copyId: 'BK-2026-0005'
-  },
-  { 
-    id: 4,
-    title: 'Deep Work', 
-    author: 'Cal Newport', 
-    isbn: '978-1455586691', 
-    availableCopies: 4, 
-    category: 'Productivity', 
-    publisher: 'Grand Central Publishing', 
-    coverUrl: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=150&auto=format&fit=crop&q=80',
-    copyId: 'BK-2026-0002'
-  },
-]
-
 type ReservationActionsMenuProps = {
   isDarkMode: boolean
+  status: ReservationStatus
   onViewDetails: () => void
+  onViewQueue: () => void
   onEdit: () => void
+  onNotify: () => void
   onComplete: () => void
   onCancel: () => void
   onDelete: () => void
 }
 
-function ReservationActionsMenu({ isDarkMode, onViewDetails, onEdit, onComplete, onCancel, onDelete }: ReservationActionsMenuProps) {
+function ReservationActionsMenu({ isDarkMode, status, onViewDetails, onViewQueue, onEdit, onNotify, onComplete, onCancel, onDelete }: ReservationActionsMenuProps) {
   const [open, setOpen] = useState(false)
   const [openUpward, setOpenUpward] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -180,28 +122,32 @@ function ReservationActionsMenu({ isDarkMode, onViewDetails, onEdit, onComplete,
   const itemDanger = isDarkMode
     ? 'text-rose-400 hover:bg-rose-500/10'
     : 'text-rose-600 hover:bg-rose-50'
+  const divider = isDarkMode ? 'border-zinc-700/60' : 'border-zinc-100'
 
   return (
-    <div ref={ref} className="relative inline-block text-left">
+    <div ref={ref} className="relative">
       <button
         type="button"
         onClick={handleToggle}
-        className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border transition-colors duration-150 ${
+        className={`inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors duration-150 ${
           open
             ? isDarkMode
-              ? 'border-zinc-500 bg-zinc-700 text-zinc-100'
-              : 'border-emerald-300 bg-emerald-50 text-emerald-700'
+              ? 'bg-zinc-700 text-zinc-100'
+              : 'bg-emerald-50 text-emerald-700'
             : isDarkMode
-              ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'
-              : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'
+              ? 'text-zinc-300 hover:bg-zinc-800'
+              : 'text-zinc-600 hover:bg-zinc-50'
         }`}
+        aria-label="Reservation actions"
+        aria-haspopup="menu"
+        aria-expanded={open}
       >
         <MoreHorizontal size={16} />
       </button>
 
       {open && (
         <div
-          className={`absolute right-0 z-50 w-48 rounded-xl border p-1.5 ${surface} ${
+          className={`absolute right-0 z-50 w-52 rounded-xl border p-1.5 ${surface} animate-[fadeIn_0.12s_ease] ${
             openUpward 
               ? 'bottom-full mb-1.5 origin-bottom-right' 
               : 'top-full mt-1.5 origin-top-right'
@@ -229,16 +175,39 @@ function ReservationActionsMenu({ isDarkMode, onViewDetails, onEdit, onComplete,
             <Eye size={15} className="shrink-0 text-sky-500" />
             View Details
           </button>
-
           <button
             type="button"
             className={`${itemBase} ${itemNormal}`}
             role="menuitem"
-            onClick={(e) => { e.stopPropagation(); setOpen(false); onComplete(); }}
+            onClick={(e) => { e.stopPropagation(); setOpen(false); onViewQueue(); }}
           >
-            <CheckCircle2 size={15} className="shrink-0 text-emerald-500" />
-            Check Out Book
+            <UserRound size={15} className="shrink-0 text-violet-500" />
+            View Book Queue
           </button>
+
+          {status === 'Queued' && (
+            <button
+              type="button"
+              className={`${itemBase} ${itemNormal}`}
+              role="menuitem"
+              onClick={(e) => { e.stopPropagation(); setOpen(false); onNotify(); }}
+            >
+              <Mail size={15} className="shrink-0 text-amber-500" />
+              Notify Next Member
+            </button>
+          )}
+
+          {status === 'Notified' && (
+            <button
+              type="button"
+              className={`${itemBase} ${itemNormal}`}
+              role="menuitem"
+              onClick={(e) => { e.stopPropagation(); setOpen(false); onComplete(); }}
+            >
+              <CheckCircle2 size={15} className="shrink-0 text-emerald-500" />
+              Mark Claimed
+            </button>
+          )}
           <button
             type="button"
             className={`${itemBase} ${itemNormal}`}
@@ -248,16 +217,20 @@ function ReservationActionsMenu({ isDarkMode, onViewDetails, onEdit, onComplete,
             <Pencil size={15} className="shrink-0 text-indigo-500" />
             Edit Reservation
           </button>
-          
-          <button
-            type="button"
-            className={`${itemBase} ${itemDanger}`}
-            role="menuitem"
-            onClick={(e) => { e.stopPropagation(); setOpen(false); onCancel(); }}
-          >
-            <Trash2 size={15} className="shrink-0 text-rose-500" />
-            Cancel Reservation
-          </button>
+
+          <div className={`my-1.5 border-t ${divider}`} />
+
+          {(status === 'Queued' || status === 'Notified') && (
+            <button
+              type="button"
+              className={`${itemBase} ${itemDanger}`}
+              role="menuitem"
+              onClick={(e) => { e.stopPropagation(); setOpen(false); onCancel(); }}
+            >
+              <Trash2 size={15} className="shrink-0 text-rose-500" />
+              Cancel Reservation
+            </button>
+          )}
           <button
             type="button"
             className={`${itemBase} ${itemDanger}`}
@@ -288,8 +261,9 @@ function ReservationDetailsViewNew({ reservation, isDarkMode, onBack, onCheckOut
 
   const getStatusStyle = (status: ReservationStatus) => {
     switch (status) {
-      case 'Reserved': return 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400'
-      case 'Ready for Pickup': return 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
+      case 'Queued': return 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400'
+      case 'Notified': return 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400'
+      case 'Claimed': return 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
       case 'Expired': return 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400'
       case 'Cancelled': return 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400'
     }
@@ -335,6 +309,9 @@ function ReservationDetailsViewNew({ reservation, isDarkMode, onBack, onCheckOut
             <div>
               <h3 className={`text-xl font-bold tracking-tight ${primaryText}`}>{reservation.id}</h3>
               <span className={`mt-1 inline-flex rounded-md px-2 py-0.5 text-[11px] font-bold ${getStatusStyle(reservation.status)}`}>{reservation.status}</span>
+              <p className="mt-1 text-xs font-semibold text-zinc-500">
+                Queue position: {reservation.queuePosition ? `#${reservation.queuePosition}` : 'Completed'}
+              </p>
             </div>
           </div>
           
@@ -343,7 +320,7 @@ function ReservationDetailsViewNew({ reservation, isDarkMode, onBack, onCheckOut
           <div className="flex items-start gap-3">
              <Calendar size={18} className="mt-0.5 shrink-0 text-zinc-400" />
              <div>
-                <p className="text-[11px] font-bold text-zinc-400">Reserved On</p>
+                <p className="text-[11px] font-bold text-zinc-400">Queue Date</p>
                 <p className={`mt-0.5 text-sm font-bold ${primaryText}`}>{reservation.reservedOn}</p>
                 <p className="text-xs font-semibold text-zinc-500">{reservation.reservedTime}</p>
              </div>
@@ -354,9 +331,10 @@ function ReservationDetailsViewNew({ reservation, isDarkMode, onBack, onCheckOut
           <div className="flex items-start gap-3">
              <Calendar size={18} className="mt-0.5 shrink-0 text-amber-500" />
              <div>
-                <p className="text-[11px] font-bold text-zinc-400">Expires On</p>
+                <p className="text-[11px] font-bold text-zinc-400">Claim Expiry</p>
                 <p className={`mt-0.5 text-sm font-bold ${primaryText}`}>{reservation.expiresOn}</p>
                 <p className="text-xs font-semibold text-zinc-500">{reservation.expiresTime}</p>
+                <p className="mt-1 text-[10px] font-semibold text-zinc-400">Notified: {reservation.notificationSentAt}</p>
              </div>
           </div>
 
@@ -489,31 +467,35 @@ function ReservationDetailsViewNew({ reservation, isDarkMode, onBack, onCheckOut
             <p className={`text-xs font-medium ${isDarkMode ? 'text-blue-400/80' : 'text-blue-600/80'}`}>Modify reservation details, dates, or branch.</p>
           </button>
 
-          <button type="button" onClick={() => onCheckOut && onCheckOut(reservation)} className={`flex w-full flex-col items-start gap-3 rounded-xl border p-4 text-left transition-all ${isDarkMode ? 'border-emerald-500/30 bg-emerald-950/20 hover:bg-emerald-950/40' : 'border-emerald-100 bg-emerald-50 hover:bg-emerald-100/70'}`}>
-            <div className="flex w-full items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-full shadow-sm ${isDarkMode ? 'bg-emerald-900/50 text-emerald-400' : 'bg-white text-emerald-600'}`}>
-                   <BookOpen size={18} />
+          {reservation.status === 'Notified' && (
+            <button type="button" onClick={() => onCheckOut && onCheckOut(reservation)} className={`flex w-full flex-col items-start gap-3 rounded-xl border p-4 text-left transition-all ${isDarkMode ? 'border-emerald-500/30 bg-emerald-950/20 hover:bg-emerald-950/40' : 'border-emerald-100 bg-emerald-50 hover:bg-emerald-100/70'}`}>
+              <div className="flex w-full items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-full shadow-sm ${isDarkMode ? 'bg-emerald-900/50 text-emerald-400' : 'bg-white text-emerald-600'}`}>
+                    <BookOpen size={18} />
+                  </div>
+                  <span className={`font-bold ${isDarkMode ? 'text-emerald-400' : 'text-emerald-700'}`}>Mark Claimed</span>
                 </div>
-                <span className={`font-bold ${isDarkMode ? 'text-emerald-400' : 'text-emerald-700'}`}>Check Out Book</span>
+                <ChevronRight size={16} className={isDarkMode ? 'text-emerald-400' : 'text-emerald-600'} />
               </div>
-              <ChevronRight size={16} className={isDarkMode ? 'text-emerald-400' : 'text-emerald-600'} />
-            </div>
-            <p className={`text-xs font-medium ${isDarkMode ? 'text-emerald-400/80' : 'text-emerald-600/80'}`}>Convert this reservation into a borrow transaction.</p>
-          </button>
+              <p className={`text-xs font-medium ${isDarkMode ? 'text-emerald-400/80' : 'text-emerald-600/80'}`}>Convert this reservation into a borrow transaction.</p>
+            </button>
+          )}
 
-          <button type="button" onClick={() => onCancel && onCancel()} className={`flex w-full flex-col items-start gap-3 rounded-xl border p-4 text-left transition-all ${isDarkMode ? 'border-rose-500/30 bg-rose-950/20 hover:bg-rose-950/40' : 'border-rose-100 bg-rose-50 hover:bg-rose-100/70'}`}>
-            <div className="flex w-full items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-full shadow-sm ${isDarkMode ? 'bg-rose-900/50 text-rose-400' : 'bg-white text-rose-600'}`}>
-                   <XCircle size={18} />
+          {(reservation.status === 'Queued' || reservation.status === 'Notified') && (
+            <button type="button" onClick={() => onCancel && onCancel()} className={`flex w-full flex-col items-start gap-3 rounded-xl border p-4 text-left transition-all ${isDarkMode ? 'border-rose-500/30 bg-rose-950/20 hover:bg-rose-950/40' : 'border-rose-100 bg-rose-50 hover:bg-rose-100/70'}`}>
+              <div className="flex w-full items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-full shadow-sm ${isDarkMode ? 'bg-rose-900/50 text-rose-400' : 'bg-white text-rose-600'}`}>
+                    <XCircle size={18} />
+                  </div>
+                  <span className={`font-bold ${isDarkMode ? 'text-rose-400' : 'text-rose-700'}`}>Cancel Reservation</span>
                 </div>
-                <span className={`font-bold ${isDarkMode ? 'text-rose-400' : 'text-rose-700'}`}>Cancel Reservation</span>
+                <ChevronRight size={16} className={isDarkMode ? 'text-rose-400' : 'text-rose-600'} />
               </div>
-              <ChevronRight size={16} className={isDarkMode ? 'text-rose-400' : 'text-rose-600'} />
-            </div>
-            <p className={`text-xs font-medium ${isDarkMode ? 'text-rose-400/80' : 'text-rose-600/80'}`}>Cancel this reservation. The book will be released.</p>
-          </button>
+              <p className={`text-xs font-medium ${isDarkMode ? 'text-rose-400/80' : 'text-rose-600/80'}`}>Cancel this reservation. The book will be released.</p>
+            </button>
+          )}
 
         </div>
       </article>
@@ -522,14 +504,19 @@ function ReservationDetailsViewNew({ reservation, isDarkMode, onBack, onCheckOut
   )
 }
 
-export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNavigateToBorrow, initialBookId = null, onInitialBookConsumed }: ReservationsPageProps) {
+export function ReservationsPage({ isDarkMode, onOpenTransactionDetail: _onOpenTransactionDetail, onNavigateToBorrow, initialBookId = null, onInitialBookConsumed }: ReservationsPageProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [activeViewReservationId, setActiveViewReservationId] = useState<string | null>(null)
   const [reservationSearch, setReservationSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'All' | ReservationStatus>('All')
   const [branchFilter, setBranchFilter] = useState<'All Branches' | string>('All Branches')
-  const [reservationDate, setReservationDate] = useState('2026-05-21')
-  const [expiresOn, setExpiresOn] = useState('2026-05-28')
+  const getInitialDateTime = (offsetDays = 0) => {
+    const d = new Date();
+    d.setDate(d.getDate() + offsetDays);
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+  const [reservationDate, setReservationDate] = useState(() => getInitialDateTime(0));
   const [notes, setNotes] = useState('')
   const [priority, setPriority] = useState('Normal')
   
@@ -556,7 +543,8 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
 
   const dynamicStats = useMemo(() => {
     const total = reservations.length
-    const reserved = reservations.filter(r => r.status === 'Reserved').length
+    const queued = reservations.filter(r => r.status === 'Queued').length
+    const notified = reservations.filter(r => r.status === 'Notified').length
     const expired = reservations.filter(r => r.status === 'Expired').length
     const cancelled = reservations.filter(r => r.status === 'Cancelled').length
 
@@ -564,9 +552,9 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
 
     return [
       { label: 'Total Reservations', value: total.toString(), subValue: 'All time', icon: Calendar, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-      { label: 'Reserved', value: reserved.toString(), subValue: getPercentage(reserved), icon: Clock3, color: 'text-blue-600', bg: 'bg-blue-50' },
-      { label: 'Expired', value: expired.toString(), subValue: getPercentage(expired), icon: XCircle, color: 'text-rose-600', bg: 'bg-rose-50' },
-      { label: 'Cancelled', value: cancelled.toString(), subValue: getPercentage(cancelled), icon: XCircle, color: 'text-rose-600', bg: 'bg-rose-50' },
+      { label: 'Queued', value: queued.toString(), subValue: getPercentage(queued), icon: Clock3, color: 'text-blue-600', bg: 'bg-blue-50' },
+      { label: 'Notified', value: notified.toString(), subValue: getPercentage(notified), icon: Mail, color: 'text-amber-600', bg: 'bg-amber-50' },
+      { label: 'Expired / Cancelled', value: (expired + cancelled).toString(), subValue: getPercentage(expired + cancelled), icon: XCircle, color: 'text-rose-600', bg: 'bg-rose-50' },
     ]
   }, [reservations])
   const [selectedBook, setSelectedBook] = useState<BookItem | null>(null)
@@ -600,14 +588,10 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
     const book = books.find((item) => item.id === initialBookId)
     if (!book) return
 
-    const reservationStart = new Date()
-    const reservationEnd = new Date(reservationStart)
-    reservationEnd.setDate(reservationEnd.getDate() + 7)
     setSelectedBook(book)
     setBookSearchQuery(book.title)
     setSelectedMember(null)
-    setReservationDate(reservationStart.toISOString().slice(0, 10))
-    setExpiresOn(reservationEnd.toISOString().slice(0, 10))
+    setReservationDate(getInitialDateTime(0))
     setNotes('')
     setPriority('Normal')
     setNotifyEmail(true)
@@ -633,12 +617,10 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
       }
       return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
     }
-    const statusFromDb = (status: string): ReservationStatus => {
-      if (status === 'Ready for Pickup' || status === 'Completed' || status === 'Cancelled') {
-        return status
-      }
-      return 'Reserved'
-    }
+    const statusFromDb = (status: string): ReservationStatus =>
+      status === 'Notified' || status === 'Claimed' || status === 'Expired' || status === 'Cancelled'
+        ? status
+        : 'Queued'
     const avatarFromName = (name: string) => {
       const parts = name.trim().split(/\s+/).filter(Boolean)
       const initials = parts.slice(0, 2).map((part) => part[0]?.toUpperCase() ?? '').join('')
@@ -694,6 +676,10 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
             memberId: reservation.memberId,
             reservationDateRaw: reservation.reservationDate,
             expiresOnRaw: reservation.expiresOn,
+            queueDateRaw: reservation.queueDate,
+            queuePosition: reservation.queuePosition,
+            notificationSentAtRaw: reservation.notificationSentAt,
+            claimExpiresAtRaw: reservation.claimExpiresAt,
             statusRaw: reservation.status,
             priority: reservation.priority,
             notes: reservation.notes ?? '',
@@ -712,11 +698,15 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
               profilePhotoData: matchedMember?.profilePhotoData ?? null,
             },
             pickupBranch: reservation.branch,
-            reservedOn: formatDate(reservation.reservationDate),
-            reservedTime: formatTime(reservation.reservationDate),
+            reservedOn: formatDate(reservation.queueDate),
+            reservedTime: formatTime(reservation.queueDate),
             status: statusFromDb(reservation.status),
-            expiresOn: formatDate(reservation.expiresOn),
-            expiresTime: formatTime(reservation.expiresOn),
+            expiresOn: reservation.claimExpiresAt ? formatDate(reservation.claimExpiresAt) : 'Not started',
+            expiresTime: reservation.claimExpiresAt ? formatTime(reservation.claimExpiresAt) : '--',
+            notificationSentAt: reservation.notificationSentAt ? `${formatDate(reservation.notificationSentAt)} ${formatTime(reservation.notificationSentAt)}` : 'Not sent',
+            daysRemaining: reservation.claimExpiresAt
+              ? `${Math.max(0, Math.ceil((new Date(reservation.claimExpiresAt).getTime() - Date.now()) / 86400000))} day(s)`
+              : '--',
           } as ReservationRow
         })
         setReservations(mappedReservations)
@@ -742,32 +732,21 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
     b.isbn.includes(bookSearchQuery)
   )
 
-  const formatExpiresDate = (dateStr: string) => {
-    try {
-      const date = new Date(dateStr)
-      if (isNaN(date.getTime())) return 'May 28, 2026 (10:30 AM)'
-      const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' }
-      return `${date.toLocaleDateString('en-US', options)} (10:30 AM)`
-    } catch {
-      return 'May 28, 2026 (10:30 AM)'
-    }
-  }
-
   const formatReservationDate = (dateStr: string) => {
     try {
       const date = new Date(dateStr)
-      if (isNaN(date.getTime())) return 'May 21, 2026 (10:30 AM)'
-      const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' }
-      return `${date.toLocaleDateString('en-US', options)} (10:30 AM)`
+      if (isNaN(date.getTime())) return 'Invalid Date'
+      return date.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
     } catch {
-      return 'May 21, 2026 (10:30 AM)'
+      return 'Invalid Date'
     }
   }
 
   const getStatusStyle = (status: ReservationStatus) => {
     switch (status) {
-      case 'Reserved': return 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400'
-      case 'Ready for Pickup': return 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
+      case 'Queued': return 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400'
+      case 'Notified': return 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400'
+      case 'Claimed': return 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
       case 'Expired': return 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400'
       case 'Cancelled': return 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400'
     }
@@ -841,7 +820,12 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
   ): ReservationRow[] => {
     const toDate = (value: string) => new Date(value)
     const toStatus = (status: string): ReservationStatus =>
-      status === 'Ready for Pickup' || status === 'Expired' || status === 'Cancelled' ? status : 'Reserved'
+      status === 'Notified' || status === 'Claimed' || status === 'Expired' || status === 'Cancelled' ? status : 'Queued'
+    const formatOptionalDateTime = (value: string | null) => {
+      if (!value) return 'Not sent'
+      const date = toDate(value)
+      return date.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
+    }
 
     return rows.map((item) => {
       const matchedBook = loadedBooks.find((book) => book.id === item.bookId)
@@ -852,6 +836,10 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
         memberId: item.memberId,
         reservationDateRaw: item.reservationDate,
         expiresOnRaw: item.expiresOn,
+        queueDateRaw: item.queueDate,
+        queuePosition: item.queuePosition,
+        notificationSentAtRaw: item.notificationSentAt,
+        claimExpiresAtRaw: item.claimExpiresAt,
         statusRaw: item.status,
         priority: item.priority,
         notes: item.notes ?? '',
@@ -876,11 +864,19 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
           profilePhotoData: matchedMember?.profilePhotoData ?? null,
         },
         pickupBranch: item.branch,
-        reservedOn: toDate(item.reservationDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-        reservedTime: toDate(item.reservationDate).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+        reservedOn: toDate(item.queueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        reservedTime: toDate(item.queueDate).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
         status: toStatus(item.status),
-        expiresOn: toDate(item.expiresOn).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-        expiresTime: toDate(item.expiresOn).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+        expiresOn: item.claimExpiresAt
+          ? toDate(item.claimExpiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+          : 'Not started',
+        expiresTime: item.claimExpiresAt
+          ? toDate(item.claimExpiresAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+          : '--',
+        notificationSentAt: formatOptionalDateTime(item.notificationSentAt),
+        daysRemaining: item.claimExpiresAt
+          ? `${Math.max(0, Math.ceil((toDate(item.claimExpiresAt).getTime() - Date.now()) / 86400000))} day(s)`
+          : '--',
       }
     })
   }
@@ -895,8 +891,8 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
       setFormError('Please select both a book and a member before creating a reservation.')
       return
     }
-    if (!reservationDate || !expiresOn) {
-      setFormError('Reservation date and expiration date are required.')
+    if (!reservationDate) {
+      setFormError('Queue date is required.')
       return
     }
 
@@ -915,8 +911,8 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
           id: numericId,
           memberId: selectedMember.id,
           bookId: selectedBook.id,
-          reservationDate: new Date(`${reservationDate}T10:30:00`).toISOString(),
-          expiresOn: new Date(`${expiresOn}T10:30:00`).toISOString(),
+          reservationDate: new Date(reservationDate).toISOString(),
+          expiresOn: new Date(reservationDate).toISOString(),
           status: editingReservation.statusRaw || editingReservation.status,
           branch: editingReservation.pickupBranch || 'Central Library',
           priority,
@@ -928,8 +924,8 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
         await createReservation({
           memberId: selectedMember.id,
           bookId: selectedBook.id,
-          reservationDate: new Date(`${reservationDate}T10:30:00`).toISOString(),
-          expiresOn: new Date(`${expiresOn}T10:30:00`).toISOString(),
+          reservationDate: new Date(reservationDate).toISOString(),
+          expiresOn: new Date(reservationDate).toISOString(),
           branch: branchFilter === 'All Branches' ? 'Central Library' : branchFilter,
           priority,
           notes,
@@ -963,7 +959,7 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
       await refreshReservations()
     } catch (error) {
       console.error(`Failed to update reservation ${reservationId}:`, error)
-      setActionError('Failed to update reservation status. Please try again.')
+      setActionError(typeof error === 'string' ? error : 'Failed to update reservation status. Please try again.')
     }
   }
 
@@ -1004,16 +1000,16 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
   }
 
   const openEditReservation = (reservation: ReservationRow) => {
-    const toInputDate = (value?: string) => {
+    const toInputDateTime = (value?: string) => {
       const parsed = value ? new Date(value) : null
       if (!parsed || Number.isNaN(parsed.getTime())) {
-        return new Date().toISOString().slice(0, 10)
+        return getInitialDateTime(0)
       }
-      return parsed.toISOString().slice(0, 10)
+      const offset = parsed.getTimezoneOffset()
+      return new Date(parsed.getTime() - offset * 60_000).toISOString().slice(0, 16)
     }
     setEditingReservation(reservation)
-    setReservationDate(toInputDate(reservation.reservationDateRaw))
-    setExpiresOn(toInputDate(reservation.expiresOnRaw))
+    setReservationDate(toInputDateTime(reservation.reservationDateRaw))
     setPriority(reservation.priority || 'Normal')
     setNotes(reservation.notes || '')
     setNotifyEmail(reservation.notifyEmail ?? true)
@@ -1028,7 +1024,7 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
     setIsAddModalOpen(true)
   }
   const handleExport = () => {
-    const headers = ['ID', 'Book Title', 'Book Author', 'Member Name', 'Member ID', 'Reserved On', 'Expires On', 'Status', 'Pickup Branch']
+    const headers = ['ID', 'Book Title', 'Book Author', 'Member Name', 'Member ID', 'Queue Position', 'Queue Date', 'Notification Sent At', 'Claim Expiry', 'Status', 'Days Remaining', 'Pickup Branch']
     const csvContent = [
       headers.join(','),
       ...filteredReservations.map(res => [
@@ -1037,9 +1033,12 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
         `"${res.book.author.replace(/"/g, '""')}"`,
         `"${res.member.name.replace(/"/g, '""')}"`,
         res.member.id,
+        res.queuePosition ?? '',
         `"${res.reservedOn}"`,
+        `"${res.notificationSentAt}"`,
         `"${res.expiresOn}"`,
         res.status,
+        `"${res.daysRemaining}"`,
         `"${res.pickupBranch}"`
       ].join(','))
     ].join('\n')
@@ -1149,7 +1148,7 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
               <p className={`mt-1 text-base font-medium ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>View and manage all book reservations.</p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <button type="button" onClick={() => { setIsAddModalOpen(true); setEditingReservation(null); setSelectedBook(null); setSelectedMember(null); const now = new Date(); setReservationDate(now.toISOString().slice(0, 10)); now.setDate(now.getDate() + 7); setExpiresOn(now.toISOString().slice(0, 10)); setNotes(''); setPriority('Normal'); setNotifyEmail(true); setNotifySMS(true); setFormError(null); }} className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white hover:bg-emerald-700 transition-all shadow-sm">
+              <button type="button" onClick={() => { setIsAddModalOpen(true); setEditingReservation(null); setSelectedBook(null); setSelectedMember(null); setReservationDate(getInitialDateTime(0)); setNotes(''); setPriority('Normal'); setNotifyEmail(true); setNotifySMS(true); setFormError(null); }} className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white hover:bg-emerald-700 transition-all shadow-sm">
                 <Plus size={18} />
                 New Reservation
               </button>
@@ -1204,7 +1203,9 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                       className={`h-11 min-w-[120px] appearance-none rounded-xl border py-2 pl-4 pr-10 text-xs font-bold outline-none ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'}`}
                     >
                       <option value="All">All</option>
-                      <option value="Reserved">Reserved</option>
+                      <option value="Queued">Queued</option>
+                      <option value="Notified">Notified</option>
+                      <option value="Claimed">Claimed</option>
                       <option value="Expired">Expired</option>
                       <option value="Cancelled">Cancelled</option>
                     </select>
@@ -1264,7 +1265,7 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
               </div>
             )}
 
-            <div className="overflow-x-auto lg:overflow-visible relative z-10">
+            <div className={`relative z-10 overflow-x-auto lg:overflow-visible ${isDarkMode ? 'bg-[#18181B]' : 'bg-white'}`}>
               <table className="w-full text-left text-sm border-collapse">
                 <thead className={isDarkMode ? 'bg-[#27272A]/50 text-zinc-400' : 'bg-zinc-50/50 text-zinc-500'}>
                   <tr>
@@ -1278,12 +1279,11 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                         aria-label="Select all reservations on this page"
                       />
                     </th>
-                    <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">ID</th>
                     <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Book Details</th>
                     <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Member</th>
-                    <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Reserved On</th>
+                    <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Queue</th>
+                    <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Expiration</th>
                     <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Expires On</th>
                     <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider text-center">Actions</th>
                   </tr>
                 </thead>
@@ -1298,9 +1298,6 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                           onChange={() => handleToggleReservationSelection(res.id)}
                           aria-label={`Select ${res.id}`}
                         />
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`text-xs font-bold ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{res.id}</span>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
@@ -1333,24 +1330,50 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <p className={`text-[11px] font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>{res.reservedOn}</p>
-                        <p className={`text-[10px] font-medium ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>{res.reservedTime}</p>
+                        <div className="flex items-center gap-3">
+                          <span className={`grid h-9 min-w-9 place-items-center rounded-lg text-sm font-black ${
+                            res.queuePosition
+                              ? isDarkMode ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-700'
+                              : isDarkMode ? 'bg-zinc-800 text-zinc-500' : 'bg-zinc-100 text-zinc-500'
+                          }`}>
+                            {res.queuePosition ? `#${res.queuePosition}` : '--'}
+                          </span>
+                          <div>
+                            <p className={`text-[11px] font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>{res.reservedOn}</p>
+                            <p className={`text-[10px] font-medium ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>{res.reservedTime} - {res.id}</p>
+                          </div>
+                        </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`rounded-md px-3 py-1 text-[11px] font-semibold tracking-wide ${getStatusStyle(res.status)}`}>
-                          {res.status}
-                        </span>
+                        {res.status === 'Notified' ? (
+                          <>
+                            <p className={`text-[11px] font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>{res.expiresOn}</p>
+                            <p className={`text-[10px] font-medium ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>{res.expiresTime}</p>
+                          </>
+                        ) : (
+                          <p className={`text-[11px] font-semibold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-600'}`}>{res.expiresOn}</p>
+                        )}
                       </td>
                       <td className="px-6 py-4">
-                        <p className={`text-[11px] font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>{res.expiresOn}</p>
-                        <p className={`text-[10px] font-medium ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>{res.expiresTime}</p>
+                        <span className={`rounded-md px-3 py-1 text-[11px] font-semibold tracking-wide ${getStatusStyle(res.status)}`}>{res.status}</span>
                       </td>
                       <td className="px-6 py-4 text-center">
                         <ReservationActionsMenu
                           isDarkMode={isDarkMode}
+                          status={res.status}
                           onViewDetails={() => setActiveViewReservationId(res.id)}
+                          onViewQueue={() => {
+                            setReservationSearch(res.book.title)
+                            setStatusFilter('All')
+                            setCurrentPage(1)
+                          }}
                           onEdit={() => openEditReservation(res)}
-                          onComplete={() => onNavigateToBorrow && onNavigateToBorrow(res.memberId, res.bookId)}
+                          onNotify={() => updateReservationActionStatus(res.id, 'Notified')}
+                          onComplete={() => {
+                            if (onNavigateToBorrow && res.memberId && res.bookId) {
+                              onNavigateToBorrow(res.memberId, res.bookId)
+                            }
+                          }}
                           onCancel={() => updateReservationActionStatus(res.id, 'Cancelled')}
                           onDelete={() => setReservationToDelete(res)}
                         />
@@ -1359,7 +1382,7 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                   ))}
                   {filteredReservations.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className={`px-6 py-12 text-center text-sm font-medium ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                      <td colSpan={7} className={`px-6 py-12 text-center text-sm font-medium ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
                         No reservations match your current filters.
                       </td>
                     </tr>
@@ -1417,7 +1440,7 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
           </div>
         </section>
       ) : (
-        <section className="mx-auto w-full max-w-[1650px] px-2 pt-2 pb-0">
+        <section className="px-5 pt-5 pb-0">
           {/* Form Header with Circular Back Button */}
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-xs">
@@ -1443,110 +1466,14 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
               <div className="space-y-4">
                 <article className={`rounded-2xl border p-5 sm:p-6 ${isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
                   
-                  {/* 1. Select Book */}
-                  <div className="relative space-y-2" ref={bookDropdownRef}>
-                    <h3 className={`text-base font-bold ${isDarkMode ? 'text-zinc-100' : 'text-[#0a1b4f]'}`}>1. Select Book</h3>
-                    <p className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} mt-0.5`}>Search and select a book to reserve.</p>
-                    
-                    <div className="mt-3.5">
-                      <label className={`group flex h-11 items-center rounded-xl border px-3 transition-all ${
-                        selectedBook 
-                          ? (isDarkMode ? 'border-emerald-500/60 bg-emerald-950/20' : 'border-emerald-500 bg-emerald-50/50')
-                          : (isDarkMode ? 'border-zinc-700 focus-within:border-emerald-500 bg-[#27272A]/30' : 'border-zinc-200 focus-within:border-emerald-500 bg-white')
-                      }`}>
-                        {selectedBook ? (
-                          <Check size={16} className="mr-2 text-emerald-500 animate-[scaleIn_0.2s_ease-out]" />
-                        ) : (
-                          <Search size={16} className={`mr-2 ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`} />
-                        )}
-                        <input
-                          value={selectedBook ? selectedBook.title : bookSearchQuery}
-                          onChange={(e) => {
-                            setBookSearchQuery(e.target.value)
-                            setShowBookDropdown(true)
-                            if (selectedBook) {
-                              setSelectedBook(null)
-                            }
-                          }}
-                          onFocus={() => setShowBookDropdown(true)}
-                          placeholder="Search by title, author, or ISBN..."
-                          className={`w-full bg-transparent text-xs outline-none ${selectedBook ? 'font-semibold text-emerald-600 dark:text-emerald-400' : (isDarkMode ? 'text-zinc-200 placeholder:text-zinc-500' : 'text-zinc-700 placeholder:text-zinc-400')}`}
-                        />
-                        {selectedBook && (
-                          <span className="mr-2 shrink-0 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 animate-[fadeIn_0.15s_ease-out]">
-                            Selected
-                          </span>
-                        )}
-                        <ChevronDown size={16} className={selectedBook ? 'text-emerald-500' : (isDarkMode ? 'text-zinc-400' : 'text-zinc-500')} />
-                      </label>
-                    </div>
-
-                    {showBookDropdown && (
-                      <div className={`absolute left-0 right-0 z-50 mt-1 max-h-60 overflow-y-auto rounded-xl border p-1.5 shadow-xl ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'}`}>
-                        {filteredBooksList.length > 0 ? (
-                          filteredBooksList.map((b) => (
-                            <button
-                              key={b.isbn}
-                              type="button"
-                              onClick={() => {
-                                setSelectedBook(b)
-                                setShowBookDropdown(false)
-                                setBookSearchQuery('')
-                              }}
-                              className={`flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left text-xs font-semibold transition-colors ${isDarkMode ? 'hover:bg-zinc-800' : 'hover:bg-zinc-50'}`}
-                            >
-                              <img src={b.coverUrl} alt={b.title} className="w-8 h-11 rounded object-cover border shrink-0" />
-                              <div className="flex-1">
-                                <p className={isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}>{b.title}</p>
-                                <p className={`text-[10px] ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{b.author} • {b.isbn}</p>
-                              </div>
-                            </button>
-                          ))
-                        ) : (
-                          <p className={`p-3 text-center text-xs ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>No books found</p>
-                        )}
-                      </div>
-                    )}
-
-                    {selectedBook && (
-                      <div className={`relative rounded-xl border p-3 animate-[fadeIn_0.15s_ease-out] ${isDarkMode ? 'border-zinc-700 bg-[#27272A]' : 'border-zinc-200 bg-zinc-50/40'}`}>
-                        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                          <div className="flex items-center gap-3">
-                            <img src={selectedBook.coverUrl} alt={selectedBook.title} className="w-11 h-16 rounded object-cover border border-zinc-200 dark:border-zinc-800 shrink-0" />
-                            <div>
-                              <p className={`font-semibold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{selectedBook.title}</p>
-                              <p className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Author: {selectedBook.author}</p>
-                              <p className={`mt-1 text-xs ${isDarkMode ? 'text-zinc-300' : 'text-zinc-600'}`}>ISBN: {selectedBook.isbn} • Copy ID: {selectedBook.copyId}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-4 md:gap-6">
-                            <div className="text-right text-xs">
-                              <p className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}>Available Copies</p>
-                              <p className={`text-xl font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-800'}`}>{selectedBook.availableCopies}</p>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => setSelectedBook(null)}
-                              className={`grid h-8 w-8 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200' : 'border-zinc-200 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700'}`}
-                            >
-                              <X size={14} />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <hr className={`my-5 border-t ${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'}`} />
-
-                  {/* 2. Select Member */}
+                  {/* 1. Select Member */}
                   <div className="relative space-y-2" ref={memberDropdownRef}>
-                    <h3 className={`text-base font-bold ${isDarkMode ? 'text-zinc-100' : 'text-[#0a1b4f]'}`}>2. Select Member</h3>
+                    <h3 className={`text-base font-bold ${isDarkMode ? 'text-zinc-100' : 'text-[#0a1b4f]'}`}>1. Select Member</h3>
                     <p className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} mt-0.5`}>Search and select a member.</p>
                     
                     <div className="mt-3.5">
                       <label className={`group flex h-11 items-center rounded-xl border px-3 transition-all ${
-                        selectedMember 
+                        selectedMember
                           ? (isDarkMode ? 'border-emerald-500/60 bg-emerald-950/20' : 'border-emerald-500 bg-emerald-50/50')
                           : (isDarkMode ? 'border-zinc-700 focus-within:border-emerald-500 bg-[#27272A]/30' : 'border-zinc-200 focus-within:border-emerald-500 bg-white')
                       }`}>
@@ -1650,6 +1577,102 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
 
                   <hr className={`my-5 border-t ${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'}`} />
 
+                  {/* 2. Select Book */}
+                  <div className="relative space-y-2" ref={bookDropdownRef}>
+                    <h3 className={`text-base font-bold ${isDarkMode ? 'text-zinc-100' : 'text-[#0a1b4f]'}`}>2. Select Book</h3>
+                    <p className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} mt-0.5`}>Search and select a book to reserve.</p>
+                    
+                    <div className="mt-3.5">
+                      <label className={`group flex h-11 items-center rounded-xl border px-3 transition-all ${
+                        selectedBook
+                          ? (isDarkMode ? 'border-emerald-500/60 bg-emerald-950/20' : 'border-emerald-500 bg-emerald-50/50')
+                          : (isDarkMode ? 'border-zinc-700 focus-within:border-emerald-500 bg-[#27272A]/30' : 'border-zinc-200 focus-within:border-emerald-500 bg-white')
+                      }`}>
+                        {selectedBook ? (
+                          <Check size={16} className="mr-2 text-emerald-500 animate-[scaleIn_0.2s_ease-out]" />
+                        ) : (
+                          <Search size={16} className={`mr-2 ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`} />
+                        )}
+                        <input
+                          value={selectedBook ? selectedBook.title : bookSearchQuery}
+                          onChange={(e) => {
+                            setBookSearchQuery(e.target.value)
+                            setShowBookDropdown(true)
+                            if (selectedBook) {
+                              setSelectedBook(null)
+                            }
+                          }}
+                          onFocus={() => setShowBookDropdown(true)}
+                          placeholder="Search by title, author, or ISBN..."
+                          className={`w-full bg-transparent text-xs outline-none ${selectedBook ? 'font-semibold text-emerald-600 dark:text-emerald-400' : (isDarkMode ? 'text-zinc-200 placeholder:text-zinc-500' : 'text-zinc-700 placeholder:text-zinc-400')}`}
+                        />
+                        {selectedBook && (
+                          <span className="mr-2 shrink-0 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 animate-[fadeIn_0.15s_ease-out]">
+                            Selected
+                          </span>
+                        )}
+                        <ChevronDown size={16} className={selectedBook ? 'text-emerald-500' : (isDarkMode ? 'text-zinc-400' : 'text-zinc-500')} />
+                      </label>
+                    </div>
+
+                    {showBookDropdown && (
+                      <div className={`absolute left-0 right-0 z-50 mt-1 max-h-60 overflow-y-auto rounded-xl border p-1.5 shadow-xl ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-200' : 'border-zinc-200 bg-white text-zinc-700'}`}>
+                        {filteredBooksList.length > 0 ? (
+                          filteredBooksList.map((b) => (
+                            <button
+                              key={b.isbn}
+                              type="button"
+                              onClick={() => {
+                                setSelectedBook(b)
+                                setShowBookDropdown(false)
+                                setBookSearchQuery('')
+                              }}
+                              className={`flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left text-xs font-semibold transition-colors ${isDarkMode ? 'hover:bg-zinc-800' : 'hover:bg-zinc-50'}`}
+                            >
+                              <img src={b.coverUrl} alt={b.title} className="w-8 h-11 rounded object-cover border shrink-0" />
+                              <div className="flex-1">
+                                <p className={isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}>{b.title}</p>
+                                <p className={`text-[10px] ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{b.author} • {b.isbn}</p>
+                              </div>
+                            </button>
+                          ))
+                        ) : (
+                          <p className={`p-3 text-center text-xs ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>No books found</p>
+                        )}
+                      </div>
+                    )}
+
+                    {selectedBook && (
+                      <div className={`relative rounded-xl border p-3 animate-[fadeIn_0.15s_ease-out] ${isDarkMode ? 'border-zinc-700 bg-[#27272A]' : 'border-zinc-200 bg-zinc-50/40'}`}>
+                        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                          <div className="flex items-center gap-3">
+                            <img src={selectedBook.coverUrl} alt={selectedBook.title} className="w-11 h-16 rounded object-cover border border-zinc-200 dark:border-zinc-800 shrink-0" />
+                            <div>
+                              <p className={`font-semibold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{selectedBook.title}</p>
+                              <p className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Author: {selectedBook.author}</p>
+                              <p className={`mt-1 text-xs ${isDarkMode ? 'text-zinc-300' : 'text-zinc-600'}`}>ISBN: {selectedBook.isbn} • Copy ID: {selectedBook.copyId}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4 md:gap-6">
+                            <div className="text-right text-xs">
+                              <p className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}>Available Copies</p>
+                              <p className={`text-xl font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-800'}`}>{selectedBook.availableCopies}</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedBook(null)}
+                              className={`grid h-8 w-8 place-items-center rounded-lg border transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200' : 'border-zinc-200 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700'}`}
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <hr className={`my-5 border-t ${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'}`} />
+
                   {/* 3. Reservation Details */}
                   <div>
                     <h3 className={`text-base font-bold ${isDarkMode ? 'text-zinc-100' : 'text-[#0a1b4f]'}`}>3. Reservation Details</h3>
@@ -1657,25 +1680,22 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                     
                     <div className="mt-4 grid gap-4 md:grid-cols-2">
                       <div>
-                        <label className={`text-[11px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Reservation Date</label>
+                        <label className={`text-[11px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Queue Date</label>
                         <div className={`mt-1.5 flex h-11 items-center gap-2 rounded-xl border px-3.5 focus-within:border-emerald-500 ${isDarkMode ? 'border-zinc-700 bg-[#27272A]' : 'border-zinc-200 bg-white'}`}>
                           <Calendar size={16} className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} />
-                          <input 
-                            type="date" 
-                            value={reservationDate} 
-                            onChange={(e) => setReservationDate(e.target.value)} 
-                            className={`w-full bg-transparent outline-none text-xs font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`} 
+                          <input type="datetime-local" value={reservationDate}
+                            onChange={(e) => setReservationDate(e.target.value)}
+                            className={`w-full bg-transparent outline-none text-xs font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}
                           />
                         </div>
                       </div>
 
                       <div>
-                        <label className={`text-[11px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Expires On *</label>
-                        <div className={`mt-1.5 flex h-11 items-center gap-2 rounded-xl border px-3.5 focus-within:border-emerald-500 ${isDarkMode ? 'border-zinc-700 bg-[#27272A]' : 'border-zinc-200 bg-white'}`}>
-                          <Calendar size={16} className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} />
-                          <input type="date" value={expiresOn} onChange={(e) => setExpiresOn(e.target.value)} className={`w-full bg-transparent outline-none text-xs font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`} />
+                        <label className={`text-[11px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Claim Period</label>
+                        <div className={`mt-1.5 flex min-h-11 items-center gap-2 rounded-xl border px-3.5 ${isDarkMode ? 'border-zinc-700 bg-[#27272A]' : 'border-zinc-200 bg-zinc-50'}`}>
+                          <Clock3 size={16} className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} />
+                          <span className={`text-xs font-semibold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-600'}`}>Starts only after the book becomes available and the member is notified.</span>
                         </div>
-                        <p className={`mt-1 text-[10px] leading-tight ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>Member will be notified before this date.</p>
                       </div>
 
 
@@ -1770,7 +1790,7 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                               <span className="text-zinc-400 font-bold block text-[8px] uppercase tracking-wider">Reservations</span>
                               <span className="font-extrabold block mt-0.5 text-blue-600 dark:text-blue-400 flex items-center gap-1">
                                 <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse inline-block"></span>
-                                {reservations.filter(r => r.bookId === selectedBook?.id && (r.status === 'Reserved' || r.status === 'Ready for Pickup')).length} waiting
+                                {reservations.filter(r => r.bookId === selectedBook?.id && (r.status === 'Queued' || r.status === 'Notified')).length} waiting
                               </span>
                             </div>
                             
@@ -1900,19 +1920,19 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
                     </div>
                     <div className="p-4 flex flex-col gap-2.5">
                       <div className="flex justify-between items-center text-[11px]">
-                        <span className="text-zinc-400 font-bold">Reservation Date</span>
+                        <span className="text-zinc-400 font-bold">Queue Date</span>
                         <span className={`font-extrabold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>{formatReservationDate(reservationDate)}</span>
                       </div>
                       <div className="flex justify-between items-center text-[11px]">
-                        <span className="text-zinc-400 font-bold">Expires On</span>
-                        <span className={`font-extrabold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>{formatExpiresDate(expiresOn)}</span>
+                        <span className="text-zinc-400 font-bold">Claim Expiry</span>
+                        <span className={`font-extrabold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>Starts after notification</span>
                       </div>
 
 
                       <div className="flex justify-between items-center text-[11px]">
                         <span className="text-zinc-400 font-bold">Estimated Wait Time</span>
                         <span className={`font-extrabold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>
-                          {!selectedBook ? '-' : selectedBook.availableCopies > 0 ? 'Available immediately' : `~ ${(reservations.filter(r => r.bookId === selectedBook.id && (r.status === 'Reserved' || r.status === 'Ready for Pickup')).length * 3) + 2} days`}
+                          {!selectedBook ? '-' : selectedBook.availableCopies > 0 ? 'Available immediately' : `~ ${(reservations.filter(r => r.bookId === selectedBook.id && (r.status === 'Queued' || r.status === 'Notified')).length * 3) + 2} days`}
                         </span>
                       </div>
                     </div>
@@ -1931,7 +1951,7 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail, onNaviga
               </aside>
             </div>
 
-            <div className={`-mx-6 sticky bottom-0 mt-5 border-t px-6 py-4 ${
+            <div className={`-mx-9 sticky bottom-0 mt-5 border-t px-9 py-4 ${
               isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-200 bg-white'
             }`}>
               <div className="flex justify-end gap-3">

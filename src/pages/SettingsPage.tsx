@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { invoke } from '@tauri-apps/api/core'
 import {
   Settings2,
   UsersRound,
@@ -188,6 +189,11 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
   const [maximumRenewals, setMaximumRenewals] = useState('2')
   const [gracePeriod, setGracePeriod] = useState('1')
   const [reservationExpiry, setReservationExpiry] = useState('3')
+  const [reservationQueueEnabled, setReservationQueueEnabled] = useState(true)
+  const [maximumQueueLength, setMaximumQueueLength] = useState('0')
+  const [autoNotifyNextUser, setAutoNotifyNextUser] = useState(true)
+  const [autoExpireUnclaimed, setAutoExpireUnclaimed] = useState(true)
+  const [reservationEmailNotifications, setReservationEmailNotifications] = useState(true)
   const [libraryName, setLibraryName] = useState('City Central School Library')
   const [libraryContactNumber, setLibraryContactNumber] = useState('(02) 8123-4567')
   const [libraryEmail, setLibraryEmail] = useState('library@citycentralschool.edu.ph')
@@ -384,6 +390,11 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
           grace,
           emailNotif,
           reservationExpiryDays,
+          configuredReservationQueueEnabled,
+          configuredMaximumQueueLength,
+          configuredAutoNotifyNextUser,
+          configuredAutoExpireUnclaimed,
+          configuredReservationEmailNotifications,
           name,
           contactNumber,
           email,
@@ -407,7 +418,12 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
           getSetting('general.maximum_renewals'),
           getSetting('general.grace_period'),
           getSetting('general.email_notifications'),
-          getSetting('general.reservation_expiry_days'),
+          getSetting('reservations.claim_period_days'),
+          getSetting('reservations.enable_queue'),
+          getSetting('reservations.maximum_queue_length'),
+          getSetting('reservations.auto_notify_next_user'),
+          getSetting('reservations.auto_expire_unclaimed'),
+          getSetting('reservations.send_email_notifications'),
           getSetting('library.name'),
           getSetting('library.contact_number'),
           getSetting('library.email'),
@@ -433,6 +449,11 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
         if (renewals) setMaximumRenewals(renewals)
         if (grace) setGracePeriod(grace)
         if (reservationExpiryDays) setReservationExpiry(reservationExpiryDays)
+        if (configuredReservationQueueEnabled) setReservationQueueEnabled(configuredReservationQueueEnabled === 'true')
+        if (configuredMaximumQueueLength) setMaximumQueueLength(configuredMaximumQueueLength)
+        if (configuredAutoNotifyNextUser) setAutoNotifyNextUser(configuredAutoNotifyNextUser === 'true')
+        if (configuredAutoExpireUnclaimed) setAutoExpireUnclaimed(configuredAutoExpireUnclaimed === 'true')
+        if (configuredReservationEmailNotifications) setReservationEmailNotifications(configuredReservationEmailNotifications === 'true')
         if (emailNotif) setNotifications(emailNotif === 'true')
         if (name) setLibraryName(name)
         if (contactNumber) setLibraryContactNumber(contactNumber)
@@ -822,12 +843,20 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
         suffix: 'days',
       },
       {
-        label: 'Reservation Expiry',
-        helper: 'How long a reservation stays active before expiring.',
+        label: 'Claim Period',
+        helper: 'Days a notified member has to claim an available book.',
         value: reservationExpiry,
         setter: setReservationExpiry,
-        settingKey: 'general.reservation_expiry_days',
+        settingKey: 'reservations.claim_period_days',
         suffix: 'days',
+      },
+      {
+        label: 'Maximum Queue Length',
+        helper: 'Maximum active reservations per book. Use 0 for unlimited.',
+        value: maximumQueueLength,
+        setter: setMaximumQueueLength,
+        settingKey: 'reservations.maximum_queue_length',
+        suffix: 'members',
       },
     ]
 
@@ -883,6 +912,36 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
               <span className={`h-4 w-4 rounded-full bg-white transition-transform ${notifications ? 'translate-x-5' : 'translate-x-0'}`} />
             </span>
           </button>
+
+          <div className="mt-3 space-y-3">
+            {[
+              { label: 'Enable Reservation Queue', helper: 'Allow multiple members to line up for the same book.', value: reservationQueueEnabled, setter: setReservationQueueEnabled, key: 'reservations.enable_queue' },
+              { label: 'Auto Notify Next User', helper: 'Promote the first queued member when a copy is available.', value: autoNotifyNextUser, setter: setAutoNotifyNextUser, key: 'reservations.auto_notify_next_user' },
+              { label: 'Auto Expire Unclaimed', helper: 'Move to the next member after the claim deadline.', value: autoExpireUnclaimed, setter: setAutoExpireUnclaimed, key: 'reservations.auto_expire_unclaimed' },
+              { label: 'Reservation Emails', helper: 'Send ready-for-pickup email notifications.', value: reservationEmailNotifications, setter: setReservationEmailNotifications, key: 'reservations.send_email_notifications' },
+            ].map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => {
+                  const next = !item.value
+                  item.setter(next)
+                  void saveGeneralSetting(item.key, String(next))
+                }}
+                className={`flex w-full items-center justify-between rounded-xl border p-4 text-left transition-colors ${
+                  isDarkMode ? 'border-zinc-700 bg-[#27272A] hover:bg-zinc-800' : 'border-zinc-200 bg-white hover:bg-zinc-50'
+                }`}
+              >
+                <div>
+                  <p className={`text-sm font-bold ${labelClass}`}>{item.label}</p>
+                  <p className={`mt-1 text-xs ${subLabelClass}`}>{item.helper}</p>
+                </div>
+                <span className={`inline-flex h-6 w-11 items-center rounded-full p-1 transition-colors ${item.value ? 'bg-emerald-600' : isDarkMode ? 'bg-zinc-700' : 'bg-zinc-200'}`}>
+                  <span className={`h-4 w-4 rounded-full bg-white transition-transform ${item.value ? 'translate-x-5' : 'translate-x-0'}`} />
+                </span>
+              </button>
+            ))}
+          </div>
         </section>
       </div>
     )

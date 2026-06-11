@@ -280,6 +280,10 @@ export type Reservation = {
   bookAuthor: string
   reservationDate: string
   expiresOn: string
+  queueDate: string
+  queuePosition: number | null
+  notificationSentAt: string | null
+  claimExpiresAt: string | null
   status: string
   branch: string
   priority: string
@@ -491,6 +495,10 @@ export async function createReservation(payload: CreateReservationPayload): Prom
 
 export async function listReservations(status?: string, limit?: number): Promise<Reservation[]> {
   return invoke<Reservation[]>('list_reservations', { status, limit })
+}
+
+export async function processReservationQueue(bookId?: number): Promise<void> {
+  return invoke<void>('process_reservation_queue', { payload: { bookId: bookId ?? null } })
 }
 
 export async function updateReservationStatus(payload: UpdateReservationStatusPayload): Promise<void> {
