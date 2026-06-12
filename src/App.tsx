@@ -62,6 +62,17 @@ const navItems = [
 
 type ActivePage = (typeof navItems)[number]['id'] | 'Profile' | 'Notifications' | 'EmailLogs' | 'SmsLogs'
 
+const librarianAllowedPages = new Set<ActivePage>([
+  'Dashboard',
+  'Books',
+  'Members',
+  'Transactions',
+  'Reservations',
+  'Notifications',
+  'Reports',
+  'Profile',
+])
+
 
 
 type DashboardStats = {
@@ -155,6 +166,7 @@ function DashboardShell({ onLogout, licenseStatus, trialSeconds }: { onLogout: (
   const [dashboardToast, setDashboardToast] = useState<string | null>(null)
   const [currentTime, setCurrentTime] = useState(() => new Date())
   const [activeUsername, setActiveUsername] = useState<string | null>(null)
+  const [activeRole, setActiveRole] = useState<string | null>(null)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
 
   useEffect(() => {
@@ -227,6 +239,8 @@ function DashboardShell({ onLogout, licenseStatus, trialSeconds }: { onLogout: (
   const [transactionActiveTab, setTransactionActiveTab] = useState<'all' | 'borrowed' | 'returned' | 'overdue'>('all')
   const [borrowPrefill, setBorrowPrefill] = useState<{ memberId?: number, bookId: number } | null>(null)
   const [borrowReturnActiveTab, setBorrowReturnActiveTab] = useState<'borrow' | 'return'>('borrow')
+  const isAdministrator = activeRole === null || activeRole === 'Admin' || activeRole === 'Administrator'
+  const canAccessPage = (page: ActivePage) => isAdministrator || librarianAllowedPages.has(page)
 
   const [isEmailMenuOpen, setIsEmailMenuOpen] = useState(false)
   const [isSmsMenuOpen, setIsSmsMenuOpen] = useState(false)
@@ -348,7 +362,10 @@ function DashboardShell({ onLogout, licenseStatus, trialSeconds }: { onLogout: (
     const loadActiveUser = async () => {
       try {
         const session = await getActiveSession()
-        if (mounted) setActiveUsername(session?.username ?? null)
+        if (mounted) {
+          setActiveUsername(session?.username ?? null)
+          setActiveRole(session?.role ?? null)
+        }
       } catch (error) {
         console.error('Failed to load active user:', error)
       }
@@ -358,6 +375,12 @@ function DashboardShell({ onLogout, licenseStatus, trialSeconds }: { onLogout: (
       mounted = false
     }
   }, [])
+
+  useEffect(() => {
+    if (activeRole !== null && !canAccessPage(activePage)) {
+      setActivePage('Dashboard')
+    }
+  }, [activePage, activeRole])
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -798,7 +821,9 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
                     <span className="text-[#10B981]">{libraryName.substring(0, Math.ceil(libraryName.length / 2))}</span>
                     {libraryName.substring(Math.ceil(libraryName.length / 2))}
                   </p>
-                  <p className={`text-[10px] font-semibold uppercase tracking-[0.08em] mt-1 ${dashboardTheme.asideSub}`}>Admin Workspace</p>
+                  <p className={`text-[10px] font-semibold uppercase tracking-[0.08em] mt-1 ${dashboardTheme.asideSub}`}>
+                    {isAdministrator ? 'Admin Workspace' : 'Librarian Workspace'}
+                  </p>
                 </div>
               ) : null}
             </div>
@@ -832,7 +857,7 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
                 <div>
                   {!sidebarCollapsed ? <div className="mb-2 px-3"><span className="text-[10px] font-bold uppercase tracking-wider text-[#71717A]">Library</span></div> : null}
                   <div className="space-y-1">
-                    {navItems.slice(1, 6).map((item) => (
+                    {navItems.slice(1, 6).filter((item) => canAccessPage(item.id)).map((item) => (
                       <button
                         key={item.id}
                         onClick={() => {
@@ -862,7 +887,7 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
                 <div>
                   {!sidebarCollapsed ? <div className="mb-2 px-3"><span className="text-[10px] font-bold uppercase tracking-wider text-[#71717A]">Circulation</span></div> : null}
                   <div className="space-y-1">
-                    {navItems.slice(6, 8).map((item) => (
+                    {navItems.slice(6, 8).filter((item) => canAccessPage(item.id)).map((item) => (
                       <button
                         key={item.id}
                         onClick={() => {
@@ -886,7 +911,7 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
                 <div className="mt-auto pt-6">
                   {!sidebarCollapsed ? <div className="mb-2 px-3"><span className="text-[10px] font-bold uppercase tracking-wider text-[#71717A]">Management</span></div> : null}
                   <div className="space-y-1">
-                    {navItems.slice(8, 10).map((item) => (
+                    {navItems.slice(8, 10).filter((item) => canAccessPage(item.id)).map((item) => (
                       <button
                         key={item.id}
                         onClick={() => {
@@ -907,7 +932,7 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
                 </div>
           </nav>
 
-          <div className={`relative z-10 mt-auto border-t ${dashboardTheme.rowBorder} p-3`}>
+          {isAdministrator && <div className={`relative z-10 mt-auto border-t ${dashboardTheme.rowBorder} p-3`}>
             <button
               onClick={() => {
                 setActivePage('Settings')
@@ -922,7 +947,7 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
               <Settings2 size={16} className="" />
               {!sidebarCollapsed ? <span className="flex-1 text-left font-medium text-xs">Settings</span> : null}
             </button>
-          </div>
+          </div>}
         </aside>
 
         <section className="flex min-h-0 min-w-0 flex-1 flex-col">
@@ -1133,7 +1158,7 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
                   >
                     {isDarkMode ? <Sun size={18} strokeWidth={1.9} /> : <Moon size={18} strokeWidth={1.9} />}
                   </button>
-                  <div className="relative">
+                  {isAdministrator && <div className="relative">
                     <button 
                       type="button" 
                       onClick={() => { setSmsLogStatusFilter(''); setActivePage('SmsLogs') }}
@@ -1142,9 +1167,9 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
                     >
                       <MessageCircle size={18} strokeWidth={1.9} />
                     </button>
-                  </div>
+                  </div>}
                   
-                  <div className="relative">
+                  {isAdministrator && <div className="relative">
                     <button 
                       type="button" 
                       onClick={() => { setEmailLogStatusFilter(''); setActivePage('EmailLogs') }}
@@ -1153,7 +1178,7 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
                     >
                       <Mail size={18} strokeWidth={1.9} />
                     </button>
-                  </div>
+                  </div>}
                   <div ref={notificationsRef} className="relative">
                     <button 
                       type="button" 
@@ -1267,7 +1292,7 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
                   </div>
                   <div>
                     <p className={`text-sm font-semibold truncate max-w-[120px] ${dashboardTheme.profileName}`}>{userProfile?.fullName || formatDisplayName(activeUsername)}</p>
-                    <p className={`text-xs ${dashboardTheme.profileRole}`}>{userProfile?.role || 'Librarian'}</p>
+                    <p className={`text-xs ${dashboardTheme.profileRole}`}>{userProfile?.role || activeRole || 'Librarian'}</p>
                   </div>
                   <button
                     type="button"
@@ -1584,11 +1609,11 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
                 setIsMemberDetailOpen(true)
                 setActivePage('Members')
               }}
-              onViewTransaction={(transactionId) => {
+              onViewTransaction={isAdministrator ? (transactionId) => {
                 setSelectedTransactionId(transactionId)
                 setIsTransactionDetailOpen(true)
                 setActivePage('All Transactions')
-              }}
+              } : undefined}
             />
           ) : activePage === 'Profile' ? (
             <ProfilePage 

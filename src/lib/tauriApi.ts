@@ -351,7 +351,7 @@ export type CreateStaffPayload = {
   role: string
   branch: string
   status: string
-  phone?: string | null
+  phone: string
   emergencyContact?: string | null
   employeeType?: string | null
   startDate?: string | null
@@ -369,7 +369,7 @@ export type UpdateStaffPayload = {
   role: string
   branch: string
   status: string
-  phone?: string | null
+  phone: string
   emergencyContact?: string | null
   employeeType?: string | null
   startDate?: string | null

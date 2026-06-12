@@ -455,7 +455,7 @@ struct CreateStaffPayload {
     role: String,
     branch: String,
     status: String,
-    phone: Option<String>,
+    phone: String,
     emergency_contact: Option<String>,
     employee_type: Option<String>,
     start_date: Option<String>,
@@ -475,7 +475,7 @@ struct UpdateStaffPayload {
     role: String,
     branch: String,
     status: String,
-    phone: Option<String>,
+    phone: String,
     emergency_contact: Option<String>,
     employee_type: Option<String>,
     start_date: Option<String>,
@@ -651,7 +651,7 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
         role TEXT NOT NULL,
         branch TEXT NOT NULL,
         status TEXT NOT NULL DEFAULT 'Active',
-        phone TEXT,
+        phone TEXT NOT NULL,
         emergency_contact TEXT,
         employee_type TEXT,
         start_date TEXT,
@@ -789,6 +789,24 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
             return Err(format!("staff migration failed: {e}"));
         }
     }
+    conn.execute_batch(
+        "
+        CREATE TRIGGER IF NOT EXISTS staff_phone_required_insert
+        BEFORE INSERT ON staff_members
+        WHEN NEW.phone IS NULL OR TRIM(NEW.phone) = ''
+        BEGIN
+          SELECT RAISE(ABORT, 'Staff contact number is required.');
+        END;
+
+        CREATE TRIGGER IF NOT EXISTS staff_phone_required_update
+        BEFORE UPDATE OF phone ON staff_members
+        WHEN NEW.phone IS NULL OR TRIM(NEW.phone) = ''
+        BEGIN
+          SELECT RAISE(ABORT, 'Staff contact number is required.');
+        END;
+        ",
+    )
+    .map_err(|e| format!("staff phone migration failed: {e}"))?;
     if let Err(e) = conn.execute("ALTER TABLE notifications ADD COLUMN unique_key TEXT", []) {
         let msg = e.to_string();
         if !msg.contains("duplicate column name") {
@@ -3289,13 +3307,20 @@ fn create_staff(app: tauri::AppHandle, payload: CreateStaffPayload) -> Result<i6
     let role = payload.role.trim();
     let branch = payload.branch.trim();
     let status = payload.status.trim();
+    let phone = payload.phone.trim();
     if full_name.is_empty()
         || email.is_empty()
         || role.is_empty()
         || branch.is_empty()
         || status.is_empty()
+        || phone.is_empty()
     {
-        return Err("fullName, email, role, branch and status are required".to_string());
+        return Err(
+            "fullName, email, role, branch, status and contact number are required".to_string(),
+        );
+    }
+    if !matches!(role, "Administrator" | "Librarian") {
+        return Err("Staff role must be Administrator or Librarian.".to_string());
     }
 
     let conn = open_db(&database_path(&app)?)?;
@@ -3323,7 +3348,7 @@ fn create_staff(app: tauri::AppHandle, payload: CreateStaffPayload) -> Result<i6
         role,
         branch,
         status,
-        payload.phone.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
+        phone,
         payload.emergency_contact.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
         payload.employee_type.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
         payload.start_date.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
@@ -3398,13 +3423,20 @@ fn update_staff(app: tauri::AppHandle, payload: UpdateStaffPayload) -> Result<()
     let role = payload.role.trim();
     let branch = payload.branch.trim();
     let status = payload.status.trim();
+    let phone = payload.phone.trim();
     if full_name.is_empty()
         || email.is_empty()
         || role.is_empty()
         || branch.is_empty()
         || status.is_empty()
+        || phone.is_empty()
     {
-        return Err("fullName, email, role, branch and status are required".to_string());
+        return Err(
+            "fullName, email, role, branch, status and contact number are required".to_string(),
+        );
+    }
+    if !matches!(role, "Administrator" | "Librarian") {
+        return Err("Staff role must be Administrator or Librarian.".to_string());
     }
 
     let conn = open_db(&database_path(&app)?)?;
@@ -3439,10 +3471,7 @@ fn update_staff(app: tauri::AppHandle, payload: UpdateStaffPayload) -> Result<()
             role,
             branch,
             status,
-            payload
-                .phone
-                .map(|v| v.trim().to_string())
-                .filter(|v| !v.is_empty()),
+            phone,
             payload
                 .emergency_contact
                 .map(|v| v.trim().to_string())

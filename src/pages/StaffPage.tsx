@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect, type ChangeEvent } from 'react'
-import { Users, UserCheck, UserX, ShieldCheck, Calendar, Search, ChevronDown, Filter, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, X, MoreHorizontal } from 'lucide-react'
+import { Users, UserCheck, UserX, ShieldCheck, Search, ChevronDown, Filter, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, X, MoreHorizontal } from 'lucide-react'
 import { createStaff, deleteStaff, listStaff, updateStaff } from '../lib/tauriApi'
 import { Toast } from '../components/ui/Toast'
-type StaffRole = 'Administrator' | 'Librarian' | 'Assistant Librarian' | 'Library Clerk'
+type StaffRole = 'Administrator' | 'Librarian'
 type StaffStatus = 'Active' | 'Inactive'
 
 type StaffMember = {
@@ -178,7 +178,6 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
     { label: 'Active Staff', value: activeStaff.toString(), subValue: totalStaff > 0 ? `${Math.round((activeStaff/totalStaff)*100)}% of total` : '0%', icon: UserCheck, color: 'text-blue-600', bg: 'bg-blue-50' },
     { label: 'Inactive Staff', value: inactiveStaff.toString(), subValue: totalStaff > 0 ? `${Math.round((inactiveStaff/totalStaff)*100)}% of total` : '0%', icon: UserX, color: 'text-amber-600', bg: 'bg-amber-50' },
     { label: 'Administrators', value: adminStaff.toString(), subValue: totalStaff > 0 ? `${Math.round((adminStaff/totalStaff)*100)}% of total` : '0%', icon: ShieldCheck, color: 'text-violet-600', bg: 'bg-violet-50' },
-    { label: 'New This Month', value: newThisMonth.toString(), subValue: 'New staff added', icon: Calendar, color: 'text-rose-600', bg: 'bg-rose-50' },
   ]
 
 
@@ -186,8 +185,6 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
     switch (role) {
       case 'Administrator': return 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400'
       case 'Librarian': return 'text-blue-600 bg-blue-50 dark:bg-blue-500/10 dark:text-blue-400'
-      case 'Assistant Librarian': return 'text-violet-600 bg-violet-50 dark:bg-violet-500/10 dark:text-violet-400'
-      case 'Library Clerk': return 'text-amber-600 bg-amber-50 dark:bg-amber-500/10 dark:text-amber-400'
     }
   }
 
@@ -242,7 +239,7 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
           id: staff.staffCode,
           name: staff.fullName,
           email: staff.email,
-          role: (staff.role as StaffRole) || 'Librarian',
+          role: staff.role === 'Administrator' || staff.role === 'Admin' ? 'Administrator' : 'Librarian',
           branch: staff.branch,
           status: (staff.status as StaffStatus) || 'Active',
           joinedOn: joined.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
@@ -301,10 +298,11 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
     const form = new FormData(event.currentTarget)
     const fullName = String(form.get('fullName') || '').trim()
     const email = String(form.get('email') || '').trim()
+    const phone = String(form.get('phone') || editingStaff?.phone || '').trim()
     const role = String(form.get('role') || 'Librarian')
     const status = String(form.get('status') || 'Active')
-    if (!fullName || !email) {
-      setStaffError('Full name and email are required.')
+    if (!fullName || !email || !phone) {
+      setStaffError('Full name, email and contact number are required.')
       return
     }
 
@@ -315,7 +313,7 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
       role,
       branch: String(form.get('branch') || editingStaff?.branch || 'Central Library'),
       status,
-      phone: String(form.get('phone') || editingStaff?.phone || '').trim() || null,
+      phone,
       emergencyContact: String(form.get('emergencyContact') || editingStaff?.emergencyContact || '').trim() || null,
       employeeType: String(form.get('employeeType') || editingStaff?.employeeType || '').trim() || null,
       startDate: String(form.get('startDate') || editingStaff?.startDate || '').trim() || null,
@@ -434,7 +432,7 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
           </div>
         </div>
 
-        <section className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <section className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {dynamicStats.map((stat) => {
             const Icon = stat.icon
             return (
@@ -480,8 +478,6 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
                     <option value="All Roles">All Roles</option>
                     <option value="Administrator">Administrator</option>
                     <option value="Librarian">Librarian</option>
-                    <option value="Assistant Librarian">Assistant Librarian</option>
-                    <option value="Library Clerk">Library Clerk</option>
                   </select>
                   <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
                 </div>
@@ -717,33 +713,25 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
                 <div className="space-y-7">
                   <div>
                     <h4 className={`mb-4 text-sm font-black uppercase tracking-wider ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Identity & Access</h4>
-                    <div className="grid gap-6 md:grid-cols-2">
-                      <div className="space-y-2">
+                    <div className="grid gap-6 md:grid-cols-6">
+                      <div className="space-y-2 md:col-span-3">
                         <label className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Full Name <span className="text-rose-500">*</span></label>
                         <input name="fullName" defaultValue={editingStaff?.name ?? ''} placeholder="e.g. James Anderson" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-100 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-700 focus:border-emerald-500'}`} required />
                       </div>
-                      <div className="space-y-2">
+                      <div className="space-y-2 md:col-span-3">
                         <label className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Email Address <span className="text-rose-500">*</span></label>
                         <input name="email" defaultValue={editingStaff?.email ?? ''} placeholder="email@infolib.com" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-100 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-700 focus:border-emerald-500'}`} required />
                       </div>
-                      <div className="space-y-2">
+                      <div className="space-y-2 md:col-span-3">
+                        <label className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Contact Number <span className="text-rose-500">*</span></label>
+                        <input name="phone" type="tel" defaultValue={editingStaff?.phone ?? ''} placeholder="e.g. 0917 123 4567" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-100 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-700 focus:border-emerald-500'}`} required />
+                      </div>
+                      <div className="space-y-2 md:col-span-3">
                         <label className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>System Role <span className="text-rose-500">*</span></label>
                         <div className="relative">
                           <select name="role" defaultValue={editingStaff?.role ?? 'Librarian'} className={`h-12 w-full appearance-none rounded-xl border pl-4 pr-10 text-sm font-bold outline-none transition-all ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-100 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-700 focus:border-emerald-500'}`}>
                             <option>Librarian</option>
                             <option>Administrator</option>
-                            <option>Assistant Librarian</option>
-                            <option>Library Clerk</option>
-                          </select>
-                          <ChevronDown size={18} className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <label className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Status <span className="text-rose-500">*</span></label>
-                        <div className="relative">
-                          <select name="status" defaultValue={editingStaff?.status ?? 'Active'} className={`h-12 w-full appearance-none rounded-xl border pl-4 pr-10 text-sm font-bold outline-none transition-all ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-100 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-700 focus:border-emerald-500'}`}>
-                            <option>Active</option>
-                            <option>Inactive</option>
                           </select>
                           <ChevronDown size={18} className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
                         </div>
@@ -770,18 +758,30 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
                   </div>
 
                   <div className={`${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'} border-t pt-6`}>
-                    <h4 className={`mb-4 text-sm font-black uppercase tracking-wider ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Optional</h4>
-                    <div className="space-y-2">
-                      <label className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Profile Photo</label>
-                      <div className="flex items-center gap-3">
-                        <span className={`grid h-12 w-12 place-items-center overflow-hidden rounded-full border text-xs font-bold ${isDarkMode ? 'border-zinc-700 bg-zinc-800/50 text-zinc-300' : 'border-zinc-200 bg-zinc-100 text-zinc-600'}`}>
-                          {profilePhotoPreview ? (
-                            <img src={profilePhotoPreview} alt="Profile preview" className="h-full w-full object-cover" />
-                          ) : (
-                            avatarFromName(editingStaff?.name || 'Staff')
-                          )}
-                        </span>
-                        <input type="file" accept="image/png,image/jpeg" onChange={handleProfilePhotoChange} className={`block w-full text-sm ${isDarkMode ? 'text-zinc-300 file:bg-zinc-800 file:text-zinc-200 file:border-zinc-700' : 'text-zinc-700 file:bg-zinc-100 file:text-zinc-700 file:border-zinc-200'} file:mr-4 file:rounded-lg file:border file:px-3 file:py-2`} />
+                    <h4 className={`mb-4 text-sm font-black uppercase tracking-wider ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Profile & Status</h4>
+                    <div className="grid items-end gap-6 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <label className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Profile Photo</label>
+                        <div className="flex min-h-12 items-center gap-3">
+                          <span className={`grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-full border text-xs font-bold ${isDarkMode ? 'border-zinc-700 bg-zinc-800/50 text-zinc-300' : 'border-zinc-200 bg-zinc-100 text-zinc-600'}`}>
+                            {profilePhotoPreview ? (
+                              <img src={profilePhotoPreview} alt="Profile preview" className="h-full w-full object-cover" />
+                            ) : (
+                              avatarFromName(editingStaff?.name || 'Staff')
+                            )}
+                          </span>
+                          <input type="file" accept="image/png,image/jpeg" onChange={handleProfilePhotoChange} className={`block min-w-0 w-full text-sm ${isDarkMode ? 'text-zinc-300 file:bg-zinc-800 file:text-zinc-200 file:border-zinc-700' : 'text-zinc-700 file:bg-zinc-100 file:text-zinc-700 file:border-zinc-200'} file:mr-4 file:rounded-lg file:border file:px-3 file:py-2`} />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Status <span className="text-rose-500">*</span></label>
+                        <div className="relative">
+                          <select name="status" defaultValue={editingStaff?.status ?? 'Active'} className={`h-12 w-full appearance-none rounded-xl border pl-4 pr-10 text-sm font-bold outline-none transition-all ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-100 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-700 focus:border-emerald-500'}`}>
+                            <option>Active</option>
+                            <option>Inactive</option>
+                          </select>
+                          <ChevronDown size={18} className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
+                        </div>
                       </div>
                     </div>
                   </div>
