@@ -24,6 +24,10 @@ type ReservationRow = {
     author: string
     cover: string
     coverUrl?: string | null
+    category: string
+    isbn: string
+    availableCopies: number
+    totalCopies: number
   }
   member: {
     name: string
@@ -39,6 +43,7 @@ type ReservationRow = {
   expiresTime: string
   notificationSentAt: string
   daysRemaining: string
+  activeQueueCount: number
 }
 
 type ReservationsPageProps = {
@@ -68,6 +73,8 @@ type BookItem = {
   author: string
   isbn: string
   availableCopies: number
+  totalCopies: number
+  shelfLocation: string
   category: string
   publisher: string
   coverUrl: string
@@ -375,10 +382,10 @@ function ReservationDetailsViewNew({ reservation, isDarkMode, onBack, onCheckOut
 
                 <div className="mt-5 grid grid-cols-2 gap-2.5">
                   {[
-                    { label: 'Category', value: 'Fiction' },
-                    { label: 'ISBN', value: '978-0061122415' },
-                    { label: 'Available', value: '1 copy', accent: true },
-                    { label: 'Total Copies', value: '4 copies' },
+                    { label: 'Category', value: book.category },
+                    { label: 'ISBN', value: book.isbn },
+                    { label: 'Available', value: `${book.availableCopies} ${book.availableCopies === 1 ? 'copy' : 'copies'}`, accent: true },
+                    { label: 'Total Copies', value: `${book.totalCopies} ${book.totalCopies === 1 ? 'copy' : 'copies'}` },
                   ].map((item) => (
                     <div key={item.label} className={`rounded-xl border p-3 ${isDarkMode ? 'border-zinc-700 bg-zinc-800/30' : 'border-zinc-100 bg-zinc-50/70'}`}>
                       <p className="text-[9px] font-bold uppercase tracking-wider text-zinc-400">{item.label}</p>
@@ -392,9 +399,11 @@ function ReservationDetailsViewNew({ reservation, isDarkMode, onBack, onCheckOut
             <div className={`mt-4 flex items-center justify-between rounded-xl border px-4 py-3 ${isDarkMode ? 'border-zinc-700 bg-zinc-800/30' : 'border-zinc-100 bg-white'}`}>
               <div>
                 <p className="text-[9px] font-bold uppercase tracking-wider text-zinc-400">Reservations / Queue</p>
-                <p className={`mt-1 text-xs font-bold ${primaryText}`}>2 people waiting</p>
+                <p className={`mt-1 text-xs font-bold ${primaryText}`}>
+                  {reservation.activeQueueCount} {reservation.activeQueueCount === 1 ? 'person' : 'people'} waiting
+                </p>
               </div>
-              <span className="grid h-9 w-9 place-items-center rounded-full bg-blue-50 text-sm font-black text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">2</span>
+              <span className="grid h-9 w-9 place-items-center rounded-full bg-blue-50 text-sm font-black text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">{reservation.activeQueueCount}</span>
             </div>
           </div>
         </article>
@@ -729,6 +738,10 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail: _onOpenT
               author: reservation.bookAuthor,
               cover: '📘',
               coverUrl: matchedBook?.coverData ?? null,
+              category: matchedBook?.category ?? 'Uncategorized',
+              isbn: matchedBook?.isbn ?? 'Not provided',
+              availableCopies: matchedBook?.available ?? 0,
+              totalCopies: matchedBook?.totalCopies ?? 0,
             },
             member: {
               name: reservation.memberName,
@@ -746,6 +759,9 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail: _onOpenT
             daysRemaining: reservation.claimExpiresAt
               ? `${Math.max(0, Math.ceil((new Date(reservation.claimExpiresAt).getTime() - Date.now()) / 86400000))} day(s)`
               : '--',
+            activeQueueCount: reservationRows.filter(
+              (item) => item.bookId === reservation.bookId && (item.status === 'Queued' || item.status === 'Notified'),
+            ).length,
           } as ReservationRow
         })
         setReservations(mappedReservations)
@@ -897,6 +913,10 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail: _onOpenT
           author: item.bookAuthor,
           cover: '📘',
           coverUrl: matchedBook?.coverUrl ?? null,
+          category: matchedBook?.category ?? 'Uncategorized',
+          isbn: matchedBook?.isbn ?? 'Not provided',
+          availableCopies: matchedBook?.availableCopies ?? 0,
+          totalCopies: matchedBook?.totalCopies ?? 0,
         },
         member: {
           name: item.memberName,
@@ -924,6 +944,9 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail: _onOpenT
         daysRemaining: item.claimExpiresAt
           ? `${Math.max(0, Math.ceil((toDate(item.claimExpiresAt).getTime() - Date.now()) / 86400000))} day(s)`
           : '--',
+        activeQueueCount: rows.filter(
+          (reservation) => reservation.bookId === item.bookId && (reservation.status === 'Queued' || reservation.status === 'Notified'),
+        ).length,
       }
     })
   }
