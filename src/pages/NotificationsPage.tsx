@@ -1,19 +1,28 @@
 import { useMemo, useState, useEffect } from 'react'
-import { Bell, CheckCheck, ChevronDown, ChevronLeft, ChevronRight, Circle, Inbox, RotateCcw, X } from 'lucide-react'
-import { listNotifications, markNotificationAsRead, markAllNotificationsRead, type NotificationItem } from '../lib/tauriApi'
+import { Bell, Building2, CheckCheck, ChevronDown, ChevronLeft, ChevronRight, Circle, IdCard, Inbox, Mail, Phone, RotateCcw, UserRound, X } from 'lucide-react'
+import { listMembers, listNotifications, markNotificationAsRead, markAllNotificationsRead, type Member, type NotificationItem } from '../lib/tauriApi'
 
 type NotificationsPageProps = {
   isDarkMode: boolean
+  initialNotificationId?: number | null
+  onInitialNotificationConsumed?: () => void
   onNotificationsChanged?: () => void
 }
 
-function NotificationsPage({ isDarkMode, onNotificationsChanged }: NotificationsPageProps) {
+function NotificationsPage({
+  isDarkMode,
+  initialNotificationId = null,
+  onInitialNotificationConsumed,
+  onNotificationsChanged,
+}: NotificationsPageProps) {
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [activeFilter, setActiveFilter] = useState<'all' | 'unread'>('all')
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
   const [selectedNotification, setSelectedNotification] = useState<NotificationItem | null>(null)
+  const [notificationMembers, setNotificationMembers] = useState<Member[]>([])
+  const [isLoadingNotificationDetails, setIsLoadingNotificationDetails] = useState(false)
 
   const cardClass = isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-200 bg-white'
   const subLabelClass = isDarkMode ? 'text-zinc-400' : 'text-zinc-500'
@@ -56,6 +65,33 @@ function NotificationsPage({ isDarkMode, onNotificationsChanged }: Notifications
     }
   }
 
+  useEffect(() => {
+    if (isLoading || initialNotificationId === null) return
+
+    const item = notifications.find((notification) => notification.id === initialNotificationId)
+    const timer = window.setTimeout(() => {
+      onInitialNotificationConsumed?.()
+      if (item) {
+        setSelectedNotification(item)
+        if (!item.isRead) {
+          void markNotificationAsRead(item.id)
+            .then(() => {
+              setNotifications((prev) => prev.map((notification) => (
+                notification.id === item.id ? { ...notification, isRead: true } : notification
+              )))
+              setSelectedNotification({ ...item, isRead: true })
+              onNotificationsChanged?.()
+            })
+            .catch((error) => {
+              console.error('Failed to mark read:', error)
+            })
+        }
+      }
+    }, 0)
+
+    return () => window.clearTimeout(timer)
+  }, [initialNotificationId, isLoading, notifications, onInitialNotificationConsumed, onNotificationsChanged])
+
   const handleMarkAllRead = async () => {
     try {
       await markAllNotificationsRead()
@@ -65,6 +101,37 @@ function NotificationsPage({ isDarkMode, onNotificationsChanged }: Notifications
       console.error('Failed to mark all read:', error)
     }
   }
+
+  useEffect(() => {
+    if (selectedNotification?.notificationType !== 'member') return
+
+    let cancelled = false
+    const timer = window.setTimeout(() => {
+      setIsLoadingNotificationDetails(true)
+      listMembers(500)
+        .then((members) => {
+          if (cancelled) return
+          const today = new Date().toISOString().slice(0, 10)
+          setNotificationMembers(
+            members
+              .filter((member) => member.createdAt.slice(0, 10) === today)
+              .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+          )
+        })
+        .catch((error) => {
+          console.error('Failed to load notification member details:', error)
+          if (!cancelled) setNotificationMembers([])
+        })
+        .finally(() => {
+          if (!cancelled) setIsLoadingNotificationDetails(false)
+        })
+    }, 0)
+
+    return () => {
+      cancelled = true
+      window.clearTimeout(timer)
+    }
+  }, [selectedNotification])
 
   const formatNotificationTime = (isoDate: string) => {
     const dt = new Date(isoDate)
@@ -257,11 +324,72 @@ function NotificationsPage({ isDarkMode, onNotificationsChanged }: Notifications
                 <X size={20} />
               </button>
             </div>
-            <div className="p-6">
+            <div className="max-h-[70vh] overflow-y-auto p-6">
               <div className={`rounded-xl border p-4 ${isDarkMode ? 'border-zinc-700 bg-[#27272A]' : 'border-zinc-200 bg-zinc-50'}`}>
                 <h3 className={`text-base font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{selectedNotification.title}</h3>
                 <p className={`mt-3 whitespace-pre-wrap text-sm leading-6 ${isDarkMode ? 'text-zinc-300' : 'text-zinc-600'}`}>{selectedNotification.message}</p>
               </div>
+              {selectedNotification.notificationType === 'member' && (
+                <div className="mt-4">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div>
+                      <h4 className={`text-sm font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Registered Members</h4>
+                      <p className={`mt-0.5 text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Members added today with their contact and account details.</p>
+                    </div>
+                    {!isLoadingNotificationDetails && (
+                      <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-bold text-emerald-600 dark:text-emerald-300">
+                        {notificationMembers.length}
+                      </span>
+                    )}
+                  </div>
+
+                  {isLoadingNotificationDetails ? (
+                    <div className={`rounded-xl border px-4 py-8 text-center text-sm ${isDarkMode ? 'border-zinc-700 text-zinc-400' : 'border-zinc-200 text-zinc-500'}`}>
+                      Loading member details...
+                    </div>
+                  ) : notificationMembers.length === 0 ? (
+                    <div className={`rounded-xl border px-4 py-8 text-center text-sm ${isDarkMode ? 'border-zinc-700 text-zinc-400' : 'border-zinc-200 text-zinc-500'}`}>
+                      No matching member records were found.
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {notificationMembers.map((member) => (
+                        <article key={member.id} className={`rounded-xl border p-4 ${isDarkMode ? 'border-zinc-700 bg-[#27272A]' : 'border-zinc-200 bg-white'}`}>
+                          <div className="flex items-start gap-3">
+                            {member.profilePhotoData ? (
+                              <img src={member.profilePhotoData} alt="" className="h-11 w-11 shrink-0 rounded-full object-cover" />
+                            ) : (
+                              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-300">
+                                <UserRound size={19} />
+                              </span>
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <div>
+                                  <p className={`font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{member.fullName}</p>
+                                  <p className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{member.memberType}</p>
+                                </div>
+                                <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-300">
+                                  {member.status}
+                                </span>
+                              </div>
+                              <div className={`mt-3 grid gap-2 text-xs ${isDarkMode ? 'text-zinc-300' : 'text-zinc-600'}`}>
+                                <p className="flex items-center gap-2"><IdCard size={14} className="text-zinc-400" />{member.memberId}</p>
+                                {member.department && <p className="flex items-center gap-2"><Building2 size={14} className="text-zinc-400" />{member.department}</p>}
+                                {member.email && <p className="flex items-center gap-2 break-all"><Mail size={14} className="shrink-0 text-zinc-400" />{member.email}</p>}
+                                {member.contactNumber && <p className="flex items-center gap-2"><Phone size={14} className="text-zinc-400" />{member.contactNumber}</p>}
+                              </div>
+                              <p className={`mt-3 text-[11px] ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                                Registered {formatNotificationTime(member.createdAt)}
+                              </p>
+                            </div>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="mt-4 flex items-center justify-between gap-4">
                 <p className={`text-xs font-medium ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>{formatNotificationTime(selectedNotification.createdAt)}</p>
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300">

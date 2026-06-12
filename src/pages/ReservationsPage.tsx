@@ -269,30 +269,20 @@ function ReservationDetailsViewNew({ reservation, isDarkMode, onBack, onCheckOut
   const primaryText = isDarkMode ? 'text-zinc-100' : 'text-zinc-900'
 
   return (
-    <section className="mx-auto w-full max-w-[1400px] px-2 pt-6 pb-6">
+    <section className="w-full p-5">
       {/* Header */}
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onBack}
-            className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl border transition-colors ${
-              isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'
-            }`}
-          >
-            <ArrowLeft size={18} />
-          </button>
-          <div>
-            <h2 className={`text-2xl font-bold tracking-tight ${isDarkMode ? 'text-zinc-100' : 'text-[#0a1b4f]'}`}>Reservation Details</h2>
-            <div className="mt-0.5 flex items-center gap-1.5 text-xs font-semibold text-zinc-400">
-              <button type="button" className="hover:underline" onClick={onBack}>Reservations</button>
-              <ChevronRight size={12} />
-              <span>{reservation.id}</span>
-            </div>
-          </div>
-        </div>
-
-      </div>
+      <header className="mb-6 flex items-center justify-between gap-4">
+        <button
+          type="button"
+          onClick={onBack}
+          className={`inline-flex items-center gap-2 text-sm font-semibold ${
+            isDarkMode ? 'text-zinc-300 hover:text-white' : 'text-zinc-600 hover:text-zinc-900'
+          }`}
+        >
+          <ArrowLeft size={16} />
+          Back to Reservations
+        </button>
+      </header>
 
       {/* Top Summary Card */}
       <article className={`mb-6 overflow-hidden rounded-2xl border ${sectionSurface}`}>

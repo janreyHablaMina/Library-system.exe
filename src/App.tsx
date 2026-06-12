@@ -29,7 +29,7 @@ import NotificationsPage from './pages/NotificationsPage'
 import { Toast } from './components/ui/Toast'
 import { ChangePasswordModal } from './components/ChangePasswordModal'
 import { ForgotPasswordModal } from './components/ForgotPasswordModal'
-import { getSetting, getTrialSecondsRemaining, verifyLicenseKey, getLicenseStatus, createBook, deleteBook, updateBook, expandMainWindow, getActiveSession, getEmailLogStats, listAuthors, listBooks, listBorrowTransactions, listMembers, listNotifications, listEmailLogs, listSmsLogs, login as loginWithDb, logout as logoutFromDb, markAllNotificationsRead, markNotificationAsRead, restoreLoginWindow, runAutomaticEmailReminders, searchAuthors, searchBooks, searchMembers, syncNotifications, getUserProfile, type UserProfile, type NotificationItem, type EmailLog, type SmsLog } from './lib/tauriApi'
+import { getSetting, getTrialSecondsRemaining, verifyLicenseKey, getLicenseStatus, createBook, deleteBook, updateBook, expandMainWindow, getActiveSession, getEmailLogStats, listAuthors, listBooks, listBorrowTransactions, listMembers, listNotifications, listEmailLogs, listSmsLogs, login as loginWithDb, logout as logoutFromDb, markAllNotificationsRead, restoreLoginWindow, runAutomaticEmailReminders, searchAuthors, searchBooks, searchMembers, syncNotifications, getUserProfile, type UserProfile, type NotificationItem, type EmailLog, type SmsLog } from './lib/tauriApi'
 
 
 type LoginFormState = {
@@ -238,6 +238,7 @@ function DashboardShell({ onLogout, licenseStatus, trialSeconds }: { onLogout: (
 
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
+  const [notificationToOpen, setNotificationToOpen] = useState<number | null>(null)
   const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
     totalBooks: 0,
     availableBooks: 0,
@@ -631,14 +632,10 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
     await refreshNotifications()
   }
 
-  const handleReadNotification = async (id: number) => {
-    try {
-      await markNotificationAsRead(id)
-      const rows = await listNotifications(12)
-      setNotifications(rows)
-    } catch (error) {
-      console.error('Failed to mark notification as read:', error)
-    }
+  const handleOpenNotificationDetail = (id: number) => {
+    setNotificationToOpen(id)
+    setIsNotificationsOpen(false)
+    setActivePage('Notifications')
   }
 
   const handleReadAllNotifications = async () => {
@@ -1162,7 +1159,7 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
                             <button
                               key={item.id}
                               type="button"
-                              onClick={() => void handleReadNotification(item.id)}
+                              onClick={() => handleOpenNotificationDetail(item.id)}
                               className={`mb-1 w-full rounded-lg px-2 py-2 text-left transition ${item.isRead ? (isDarkMode ? 'bg-transparent hover:bg-zinc-800/60' : 'bg-transparent hover:bg-zinc-50') : (isDarkMode ? 'bg-emerald-500/10 hover:bg-emerald-500/15' : 'bg-emerald-50 hover:bg-emerald-100')}`}
                             >
                               <p className={`text-xs font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{item.title}</p>
@@ -1507,7 +1504,12 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
               }}
             />
           ) : activePage === 'Notifications' ? (
-            <NotificationsPage isDarkMode={isDarkMode} onNotificationsChanged={() => void refreshNotifications()} />
+            <NotificationsPage
+              isDarkMode={isDarkMode}
+              initialNotificationId={notificationToOpen}
+              onInitialNotificationConsumed={() => setNotificationToOpen(null)}
+              onNotificationsChanged={() => void refreshNotifications()}
+            />
           ) : activePage === 'Profile' ? (
             <ProfilePage 
               isDarkMode={isDarkMode} 
