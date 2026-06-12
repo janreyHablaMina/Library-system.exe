@@ -77,14 +77,14 @@ function StaffActionsMenu({ isDarkMode, onView, onSendEmail, onSendSms, onEdit, 
       <button
         type="button"
         onClick={handleToggle}
-        className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border transition-colors ${
+        className={`inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
           open
             ? isDarkMode
-              ? 'border-zinc-500 bg-zinc-700 text-zinc-100'
-              : 'border-emerald-300 bg-emerald-50 text-emerald-700'
+              ? 'bg-zinc-700 text-zinc-100'
+              : 'bg-emerald-50 text-emerald-700'
             : isDarkMode
-              ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'
-              : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'
+              ? 'text-zinc-300 hover:bg-zinc-800'
+              : 'text-zinc-600 hover:bg-zinc-50'
         }`}
       >
         <MoreHorizontal size={15} />
@@ -179,6 +179,7 @@ export function StaffPage({ isDarkMode, onOpenStaffDetail }: StaffPageProps) {
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false)
   const [selectedStaffIds, setSelectedStaffIds] = useState<Set<number>>(() => new Set())
   const [staffError, setStaffError] = useState<string | null>(null)
+  const [modalError, setModalError] = useState<string | null>(null)
   const [isSavingStaff, setIsSavingStaff] = useState(false)
   const [staffSearch, setStaffSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState<'All Roles' | StaffRole>('All Roles')
@@ -304,12 +305,12 @@ export function StaffPage({ isDarkMode, onOpenStaffDetail }: StaffPageProps) {
 
     const acceptedTypes = ['image/jpeg', 'image/png']
     if (!acceptedTypes.includes(file.type)) {
-      setStaffError('Only JPG and PNG files are allowed.')
+      setModalError('Only JPG and PNG files are allowed.')
       event.target.value = ''
       return
     }
     if (file.size > 2 * 1024 * 1024) {
-      setStaffError('Photo must be 2MB or smaller.')
+      setModalError('Photo must be 2MB or smaller.')
       event.target.value = ''
       return
     }
@@ -320,7 +321,7 @@ export function StaffPage({ isDarkMode, onOpenStaffDetail }: StaffPageProps) {
       setProfilePhotoPreview(dataUrl)
     }
     reader.onerror = () => {
-      setStaffError('Failed to read photo file.')
+      setModalError('Failed to read photo file.')
       event.target.value = ''
     }
     reader.readAsDataURL(file)
@@ -342,7 +343,15 @@ export function StaffPage({ isDarkMode, onOpenStaffDetail }: StaffPageProps) {
     const role = String(form.get('role') || 'Librarian')
     const status = String(form.get('status') || 'Active')
     if (!fullName || !email || !phone) {
-      setStaffError('Full name, email and contact number are required.')
+      setModalError('Full name, email and contact number are required.')
+      return
+    }
+
+    const tempPassword = String(form.get('tempPassword') || '').trim()
+    const confirmPassword = String(form.get('confirmPassword') || '').trim()
+    
+    if (tempPassword !== confirmPassword) {
+      setModalError('Passwords do not match.')
       return
     }
 
@@ -358,13 +367,13 @@ export function StaffPage({ isDarkMode, onOpenStaffDetail }: StaffPageProps) {
       employeeType: String(form.get('employeeType') || editingStaff?.employeeType || '').trim() || null,
       startDate: String(form.get('startDate') || editingStaff?.startDate || '').trim() || null,
       username: String(form.get('username') || '').trim() || null,
-      tempPassword: String(form.get('tempPassword') || '').trim() || null,
+      tempPassword: tempPassword || null,
       requirePasswordReset: form.has('requirePasswordReset') ? form.get('requirePasswordReset') === 'on' : (editingStaff?.requirePasswordReset ?? false),
       profilePhotoData: profilePhotoPreview || editingStaff?.profilePhotoData || null,
     }
 
     try {
-      setStaffError(null)
+      setModalError(null)
       setIsSavingStaff(true)
       if (editingStaff) {
         await updateStaff({ id: editingStaff.dbId, ...payloadBase, requirePasswordReset: payloadBase.requirePasswordReset })
@@ -379,7 +388,7 @@ export function StaffPage({ isDarkMode, onOpenStaffDetail }: StaffPageProps) {
       setProfilePhotoPreview(null)
     } catch (error) {
       console.error('Failed to save staff:', error)
-      setStaffError('Failed to save staff member. Please try again.')
+      setModalError('Failed to save staff member. Please try again.')
     } finally {
       setIsSavingStaff(false)
     }
@@ -463,7 +472,7 @@ export function StaffPage({ isDarkMode, onOpenStaffDetail }: StaffPageProps) {
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={() => { setEditingStaff(null); setIsAddModalOpen(true) }}
+              onClick={() => { setEditingStaff(null); setModalError(null); setIsAddModalOpen(true) }}
               className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white hover:bg-emerald-700 transition-all shadow-sm"
             >
               <Plus size={18} />
@@ -661,7 +670,7 @@ export function StaffPage({ isDarkMode, onOpenStaffDetail }: StaffPageProps) {
                           onView={() => onOpenStaffDetail && onOpenStaffDetail(staff.dbId)}
                           onSendEmail={() => setEmailStaff(staff)}
                           onSendSms={() => setSmsStaff(staff)}
-                          onEdit={() => { setEditingStaff(staff); setIsAddModalOpen(true) }}
+                          onEdit={() => { setEditingStaff(staff); setModalError(null); setIsAddModalOpen(true) }}
                           onDelete={() => setStaffToDelete(staff)}
                         />
                       </div>
@@ -744,7 +753,7 @@ export function StaffPage({ isDarkMode, onOpenStaffDetail }: StaffPageProps) {
               </div>
               <button
                 type="button"
-                onClick={() => { setIsAddModalOpen(false); setEditingStaff(null) }}
+                onClick={() => { setIsAddModalOpen(false); setEditingStaff(null); setModalError(null) }}
                 className={`grid h-10 w-10 place-items-center rounded-xl border transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'}`}
               >
                 <X size={18} />
@@ -753,6 +762,11 @@ export function StaffPage({ isDarkMode, onOpenStaffDetail }: StaffPageProps) {
 
             <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleStaffSubmit}>
               <div className="min-h-0 flex-1 overflow-y-auto px-8 py-7">
+                {modalError && (
+                  <div className={`mb-6 rounded-xl border px-4 py-3 text-sm font-semibold ${isDarkMode ? 'border-rose-500/30 bg-rose-500/10 text-rose-300' : 'border-rose-200 bg-rose-50 text-rose-600'}`}>
+                    {modalError}
+                  </div>
+                )}
                 <div className="space-y-7">
                   <div>
                     <h4 className={`mb-4 text-sm font-black uppercase tracking-wider ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Identity & Access</h4>
@@ -795,7 +809,7 @@ export function StaffPage({ isDarkMode, onOpenStaffDetail }: StaffPageProps) {
                       </div>
                       <div className="space-y-2">
                         <label className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Confirm Password <span className="text-rose-500">*</span></label>
-                        <input type="password" placeholder="Re-enter password" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-100 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-700 focus:border-emerald-500'}`} required />
+                        <input name="confirmPassword" type="password" placeholder="Re-enter password" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-100 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-700 focus:border-emerald-500'}`} required />
                       </div>
                     </div>
                   </div>
