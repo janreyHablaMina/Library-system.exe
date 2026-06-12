@@ -313,7 +313,8 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 
       setDueDate(new Date(Date.now() + defaultLoanDays * 24 * 60 * 60 * 1000).toISOString().slice(0, 10))
       await loadData()
     } catch (error) {
-      setShowToast(error instanceof Error ? error.message : 'Transaction failed.')
+      console.error('Borrow/Return transaction failed:', error)
+      setShowToast(typeof error === 'string' ? error : (error instanceof Error ? error.message : 'Transaction failed.'))
     }
   }
 

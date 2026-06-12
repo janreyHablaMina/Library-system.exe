@@ -1,6 +1,5 @@
 import {
   Download,
-  Printer,
   Calendar,
   ChevronRight,
   BookOpen,
@@ -10,7 +9,8 @@ import {
   BadgeDollarSign,
   ArrowUpRight,
   ArrowDownRight,
-  TriangleAlert
+  TriangleAlert,
+  ChevronDown
 } from 'lucide-react'
 import {
   AreaChart,
@@ -40,6 +40,7 @@ export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMember
   const [books, setBooks] = useState<Book[]>([])
   const [members, setMembers] = useState<Member[]>([])
   const [transactions, setTransactions] = useState<BorrowTransaction[]>([])
+  const [timeRange, setTimeRange] = useState('7days')
 
   useEffect(() => {
     const load = async () => {
@@ -62,19 +63,57 @@ export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMember
   const computed = useMemo(() => {
     const now = Date.now()
     const oneDayMs = 24 * 60 * 60 * 1000
-    const borrowedTotal = transactions.length
-    const returnedTotal = transactions.filter((tx) => tx.returnDate || tx.status.toLowerCase() === 'returned').length
+    const daysCount = timeRange === '1month' ? 30 : 7
+    const cutoffMs = now - (daysCount * oneDayMs)
+    const prevCutoffMs = cutoffMs - (daysCount * oneDayMs)
+
+    const currentTx = transactions.filter(tx => {
+      const ts = new Date(tx.borrowDate).getTime()
+      return !Number.isNaN(ts) && ts >= cutoffMs
+    })
+    const prevTx = transactions.filter(tx => {
+      const ts = new Date(tx.borrowDate).getTime()
+      return !Number.isNaN(ts) && ts >= prevCutoffMs && ts < cutoffMs
+    })
+    const borrowedTotal = currentTx.length
+    const prevBorrowedTotal = prevTx.length
+    const borrowedTrend = prevBorrowedTotal === 0 ? null : ((borrowedTotal - prevBorrowedTotal) / prevBorrowedTotal) * 100
+
+    const currentReturns = transactions.filter(tx => {
+      if (!tx.returnDate) return false
+      const ts = new Date(tx.returnDate).getTime()
+      return !Number.isNaN(ts) && ts >= cutoffMs
+    })
+    const prevReturns = transactions.filter(tx => {
+      if (!tx.returnDate) return false
+      const ts = new Date(tx.returnDate).getTime()
+      return !Number.isNaN(ts) && ts >= prevCutoffMs && ts < cutoffMs
+    })
+    const returnedTotal = currentReturns.length
+    const prevReturnedTotal = prevReturns.length
+    const returnedTrend = prevReturnedTotal === 0 ? null : ((returnedTotal - prevReturnedTotal) / prevReturnedTotal) * 100
+
     const overdueTx = transactions.filter((tx) => {
       if (tx.returnDate || tx.status.toLowerCase() === 'returned') return false
       const due = new Date(tx.dueDate).getTime()
       return !Number.isNaN(due) && due < now
     })
     const overdueTotal = overdueTx.length
-    const fines = transactions.reduce((sum, tx) => sum + (Number.isFinite(tx.fine) ? tx.fine : 0), 0)
-    const activeMembers = members.filter((m) => (m.status || '').toLowerCase() === 'active').length
+    const overdueTrend = null // Overdue is a snapshot metric, no meaningful trend here
 
-    const dayBuckets = Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(now - (6 - i) * oneDayMs)
+    const fines = currentReturns.reduce((sum, tx) => sum + (Number.isFinite(tx.fine) ? tx.fine : 0), 0)
+    const prevFines = prevReturns.reduce((sum, tx) => sum + (Number.isFinite(tx.fine) ? tx.fine : 0), 0)
+    const finesTrend = prevFines === 0 ? null : ((fines - prevFines) / prevFines) * 100
+
+    const activeMembers = members.filter((m) => (m.status || '').toLowerCase() === 'active').length
+    const newMembersCurrent = members.filter(m => new Date(m.createdAt).getTime() >= cutoffMs).length
+    const newMembersPrev = members.filter(m => {
+       const ts = new Date(m.createdAt).getTime()
+       return ts >= prevCutoffMs && ts < cutoffMs
+    }).length
+    const membersTrend = newMembersPrev === 0 ? null : ((newMembersCurrent - newMembersPrev) / newMembersPrev) * 100
+    const dayBuckets = Array.from({ length: daysCount }, (_, i) => {
+      const d = new Date(now - (daysCount - 1 - i) * oneDayMs)
       const key = d.toISOString().slice(0, 10)
       const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
       return { key, name: label, borrowed: 0, returned: 0 }
@@ -152,12 +191,20 @@ export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMember
         }
       })
 
-    return { borrowedTotal, returnedTotal, overdueTotal, fines, activeMembers, activityData: dayBuckets, bookData, categoryData, topMembers, overdueRows }
-  }, [books, members, transactions])
+    return { 
+      borrowedTotal, borrowedTrend, 
+      returnedTotal, returnedTrend, 
+      overdueTotal, overdueTrend, 
+      fines, finesTrend, 
+      activeMembers, membersTrend, 
+      activityData: dayBuckets, bookData, categoryData, topMembers, overdueRows 
+    }
+  }, [books, members, transactions, timeRange])
 
   return (
-    <div className={`min-h-0 flex-1 overflow-auto p-6 ${isDarkMode ? 'bg-[transparent] text-zinc-100' : 'bg-[#f8fafc] text-zinc-900'}`}>
-      <div className="space-y-8 pb-10">
+    <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[transparent] text-zinc-100' : 'bg-[#f8fafc] text-zinc-900'}`}>
+      <section className="p-5">
+        <div className="space-y-8 pb-10">
         
         {/* HEADER */}
         <div className="flex flex-wrap items-center justify-between gap-6">
@@ -171,94 +218,108 @@ export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMember
             <p className={`text-sm ${labelClass}`}>Overview of library activities and insights</p>
           </div>
           <div className="flex items-center gap-3">
-            <div className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold ${cardClass}`}>
-              <Calendar size={18} className="opacity-40" />
-              <span>Last 7 Days</span>
+            <div className="relative">
+              <select
+                value={timeRange}
+                onChange={(e) => setTimeRange(e.target.value)}
+                className="appearance-none flex h-[42px] w-40 items-center gap-2 rounded-xl bg-emerald-600 pl-11 pr-10 text-sm font-bold text-white shadow-sm outline-none transition-all hover:bg-emerald-700 cursor-pointer"
+              >
+                <option value="7days">Last 7 Days</option>
+                <option value="1month">Last 1 Month</option>
+              </select>
+              <Calendar size={18} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-100" />
+              <ChevronDown size={16} className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-emerald-100" />
             </div>
-            <button className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-bold transition-all hover:bg-zinc-50 dark:hover:bg-zinc-800 ${cardClass}`}>
+            <button className={`flex items-center gap-2 h-[42px] rounded-xl border px-4 text-sm font-bold transition-all hover:bg-zinc-50 dark:hover:bg-zinc-800 ${cardClass}`}>
               <Download size={15} />
               Export
-            </button>
-            <button className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-200 transition-all hover:bg-emerald-700 dark:shadow-none">
-              <Printer size={15} />
-              Print Report
             </button>
           </div>
         </div>
 
-        {/* 1st ROW: STATS (Direct Render) */}
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
-           {/* Card 1 */}
-           <div className={`flex items-center gap-5 rounded-xl border p-7 ${cardClass}`}>
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
-                <BookOpen size={20} />
-              </div>
-              <div className="space-y-0.5">
-                <p className={`text-[11px] font-bold tracking-tight uppercase ${labelClass}`}>Total Borrowed</p>
-                <h4 className="text-xl font-bold leading-tight tracking-tight">{computed.borrowedTotal}</h4>
-                <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-500">
-                  <ArrowUpRight size={12} />
-                  <span>12.5%</span>
-                </div>
-              </div>
-           </div>
-           {/* Card 2 */}
-           <div className={`flex items-center gap-5 rounded-xl border p-7 ${cardClass}`}>
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
-                <Users size={20} />
-              </div>
-              <div className="space-y-0.5">
-                <p className={`text-[11px] font-bold tracking-tight uppercase ${labelClass}`}>Active Members</p>
-                <h4 className="text-xl font-bold leading-tight tracking-tight">{computed.activeMembers}</h4>
-                <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-500">
-                  <ArrowUpRight size={12} />
-                  <span>8.3%</span>
-                </div>
-              </div>
-           </div>
-           {/* Card 3 */}
-           <div className={`flex items-center gap-5 rounded-xl border p-7 ${cardClass}`}>
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400">
-                <Clock size={20} />
-              </div>
-              <div className="space-y-0.5">
-                <p className={`text-[11px] font-bold tracking-tight uppercase ${labelClass}`}>Overdue Books</p>
-                <h4 className="text-xl font-bold leading-tight tracking-tight">{computed.overdueTotal}</h4>
-                <div className="flex items-center gap-1 text-[10px] font-bold text-rose-500">
-                  <ArrowDownRight size={12} />
-                  <span>5.6%</span>
-                </div>
-              </div>
-           </div>
-           {/* Card 4 */}
-           <div className={`flex items-center gap-5 rounded-xl border p-7 ${cardClass}`}>
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400">
-                <RotateCcw size={20} />
-              </div>
-              <div className="space-y-0.5">
-                <p className={`text-[11px] font-bold tracking-tight uppercase ${labelClass}`}>Returned Books</p>
-                <h4 className="text-xl font-bold leading-tight tracking-tight">{computed.returnedTotal}</h4>
-                <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-500">
-                  <ArrowUpRight size={12} />
-                  <span>15.2%</span>
-                </div>
-              </div>
-           </div>
-           {/* Card 5 */}
-           <div className={`flex items-center gap-5 rounded-xl border p-7 ${cardClass}`}>
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400">
-                <BadgeDollarSign size={20} />
-              </div>
-              <div className="space-y-0.5">
-                <p className={`text-[11px] font-bold tracking-tight uppercase ${labelClass}`}>Fines Collected</p>
-                <h4 className="text-xl font-bold leading-tight tracking-tight">PHP {computed.fines.toFixed(2)}</h4>
-                <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-500">
-                  <ArrowUpRight size={12} />
-                  <span>10.8%</span>
-                </div>
-              </div>
-           </div>
-        </div>
+         {/* 1st ROW: STATS (Direct Render) */}
+         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
+            {/* Card 1 */}
+            <div className={`flex items-center gap-5 rounded-xl border p-7 ${cardClass}`}>
+               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
+                 <BookOpen size={20} />
+               </div>
+               <div className="space-y-0.5">
+                 <p className={`text-[11px] font-bold tracking-tight uppercase ${labelClass}`}>Total Borrowed</p>
+                 <h4 className="text-xl font-bold leading-tight tracking-tight">{computed.borrowedTotal}</h4>
+                 {computed.borrowedTrend !== null && (
+                   <div className={`flex items-center gap-1 text-[10px] font-bold ${computed.borrowedTrend >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                     {computed.borrowedTrend >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+                     <span>{Math.abs(computed.borrowedTrend).toFixed(1)}%</span>
+                   </div>
+                 )}
+               </div>
+            </div>
+            {/* Card 2 */}
+            <div className={`flex items-center gap-5 rounded-xl border p-7 ${cardClass}`}>
+               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
+                 <Users size={20} />
+               </div>
+               <div className="space-y-0.5">
+                 <p className={`text-[11px] font-bold tracking-tight uppercase ${labelClass}`}>Active Members</p>
+                 <h4 className="text-xl font-bold leading-tight tracking-tight">{computed.activeMembers}</h4>
+                 {computed.membersTrend !== null && (
+                   <div className={`flex items-center gap-1 text-[10px] font-bold ${computed.membersTrend >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                     {computed.membersTrend >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+                     <span>{Math.abs(computed.membersTrend).toFixed(1)}%</span>
+                   </div>
+                 )}
+               </div>
+            </div>
+            {/* Card 3 */}
+            <div className={`flex items-center gap-5 rounded-xl border p-7 ${cardClass}`}>
+               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400">
+                 <Clock size={20} />
+               </div>
+               <div className="space-y-0.5">
+                 <p className={`text-[11px] font-bold tracking-tight uppercase ${labelClass}`}>Overdue Books</p>
+                 <h4 className="text-xl font-bold leading-tight tracking-tight">{computed.overdueTotal}</h4>
+                 {computed.overdueTrend !== null && (
+                   <div className={`flex items-center gap-1 text-[10px] font-bold ${computed.overdueTrend >= 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
+                     {computed.overdueTrend >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+                     <span>{Math.abs(computed.overdueTrend).toFixed(1)}%</span>
+                   </div>
+                 )}
+               </div>
+            </div>
+            {/* Card 4 */}
+            <div className={`flex items-center gap-5 rounded-xl border p-7 ${cardClass}`}>
+               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400">
+                 <RotateCcw size={20} />
+               </div>
+               <div className="space-y-0.5">
+                 <p className={`text-[11px] font-bold tracking-tight uppercase ${labelClass}`}>Returned Books</p>
+                 <h4 className="text-xl font-bold leading-tight tracking-tight">{computed.returnedTotal}</h4>
+                 {computed.returnedTrend !== null && (
+                   <div className={`flex items-center gap-1 text-[10px] font-bold ${computed.returnedTrend >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                     {computed.returnedTrend >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+                     <span>{Math.abs(computed.returnedTrend).toFixed(1)}%</span>
+                   </div>
+                 )}
+               </div>
+            </div>
+            {/* Card 5 */}
+            <div className={`flex items-center gap-5 rounded-xl border p-7 ${cardClass}`}>
+               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400">
+                 <BadgeDollarSign size={20} />
+               </div>
+               <div className="space-y-0.5">
+                 <p className={`text-[11px] font-bold tracking-tight uppercase ${labelClass}`}>Fines Collected</p>
+                 <h4 className="text-xl font-bold leading-tight tracking-tight">PHP {computed.fines.toFixed(2)}</h4>
+                 {computed.finesTrend !== null && (
+                   <div className={`flex items-center gap-1 text-[10px] font-bold ${computed.finesTrend >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                     {computed.finesTrend >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+                     <span>{Math.abs(computed.finesTrend).toFixed(1)}%</span>
+                   </div>
+                 )}
+               </div>
+            </div>
+         </div>
 
         {/* 2nd ROW: CHARTS */}
         <div className="grid gap-6 lg:grid-cols-[3fr_1fr_1fr]">
@@ -463,7 +524,8 @@ export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMember
               </div>
            </div>
         </div>
-      </div>
+        </div>
+      </section>
     </div>
   )
 }
