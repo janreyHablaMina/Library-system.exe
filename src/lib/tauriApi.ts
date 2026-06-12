@@ -361,6 +361,12 @@ export type CreateStaffPayload = {
   profilePhotoData?: string | null
 }
 
+export type CreateStaffResult = {
+  id: number
+  emailSent: boolean
+  emailError: string | null
+}
+
 export type UpdateStaffPayload = {
   id: number
   staffCode?: string | null
@@ -514,8 +520,8 @@ export async function deleteReservation(id: number): Promise<void> {
   return invoke<void>('delete_reservation', { id })
 }
 
-export async function createStaff(payload: CreateStaffPayload): Promise<number> {
-  return invoke<number>('create_staff', { payload })
+export async function createStaff(payload: CreateStaffPayload): Promise<CreateStaffResult> {
+  return invoke<CreateStaffResult>('create_staff', { payload })
 }
 
 export async function listStaff(limit?: number): Promise<Staff[]> {

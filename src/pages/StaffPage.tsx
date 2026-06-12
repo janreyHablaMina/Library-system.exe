@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect, type ChangeEvent } from 'react'
-import { Users, UserCheck, UserX, ShieldCheck, Search, ChevronDown, Filter, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, X, MoreHorizontal } from 'lucide-react'
+import { Users, UserCheck, UserX, ShieldCheck, Search, ChevronDown, Filter, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, X, MoreHorizontal, Mail, MessageSquare, Eye } from 'lucide-react'
 import { createStaff, deleteStaff, listStaff, updateStaff } from '../lib/tauriApi'
 import { Toast } from '../components/ui/Toast'
+import { SendEmailModal } from '../components/modals/SendEmailModal'
+import { SendSmsModal } from '../components/modals/SendSmsModal'
 type StaffRole = 'Administrator' | 'Librarian'
 type StaffStatus = 'Active' | 'Inactive'
 
@@ -28,17 +30,21 @@ type StaffMember = {
 
 type StaffPageProps = {
   isDarkMode: boolean
+  onOpenStaffDetail?: (id: number) => void
 }
 
 type StaffActionsMenuProps = {
   isDarkMode: boolean
+  onView: () => void
+  onSendEmail: () => void
+  onSendSms: () => void
   onEdit: () => void
   onDelete: () => void
 }
 
 
 
-function StaffActionsMenu({ isDarkMode, onEdit, onDelete }: StaffActionsMenuProps) {
+function StaffActionsMenu({ isDarkMode, onView, onSendEmail, onSendSms, onEdit, onDelete }: StaffActionsMenuProps) {
   const [open, setOpen] = useState(false)
   const [openUpward, setOpenUpward] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -109,6 +115,38 @@ function StaffActionsMenu({ isDarkMode, onEdit, onDelete }: StaffActionsMenuProp
             className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors duration-100 ${
               isDarkMode ? 'text-zinc-200 hover:bg-zinc-800' : 'text-zinc-700 hover:bg-zinc-50'
             }`}
+            onClick={() => { setOpen(false); onView() }}
+          >
+            <Eye size={14} className="text-blue-500" />
+            View Details
+          </button>
+          <button
+            type="button"
+            className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors duration-100 ${
+              isDarkMode ? 'text-zinc-200 hover:bg-zinc-800' : 'text-zinc-700 hover:bg-zinc-50'
+            }`}
+            onClick={() => { setOpen(false); onSendEmail() }}
+          >
+            <Mail size={14} className="text-sky-500" />
+            Send Email
+          </button>
+          <button
+            type="button"
+            className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors duration-100 ${
+              isDarkMode ? 'text-zinc-200 hover:bg-zinc-800' : 'text-zinc-700 hover:bg-zinc-50'
+            }`}
+            onClick={() => { setOpen(false); onSendSms() }}
+          >
+            <MessageSquare size={14} className="text-emerald-500" />
+            Send SMS
+          </button>
+
+          <div className={`my-1.5 border-t ${isDarkMode ? 'border-zinc-700/60' : 'border-zinc-100'}`} />
+          <button
+            type="button"
+            className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors duration-100 ${
+              isDarkMode ? 'text-zinc-200 hover:bg-zinc-800' : 'text-zinc-700 hover:bg-zinc-50'
+            }`}
             onClick={() => { setOpen(false); onEdit() }}
           >
             <Pencil size={14} className="text-violet-500" />
@@ -133,7 +171,7 @@ function StaffActionsMenu({ isDarkMode, onEdit, onDelete }: StaffActionsMenuProp
   )
 }
 
-export function StaffPage({ isDarkMode }: StaffPageProps) {
+export function StaffPage({ isDarkMode, onOpenStaffDetail }: StaffPageProps) {
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([])
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null)
@@ -149,6 +187,8 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
   const [showToast, setShowToast] = useState<string | null>(null)
+  const [emailStaff, setEmailStaff] = useState<StaffMember | null>(null)
+  const [smsStaff, setSmsStaff] = useState<StaffMember | null>(null)
   const selectAllRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -601,7 +641,7 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
                         {staff.role}
                       </span>
                     </td>
-                                        <td className="px-6 py-4">
+                    <td className="px-6 py-4">
                       <span className={`rounded-md px-3 py-1 text-[11px] font-semibold tracking-wide ${
                         staff.status === 'Active' 
                           ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' 
@@ -618,6 +658,9 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
                       <div className="flex items-center justify-center">
                         <StaffActionsMenu
                           isDarkMode={isDarkMode}
+                          onView={() => onOpenStaffDetail && onOpenStaffDetail(staff.dbId)}
+                          onSendEmail={() => setEmailStaff(staff)}
+                          onSendSms={() => setSmsStaff(staff)}
                           onEdit={() => { setEditingStaff(staff); setIsAddModalOpen(true) }}
                           onDelete={() => setStaffToDelete(staff)}
                         />
@@ -855,6 +898,34 @@ export function StaffPage({ isDarkMode }: StaffPageProps) {
             </div>
           </section>
         </div>
+      ) : null}
+
+      {emailStaff ? (
+        <SendEmailModal
+          isOpen
+          onClose={() => setEmailStaff(null)}
+          member={{
+            id: emailStaff.dbId,
+            fullName: emailStaff.name,
+            email: emailStaff.email || null,
+          }}
+          isDarkMode={isDarkMode}
+          onSuccess={() => setShowToast(`Email sent successfully to ${emailStaff.name}.`)}
+        />
+      ) : null}
+
+      {smsStaff ? (
+        <SendSmsModal
+          isOpen
+          onClose={() => setSmsStaff(null)}
+          member={{
+            id: smsStaff.dbId,
+            fullName: smsStaff.name,
+            phone: smsStaff.phone || null,
+          }}
+          isDarkMode={isDarkMode}
+          onSuccess={() => setShowToast(`SMS sent successfully to ${smsStaff.name}.`)}
+        />
       ) : null}
     </div>
   )

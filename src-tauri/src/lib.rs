@@ -465,6 +465,14 @@ struct CreateStaffPayload {
     profile_photo_data: Option<String>,
 }
 
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct CreateStaffResult {
+    id: i64,
+    email_sent: bool,
+    email_error: Option<String>,
+}
+
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct UpdateStaffPayload {
@@ -3301,22 +3309,30 @@ fn delete_reservation(app: tauri::AppHandle, id: i64) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn create_staff(app: tauri::AppHandle, payload: CreateStaffPayload) -> Result<i64, String> {
+fn create_staff(
+    app: tauri::AppHandle,
+    payload: CreateStaffPayload,
+) -> Result<CreateStaffResult, String> {
     let full_name = payload.full_name.trim();
     let email = payload.email.trim();
     let role = payload.role.trim();
     let branch = payload.branch.trim();
     let status = payload.status.trim();
     let phone = payload.phone.trim();
+    let username = payload.username.as_deref().unwrap_or_default().trim();
+    let temp_password = payload.temp_password.as_deref().unwrap_or_default().trim();
     if full_name.is_empty()
         || email.is_empty()
         || role.is_empty()
         || branch.is_empty()
         || status.is_empty()
         || phone.is_empty()
+        || username.is_empty()
+        || temp_password.is_empty()
     {
         return Err(
-            "fullName, email, role, branch, status and contact number are required".to_string(),
+            "fullName, email, role, branch, status, contact number, username and password are required"
+                .to_string(),
         );
     }
     if !matches!(role, "Administrator" | "Librarian") {
@@ -3352,8 +3368,8 @@ fn create_staff(app: tauri::AppHandle, payload: CreateStaffPayload) -> Result<i6
         payload.emergency_contact.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
         payload.employee_type.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
         payload.start_date.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
-        payload.username.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
-        payload.temp_password.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
+        username,
+        temp_password,
         if payload.require_password_reset.unwrap_or(true) { 1 } else { 0 },
         payload.profile_photo_data,
         Utc::now().to_rfc3339(),
@@ -3369,7 +3385,65 @@ fn create_staff(app: tauri::AppHandle, payload: CreateStaffPayload) -> Result<i6
     )
     .map_err(|e| format!("normalize staff code failed: {e}"))?;
 
-    Ok(new_id)
+    let subject = "Your Library System Account Has Been Created";
+    let body = format!(
+        "Hello {full_name},\n\nYour {role} account for the Library Management System has been created.\n\nUsername: {username}\nTemporary Password: {temp_password}\n\nPlease sign in using these credentials and keep them secure. You may be required to change your password after signing in.\n\nThank you,\nLibrary Management System"
+    );
+    let email_result = send_email_from_settings(&conn, email, subject, &body);
+    let (email_sent, email_error) = match email_result {
+        Ok(()) => {
+            log_email(
+                &conn,
+                None,
+                full_name,
+                email,
+                "Staff Account",
+                "Account Created",
+                "Sent",
+                None,
+                Some(&format!("staff-account:{new_id}")),
+            )?;
+            (true, None)
+        }
+        Err(error) => {
+            log_email(
+                &conn,
+                None,
+                full_name,
+                email,
+                "Staff Account",
+                "Account Created",
+                "Failed",
+                Some(&error),
+                Some(&format!("staff-account:{new_id}")),
+            )?;
+            (false, Some(error))
+        }
+    };
+
+    let notification_message = if email_sent {
+        format!(
+            "{full_name} was added as {role}. Login credentials were emailed to {email}."
+        )
+    } else {
+        format!(
+            "{full_name} was added as {role}, but the credentials email to {email} could not be sent. Check Email Logs for details."
+        )
+    };
+    upsert_notification(
+        &conn,
+        "staff",
+        "Staff Account Created",
+        &notification_message,
+        &format!("staff:created:{new_id}"),
+    )?;
+    emit_notifications_refresh(&app);
+
+    Ok(CreateStaffResult {
+        id: new_id,
+        email_sent,
+        email_error,
+    })
 }
 
 #[tauri::command]

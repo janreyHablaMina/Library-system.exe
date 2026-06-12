@@ -22,6 +22,7 @@ import { AuthorDetailPage } from './pages/AuthorDetailPage'
 import { CategoriesPage } from './pages/CategoriesPage'
 import { ReservationsPage } from './pages/ReservationsPage'
 import { StaffPage } from './pages/StaffPage'
+import { StaffDetailPage } from './pages/StaffDetailPage'
 import EmailLogsPage from './pages/EmailLogsPage'
 import SmsLogsPage from './pages/SmsLogsPage'
 import { ProfilePage } from './pages/ProfilePage'
@@ -233,6 +234,8 @@ function DashboardShell({ onLogout, licenseStatus, trialSeconds }: { onLogout: (
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null)
   const [isMemberDetailOpen, setIsMemberDetailOpen] = useState(false)
   const [selectedMemberId, setSelectedMemberId] = useState<number | null>(null)
+  const [isStaffDetailOpen, setIsStaffDetailOpen] = useState(false)
+  const [selectedStaffId, setSelectedStaffId] = useState<number | null>(null)
   const [memberAddModalTrigger, setMemberAddModalTrigger] = useState(0)
   const [isAuthorDetailOpen, setIsAuthorDetailOpen] = useState(false)
   const [selectedAuthorId, setSelectedAuthorId] = useState<number | null>(null)
@@ -434,6 +437,10 @@ function DashboardShell({ onLogout, licenseStatus, trialSeconds }: { onLogout: (
     if (activePage !== 'Members') {
       setIsMemberDetailOpen(false)
       setSelectedMemberId(null)
+    }
+    if (activePage !== 'Staff') {
+      setIsStaffDetailOpen(false)
+      setSelectedStaffId(null)
     }
     if (activePage !== 'Authors') {
       setIsAuthorDetailOpen(false)
@@ -1585,7 +1592,21 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
               onShowToast={setDashboardToast}
             />
           ) : activePage === 'Staff' ? (
-            <StaffPage isDarkMode={isDarkMode} />
+            isStaffDetailOpen ? (
+              <StaffDetailPage
+                isDarkMode={isDarkMode}
+                onBack={() => setIsStaffDetailOpen(false)}
+                staffId={selectedStaffId || undefined}
+              />
+            ) : (
+              <StaffPage 
+                isDarkMode={isDarkMode} 
+                onOpenStaffDetail={(id) => {
+                  setSelectedStaffId(id)
+                  setIsStaffDetailOpen(true)
+                }}
+              />
+            )
           ) : activePage === 'EmailLogs' ? (
             <EmailLogsPage isDarkMode={isDarkMode} initialStatusFilter={emailLogStatusFilter} />
           ) : activePage === 'SmsLogs' ? (
