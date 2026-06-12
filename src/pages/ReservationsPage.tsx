@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
-import { Calendar, Clock3, CheckCircle2, XCircle, MapPin, Eye, Trash2, Download, Plus, Search, ChevronDown, Filter, ChevronLeft, ChevronRight, MoreHorizontal, BookOpen, UserRound, ArrowLeft, Info, X, Check, Mail, Smartphone, Pencil, AlertTriangle , Zap } from 'lucide-react'
+import { Calendar, Clock3, CheckCircle2, XCircle, Eye, Trash2, Download, Plus, Search, ChevronDown, Filter, ChevronLeft, ChevronRight, MoreHorizontal, BookOpen, UserRound, ArrowLeft, Info, X, Check, Mail, Smartphone, Pencil, AlertTriangle , Zap } from 'lucide-react'
 import { createReservation, deleteReservation, getSetting, listBooks, listMembers, listReservations, updateReservation, updateReservationStatus } from '../lib/tauriApi'
 
 type ReservationStatus = 'Queued' | 'Notified' | 'Claimed' | 'Expired' | 'Cancelled'
@@ -259,7 +259,6 @@ function ReservationDetailsViewNew({ reservation, isDarkMode, onBack, onCheckOut
   }
 
   const sectionSurface = isDarkMode ? 'border-zinc-700 bg-[#18181B]' : 'border-zinc-200 bg-white'
-  const sectionBorder = isDarkMode ? 'border-zinc-700' : 'border-zinc-100'
   const primaryText = isDarkMode ? 'text-zinc-100' : 'text-zinc-900'
 
   return (
@@ -289,52 +288,60 @@ function ReservationDetailsViewNew({ reservation, isDarkMode, onBack, onCheckOut
       </div>
 
       {/* Top Summary Card */}
-      <article className={`mb-6 rounded-2xl border p-5 sm:p-6 ${sectionSurface}`}>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className={`grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400`}>
-              <Calendar size={20} />
+      <article className={`mb-6 overflow-hidden rounded-2xl border ${sectionSurface}`}>
+        <div className={`h-1.5 w-full ${
+          reservation.status === 'Notified'
+            ? 'bg-emerald-500'
+            : reservation.status === 'Claimed'
+              ? 'bg-emerald-500'
+              : reservation.status === 'Queued'
+                ? 'bg-blue-500'
+                : 'bg-rose-500'
+        }`} />
+        <div className="grid gap-5 p-5 sm:p-6 lg:grid-cols-[1.15fr_1fr_1fr]">
+          <div className={`flex items-center gap-4 rounded-xl border p-4 ${isDarkMode ? 'border-zinc-700 bg-zinc-800/40' : 'border-zinc-100 bg-zinc-50/70'}`}>
+            <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
+              <Calendar size={23} />
             </div>
-            <div>
-              <h3 className={`text-xl font-bold tracking-tight ${primaryText}`}>{reservation.id}</h3>
-              <span className={`mt-1 inline-flex rounded-md px-2 py-0.5 text-[11px] font-bold ${getStatusStyle(reservation.status)}`}>{reservation.status}</span>
-              <p className="mt-1 text-xs font-semibold text-zinc-500">
-                Queue position: {reservation.queuePosition ? `#${reservation.queuePosition}` : 'Completed'}
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className={`text-xl font-black tracking-tight ${primaryText}`}>{reservation.id}</h3>
+                <span className={`inline-flex rounded-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${getStatusStyle(reservation.status)}`}>{reservation.status}</span>
+              </div>
+              <p className={`mt-2 text-xs font-semibold ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                Queue position
+                <span className={`ml-2 text-sm font-black ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                  {reservation.queuePosition ? `#${reservation.queuePosition}` : 'Completed'}
+                </span>
               </p>
             </div>
           </div>
-          
-          <div className={`hidden h-10 w-px lg:block ${sectionBorder}`} />
-          
-          <div className="flex items-start gap-3">
-             <Calendar size={18} className="mt-0.5 shrink-0 text-zinc-400" />
-             <div>
-                <p className="text-[11px] font-bold text-zinc-400">Queue Date</p>
-                <p className={`mt-0.5 text-sm font-bold ${primaryText}`}>{reservation.reservedOn}</p>
-                <p className="text-xs font-semibold text-zinc-500">{reservation.reservedTime}</p>
-             </div>
-          </div>
-          
-          <div className={`hidden h-10 w-px lg:block ${sectionBorder}`} />
 
-          <div className="flex items-start gap-3">
-             <Calendar size={18} className="mt-0.5 shrink-0 text-amber-500" />
-             <div>
-                <p className="text-[11px] font-bold text-zinc-400">Claim Expiry</p>
-                <p className={`mt-0.5 text-sm font-bold ${primaryText}`}>{reservation.expiresOn}</p>
-                <p className="text-xs font-semibold text-zinc-500">{reservation.expiresTime}</p>
-                <p className="mt-1 text-[10px] font-semibold text-zinc-400">Notified: {reservation.notificationSentAt}</p>
-             </div>
+          <div className={`rounded-xl border p-4 ${isDarkMode ? 'border-zinc-700 bg-zinc-800/30' : 'border-zinc-100 bg-white'}`}>
+            <div className="flex items-center gap-2 text-zinc-400">
+              <Calendar size={16} />
+              <p className="text-[10px] font-bold uppercase tracking-[0.12em]">Queue Date</p>
+            </div>
+            <p className={`mt-3 text-base font-black ${primaryText}`}>{reservation.reservedOn}</p>
+            <p className={`mt-1 text-xs font-semibold ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>{reservation.reservedTime}</p>
           </div>
 
-          <div className={`hidden h-10 w-px lg:block ${sectionBorder}`} />
-
-          <div className="flex items-start gap-3">
-             <MapPin size={18} className="mt-0.5 shrink-0 text-emerald-500" />
-             <div>
-                <p className="text-[11px] font-bold text-zinc-400">Pickup Branch</p>
-                <p className={`mt-0.5 text-sm font-bold ${primaryText}`}>{reservation.pickupBranch}</p>
-             </div>
+          <div className={`rounded-xl border p-4 ${
+            reservation.status === 'Notified'
+              ? isDarkMode ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-emerald-100 bg-emerald-50/50'
+              : isDarkMode ? 'border-zinc-700 bg-zinc-800/30' : 'border-zinc-100 bg-white'
+          }`}>
+            <div className={`flex items-center gap-2 ${reservation.status === 'Notified' ? 'text-emerald-500' : 'text-zinc-400'}`}>
+              <Clock3 size={16} />
+              <p className="text-[10px] font-bold uppercase tracking-[0.12em]">Claim Expiry</p>
+            </div>
+            <p className={`mt-3 text-base font-black ${primaryText}`}>{reservation.expiresOn}</p>
+            <p className={`mt-1 text-xs font-semibold ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>{reservation.expiresTime}</p>
+            {reservation.status === 'Notified' && (
+              <p className="mt-2 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                Notification sent {reservation.notificationSentAt}
+              </p>
+            )}
           </div>
         </div>
       </article>
@@ -343,91 +350,115 @@ function ReservationDetailsViewNew({ reservation, isDarkMode, onBack, onCheckOut
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         
         {/* Book Information */}
-        <article className={`rounded-2xl border p-6 ${sectionSurface}`}>
-          <div className="mb-6 flex items-center gap-2">
-            <div className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
-              <BookOpen size={16} />
+        <article className={`overflow-hidden rounded-2xl border ${sectionSurface}`}>
+          <div className={`flex items-center justify-between border-b px-5 py-4 ${isDarkMode ? 'border-zinc-700 bg-emerald-500/5' : 'border-zinc-100 bg-emerald-50/50'}`}>
+            <div className="flex items-center gap-3">
+              <div className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">
+                <BookOpen size={17} />
+              </div>
+              <div>
+                <h3 className={`text-sm font-black ${primaryText}`}>Book Information</h3>
+                <p className="mt-0.5 text-[10px] font-semibold text-zinc-400">Reserved library material</p>
+              </div>
             </div>
-            <h3 className={`text-base font-bold ${primaryText}`}>Book Information</h3>
+            <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">BOOK</span>
           </div>
           
-          <div className="flex flex-col sm:flex-row gap-6">
-            <img src={book.coverUrl || 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=150&auto=format&fit=crop&q=80'} alt={`${book.title} cover`} className={`aspect-[2/3] w-full max-w-[140px] rounded-xl border object-cover shadow-sm ${sectionBorder}`} />
-            <div className="flex-1">
-              <h4 className={`text-xl font-bold leading-tight ${primaryText}`}>{book.title}</h4>
-              <p className="mt-1 text-sm font-semibold text-emerald-600">{book.author}</p>
-              
-              <div className="mt-6 space-y-3 text-sm">
-                <div className="flex justify-between pb-1">
-                  <span className="font-medium text-zinc-500">Category</span>
-                  <span className={`font-semibold ${primaryText}`}>Fiction</span>
-                </div>
-                <div className="flex justify-between pb-1">
-                  <span className="font-medium text-zinc-500">ISBN</span>
-                  <span className={`font-semibold ${primaryText}`}>978-0061122415</span>
-                </div>
-                <div className="flex justify-between pb-1">
-                  <span className="font-medium text-zinc-500">Available Copies</span>
-                  <span className={`font-bold text-emerald-600`}>1 copy</span>
-                </div>
-                <div className="flex justify-between pb-1">
-                  <span className="font-medium text-zinc-500">Total Copies</span>
-                  <span className={`font-semibold ${primaryText}`}>4 copies</span>
-                </div>
-                <div className="flex justify-between pb-1">
-                  <span className="font-medium text-zinc-500">Reservations / Queue</span>
-                  <span className={`font-semibold ${primaryText}`}>2 people</span>
+          <div className="p-5">
+            <div className="flex flex-col gap-5 sm:flex-row">
+              <div className={`shrink-0 rounded-xl border p-2 ${isDarkMode ? 'border-zinc-700 bg-zinc-800/50' : 'border-zinc-100 bg-zinc-50'}`}>
+                <img src={book.coverUrl || 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=150&auto=format&fit=crop&q=80'} alt={`${book.title} cover`} className="aspect-[2/3] w-full max-w-[120px] rounded-lg object-cover shadow-sm" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h4 className={`text-xl font-black leading-tight ${primaryText}`}>{book.title}</h4>
+                <p className="mt-1 text-sm font-bold text-emerald-600 dark:text-emerald-400">{book.author}</p>
+
+                <div className="mt-5 grid grid-cols-2 gap-2.5">
+                  {[
+                    { label: 'Category', value: 'Fiction' },
+                    { label: 'ISBN', value: '978-0061122415' },
+                    { label: 'Available', value: '1 copy', accent: true },
+                    { label: 'Total Copies', value: '4 copies' },
+                  ].map((item) => (
+                    <div key={item.label} className={`rounded-xl border p-3 ${isDarkMode ? 'border-zinc-700 bg-zinc-800/30' : 'border-zinc-100 bg-zinc-50/70'}`}>
+                      <p className="text-[9px] font-bold uppercase tracking-wider text-zinc-400">{item.label}</p>
+                      <p className={`mt-1 truncate text-xs font-black ${item.accent ? 'text-emerald-600 dark:text-emerald-400' : primaryText}`}>{item.value}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
+            </div>
+
+            <div className={`mt-4 flex items-center justify-between rounded-xl border px-4 py-3 ${isDarkMode ? 'border-zinc-700 bg-zinc-800/30' : 'border-zinc-100 bg-white'}`}>
+              <div>
+                <p className="text-[9px] font-bold uppercase tracking-wider text-zinc-400">Reservations / Queue</p>
+                <p className={`mt-1 text-xs font-bold ${primaryText}`}>2 people waiting</p>
+              </div>
+              <span className="grid h-9 w-9 place-items-center rounded-full bg-blue-50 text-sm font-black text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">2</span>
             </div>
           </div>
         </article>
 
         {/* Member Information */}
-        <article className={`rounded-2xl border p-6 ${sectionSurface}`}>
-          <div className="mb-6 flex items-center gap-2">
-            <div className="grid h-8 w-8 place-items-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
-              <UserRound size={16} />
+        <article className={`overflow-hidden rounded-2xl border ${sectionSurface}`}>
+          <div className={`flex items-center justify-between border-b px-5 py-4 ${isDarkMode ? 'border-zinc-700 bg-blue-500/5' : 'border-zinc-100 bg-blue-50/50'}`}>
+            <div className="flex items-center gap-3">
+              <div className="grid h-9 w-9 place-items-center rounded-xl bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400">
+                <UserRound size={17} />
+              </div>
+              <div>
+                <h3 className={`text-sm font-black ${primaryText}`}>Member Information</h3>
+                <p className="mt-0.5 text-[10px] font-semibold text-zinc-400">Reservation owner</p>
+              </div>
             </div>
-            <h3 className={`text-base font-bold ${primaryText}`}>Member Information</h3>
+            <span className="rounded-full bg-blue-500/10 px-2.5 py-1 text-[10px] font-bold text-blue-600 dark:text-blue-400">MEMBER</span>
           </div>
           
-          <div className="flex items-center gap-5">
-            <img
-              src={member.profilePhotoData || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80"}
-              alt={member.name}
-              className={`h-24 w-24 rounded-full border-4 object-cover shadow-sm ${isDarkMode ? 'border-zinc-800' : 'border-white'}`}
-            />
-            <div>
-              <h4 className={`text-xl font-bold leading-tight ${primaryText}`}>{member.name}</h4>
-              <span className="mt-2 inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
-                Active Member
-              </span>
+          <div className="p-5">
+            <div className={`flex items-center gap-4 rounded-xl border p-4 ${isDarkMode ? 'border-zinc-700 bg-zinc-800/30' : 'border-zinc-100 bg-zinc-50/70'}`}>
+              <div className="relative shrink-0">
+                <img
+                  src={member.profilePhotoData || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80"}
+                  alt={member.name}
+                  className={`h-20 w-20 rounded-2xl border-2 object-cover shadow-sm ${isDarkMode ? 'border-zinc-700' : 'border-white'}`}
+                />
+                <span className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white bg-emerald-500 dark:border-zinc-800" />
+              </div>
+              <div className="min-w-0">
+                <h4 className={`truncate text-xl font-black leading-tight ${primaryText}`}>{member.name}</h4>
+                <p className="mt-1 text-xs font-semibold text-zinc-500">{member.id}</p>
+                <span className="mt-2 inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+                  Active Member
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-2.5">
+              <div className={`rounded-xl border p-3 ${isDarkMode ? 'border-zinc-700 bg-zinc-800/30' : 'border-zinc-100 bg-white'}`}>
+                <p className="text-[9px] font-bold uppercase tracking-wider text-zinc-400">Member ID</p>
+                <p className={`mt-1 truncate text-xs font-black ${primaryText}`}>{member.id}</p>
+              </div>
+              <div className={`rounded-xl border p-3 ${isDarkMode ? 'border-zinc-700 bg-zinc-800/30' : 'border-zinc-100 bg-white'}`}>
+                <p className="text-[9px] font-bold uppercase tracking-wider text-zinc-400">Member Since</p>
+                <p className={`mt-1 text-xs font-black ${primaryText}`}>Jan 15, 2023</p>
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-2.5">
+              <div className={`flex items-center gap-3 rounded-xl border px-3.5 py-3 text-xs font-semibold ${isDarkMode ? 'border-zinc-700 bg-zinc-800/30 text-zinc-300' : 'border-zinc-100 bg-zinc-50/70 text-zinc-700'}`}>
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
+                  <Smartphone size={15} />
+                </span>
+                <span className="truncate">0917 123 4567</span>
+              </div>
+              <div className={`flex items-center gap-3 rounded-xl border px-3.5 py-3 text-xs font-semibold ${isDarkMode ? 'border-zinc-700 bg-zinc-800/30 text-zinc-300' : 'border-zinc-100 bg-zinc-50/70 text-zinc-700'}`}>
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
+                  <Mail size={15} />
+                </span>
+                <span className="truncate">{member.name.toLowerCase().replace(' ', '.')}@example.com</span>
+              </div>
             </div>
           </div>
-
-          <div className="mt-8 space-y-4 text-sm">
-            <div className="flex justify-between">
-              <span className="font-medium text-zinc-500">Member ID</span>
-              <span className={`font-semibold ${primaryText}`}>{member.id}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-medium text-zinc-500">Member since</span>
-              <span className={`font-semibold ${primaryText}`}>Jan 15, 2023</span>
-            </div>
-          </div>
-
-          <div className={`mt-6 space-y-3 border-t pt-5 ${sectionBorder}`}>
-            <div className={`flex items-center gap-3 text-sm font-semibold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>
-              <Smartphone size={16} className="text-zinc-400" />
-              <span>0917 123 4567</span>
-            </div>
-            <div className={`flex items-center gap-3 text-sm font-semibold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>
-              <Mail size={16} className="text-zinc-400" />
-              <span>{member.name.toLowerCase().replace(' ', '.')}@example.com</span>
-            </div>
-          </div>
-
         </article>
 
       </div>
