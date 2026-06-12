@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
-import { Calendar, Clock3, CheckCircle2, XCircle, Eye, Trash2, Download, Plus, Search, ChevronDown, Filter, ChevronLeft, ChevronRight, MoreHorizontal, BookOpen, UserRound, ArrowLeft, Info, X, Check, Mail, Smartphone, Pencil, AlertTriangle , Zap } from 'lucide-react'
+import { Calendar, Clock3, CheckCircle2, XCircle, Eye, Trash2, Download, Plus, Search, ChevronDown, Filter, ChevronLeft, ChevronRight, MoreHorizontal, BookOpen, UserRound, ArrowLeft, Info, X, Check, Mail, Smartphone, Pencil, AlertTriangle, RotateCcw, Zap } from 'lucide-react'
 import { createReservation, deleteReservation, getSetting, listBooks, listMembers, listReservations, updateReservation, updateReservationStatus } from '../lib/tauriApi'
+import { SendEmailModal } from '../components/modals/SendEmailModal'
+import { SendSmsModal } from '../components/modals/SendSmsModal'
 
 type ReservationStatus = 'Queued' | 'Notified' | 'Claimed' | 'Expired' | 'Cancelled'
 
@@ -87,13 +89,15 @@ type ReservationActionsMenuProps = {
   status: ReservationStatus
   onViewDetails: () => void
   onEdit: () => void
-  onNotify: () => void
+  onSendEmail: () => void
+  onSendSms: () => void
   onComplete: () => void
   onCancel: () => void
+  onReserveAgain: () => void
   onDelete: () => void
 }
 
-function ReservationActionsMenu({ isDarkMode, status, onViewDetails, onEdit, onNotify, onComplete, onCancel, onDelete }: ReservationActionsMenuProps) {
+function ReservationActionsMenu({ isDarkMode, status, onViewDetails, onEdit, onSendEmail, onSendSms, onComplete, onCancel, onReserveAgain, onDelete }: ReservationActionsMenuProps) {
   const [open, setOpen] = useState(false)
   const [openUpward, setOpenUpward] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -182,17 +186,24 @@ function ReservationActionsMenu({ isDarkMode, status, onViewDetails, onEdit, onN
             <Eye size={15} className="shrink-0 text-sky-500" />
             View Details
           </button>
-          {status === 'Queued' && (
-            <button
-              type="button"
-              className={`${itemBase} ${itemNormal}`}
-              role="menuitem"
-              onClick={(e) => { e.stopPropagation(); setOpen(false); onNotify(); }}
-            >
-              <Mail size={15} className="shrink-0 text-amber-500" />
-              Notify Next Member
-            </button>
-          )}
+          <button
+            type="button"
+            className={`${itemBase} ${itemNormal}`}
+            role="menuitem"
+            onClick={(e) => { e.stopPropagation(); setOpen(false); onSendEmail(); }}
+          >
+            <Mail size={15} className="shrink-0 text-emerald-500" />
+            Send Email
+          </button>
+          <button
+            type="button"
+            className={`${itemBase} ${itemNormal}`}
+            role="menuitem"
+            onClick={(e) => { e.stopPropagation(); setOpen(false); onSendSms(); }}
+          >
+            <Smartphone size={15} className="shrink-0 text-sky-500" />
+            Send SMS
+          </button>
 
           {status === 'Notified' && (
             <button
@@ -203,6 +214,17 @@ function ReservationActionsMenu({ isDarkMode, status, onViewDetails, onEdit, onN
             >
               <CheckCircle2 size={15} className="shrink-0 text-emerald-500" />
               Mark Claimed
+            </button>
+          )}
+          {status === 'Cancelled' && (
+            <button
+              type="button"
+              className={`${itemBase} ${itemNormal}`}
+              role="menuitem"
+              onClick={(e) => { e.stopPropagation(); setOpen(false); onReserveAgain(); }}
+            >
+              <RotateCcw size={15} className="shrink-0 text-emerald-500" />
+              Reserve Again
             </button>
           )}
           <button
@@ -550,6 +572,8 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail: _onOpenT
   const [reservationToDelete, setReservationToDelete] = useState<ReservationRow | null>(null)
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false)
   const [selectedReservationIds, setSelectedReservationIds] = useState<Set<string>>(() => new Set())
+  const [emailReservation, setEmailReservation] = useState<ReservationRow | null>(null)
+  const [smsReservation, setSmsReservation] = useState<ReservationRow | null>(null)
   
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
@@ -1049,6 +1073,33 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail: _onOpenT
     }
   }
 
+  const reserveAgain = async (reservation: ReservationRow) => {
+    if (!reservation.memberId || !reservation.bookId) {
+      setActionError('This reservation is missing its member or book information.')
+      return
+    }
+
+    try {
+      setActionError(null)
+      await createReservation({
+        memberId: reservation.memberId,
+        bookId: reservation.bookId,
+        reservationDate: new Date().toISOString(),
+        expiresOn: new Date().toISOString(),
+        branch: reservation.pickupBranch || 'Central Library',
+        priority: reservation.priority || 'Normal',
+        notes: reservation.notes || null,
+        notifyEmail: reservation.notifyEmail ?? true,
+        notifySms: reservation.notifySms ?? true,
+      })
+      await refreshReservations()
+      onShowToast?.(`Successfully reserved "${reservation.book.title}" again for ${reservation.member.name}.`)
+    } catch (error) {
+      console.error(`Failed to reserve ${reservation.id} again:`, error)
+      setActionError(typeof error === 'string' ? error : 'Failed to reserve this book again. Please try again.')
+    }
+  }
+
   const handleBulkDeleteConfirm = async () => {
     const selectedReservations = reservations.filter((reservation) => selectedReservationIds.has(reservation.id))
     if (selectedReservations.length === 0) return
@@ -1435,13 +1486,15 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail: _onOpenT
                           status={res.status}
                           onViewDetails={() => setActiveViewReservationId(res.id)}
                           onEdit={() => openEditReservation(res)}
-                          onNotify={() => updateReservationActionStatus(res.id, 'Notified')}
+                          onSendEmail={() => setEmailReservation(res)}
+                          onSendSms={() => setSmsReservation(res)}
                           onComplete={() => {
                             if (onNavigateToBorrow && res.memberId && res.bookId) {
                               onNavigateToBorrow(res.memberId, res.bookId)
                             }
                           }}
                           onCancel={() => updateReservationActionStatus(res.id, 'Cancelled')}
+                          onReserveAgain={() => void reserveAgain(res)}
                           onDelete={() => setReservationToDelete(res)}
                         />
                       </td>
@@ -2048,6 +2101,34 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail: _onOpenT
             </div>
           </form>
         </section>
+      )}
+
+      {emailReservation && (
+        <SendEmailModal
+          isOpen
+          onClose={() => setEmailReservation(null)}
+          member={{
+            id: emailReservation.memberId ?? 0,
+            fullName: emailReservation.member.name,
+            email: emailReservation.member.email || null,
+          }}
+          isDarkMode={isDarkMode}
+          onSuccess={() => onShowToast?.(`Successfully sent email to ${emailReservation.member.name}.`)}
+        />
+      )}
+
+      {smsReservation && (
+        <SendSmsModal
+          isOpen
+          onClose={() => setSmsReservation(null)}
+          member={{
+            id: smsReservation.memberId ?? 0,
+            fullName: smsReservation.member.name,
+            phone: smsReservation.member.phone || null,
+          }}
+          isDarkMode={isDarkMode}
+          onSuccess={() => onShowToast?.(`Successfully sent SMS to ${smsReservation.member.name}.`)}
+        />
       )}
     </div>
   )
