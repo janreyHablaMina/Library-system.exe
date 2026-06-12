@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { Calendar, Clock3, CheckCircle2, XCircle, MapPin, Eye, Trash2, Download, Plus, Search, ChevronDown, Filter, ChevronLeft, ChevronRight, MoreHorizontal, BookOpen, UserRound, ArrowLeft, Info, X, Check, Mail, Smartphone, Pencil, AlertTriangle , Zap } from 'lucide-react'
-import { createReservation, deleteReservation, listBooks, listMembers, listReservations, updateReservation, updateReservationStatus } from '../lib/tauriApi'
+import { createReservation, deleteReservation, getSetting, listBooks, listMembers, listReservations, updateReservation, updateReservationStatus } from '../lib/tauriApi'
 
 type ReservationStatus = 'Queued' | 'Notified' | 'Claimed' | 'Expired' | 'Cancelled'
 
@@ -78,7 +78,6 @@ type ReservationActionsMenuProps = {
   isDarkMode: boolean
   status: ReservationStatus
   onViewDetails: () => void
-  onViewQueue: () => void
   onEdit: () => void
   onNotify: () => void
   onComplete: () => void
@@ -86,7 +85,7 @@ type ReservationActionsMenuProps = {
   onDelete: () => void
 }
 
-function ReservationActionsMenu({ isDarkMode, status, onViewDetails, onViewQueue, onEdit, onNotify, onComplete, onCancel, onDelete }: ReservationActionsMenuProps) {
+function ReservationActionsMenu({ isDarkMode, status, onViewDetails, onEdit, onNotify, onComplete, onCancel, onDelete }: ReservationActionsMenuProps) {
   const [open, setOpen] = useState(false)
   const [openUpward, setOpenUpward] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -175,16 +174,6 @@ function ReservationActionsMenu({ isDarkMode, status, onViewDetails, onViewQueue
             <Eye size={15} className="shrink-0 text-sky-500" />
             View Details
           </button>
-          <button
-            type="button"
-            className={`${itemBase} ${itemNormal}`}
-            role="menuitem"
-            onClick={(e) => { e.stopPropagation(); setOpen(false); onViewQueue(); }}
-          >
-            <UserRound size={15} className="shrink-0 text-violet-500" />
-            View Book Queue
-          </button>
-
           {status === 'Queued' && (
             <button
               type="button"
@@ -517,6 +506,7 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail: _onOpenT
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   };
   const [reservationDate, setReservationDate] = useState(() => getInitialDateTime(0));
+  const [claimPeriodDays, setClaimPeriodDays] = useState(3)
   const [notes, setNotes] = useState('')
   const [priority, setPriority] = useState('Normal')
   
@@ -540,6 +530,24 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail: _onOpenT
   const [books, setBooks] = useState<BookItem[]>([])
   const [members, setMembers] = useState<MemberItem[]>([])
   const [reservations, setReservations] = useState<ReservationRow[]>([])
+
+  useEffect(() => {
+    void getSetting('reservations.claim_period_days').then((value) => {
+      const parsed = Number.parseInt(value ?? '', 10)
+      if (Number.isFinite(parsed) && parsed > 0) {
+        setClaimPeriodDays(parsed)
+      }
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!isAddModalOpen || editingReservation) return
+
+    const syncQueueTime = () => setReservationDate(getInitialDateTime(0))
+    syncQueueTime()
+    const timer = window.setInterval(syncQueueTime, 30_000)
+    return () => window.clearInterval(timer)
+  }, [isAddModalOpen, editingReservation])
 
   const dynamicStats = useMemo(() => {
     const total = reservations.length
@@ -742,6 +750,14 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail: _onOpenT
     }
   }
 
+  const immediateClaimExpiry = useMemo(() => {
+    if (!selectedBook || selectedBook.availableCopies < 1) return null
+    const queueDate = new Date(reservationDate)
+    if (Number.isNaN(queueDate.getTime())) return null
+    queueDate.setDate(queueDate.getDate() + claimPeriodDays)
+    return formatReservationDate(queueDate.toISOString())
+  }, [selectedBook, reservationDate, claimPeriodDays])
+
   const getStatusStyle = (status: ReservationStatus) => {
     switch (status) {
       case 'Queued': return 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400'
@@ -899,6 +915,9 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail: _onOpenT
     try {
       setFormError(null)
       setIsSavingReservation(true)
+      const queueDateIso = editingReservation
+        ? new Date(reservationDate).toISOString()
+        : new Date().toISOString()
       if (editingReservation) {
         const numericId = Number.parseInt(editingReservation.id.replace('RES-', ''), 10)
         if (Number.isNaN(numericId)) {
@@ -911,8 +930,8 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail: _onOpenT
           id: numericId,
           memberId: selectedMember.id,
           bookId: selectedBook.id,
-          reservationDate: new Date(reservationDate).toISOString(),
-          expiresOn: new Date(reservationDate).toISOString(),
+          reservationDate: queueDateIso,
+          expiresOn: queueDateIso,
           status: editingReservation.statusRaw || editingReservation.status,
           branch: editingReservation.pickupBranch || 'Central Library',
           priority,
@@ -924,8 +943,8 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail: _onOpenT
         await createReservation({
           memberId: selectedMember.id,
           bookId: selectedBook.id,
-          reservationDate: new Date(reservationDate).toISOString(),
-          expiresOn: new Date(reservationDate).toISOString(),
+          reservationDate: queueDateIso,
+          expiresOn: queueDateIso,
           branch: branchFilter === 'All Branches' ? 'Central Library' : branchFilter,
           priority,
           notes,
@@ -1362,11 +1381,6 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail: _onOpenT
                           isDarkMode={isDarkMode}
                           status={res.status}
                           onViewDetails={() => setActiveViewReservationId(res.id)}
-                          onViewQueue={() => {
-                            setReservationSearch(res.book.title)
-                            setStatusFilter('All')
-                            setCurrentPage(1)
-                          }}
                           onEdit={() => openEditReservation(res)}
                           onNotify={() => updateReservationActionStatus(res.id, 'Notified')}
                           onComplete={() => {
@@ -1685,7 +1699,8 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail: _onOpenT
                           <Calendar size={16} className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} />
                           <input type="datetime-local" value={reservationDate}
                             onChange={(e) => setReservationDate(e.target.value)}
-                            className={`w-full bg-transparent outline-none text-xs font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}
+                            readOnly={!editingReservation}
+                            className={`w-full bg-transparent outline-none text-xs font-semibold ${!editingReservation ? 'cursor-default' : ''} ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}
                           />
                         </div>
                       </div>
@@ -1694,7 +1709,11 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail: _onOpenT
                         <label className={`text-[11px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Claim Period</label>
                         <div className={`mt-1.5 flex min-h-11 items-center gap-2 rounded-xl border px-3.5 ${isDarkMode ? 'border-zinc-700 bg-[#27272A]' : 'border-zinc-200 bg-zinc-50'}`}>
                           <Clock3 size={16} className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} />
-                          <span className={`text-xs font-semibold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-600'}`}>Starts only after the book becomes available and the member is notified.</span>
+                          <span className={`text-xs font-semibold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-600'}`}>
+                            {selectedBook?.availableCopies
+                              ? immediateClaimExpiry ?? 'Calculating expiration...'
+                              : 'Starts only after the book becomes available and the member is notified.'}
+                          </span>
                         </div>
                       </div>
 
@@ -1925,14 +1944,8 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail: _onOpenT
                       </div>
                       <div className="flex justify-between items-center text-[11px]">
                         <span className="text-zinc-400 font-bold">Claim Expiry</span>
-                        <span className={`font-extrabold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>Starts after notification</span>
-                      </div>
-
-
-                      <div className="flex justify-between items-center text-[11px]">
-                        <span className="text-zinc-400 font-bold">Estimated Wait Time</span>
                         <span className={`font-extrabold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>
-                          {!selectedBook ? '-' : selectedBook.availableCopies > 0 ? 'Available immediately' : `~ ${(reservations.filter(r => r.bookId === selectedBook.id && (r.status === 'Queued' || r.status === 'Notified')).length * 3) + 2} days`}
+                          {immediateClaimExpiry ?? 'Starts after notification'}
                         </span>
                       </div>
                     </div>
@@ -1945,7 +1958,11 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail: _onOpenT
                       : 'bg-blue-50/70 text-blue-800 border-blue-100'
                   }`}>
                     <Info size={16} className="shrink-0 mt-0.5 text-blue-500" />
-                    <span>The member will be notified when the book becomes available for pickup.</span>
+                    <span>
+                      {selectedBook?.availableCopies
+                        ? `This book is available. The member will be notified immediately and has ${claimPeriodDays} day${claimPeriodDays === 1 ? '' : 's'} to claim it.`
+                        : 'The member will be notified when the book becomes available for pickup.'}
+                    </span>
                   </div>
                 </article>
               </aside>
