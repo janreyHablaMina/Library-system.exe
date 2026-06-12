@@ -48,6 +48,7 @@ const initialState: LoginFormState = {
 
 const navItems = [
   { id: 'Dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { id: 'All Transactions', icon: FileText, label: 'All Transactions' },
   { id: 'Books', icon: BookOpen, label: 'Books' },
   { id: 'Members', icon: Users, label: 'Members' },
   { id: 'Authors', icon: Feather, label: 'Authors' },
@@ -59,7 +60,7 @@ const navItems = [
   { id: 'Settings', icon: Settings2, label: 'Settings' },
 ] as const
 
-type ActivePage = (typeof navItems)[number]['id'] | 'All Transactions' | 'Profile' | 'Notifications' | 'EmailLogs' | 'SmsLogs'
+type ActivePage = (typeof navItems)[number]['id'] | 'Profile' | 'Notifications' | 'EmailLogs' | 'SmsLogs'
 
 
 
@@ -831,11 +832,16 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
                 <div>
                   {!sidebarCollapsed ? <div className="mb-2 px-3"><span className="text-[10px] font-bold uppercase tracking-wider text-[#71717A]">Library</span></div> : null}
                   <div className="space-y-1">
-                    {navItems.slice(1, 5).map((item) => (
+                    {navItems.slice(1, 6).map((item) => (
                       <button
                         key={item.id}
                         onClick={() => {
                           setActivePage(item.id as any)
+                          if (item.id === 'All Transactions') {
+                            setTransactionActiveTab('all')
+                            setIsTransactionDetailOpen(false)
+                            setSelectedTransactionId(null)
+                          }
                           if (item.id === 'Books') setBooksInitialCategory(null)
                           if (item.id === 'Members') setMemberAddModalTrigger(0)
                         }}
@@ -856,7 +862,7 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
                 <div>
                   {!sidebarCollapsed ? <div className="mb-2 px-3"><span className="text-[10px] font-bold uppercase tracking-wider text-[#71717A]">Circulation</span></div> : null}
                   <div className="space-y-1">
-                    {navItems.slice(5, 7).map((item) => (
+                    {navItems.slice(6, 8).map((item) => (
                       <button
                         key={item.id}
                         onClick={() => {
@@ -880,7 +886,7 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
                 <div className="mt-auto pt-6">
                   {!sidebarCollapsed ? <div className="mb-2 px-3"><span className="text-[10px] font-bold uppercase tracking-wider text-[#71717A]">Management</span></div> : null}
                   <div className="space-y-1">
-                    {navItems.slice(7, 9).map((item) => (
+                    {navItems.slice(8, 10).map((item) => (
                       <button
                         key={item.id}
                         onClick={() => {

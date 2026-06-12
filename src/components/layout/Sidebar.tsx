@@ -50,9 +50,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Sections */}
         {[
-          { label: 'Library', range: [1, 5] },
-          { label: 'Circulation', range: [5, 7] },
-          { label: 'Management', range: [7, 9] },
+          { label: 'Library', range: [1, 6] },
+          { label: 'Circulation', range: [6, 8] },
+          { label: 'Management', range: [8, 10] },
         ].map((section) => (
           <div key={section.label} className="mt-6 px-4">
             {!sidebarCollapsed && <p className="px-4 text-[11px] font-bold uppercase tracking-[2px] text-zinc-500">{section.label}</p>}
