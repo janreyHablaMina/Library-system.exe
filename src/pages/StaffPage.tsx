@@ -197,8 +197,6 @@ export function StaffPage({ isDarkMode, onOpenStaffDetail }: StaffPageProps) {
   const [statusFilter, setStatusFilter] = useState<'All Status' | StaffStatus>('All Status')
   const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(null)
   const [generatedTempPassword, setGeneratedTempPassword] = useState('')
-  const [resetPasswordValue, setResetPasswordValue] = useState('')
-  const [confirmResetPasswordValue, setConfirmResetPasswordValue] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
   const [showToast, setShowToast] = useState<string | null>(null)
@@ -432,8 +430,6 @@ export function StaffPage({ isDarkMode, onOpenStaffDetail }: StaffPageProps) {
   const handleGenerateResetPassword = () => {
     const nextPassword = generateTemporaryPassword()
     setGeneratedTempPassword(nextPassword)
-    setResetPasswordValue(nextPassword)
-    setConfirmResetPasswordValue(nextPassword)
     setResetPasswordError(null)
   }
 
@@ -452,15 +448,9 @@ export function StaffPage({ isDarkMode, onOpenStaffDetail }: StaffPageProps) {
     event.preventDefault()
     if (!resetPasswordStaff) return
 
-    const newPassword = resetPasswordValue.trim()
-    const confirmPassword = confirmResetPasswordValue.trim()
-
+    const newPassword = generatedTempPassword.trim()
     if (newPassword.length < 8) {
-      setResetPasswordError('Password must be at least 8 characters.')
-      return
-    }
-    if (newPassword !== confirmPassword) {
-      setResetPasswordError('Password and confirmation must match.')
+      setResetPasswordError('Generate a temporary password before resetting.')
       return
     }
 
@@ -475,8 +465,6 @@ export function StaffPage({ isDarkMode, onOpenStaffDetail }: StaffPageProps) {
       await refreshStaff()
       setResetPasswordStaff(null)
       setGeneratedTempPassword('')
-      setResetPasswordValue('')
-      setConfirmResetPasswordValue('')
       setShowToast(`Password reset for ${resetPasswordStaff.name}.`)
     } catch (error) {
       console.error('Failed to reset staff password:', error)
@@ -753,8 +741,6 @@ export function StaffPage({ isDarkMode, onOpenStaffDetail }: StaffPageProps) {
                             const nextPassword = generateTemporaryPassword()
                             setResetPasswordStaff(staff)
                             setGeneratedTempPassword(nextPassword)
-                            setResetPasswordValue(nextPassword)
-                            setConfirmResetPasswordValue(nextPassword)
                             setResetPasswordError(null)
                           }}
                           onDelete={() => setStaffToDelete(staff)}
@@ -950,114 +936,81 @@ export function StaffPage({ isDarkMode, onOpenStaffDetail }: StaffPageProps) {
 
       {resetPasswordStaff ? (
         <div className="fixed inset-0 z-[55] flex items-center justify-center bg-zinc-950/60 p-4 backdrop-blur-sm">
-          <section className={`flex w-full max-w-xl flex-col overflow-hidden rounded-3xl border shadow-2xl ${isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
-            <div className={`flex items-start justify-between border-b px-8 py-6 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'}`}>
-              <div>
-                <h3 className={`text-3xl font-black ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Reset Password</h3>
-                <p className={`mt-1 text-sm font-medium ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                  Set a new password for {resetPasswordStaff.name} without exposing any existing credentials.
-                </p>
+          <section className={`flex w-full max-w-xl flex-col overflow-hidden rounded-[30px] border shadow-[0_32px_90px_rgba(15,23,42,0.22)] ${isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
+            <div className={`relative overflow-hidden border-b px-7 py-6 ${isDarkMode ? 'border-zinc-800 bg-[radial-gradient(circle_at_top_left,rgba(245,158,11,0.12),transparent_36%),linear-gradient(180deg,rgba(39,39,42,0.95),rgba(24,24,27,1))]' : 'border-zinc-100 bg-[radial-gradient(circle_at_top_left,rgba(245,158,11,0.12),transparent_28%),linear-gradient(180deg,#fffdf8,#ffffff)]'}`}>
+              <div className="absolute right-0 top-0 h-32 w-32 rounded-full bg-amber-400/10 blur-3xl" />
+              <div className="relative flex items-start justify-between gap-4">
+                <div>
+                  <h3 className={`text-3xl font-black leading-tight ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Reset Password</h3>
+                  <p className={`mt-2 text-sm font-medium leading-6 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                    Generate a temporary password for {resetPasswordStaff.name} and share it securely.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setResetPasswordStaff(null)
+                    setResetPasswordError(null)
+                    setGeneratedTempPassword('')
+                  }}
+                  className={`grid h-11 w-11 place-items-center rounded-2xl border transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'}`}
+                >
+                  <X size={18} />
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setResetPasswordStaff(null)
-                  setResetPasswordError(null)
-                  setGeneratedTempPassword('')
-                  setResetPasswordValue('')
-                  setConfirmResetPasswordValue('')
-                }}
-                className={`grid h-10 w-10 place-items-center rounded-xl border transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'}`}
-              >
-                <X size={18} />
-              </button>
             </div>
 
             <form onSubmit={handleResetPasswordSubmit} className="flex flex-col">
-              <div className="space-y-6 px-8 py-7">
+              <div className="space-y-5 px-7 py-6">
                 {resetPasswordError ? (
-                  <div className={`rounded-xl border px-4 py-3 text-sm font-semibold ${isDarkMode ? 'border-rose-500/30 bg-rose-500/10 text-rose-300' : 'border-rose-200 bg-rose-50 text-rose-600'}`}>
+                  <div className={`rounded-2xl border px-4 py-3 text-sm font-semibold ${isDarkMode ? 'border-rose-500/30 bg-rose-500/10 text-rose-300' : 'border-rose-200 bg-rose-50 text-rose-600'}`}>
                     {resetPasswordError}
                   </div>
                 ) : null}
 
-                <div className={`rounded-2xl border p-4 ${isDarkMode ? 'border-zinc-700 bg-zinc-900/40' : 'border-zinc-200 bg-zinc-50/80'}`}>
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <p className={`text-xs font-black uppercase tracking-[0.18em] ${isDarkMode ? 'text-zinc-500' : 'text-zinc-500'}`}>Temporary Password</p>
-                      <p className={`mt-2 font-mono text-lg font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{generatedTempPassword}</p>
+                <div className={`overflow-hidden rounded-[26px] border ${isDarkMode ? 'border-zinc-700 bg-[linear-gradient(145deg,rgba(39,39,42,0.98),rgba(24,24,27,1))]' : 'border-zinc-200 bg-[linear-gradient(145deg,#fffef9,#ffffff)]'}`}>
+                  <div className={`px-5 py-5 ${isDarkMode ? 'bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.14),transparent_22%)]' : 'bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.10),transparent_24%)]'}`}>
+                    <p className={`text-[11px] font-black uppercase tracking-[0.24em] ${isDarkMode ? 'text-zinc-500' : 'text-zinc-500'}`}>Temporary Password</p>
+                    <div className={`mt-3 rounded-[22px] border p-4 ${isDarkMode ? 'border-zinc-700 bg-zinc-950/45' : 'border-zinc-200 bg-white'}`}>
+                      <div className="flex items-center gap-3">
+                        <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ${isDarkMode ? 'bg-emerald-500/10 text-emerald-300' : 'bg-emerald-50 text-emerald-700'}`}>
+                          <KeyRound size={18} />
+                        </span>
+                        <p className={`min-w-0 truncate font-mono text-2xl font-black tracking-[0.05em] ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{generatedTempPassword}</p>
+                      </div>
                     </div>
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={handleGenerateResetPassword}
-                        className={`inline-flex h-11 items-center gap-2 rounded-xl border px-4 text-sm font-bold transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}
-                      >
-                        <RefreshCw size={16} />
-                        Generate
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void handleCopyGeneratedPassword()}
-                        className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-4 text-sm font-bold text-white shadow-lg shadow-emerald-600/30 transition-all hover:bg-emerald-700"
-                      >
-                        <Copy size={16} />
-                        Copy
-                      </button>
-                    </div>
-                  </div>
-                  <p className={`mt-3 text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                    Generate a temporary password, copy it, and share it securely with the staff member.
-                  </p>
-                </div>
-
-                <div className="grid gap-6 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <label className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>New Password <span className="text-rose-500">*</span></label>
-                    <div className={`flex h-12 items-center rounded-xl border px-4 ${isDarkMode ? 'border-zinc-700 bg-[#27272A]' : 'border-zinc-200 bg-white'}`}>
-                      <Lock size={16} className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} />
-                      <input
-                        name="newPassword"
-                        type="password"
-                        value={resetPasswordValue}
-                        onChange={(event) => setResetPasswordValue(event.target.value)}
-                        placeholder="Enter new password"
-                        className={`ml-3 h-full w-full bg-transparent text-sm font-medium outline-none ${isDarkMode ? 'text-zinc-100' : 'text-zinc-700'}`}
-                        required
-                      />
-                    </div>
-                    <p className={`text-xs ${isDarkMode ? 'text-zinc-500' : 'text-zinc-500'}`}>Minimum of 8 characters.</p>
-                  </div>
-                  <div className="space-y-2">
-                    <label className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Confirm New Password <span className="text-rose-500">*</span></label>
-                    <div className={`flex h-12 items-center rounded-xl border px-4 ${isDarkMode ? 'border-zinc-700 bg-[#27272A]' : 'border-zinc-200 bg-white'}`}>
-                      <KeyRound size={16} className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} />
-                      <input
-                        name="confirmNewPassword"
-                        type="password"
-                        value={confirmResetPasswordValue}
-                        onChange={(event) => setConfirmResetPasswordValue(event.target.value)}
-                        placeholder="Confirm new password"
-                        className={`ml-3 h-full w-full bg-transparent text-sm font-medium outline-none ${isDarkMode ? 'text-zinc-100' : 'text-zinc-700'}`}
-                        required
-                      />
+                    <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                        <button
+                          type="button"
+                          onClick={handleGenerateResetPassword}
+                          className={`inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-2xl border px-4 text-sm font-bold transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}
+                        >
+                          <RefreshCw size={16} />
+                          Regenerate
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void handleCopyGeneratedPassword()}
+                          className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-5 text-sm font-bold text-white shadow-lg shadow-emerald-600/30 transition-all hover:bg-emerald-700"
+                        >
+                          <Copy size={16} />
+                          Copy Password
+                        </button>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className={`flex gap-4 border-t px-8 py-5 ${isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-100 bg-zinc-50/60'}`}>
+              <div className={`flex flex-col-reverse gap-3 border-t px-7 py-5 sm:flex-row ${isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-100 bg-zinc-50/60'}`}>
                 <button type="button" onClick={() => {
                   setResetPasswordStaff(null)
                   setResetPasswordError(null)
                   setGeneratedTempPassword('')
-                  setResetPasswordValue('')
-                  setConfirmResetPasswordValue('')
-                }} className={`h-12 flex-1 rounded-xl border font-bold transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>Cancel</button>
+                }} className={`h-12 flex-1 rounded-2xl border font-bold transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>Cancel</button>
                 <button
                   type="submit"
                   disabled={isResettingPassword}
-                  className="h-12 flex-1 rounded-xl bg-amber-500 font-bold text-zinc-950 shadow-lg shadow-amber-500/30 transition-all hover:bg-amber-400"
+                  className="h-12 flex-1 rounded-2xl bg-amber-500 font-bold text-zinc-950 shadow-lg shadow-amber-500/30 transition-all hover:bg-amber-400"
                 >
                   {isResettingPassword ? 'Resetting...' : 'Reset Password'}
                 </button>
