@@ -337,11 +337,10 @@ export type Staff = {
   emergencyContact: string | null
   employeeType: string | null
   startDate: string | null
-  username: string | null
-  tempPassword: string | null
-  requirePasswordReset: boolean
   profilePhotoData: string | null
   createdAt: string
+  username: string | null
+  requirePasswordReset: boolean
 }
 
 export type CreateStaffPayload = {
@@ -379,10 +378,15 @@ export type UpdateStaffPayload = {
   emergencyContact?: string | null
   employeeType?: string | null
   startDate?: string | null
-  username?: string | null
-  tempPassword?: string | null
-  requirePasswordReset: boolean
   profilePhotoData?: string | null
+  username?: string | null
+  requirePasswordReset: boolean
+}
+
+export type ResetStaffPasswordPayload = {
+  id: number
+  newPassword: string
+  requirePasswordReset?: boolean
 }
 
 export async function initDb(): Promise<string> {
@@ -403,8 +407,21 @@ export type SettingActivityRow = {
   updatedAt: string
 }
 
+export type ActivityLogRow = {
+  id: number
+  actor: string
+  action: string
+  target: string
+  module: string
+  createdAt: string
+}
+
 export async function listSettingsActivity(limit?: number): Promise<SettingActivityRow[]> {
   return invoke<SettingActivityRow[]>('list_settings_activity', { limit })
+}
+
+export async function listActivityLogs(target?: string, limit?: number): Promise<ActivityLogRow[]> {
+  return invoke<ActivityLogRow[]>('list_activity_logs', { target, limit })
 }
 
 export async function createBook(payload: CreateBookPayload): Promise<number> {
@@ -530,6 +547,10 @@ export async function listStaff(limit?: number): Promise<Staff[]> {
 
 export async function updateStaff(payload: UpdateStaffPayload): Promise<void> {
   return invoke<void>('update_staff', { payload })
+}
+
+export async function resetStaffPassword(payload: ResetStaffPasswordPayload): Promise<void> {
+  return invoke<void>('reset_staff_password', { payload })
 }
 
 export async function deleteStaff(id: number): Promise<void> {

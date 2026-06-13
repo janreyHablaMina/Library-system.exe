@@ -14,7 +14,7 @@ import {
   ChevronRight,
   ChevronDown
 } from 'lucide-react'
-import { listStaff, type Staff as DbStaffMember } from '../lib/tauriApi'
+import { listActivityLogs, listStaff, type ActivityLogRow, type Staff as DbStaffMember } from '../lib/tauriApi'
 import { SendEmailModal } from '../components/modals/SendEmailModal'
 import { SendSmsModal } from '../components/modals/SendSmsModal'
 import { Toast } from '../components/ui/Toast'
@@ -38,6 +38,7 @@ const getRoleStyle = (role: string) => {
 
 export function StaffDetailPage({ isDarkMode, onBack, staffId }: StaffDetailPageProps) {
   const [dbStaff, setDbStaff] = useState<DbStaffMember | null>(null)
+  const [activityLogs, setActivityLogs] = useState<ActivityLogRow[]>([])
   const [loading, setLoading] = useState(true)
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false)
   const [isSmsModalOpen, setIsSmsModalOpen] = useState(false)
@@ -54,9 +55,18 @@ export function StaffDetailPage({ isDarkMode, onBack, staffId }: StaffDetailPage
         const found = typeof staffId === 'number' ? rows.find((row) => row.id === staffId) ?? null : null
         if (mounted) {
           setDbStaff(found)
+          if (found) {
+            const logs = await listActivityLogs(found.fullName, 100)
+            if (mounted) setActivityLogs(logs)
+          } else {
+            setActivityLogs([])
+          }
         }
       } catch {
-        if (mounted) setDbStaff(null)
+        if (mounted) {
+          setDbStaff(null)
+          setActivityLogs([])
+        }
       } finally {
         if (mounted) setLoading(false)
       }
@@ -103,16 +113,9 @@ export function StaffDetailPage({ isDarkMode, onBack, staffId }: StaffDetailPage
     ? isDarkMode ? 'bg-emerald-500/15 text-emerald-300' : 'bg-emerald-50 text-emerald-700'
     : isDarkMode ? 'bg-amber-500/15 text-amber-300' : 'bg-amber-50 text-amber-700'
 
-  const dummyLogs = [
-    { id: 1, timestamp: '2026-06-12 08:30 AM', action: 'System Login', module: 'Authentication', ip: '192.168.1.105', status: 'Success' },
-    { id: 2, timestamp: '2026-06-11 05:15 PM', action: 'System Logout', module: 'Authentication', ip: '192.168.1.105', status: 'Success' },
-    { id: 3, timestamp: '2026-06-11 02:45 PM', action: 'Updated Member Profile', module: 'Members', ip: '192.168.1.105', status: 'Success' },
-    { id: 4, timestamp: '2026-06-11 09:12 AM', action: 'Issued Book', module: 'Circulation', ip: '192.168.1.105', status: 'Success' },
-    { id: 5, timestamp: '2026-06-11 08:25 AM', action: 'System Login', module: 'Authentication', ip: '192.168.1.105', status: 'Failed' },
-  ]
-  const historyTotalPages = Math.ceil(dummyLogs.length / historyPerPage)
+  const historyTotalPages = Math.ceil(activityLogs.length / historyPerPage)
   const safeHistoryPage = Math.max(1, Math.min(historyPage, Math.max(1, historyTotalPages)))
-  const paginatedLogs = dummyLogs.slice((safeHistoryPage - 1) * historyPerPage, safeHistoryPage * historyPerPage)
+  const paginatedLogs = activityLogs.slice((safeHistoryPage - 1) * historyPerPage, safeHistoryPage * historyPerPage)
 
   return (
     <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'text-zinc-100' : 'bg-[#f8fafc] text-zinc-900'}`}>
@@ -250,7 +253,7 @@ export function StaffDetailPage({ isDarkMode, onBack, staffId }: StaffDetailPage
               </div>
               <div>
                 <h3 className={`font-black ${primary}`}>System Activity Logs</h3>
-                <p className={`text-xs ${muted}`}>{dummyLogs.length} activities recorded</p>
+                <p className={`text-xs ${muted}`}>{activityLogs.length} activities recorded</p>
               </div>
             </div>
           </div>
@@ -262,35 +265,43 @@ export function StaffDetailPage({ isDarkMode, onBack, staffId }: StaffDetailPage
                   <th className="px-6 py-3 text-xs font-bold uppercase tracking-wide">Timestamp</th>
                   <th className="px-4 py-3 text-xs font-bold uppercase tracking-wide">Action Taken</th>
                   <th className="px-4 py-3 text-xs font-bold uppercase tracking-wide">Module/Area</th>
-                  <th className="px-4 py-3 text-xs font-bold uppercase tracking-wide">IP Address</th>
-                  <th className="px-6 py-3 text-xs font-bold uppercase tracking-wide">Status</th>
+                  <th className="px-4 py-3 text-xs font-bold uppercase tracking-wide">Performed By</th>
+                  <th className="px-6 py-3 text-xs font-bold uppercase tracking-wide">Target</th>
                 </tr>
               </thead>
               <tbody>
                 {paginatedLogs.map((log) => {
-                  const badge = log.status === 'Success'
-                    ? isDarkMode ? 'bg-emerald-500/15 text-emerald-300' : 'bg-emerald-50 text-emerald-700'
-                    : isDarkMode ? 'bg-rose-500/15 text-rose-300' : 'bg-rose-50 text-rose-700'
+                  const timestamp = new Date(log.createdAt)
+                  const formattedTimestamp = Number.isNaN(timestamp.getTime())
+                    ? log.createdAt
+                    : timestamp.toLocaleString('en-US', { month: 'short', day: '2-digit', year: 'numeric', hour: 'numeric', minute: '2-digit' })
                     
                   return (
                     <tr key={log.id} className={`border-t ${isDarkMode ? 'border-zinc-700 hover:bg-zinc-800/50' : 'border-zinc-100 hover:bg-zinc-50'}`}>
-                      <td className={`px-6 py-4 font-medium ${primary}`}>{log.timestamp}</td>
+                      <td className={`px-6 py-4 font-medium ${primary}`}>{formattedTimestamp}</td>
                       <td className={`px-4 py-4 font-bold ${primary}`}>{log.action}</td>
                       <td className={`px-4 py-4 ${muted}`}>{log.module}</td>
-                      <td className={`px-4 py-4 ${muted}`}>{log.ip}</td>
+                      <td className={`px-4 py-4 ${muted}`}>{log.actor}</td>
                       <td className="px-6 py-4">
-                        <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${badge}`}>{log.status}</span>
+                        <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${isDarkMode ? 'bg-emerald-500/15 text-emerald-300' : 'bg-emerald-50 text-emerald-700'}`}>{log.target}</span>
                       </td>
                     </tr>
                   )
                 })}
+                {paginatedLogs.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className={`px-6 py-10 text-center text-sm ${muted}`}>
+                      No recorded activity for this staff member yet.
+                    </td>
+                  </tr>
+                ) : null}
               </tbody>
             </table>
           </div>
 
           <div className={`flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm ${isDarkMode ? 'border-zinc-700 bg-[#18181B] text-zinc-300' : 'border-zinc-200 bg-white text-zinc-600'}`}>
             <p>
-              Showing {dummyLogs.length > 0 ? (safeHistoryPage - 1) * historyPerPage + 1 : 0} to {Math.min(safeHistoryPage * historyPerPage, dummyLogs.length)} of {dummyLogs.length} transactions
+              Showing {activityLogs.length > 0 ? (safeHistoryPage - 1) * historyPerPage + 1 : 0} to {Math.min(safeHistoryPage * historyPerPage, activityLogs.length)} of {activityLogs.length} activities
             </p>
             <div className="flex items-center gap-2">
               <div className="relative">

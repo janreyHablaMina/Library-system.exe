@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, type ChangeEvent } from 'react'
-import { Users, UserCheck, UserX, ShieldCheck, Search, ChevronDown, Filter, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, X, MoreHorizontal, Mail, MessageSquare, Eye } from 'lucide-react'
-import { createStaff, deleteStaff, listStaff, updateStaff } from '../lib/tauriApi'
+import { Users, UserCheck, UserX, ShieldCheck, Search, ChevronDown, Filter, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, X, MoreHorizontal, Mail, MessageSquare, Eye, Lock, KeyRound, Copy, RefreshCw } from 'lucide-react'
+import { createStaff, deleteStaff, listStaff, resetStaffPassword, updateStaff } from '../lib/tauriApi'
 import { Toast } from '../components/ui/Toast'
 import { SendEmailModal } from '../components/modals/SendEmailModal'
 import { SendSmsModal } from '../components/modals/SendSmsModal'
@@ -23,7 +23,6 @@ type StaffMember = {
   employeeType?: string
   startDate?: string
   username?: string
-  tempPassword?: string
   requirePasswordReset?: boolean
   profilePhotoData?: string | null
 }
@@ -39,12 +38,11 @@ type StaffActionsMenuProps = {
   onSendEmail: () => void
   onSendSms: () => void
   onEdit: () => void
+  onResetPassword: () => void
   onDelete: () => void
 }
 
-
-
-function StaffActionsMenu({ isDarkMode, onView, onSendEmail, onSendSms, onEdit, onDelete }: StaffActionsMenuProps) {
+function StaffActionsMenu({ isDarkMode, onView, onSendEmail, onSendSms, onEdit, onResetPassword, onDelete }: StaffActionsMenuProps) {
   const [open, setOpen] = useState(false)
   const [openUpward, setOpenUpward] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -152,6 +150,16 @@ function StaffActionsMenu({ isDarkMode, onView, onSendEmail, onSendSms, onEdit, 
             <Pencil size={14} className="text-violet-500" />
             Edit Staff
           </button>
+          <button
+            type="button"
+            className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors duration-100 ${
+              isDarkMode ? 'text-zinc-200 hover:bg-zinc-800' : 'text-zinc-700 hover:bg-zinc-50'
+            }`}
+            onClick={() => { setOpen(false); onResetPassword() }}
+          >
+            <KeyRound size={14} className="text-amber-500" />
+            Reset Password
+          </button>
           
           <div className={`my-1.5 border-t ${isDarkMode ? 'border-zinc-700/60' : 'border-zinc-100'}`} />
           
@@ -175,16 +183,22 @@ export function StaffPage({ isDarkMode, onOpenStaffDetail }: StaffPageProps) {
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([])
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null)
+  const [resetPasswordStaff, setResetPasswordStaff] = useState<StaffMember | null>(null)
   const [staffToDelete, setStaffToDelete] = useState<StaffMember | null>(null)
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false)
   const [selectedStaffIds, setSelectedStaffIds] = useState<Set<number>>(() => new Set())
   const [staffError, setStaffError] = useState<string | null>(null)
   const [modalError, setModalError] = useState<string | null>(null)
+  const [resetPasswordError, setResetPasswordError] = useState<string | null>(null)
   const [isSavingStaff, setIsSavingStaff] = useState(false)
+  const [isResettingPassword, setIsResettingPassword] = useState(false)
   const [staffSearch, setStaffSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState<'All Roles' | StaffRole>('All Roles')
   const [statusFilter, setStatusFilter] = useState<'All Status' | StaffStatus>('All Status')
   const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(null)
+  const [generatedTempPassword, setGeneratedTempPassword] = useState('')
+  const [resetPasswordValue, setResetPasswordValue] = useState('')
+  const [confirmResetPasswordValue, setConfirmResetPasswordValue] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
   const [showToast, setShowToast] = useState<string | null>(null)
@@ -270,6 +284,12 @@ export function StaffPage({ isDarkMode, onOpenStaffDetail }: StaffPageProps) {
     return parts.slice(0, 2).map((part) => part[0]?.toUpperCase() ?? '').join('') || 'ST'
   }
 
+  const generateTemporaryPassword = () => {
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'
+    const suffix = Array.from({ length: 3 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join('')
+    return `Lib@2026#${suffix}`
+  }
+
   const refreshStaff = async () => {
     const rows = await listStaff(1000)
     setStaffMembers(
@@ -291,7 +311,6 @@ export function StaffPage({ isDarkMode, onOpenStaffDetail }: StaffPageProps) {
           employeeType: staff.employeeType ?? 'Full-time',
           startDate: staff.startDate ?? '',
           username: staff.username ?? '',
-          tempPassword: staff.tempPassword ?? '',
           requirePasswordReset: staff.requirePasswordReset,
           profilePhotoData: staff.profilePhotoData ?? null,
         }
@@ -347,14 +366,6 @@ export function StaffPage({ isDarkMode, onOpenStaffDetail }: StaffPageProps) {
       return
     }
 
-    const tempPassword = String(form.get('tempPassword') || '').trim()
-    const confirmPassword = String(form.get('confirmPassword') || '').trim()
-    
-    if (tempPassword !== confirmPassword) {
-      setModalError('Passwords do not match.')
-      return
-    }
-
     const payloadBase = {
       staffCode: String(form.get('staffCode') || '').trim() || null,
       fullName,
@@ -366,20 +377,30 @@ export function StaffPage({ isDarkMode, onOpenStaffDetail }: StaffPageProps) {
       emergencyContact: String(form.get('emergencyContact') || editingStaff?.emergencyContact || '').trim() || null,
       employeeType: String(form.get('employeeType') || editingStaff?.employeeType || '').trim() || null,
       startDate: String(form.get('startDate') || editingStaff?.startDate || '').trim() || null,
-      username: String(form.get('username') || '').trim() || null,
-      tempPassword: tempPassword || null,
+      username: String(form.get('username') || editingStaff?.username || '').trim() || null,
       requirePasswordReset: form.has('requirePasswordReset') ? form.get('requirePasswordReset') === 'on' : (editingStaff?.requirePasswordReset ?? false),
       profilePhotoData: profilePhotoPreview || editingStaff?.profilePhotoData || null,
     }
 
     try {
       setModalError(null)
-      setIsSavingStaff(true)
       if (editingStaff) {
+        setIsSavingStaff(true)
         await updateStaff({ id: editingStaff.dbId, ...payloadBase, requirePasswordReset: payloadBase.requirePasswordReset })
         setShowToast('Staff member updated successfully!')
       } else {
-        await createStaff(payloadBase)
+        const tempPassword = String(form.get('tempPassword') || '').trim()
+        const confirmPassword = String(form.get('confirmPassword') || '').trim()
+        if (tempPassword.length < 8) {
+          setModalError('Password must be at least 8 characters.')
+          return
+        }
+        if (tempPassword !== confirmPassword) {
+          setModalError('Passwords do not match.')
+          return
+        }
+        setIsSavingStaff(true)
+        await createStaff({ ...payloadBase, tempPassword })
         setShowToast('Staff member added successfully!')
       }
       await refreshStaff()
@@ -405,6 +426,63 @@ export function StaffPage({ isDarkMode, onOpenStaffDetail }: StaffPageProps) {
     } catch (error) {
       console.error('Failed to delete staff:', error)
       setStaffError('Failed to delete staff member. Please try again.')
+    }
+  }
+
+  const handleGenerateResetPassword = () => {
+    const nextPassword = generateTemporaryPassword()
+    setGeneratedTempPassword(nextPassword)
+    setResetPasswordValue(nextPassword)
+    setConfirmResetPasswordValue(nextPassword)
+    setResetPasswordError(null)
+  }
+
+  const handleCopyGeneratedPassword = async () => {
+    if (!generatedTempPassword) return
+    try {
+      await navigator.clipboard.writeText(generatedTempPassword)
+      setShowToast('Temporary password copied to clipboard.')
+    } catch (error) {
+      console.error('Failed to copy password:', error)
+      setResetPasswordError('Could not copy the password. You can still copy it manually.')
+    }
+  }
+
+  const handleResetPasswordSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!resetPasswordStaff) return
+
+    const newPassword = resetPasswordValue.trim()
+    const confirmPassword = confirmResetPasswordValue.trim()
+
+    if (newPassword.length < 8) {
+      setResetPasswordError('Password must be at least 8 characters.')
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      setResetPasswordError('Password and confirmation must match.')
+      return
+    }
+
+    try {
+      setResetPasswordError(null)
+      setIsResettingPassword(true)
+      await resetStaffPassword({
+        id: resetPasswordStaff.dbId,
+        newPassword,
+        requirePasswordReset: true,
+      })
+      await refreshStaff()
+      setResetPasswordStaff(null)
+      setGeneratedTempPassword('')
+      setResetPasswordValue('')
+      setConfirmResetPasswordValue('')
+      setShowToast(`Password reset for ${resetPasswordStaff.name}.`)
+    } catch (error) {
+      console.error('Failed to reset staff password:', error)
+      setResetPasswordError('Failed to reset password. Please try again.')
+    } finally {
+      setIsResettingPassword(false)
     }
   }
 
@@ -472,7 +550,7 @@ export function StaffPage({ isDarkMode, onOpenStaffDetail }: StaffPageProps) {
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={() => { setEditingStaff(null); setModalError(null); setIsAddModalOpen(true) }}
+              onClick={() => { setEditingStaff(null); setModalError(null); setProfilePhotoPreview(null); setIsAddModalOpen(true) }}
               className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white hover:bg-emerald-700 transition-all shadow-sm"
             >
               <Plus size={18} />
@@ -670,7 +748,15 @@ export function StaffPage({ isDarkMode, onOpenStaffDetail }: StaffPageProps) {
                           onView={() => onOpenStaffDetail && onOpenStaffDetail(staff.dbId)}
                           onSendEmail={() => setEmailStaff(staff)}
                           onSendSms={() => setSmsStaff(staff)}
-                          onEdit={() => { setEditingStaff(staff); setModalError(null); setIsAddModalOpen(true) }}
+                          onEdit={() => { setEditingStaff(staff); setModalError(null); setProfilePhotoPreview(staff.profilePhotoData ?? null); setIsAddModalOpen(true) }}
+                          onResetPassword={() => {
+                            const nextPassword = generateTemporaryPassword()
+                            setResetPasswordStaff(staff)
+                            setGeneratedTempPassword(nextPassword)
+                            setResetPasswordValue(nextPassword)
+                            setConfirmResetPasswordValue(nextPassword)
+                            setResetPasswordError(null)
+                          }}
                           onDelete={() => setStaffToDelete(staff)}
                         />
                       </div>
@@ -748,12 +834,12 @@ export function StaffPage({ isDarkMode, onOpenStaffDetail }: StaffPageProps) {
                   {editingStaff ? 'Edit Staff Member' : 'Add Staff Member'}
                 </h3>
                 <p className={`mt-1 text-sm font-medium ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                  {editingStaff ? 'Update staff profile details and account access.' : 'Create a new staff profile and set system permissions.'}
+                  {editingStaff ? 'Update staff profile information and account settings.' : 'Create a new staff profile and set initial account credentials.'}
                 </p>
               </div>
               <button
                 type="button"
-                onClick={() => { setIsAddModalOpen(false); setEditingStaff(null); setModalError(null) }}
+                onClick={() => { setIsAddModalOpen(false); setEditingStaff(null); setModalError(null); setProfilePhotoPreview(null) }}
                 className={`grid h-10 w-10 place-items-center rounded-xl border transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'}`}
               >
                 <X size={18} />
@@ -796,23 +882,25 @@ export function StaffPage({ isDarkMode, onOpenStaffDetail }: StaffPageProps) {
                     </div>
                   </div>
 
-                  <div className={`${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'} border-t pt-6`}>
-                    <h4 className={`mb-4 text-sm font-black uppercase tracking-wider ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Account Credentials</h4>
-                    <div className="grid gap-6 md:grid-cols-2">
-                      <div className="space-y-2 md:col-span-2">
-                        <label className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Username <span className="text-rose-500">*</span></label>
-                        <input name="username" defaultValue={editingStaff?.username ?? ''} placeholder="j.anderson" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-100 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-700 focus:border-emerald-500'}`} required />
-                      </div>
-                      <div className="space-y-2">
-                        <label className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Password <span className="text-rose-500">*</span></label>
-                        <input name="tempPassword" type="password" defaultValue={editingStaff?.tempPassword ?? ''} placeholder="Enter password" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-100 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-700 focus:border-emerald-500'}`} required />
-                      </div>
-                      <div className="space-y-2">
-                        <label className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Confirm Password <span className="text-rose-500">*</span></label>
-                        <input name="confirmPassword" type="password" placeholder="Re-enter password" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-100 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-700 focus:border-emerald-500'}`} required />
+                  {!editingStaff ? (
+                    <div className={`${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'} border-t pt-6`}>
+                      <h4 className={`mb-4 text-sm font-black uppercase tracking-wider ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Account Credentials</h4>
+                      <div className="grid gap-6 md:grid-cols-2">
+                        <div className="space-y-2 md:col-span-2">
+                          <label className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Username <span className="text-rose-500">*</span></label>
+                          <input name="username" defaultValue="" placeholder="j.anderson" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-100 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-700 focus:border-emerald-500'}`} required />
+                        </div>
+                        <div className="space-y-2">
+                          <label className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Password <span className="text-rose-500">*</span></label>
+                          <input name="tempPassword" type="password" defaultValue="" placeholder="Enter password" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-100 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-700 focus:border-emerald-500'}`} required />
+                        </div>
+                        <div className="space-y-2">
+                          <label className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Confirm Password <span className="text-rose-500">*</span></label>
+                          <input name="confirmPassword" type="password" defaultValue="" placeholder="Re-enter password" className={`h-12 w-full rounded-xl border px-4 text-sm font-medium outline-none transition-all ${isDarkMode ? 'border-zinc-700 bg-[#27272A] text-zinc-100 focus:border-emerald-500' : 'border-zinc-200 bg-white text-zinc-700 focus:border-emerald-500'}`} required />
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  ) : null}
 
                   <div className={`${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'} border-t pt-6`}>
                     <h4 className={`mb-4 text-sm font-black uppercase tracking-wider ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Profile & Status</h4>
@@ -846,7 +934,7 @@ export function StaffPage({ isDarkMode, onOpenStaffDetail }: StaffPageProps) {
               </div>
 
               <div className={`flex gap-4 border-t px-8 py-5 ${isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-100 bg-zinc-50/60'}`}>
-                <button type="button" onClick={() => { setIsAddModalOpen(false); setEditingStaff(null) }} className={`h-12 flex-1 rounded-xl border font-bold transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>Cancel</button>
+                <button type="button" onClick={() => { setIsAddModalOpen(false); setEditingStaff(null); setModalError(null); setProfilePhotoPreview(null) }} className={`h-12 flex-1 rounded-xl border font-bold transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>Cancel</button>
                 <button
                   type="submit"
                   disabled={isSavingStaff}
@@ -859,6 +947,125 @@ export function StaffPage({ isDarkMode, onOpenStaffDetail }: StaffPageProps) {
           </section>
         </div>
       )}
+
+      {resetPasswordStaff ? (
+        <div className="fixed inset-0 z-[55] flex items-center justify-center bg-zinc-950/60 p-4 backdrop-blur-sm">
+          <section className={`flex w-full max-w-xl flex-col overflow-hidden rounded-3xl border shadow-2xl ${isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-200 bg-white'}`}>
+            <div className={`flex items-start justify-between border-b px-8 py-6 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-100'}`}>
+              <div>
+                <h3 className={`text-3xl font-black ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Reset Password</h3>
+                <p className={`mt-1 text-sm font-medium ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                  Set a new password for {resetPasswordStaff.name} without exposing any existing credentials.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setResetPasswordStaff(null)
+                  setResetPasswordError(null)
+                  setGeneratedTempPassword('')
+                  setResetPasswordValue('')
+                  setConfirmResetPasswordValue('')
+                }}
+                className={`grid h-10 w-10 place-items-center rounded-xl border transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'}`}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleResetPasswordSubmit} className="flex flex-col">
+              <div className="space-y-6 px-8 py-7">
+                {resetPasswordError ? (
+                  <div className={`rounded-xl border px-4 py-3 text-sm font-semibold ${isDarkMode ? 'border-rose-500/30 bg-rose-500/10 text-rose-300' : 'border-rose-200 bg-rose-50 text-rose-600'}`}>
+                    {resetPasswordError}
+                  </div>
+                ) : null}
+
+                <div className={`rounded-2xl border p-4 ${isDarkMode ? 'border-zinc-700 bg-zinc-900/40' : 'border-zinc-200 bg-zinc-50/80'}`}>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className={`text-xs font-black uppercase tracking-[0.18em] ${isDarkMode ? 'text-zinc-500' : 'text-zinc-500'}`}>Temporary Password</p>
+                      <p className={`mt-2 font-mono text-lg font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{generatedTempPassword}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={handleGenerateResetPassword}
+                        className={`inline-flex h-11 items-center gap-2 rounded-xl border px-4 text-sm font-bold transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}
+                      >
+                        <RefreshCw size={16} />
+                        Generate
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleCopyGeneratedPassword()}
+                        className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-4 text-sm font-bold text-white shadow-lg shadow-emerald-600/30 transition-all hover:bg-emerald-700"
+                      >
+                        <Copy size={16} />
+                        Copy
+                      </button>
+                    </div>
+                  </div>
+                  <p className={`mt-3 text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                    Generate a temporary password, copy it, and share it securely with the staff member.
+                  </p>
+                </div>
+
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>New Password <span className="text-rose-500">*</span></label>
+                    <div className={`flex h-12 items-center rounded-xl border px-4 ${isDarkMode ? 'border-zinc-700 bg-[#27272A]' : 'border-zinc-200 bg-white'}`}>
+                      <Lock size={16} className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} />
+                      <input
+                        name="newPassword"
+                        type="password"
+                        value={resetPasswordValue}
+                        onChange={(event) => setResetPasswordValue(event.target.value)}
+                        placeholder="Enter new password"
+                        className={`ml-3 h-full w-full bg-transparent text-sm font-medium outline-none ${isDarkMode ? 'text-zinc-100' : 'text-zinc-700'}`}
+                        required
+                      />
+                    </div>
+                    <p className={`text-xs ${isDarkMode ? 'text-zinc-500' : 'text-zinc-500'}`}>Minimum of 8 characters.</p>
+                  </div>
+                  <div className="space-y-2">
+                    <label className={`text-sm font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Confirm New Password <span className="text-rose-500">*</span></label>
+                    <div className={`flex h-12 items-center rounded-xl border px-4 ${isDarkMode ? 'border-zinc-700 bg-[#27272A]' : 'border-zinc-200 bg-white'}`}>
+                      <KeyRound size={16} className={isDarkMode ? 'text-zinc-400' : 'text-zinc-500'} />
+                      <input
+                        name="confirmNewPassword"
+                        type="password"
+                        value={confirmResetPasswordValue}
+                        onChange={(event) => setConfirmResetPasswordValue(event.target.value)}
+                        placeholder="Confirm new password"
+                        className={`ml-3 h-full w-full bg-transparent text-sm font-medium outline-none ${isDarkMode ? 'text-zinc-100' : 'text-zinc-700'}`}
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className={`flex gap-4 border-t px-8 py-5 ${isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-100 bg-zinc-50/60'}`}>
+                <button type="button" onClick={() => {
+                  setResetPasswordStaff(null)
+                  setResetPasswordError(null)
+                  setGeneratedTempPassword('')
+                  setResetPasswordValue('')
+                  setConfirmResetPasswordValue('')
+                }} className={`h-12 flex-1 rounded-xl border font-bold transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>Cancel</button>
+                <button
+                  type="submit"
+                  disabled={isResettingPassword}
+                  className="h-12 flex-1 rounded-xl bg-amber-500 font-bold text-zinc-950 shadow-lg shadow-amber-500/30 transition-all hover:bg-amber-400"
+                >
+                  {isResettingPassword ? 'Resetting...' : 'Reset Password'}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      ) : null}
 
       {staffToDelete ? (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-zinc-950/60 p-4 backdrop-blur-sm">

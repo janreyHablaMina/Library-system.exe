@@ -1,3 +1,7 @@
+use argon2::{
+    password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
+    Argon2,
+};
 use chrono::{Duration, Local, NaiveDate, Utc};
 use lettre::{
     message::Mailbox, transport::smtp::authentication::Credentials, Message, SmtpTransport,
@@ -439,11 +443,10 @@ struct StaffRow {
     emergency_contact: Option<String>,
     employee_type: Option<String>,
     start_date: Option<String>,
-    username: Option<String>,
-    temp_password: Option<String>,
-    require_password_reset: bool,
     profile_photo_data: Option<String>,
     created_at: String,
+    username: Option<String>,
+    require_password_reset: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -487,10 +490,28 @@ struct UpdateStaffPayload {
     emergency_contact: Option<String>,
     employee_type: Option<String>,
     start_date: Option<String>,
-    username: Option<String>,
-    temp_password: Option<String>,
-    require_password_reset: bool,
     profile_photo_data: Option<String>,
+    username: Option<String>,
+    require_password_reset: bool,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ResetStaffPasswordPayload {
+    id: i64,
+    new_password: String,
+    require_password_reset: Option<bool>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ActivityLogRow {
+    id: i64,
+    actor: String,
+    action: String,
+    target: String,
+    module: String,
+    created_at: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -704,6 +725,14 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
         automatic_key TEXT UNIQUE,
         message_body TEXT,
         FOREIGN KEY(borrow_transaction_id) REFERENCES borrow_transactions(id) ON DELETE SET NULL
+      );
+      CREATE TABLE IF NOT EXISTS activity_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        actor TEXT NOT NULL,
+        action TEXT NOT NULL,
+        target TEXT NOT NULL,
+        module TEXT NOT NULL,
+        created_at TEXT NOT NULL
       );
       CREATE TABLE IF NOT EXISTS inbox_messages (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1048,6 +1077,51 @@ fn setting_i64(conn: &Connection, key: &str, default_value: i64) -> i64 {
 
 fn hash_password_reset_secret(secret: &str) -> String {
     format!("{:x}", Sha256::digest(secret.as_bytes()))
+}
+
+fn hash_password(password: &str) -> Result<String, String> {
+    let salt = SaltString::generate(&mut argon2::password_hash::rand_core::OsRng);
+    Argon2::default()
+        .hash_password(password.as_bytes(), &salt)
+        .map(|hash| hash.to_string())
+        .map_err(|e| format!("password hashing failed: {e}"))
+}
+
+fn verify_password(password: &str, stored_value: &str) -> bool {
+    if let Ok(parsed_hash) = PasswordHash::new(stored_value) {
+        return Argon2::default()
+            .verify_password(password.as_bytes(), &parsed_hash)
+            .is_ok();
+    }
+
+    stored_value == password
+}
+
+fn append_activity_log(
+    conn: &Connection,
+    actor: &str,
+    action: &str,
+    target: &str,
+    module: &str,
+) -> Result<(), String> {
+    conn.execute(
+        "
+        INSERT INTO activity_logs (actor, action, target, module, created_at)
+        VALUES (?1, ?2, ?3, ?4, ?5)
+        ",
+        params![actor, action, target, module, Utc::now().to_rfc3339()],
+    )
+    .map_err(|e| format!("append activity log failed: {e}"))?;
+    Ok(())
+}
+
+fn get_active_session_username(conn: &Connection) -> Option<String> {
+    conn.query_row(
+        "SELECT username FROM sessions WHERE is_active = 1 ORDER BY id DESC LIMIT 1",
+        [],
+        |row| row.get::<_, String>(0),
+    )
+    .ok()
 }
 
 fn generate_password_reset_code() -> String {
@@ -1589,6 +1663,7 @@ fn create_system_user(
     if password.len() < 8 {
         return Err("password must be at least 8 characters".to_string());
     }
+    let password_hash = hash_password(password)?;
 
     conn
     .execute(
@@ -1598,7 +1673,7 @@ fn create_system_user(
       ",
       params![
         username,
-        password,
+        password_hash,
         role,
         if payload.is_active { 1 } else { 0 },
         Utc::now().to_rfc3339(),
@@ -1666,9 +1741,10 @@ fn reset_system_user_password(
     if password.len() < 8 {
         return Err("new password must be at least 8 characters".to_string());
     }
+    let password_hash = hash_password(password)?;
     conn.execute(
         "UPDATE users SET password = ?1 WHERE id = ?2",
-        params![password, id],
+        params![password_hash, id],
     )
     .map_err(|e| format!("reset system user password failed: {e}"))?;
     Ok(())
@@ -1705,6 +1781,45 @@ fn list_settings_activity(
 
     rows.collect::<Result<Vec<_>, _>>()
         .map_err(|e| format!("collect settings activity failed: {e}"))
+}
+
+#[tauri::command]
+fn list_activity_logs(
+    app: tauri::AppHandle,
+    target: Option<String>,
+    limit: Option<i64>,
+) -> Result<Vec<ActivityLogRow>, String> {
+    let conn = open_db(&database_path(&app)?)?;
+    init_schema(&conn)?;
+    let max_rows = limit.unwrap_or(50).clamp(1, 500);
+    let target_filter = target.unwrap_or_default();
+    let mut stmt = conn
+        .prepare(
+            "
+            SELECT id, actor, action, target, module, created_at
+            FROM activity_logs
+            WHERE (?1 = '' OR LOWER(target) = LOWER(?1))
+            ORDER BY datetime(created_at) DESC, id DESC
+            LIMIT ?2
+            ",
+        )
+        .map_err(|e| format!("prepare activity logs query failed: {e}"))?;
+
+    let rows = stmt
+        .query_map(params![target_filter, max_rows], |row| {
+            Ok(ActivityLogRow {
+                id: row.get(0)?,
+                actor: row.get(1)?,
+                action: row.get(2)?,
+                target: row.get(3)?,
+                module: row.get(4)?,
+                created_at: row.get(5)?,
+            })
+        })
+        .map_err(|e| format!("list activity logs failed: {e}"))?;
+
+    rows.collect::<Result<Vec<_>, _>>()
+        .map_err(|e| format!("collect activity logs failed: {e}"))
 }
 
 #[tauri::command]
@@ -3338,9 +3453,13 @@ fn create_staff(
     if !matches!(role, "Administrator" | "Librarian") {
         return Err("Staff role must be Administrator or Librarian.".to_string());
     }
+    if temp_password.len() < 8 {
+        return Err("password must be at least 8 characters".to_string());
+    }
 
     let conn = open_db(&database_path(&app)?)?;
     init_schema(&conn)?;
+    let password_hash = hash_password(temp_password)?;
 
     let staff_code = payload
         .staff_code
@@ -3369,7 +3488,7 @@ fn create_staff(
         payload.employee_type.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
         payload.start_date.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
         username,
-        temp_password,
+        password_hash,
         if payload.require_password_reset.unwrap_or(true) { 1 } else { 0 },
         payload.profile_photo_data,
         Utc::now().to_rfc3339(),
@@ -3455,7 +3574,7 @@ fn list_staff(app: tauri::AppHandle, limit: Option<i64>) -> Result<Vec<StaffRow>
     .prepare(
       "
       SELECT id, staff_code, full_name, email, role, branch, status, phone, emergency_contact,
-             employee_type, start_date, username, temp_password, require_password_reset, profile_photo_data, created_at
+             employee_type, start_date, profile_photo_data, created_at, username, require_password_reset
       FROM staff_members
       ORDER BY id DESC
       LIMIT ?1
@@ -3477,11 +3596,10 @@ fn list_staff(app: tauri::AppHandle, limit: Option<i64>) -> Result<Vec<StaffRow>
                 emergency_contact: row.get(8)?,
                 employee_type: row.get(9)?,
                 start_date: row.get(10)?,
-                username: row.get(11)?,
-                temp_password: row.get(12)?,
-                require_password_reset: row.get::<_, i64>(13)? == 1,
-                profile_photo_data: row.get(14)?,
-                created_at: row.get(15)?,
+                profile_photo_data: row.get(11)?,
+                created_at: row.get(12)?,
+                username: row.get(13)?,
+                require_password_reset: row.get::<_, i64>(14)? == 1,
             })
         })
         .map_err(|e| format!("list staff failed: {e}"))?;
@@ -3529,10 +3647,9 @@ fn update_staff(app: tauri::AppHandle, payload: UpdateStaffPayload) -> Result<()
           employee_type = ?9,
           start_date = ?10,
           username = ?11,
-          temp_password = ?12,
-          require_password_reset = ?13,
-          profile_photo_data = ?14
-      WHERE id = ?15
+          require_password_reset = ?12,
+          profile_photo_data = ?13
+      WHERE id = ?14
       ",
         params![
             payload
@@ -3562,16 +3679,64 @@ fn update_staff(app: tauri::AppHandle, payload: UpdateStaffPayload) -> Result<()
                 .username
                 .map(|v| v.trim().to_string())
                 .filter(|v| !v.is_empty()),
-            payload
-                .temp_password
-                .map(|v| v.trim().to_string())
-                .filter(|v| !v.is_empty()),
             if payload.require_password_reset { 1 } else { 0 },
             payload.profile_photo_data,
             payload.id
         ],
     )
     .map_err(|e| format!("update staff failed: {e}"))?;
+    Ok(())
+}
+
+#[tauri::command]
+fn reset_staff_password(
+    app: tauri::AppHandle,
+    payload: ResetStaffPasswordPayload,
+) -> Result<(), String> {
+    let conn = open_db(&database_path(&app)?)?;
+    init_schema(&conn)?;
+
+    let new_password = payload.new_password.trim();
+    if new_password.len() < 8 {
+        return Err("new password must be at least 8 characters".to_string());
+    }
+
+    let (full_name, role): (String, String) = conn
+        .query_row(
+            "SELECT full_name, role FROM staff_members WHERE id = ?1",
+            params![payload.id],
+            |row| Ok((row.get(0)?, row.get(1)?)),
+        )
+        .map_err(|e| format!("find staff member for password reset failed: {e}"))?;
+
+    let password_hash = hash_password(new_password)?;
+    conn.execute(
+        "
+        UPDATE staff_members
+        SET temp_password = ?1, require_password_reset = ?2
+        WHERE id = ?3
+        ",
+        params![
+            password_hash,
+            if payload.require_password_reset.unwrap_or(true) {
+                1
+            } else {
+                0
+            },
+            payload.id
+        ],
+    )
+    .map_err(|e| format!("reset staff password failed: {e}"))?;
+
+    let actor = get_active_session_username(&conn).unwrap_or_else(|| "System".to_string());
+    append_activity_log(
+        &conn,
+        &actor,
+        &format!("Reset password for {role} {full_name}"),
+        &full_name,
+        "Staff Management",
+    )?;
+
     Ok(())
 }
 
@@ -3962,38 +4127,47 @@ fn login(app: tauri::AppHandle, payload: LoginPayload) -> Result<bool, String> {
         return Ok(false);
     }
 
-    let mut stmt = conn
-        .prepare(
+    let user_account = conn
+        .query_row(
             "
-      SELECT role
-      FROM users
-      WHERE username = ?1
-        AND password = ?2
-        AND is_active = 1
-      ",
+            SELECT role, password
+            FROM users
+            WHERE username = ?1
+              AND is_active = 1
+            LIMIT 1
+            ",
+            params![username],
+            |row| Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?)),
         )
-        .map_err(|e| format!("prepare login query failed: {e}"))?;
+        .ok();
 
-    let mut role = stmt.query_row(params![username, password], |row| row.get::<_, String>(0));
+    let staff_account = if user_account.is_none() {
+        conn.query_row(
+            "
+            SELECT role, temp_password
+            FROM staff_members
+            WHERE username = ?1
+              AND status = 'Active'
+            LIMIT 1
+            ",
+            params![username],
+            |row| Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?)),
+        )
+        .ok()
+    } else {
+        None
+    };
 
-    if matches!(role, Err(rusqlite::Error::QueryReturnedNoRows)) {
-        // Fallback: check staff_members table
-        let mut staff_stmt = conn
-            .prepare(
-                "
-        SELECT role
-        FROM staff_members
-        WHERE username = ?1
-          AND temp_password = ?2
-          AND status = 'Active'
-        ",
-            )
-            .map_err(|e| format!("prepare staff login query failed: {e}"))?;
-        role = staff_stmt.query_row(params![username, password], |row| row.get::<_, String>(0));
-    }
+    let role = user_account
+        .and_then(|(role, stored_password)| verify_password(password, &stored_password).then_some(role))
+        .or_else(|| {
+            staff_account.and_then(|(role, stored_password)| {
+                verify_password(password, &stored_password).then_some(role)
+            })
+        });
 
     match role {
-        Ok(role) => {
+        Some(role) => {
             conn.execute(
                 "UPDATE sessions SET is_active = 0, logout_at = ?1 WHERE is_active = 1",
                 params![Utc::now().to_rfc3339()],
@@ -4011,8 +4185,7 @@ fn login(app: tauri::AppHandle, payload: LoginPayload) -> Result<bool, String> {
             .map_err(|e| format!("create session failed: {e}"))?;
             Ok(true)
         }
-        Err(rusqlite::Error::QueryReturnedNoRows) => Ok(false),
-        Err(e) => Err(format!("execute login query failed: {e}")),
+        None => Ok(false),
     }
 }
 
@@ -4297,6 +4470,7 @@ fn complete_password_reset(
     if new_password.len() < 8 {
         return Err("New password must be at least 8 characters.".to_string());
     }
+    let new_password_hash = hash_password(new_password)?;
     let token_hash = hash_password_reset_secret(payload.reset_token.trim());
     let (request_id, username, account_source, expires_at): (i64, String, String, String) = conn
         .query_row(
@@ -4325,12 +4499,12 @@ fn complete_password_reset(
     let updated = if account_source == "staff_members" {
         tx.execute(
             "UPDATE staff_members SET temp_password = ?1 WHERE username = ?2",
-            params![new_password, username],
+            params![new_password_hash, username],
         )
     } else {
         tx.execute(
             "UPDATE users SET password = ?1 WHERE username = ?2",
-            params![new_password, username],
+            params![new_password_hash, username],
         )
     }
     .map_err(|e| format!("update reset password failed: {e}"))?;
@@ -4367,30 +4541,29 @@ fn change_password(app: tauri::AppHandle, payload: ChangePasswordPayload) -> Res
         return Err("New password must be at least 8 characters.".to_string());
     }
 
-    let active_user = conn
+    let active_user = get_active_session_username(&conn)
+        .ok_or_else(|| "No active session found.".to_string())?;
+    let stored_password = conn
         .query_row(
-            "SELECT username FROM sessions WHERE is_active = 1 ORDER BY id DESC LIMIT 1",
-            [],
+            "SELECT password FROM users WHERE username = ?1 AND is_active = 1",
+            params![&active_user],
             |row| row.get::<_, String>(0),
         )
         .map_err(|_| "No active session found.".to_string())?;
-
-    let updated = conn
-        .execute(
-            "
-      UPDATE users
-      SET password = ?1
-      WHERE username = ?2
-        AND password = ?3
-        AND is_active = 1
-      ",
-            params![new_password, active_user, current_password],
-        )
-        .map_err(|e| format!("change password failed: {e}"))?;
-
-    if updated == 0 {
+    if !verify_password(current_password, &stored_password) {
         return Err("Current password is incorrect.".to_string());
     }
+    let new_password_hash = hash_password(new_password)?;
+    conn.execute(
+        "
+        UPDATE users
+        SET password = ?1
+        WHERE username = ?2
+          AND is_active = 1
+        ",
+        params![new_password_hash, active_user],
+    )
+    .map_err(|e| format!("change password failed: {e}"))?;
 
     conn.execute(
         "
@@ -4903,6 +5076,7 @@ pub fn run() {
             delete_system_user,
             reset_system_user_password,
             list_settings_activity,
+            list_activity_logs,
             create_book,
             list_books,
             search_books,
@@ -4934,6 +5108,7 @@ pub fn run() {
             create_staff,
             list_staff,
             update_staff,
+            reset_staff_password,
             delete_staff,
             sync_inbox,
             list_inbox_messages,
