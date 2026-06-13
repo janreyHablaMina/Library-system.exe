@@ -1465,19 +1465,19 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
         </div>
 
         <div className="space-y-5">
-          <div className={`p-5 mb-6 rounded-xl border ${isDarkMode ? 'border-indigo-500/20 bg-indigo-500/10' : 'border-indigo-100 bg-indigo-50'}`}>
+          <div className={`p-5 mb-6 rounded-xl border ${isDarkMode ? 'border-amber-500/20 bg-amber-500/10' : 'border-amber-100 bg-amber-50'}`}>
             <div className="flex items-center gap-3 mb-4">
-               <div className={`grid h-8 w-8 place-items-center rounded-lg ${isDarkMode ? 'bg-indigo-500/20 text-indigo-400' : 'bg-indigo-100 text-indigo-600'}`}>
+               <div className={`grid h-8 w-8 place-items-center rounded-lg ${isDarkMode ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600'}`}>
                  <Smartphone size={16} />
                </div>
                <div>
-                 <h3 className={`font-bold ${isDarkMode ? 'text-white' : 'text-indigo-900'}`}>Send a Test SMS</h3>
-                 <p className={`text-xs ${isDarkMode ? 'text-indigo-200/70' : 'text-indigo-600/70'}`}>Verify your TxtBox API connection.</p>
+                 <h3 className={`font-bold ${isDarkMode ? 'text-white' : 'text-amber-900'}`}>Send a Test SMS</h3>
+                 <p className={`text-xs ${isDarkMode ? 'text-amber-200/70' : 'text-amber-600/70'}`}>Verify your TxtBox API connection.</p>
                </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-3">
-              <input value={smsTestTo} onChange={(event) => setSmsTestTo(event.target.value)} placeholder="09xxxxxxxxx" className={`h-11 w-full sm:max-w-md rounded-xl border px-3 text-sm outline-none focus:border-indigo-500 ${isDarkMode ? 'bg-zinc-900/50 border-indigo-500/30 text-white' : 'bg-white border-indigo-200 text-zinc-900'}`} />
-              <button type="button" onClick={() => void handleTestSms()} className="inline-flex h-11 whitespace-nowrap items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-bold text-white hover:bg-indigo-700 shrink-0 shadow-sm">
+              <input value={smsTestTo} onChange={(event) => setSmsTestTo(event.target.value)} placeholder="09xxxxxxxxx" className={`h-11 w-full sm:max-w-md rounded-xl border px-3 text-sm outline-none focus:border-amber-500 ${isDarkMode ? 'bg-zinc-900/50 border-amber-500/30 text-white' : 'bg-white border-amber-200 text-zinc-900'}`} />
+              <button type="button" onClick={() => void handleTestSms()} className="inline-flex h-11 whitespace-nowrap items-center justify-center gap-2 rounded-xl bg-amber-600 px-5 text-sm font-bold text-white hover:bg-amber-700 shrink-0 shadow-sm">
                 <Send size={16} /> Send Test
               </button>
             </div>
@@ -1486,23 +1486,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
             ) : null}
           </div>
 
-          <div className={`flex items-center justify-between rounded-xl border p-4 ${inputClass}`}>
-            <div>
-              <p className={`text-sm font-bold ${labelClass}`}>Enable SMS Notifications</p>
-              <p className={`text-xs ${subLabelClass}`}>{smsEnabled ? 'Enabled' : 'Disabled'}</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                const next = !smsEnabled
-                setSmsEnabled(next)
-                void saveSmsSetting('sms.enabled', String(next))
-              }}
-              className={`relative h-7 w-12 rounded-full transition-colors ${smsEnabled ? 'bg-emerald-600' : isDarkMode ? 'bg-zinc-700' : 'bg-zinc-300'}`}
-            >
-              <span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-transform ${smsEnabled ? 'translate-x-5' : 'translate-x-1'}`} />
-            </button>
-          </div>
+
 
           <label className="space-y-2 block">
             <span className={`text-sm font-bold ${labelClass}`}>TxtBox API Key</span>
