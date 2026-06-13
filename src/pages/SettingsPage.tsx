@@ -1403,30 +1403,6 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
           </div>
         </div>
 
-        <div className="space-y-5">
-          {[
-            { label: 'Enable Email Notifications', value: emailEnabled, setter: setEmailEnabled, key: 'email.enabled' },
-            { label: 'Enable Automatic Reminders', value: automaticReminders, setter: setAutomaticReminders, key: 'email.automatic_reminders' },
-          ].map((toggle) => (
-            <div key={toggle.key} className={`flex items-center justify-between rounded-xl border p-4 ${inputClass}`}>
-              <div>
-                <p className={`text-sm font-bold ${labelClass}`}>{toggle.label}</p>
-                <p className={`text-xs ${subLabelClass}`}>{toggle.value ? 'Enabled' : 'Disabled'}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  const next = !toggle.value
-                  toggle.setter(next)
-                  void saveEmailSetting(toggle.key, String(next))
-                }}
-                className={`relative h-7 w-12 rounded-full transition-colors ${toggle.value ? 'bg-emerald-600' : isDarkMode ? 'bg-zinc-700' : 'bg-zinc-300'}`}
-              >
-                <span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-transform ${toggle.value ? 'translate-x-5' : 'translate-x-1'}`} />
-              </button>
-            </div>
-          ))}
-
           <div className="grid gap-4 md:grid-cols-2">
             {[
               { label: 'Sender Name', value: senderName, setter: setSenderName, key: 'email.sender_name', placeholder: 'Library Management System' },
@@ -1449,7 +1425,6 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
               </label>
             ))}
           </div>
-        </div>
       </section>
 
       <section className={`rounded-2xl border p-6 ${cardClass}`}>
@@ -1469,67 +1444,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
         </div>
       </section>
 
-      {/* SMS Configuration Section */}
-      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr] mt-6">
-        <section className={`rounded-2xl border p-6 ${cardClass}`}>
-          <div className="mb-6 flex items-center gap-4">
-            <div className={`grid h-12 w-12 place-items-center rounded-2xl ${iconBoxBg}`}><Smartphone size={24} /></div>
-            <div>
-              <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>SMS Configuration</h3>
-              <p className={`text-sm ${subLabelClass}`}>Configure the TxtBox API used for sending text messages.</p>
-            </div>
-          </div>
 
-          <div className="space-y-5">
-            <div className={`flex items-center justify-between rounded-xl border p-4 ${inputClass}`}>
-              <div>
-                <p className={`text-sm font-bold ${labelClass}`}>Enable SMS Notifications</p>
-                <p className={`text-xs ${subLabelClass}`}>{smsEnabled ? 'Enabled' : 'Disabled'}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  const next = !smsEnabled
-                  setSmsEnabled(next)
-                  void saveSmsSetting('sms.enabled', String(next))
-                }}
-                className={`relative h-7 w-12 rounded-full transition-colors ${smsEnabled ? 'bg-emerald-600' : isDarkMode ? 'bg-zinc-700' : 'bg-zinc-300'}`}
-              >
-                <span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-transform ${smsEnabled ? 'translate-x-5' : 'translate-x-1'}`} />
-              </button>
-            </div>
-
-            <label className="space-y-2 block">
-              <span className={`text-sm font-bold ${labelClass}`}>TxtBox API Key</span>
-              <input
-                type="password"
-                value={txtboxApiKey}
-                onChange={(event) => setTxtboxApiKey(event.target.value)}
-                onBlur={() => void saveSmsSetting('sms.txtbox_api_key', txtboxApiKey)}
-                placeholder="TxtBox API Key"
-                className={`h-11 w-full rounded-xl border px-3 text-sm outline-none focus:border-emerald-500 ${inputClass}`}
-              />
-            </label>
-          </div>
-        </section>
-
-        <section className={`rounded-2xl border p-6 ${cardClass}`}>
-          <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Test SMS</h3>
-          <p className={`mt-1 text-sm ${subLabelClass}`}>Send a quick test SMS using the current configuration.</p>
-          <div className="mt-5 space-y-3">
-            <label className="space-y-2 block">
-              <span className={`text-sm font-bold ${labelClass}`}>Recipient Phone Number</span>
-              <input value={smsTestTo} onChange={(event) => setSmsTestTo(event.target.value)} placeholder="09xxxxxxxxx" className={`h-11 w-full rounded-xl border px-3 text-sm outline-none focus:border-emerald-500 ${inputClass}`} />
-            </label>
-            <button type="button" onClick={() => void handleTestSms()} className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#059669] px-5 text-sm font-bold text-white hover:bg-emerald-700">
-              <Send size={16} /> Test SMS
-            </button>
-            {smsTestStatus.message ? (
-              <p className={`text-sm font-semibold ${smsTestStatus.type === 'success' ? 'text-emerald-600' : 'text-rose-500'}`}>{smsTestStatus.message}</p>
-            ) : null}
-          </div>
-        </section>
-      </div>
     </div>
   )
 
@@ -1546,24 +1461,6 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
         </div>
 
         <div className="space-y-5">
-          <div className={`flex items-center justify-between rounded-xl border p-4 ${inputClass}`}>
-            <div>
-              <p className={`text-sm font-bold ${labelClass}`}>Enable SMS Notifications</p>
-              <p className={`text-xs ${subLabelClass}`}>{smsEnabled ? 'Enabled' : 'Disabled'}</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                const next = !smsEnabled
-                setSmsEnabled(next)
-                void saveSmsSetting('sms.enabled', String(next))
-              }}
-              className={`relative h-7 w-12 rounded-full transition-colors ${smsEnabled ? 'bg-emerald-600' : isDarkMode ? 'bg-zinc-700' : 'bg-zinc-300'}`}
-            >
-              <span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-transform ${smsEnabled ? 'translate-x-5' : 'translate-x-1'}`} />
-            </button>
-          </div>
-
           <label className="space-y-2 block">
             <span className={`text-sm font-bold ${labelClass}`}>TxtBox API Key</span>
             <input
@@ -1740,22 +1637,6 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
               tab: 'Library Profile',
               color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10'
             },
-            { 
-              title: 'Users & Roles', 
-              desc: 'Add users, set roles and manage permissions across the system.', 
-              icon: UsersRound, 
-              btnText: 'Manage Access', 
-              tab: 'Users & Roles',
-              color: 'text-violet-500 bg-violet-50 dark:bg-violet-500/10'
-            },
-            { 
-              title: 'Account Security', 
-              desc: 'Change your password and view login trail to keep your account secure.', 
-              icon: ShieldCheck, 
-              btnText: 'Manage Security', 
-              tab: 'Account Security',
-              color: 'text-blue-500 bg-blue-50 dark:bg-blue-500/10'
-            },
             {
               title: 'Email Configuration',
               desc: 'Set up SMTP, automatic reminders and test outgoing library emails.',
@@ -1771,14 +1652,6 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
               btnText: 'Configure SMS',
               tab: 'SMS Configuration',
               color: 'text-indigo-500 bg-indigo-50 dark:bg-indigo-500/10'
-            },
-            {
-              title: 'Email Logs',
-              desc: 'Review sent, failed and pending reminder emails.',
-              icon: History,
-              btnText: 'View Logs',
-              tab: 'Email Logs',
-              color: 'text-amber-500 bg-amber-50 dark:bg-amber-500/10'
             }
           ].map((card) => (
             <section key={card.title} className={`flex flex-col rounded-2xl border p-6 transition-all duration-300 hover:shadow-lg ${cardClass}`}>
