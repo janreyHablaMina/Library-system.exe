@@ -890,7 +890,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
         <section className={`rounded-2xl border p-6 ${cardClass}`}>
           <div className="mb-6">
             <h3 className={`text-lg font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>System Preferences</h3>
-            <p className={`mt-1 text-sm ${subLabelClass}`}>Basic notification behavior for library operations.</p>
+            <p className={`mt-1 text-sm ${subLabelClass}`}>Control automatic email and reservation behavior for library operations.</p>
           </div>
 
           <button
@@ -906,7 +906,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
           >
             <div>
               <p className={`text-sm font-bold ${labelClass}`}>Email Notifications</p>
-              <p className={`mt-1 text-xs ${subLabelClass}`}>{notifications ? 'Enabled for general notices.' : 'Disabled for general notices.'}</p>
+              <p className={`mt-1 text-xs ${subLabelClass}`}>{notifications ? 'Enabled for automatic email notifications.' : 'Disabled for automatic email notifications.'}</p>
             </div>
             <span className={`inline-flex h-6 w-11 items-center rounded-full p-1 transition-colors ${notifications ? 'bg-emerald-600' : isDarkMode ? 'bg-zinc-700' : 'bg-zinc-200'}`}>
               <span className={`h-4 w-4 rounded-full bg-white transition-transform ${notifications ? 'translate-x-5' : 'translate-x-0'}`} />

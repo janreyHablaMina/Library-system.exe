@@ -1454,6 +1454,11 @@ fn send_email_from_settings(
     Ok(())
 }
 
+fn automatic_email_notifications_enabled(conn: &Connection) -> bool {
+    setting_bool(conn, "email.enabled", false)
+        && setting_bool(conn, "general.email_notifications", true)
+}
+
 fn send_reminder_for_transaction(
     conn: &Connection,
     transaction_id: i64,
@@ -2950,6 +2955,7 @@ fn notify_next_reservation(
     .map_err(|e| format!("notify reservation failed: {e}"))?;
 
     if notify_email
+        && automatic_email_notifications_enabled(conn)
         && setting_bool(conn, "reservations.send_email_notifications", true)
         && email
             .as_deref()
@@ -3827,7 +3833,7 @@ fn send_manual_email_reminder(
 fn run_automatic_email_reminders(app: tauri::AppHandle) -> Result<i64, String> {
     let conn = open_db(&database_path(&app)?)?;
     init_schema(&conn)?;
-    if !setting_bool(&conn, "email.enabled", false)
+    if !automatic_email_notifications_enabled(&conn)
         || !setting_bool(&conn, "email.automatic_reminders", false)
     {
         return Ok(0);
