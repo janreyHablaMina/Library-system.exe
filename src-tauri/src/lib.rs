@@ -988,6 +988,8 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
         ("reservations.auto_notify_next_user", "true"),
         ("reservations.auto_expire_unclaimed", "true"),
         ("reservations.send_email_notifications", "true"),
+        ("reservations.send_sms_notifications", "true"),
+        ("general.sms_notifications", "true"),
     ] {
         conn.execute(
             "
@@ -1457,6 +1459,11 @@ fn send_email_from_settings(
 fn automatic_email_notifications_enabled(conn: &Connection) -> bool {
     setting_bool(conn, "email.enabled", false)
         && setting_bool(conn, "general.email_notifications", true)
+}
+
+fn automatic_sms_notifications_enabled(conn: &Connection) -> bool {
+    setting_bool(conn, "sms.enabled", false)
+        && setting_bool(conn, "general.sms_notifications", true)
 }
 
 fn send_reminder_for_transaction(
@@ -2912,7 +2919,7 @@ fn notify_next_reservation(
 
     let next = conn.query_row(
         "
-        SELECT r.id, r.member_id, m.full_name, m.email, b.title, r.notify_email
+        SELECT r.id, r.member_id, m.full_name, m.email, m.contact_number, b.title, r.notify_email, r.notify_sms
         FROM reservations r
         INNER JOIN members m ON m.id = r.member_id
         INNER JOIN books b ON b.id = r.book_id
@@ -2927,12 +2934,14 @@ fn notify_next_reservation(
                 row.get::<_, i64>(1)?,
                 row.get::<_, String>(2)?,
                 row.get::<_, Option<String>>(3)?,
-                row.get::<_, String>(4)?,
-                row.get::<_, i64>(5)? == 1,
+                row.get::<_, Option<String>>(4)?,
+                row.get::<_, String>(5)?,
+                row.get::<_, i64>(6)? == 1,
+                row.get::<_, i64>(7)? == 1,
             ))
         },
     );
-    let (reservation_id, _member_id, member_name, email, book_title, notify_email) = match next {
+    let (reservation_id, _member_id, member_name, email, phone_number, book_title, notify_email, notify_sms) = match next {
         Ok(value) => value,
         Err(rusqlite::Error::QueryReturnedNoRows) => return Ok(false),
         Err(e) => return Err(format!("find next reservation failed: {e}")),
@@ -2991,6 +3000,42 @@ fn notify_next_reservation(
                 Some(&automatic_key),
             )?,
         }
+    }
+    if notify_sms
+        && automatic_sms_notifications_enabled(conn)
+        && setting_bool(conn, "reservations.send_sms_notifications", true)
+        && phone_number
+            .as_deref()
+            .is_some_and(|value| !value.trim().is_empty())
+    {
+        let recipient = phone_number.unwrap_or_default();
+        let message = format!(
+            "Hello {member_name}, your reserved book \"{book_title}\" is ready for pickup. Please claim it before {claim_expires_at}."
+        );
+        let sms_result = tauri::async_runtime::block_on(send_sms_txtbox(
+            &conn
+                .query_row(
+                    "SELECT value FROM settings WHERE key = 'sms.txtbox_api_key'",
+                    [],
+                    |row| row.get::<_, String>(0),
+                )
+                .unwrap_or_default(),
+            &recipient,
+            &message,
+        ));
+
+        match sms_result {
+            Ok(()) => conn.execute(
+                "INSERT INTO sms_logs (borrower_name, phone_number, book_title, sms_type, status, sent_at, error_message, message_body) VALUES (?1, ?2, ?3, ?4, ?5, datetime('now', 'localtime'), ?6, ?7)",
+                params![member_name, recipient, book_title, "Reservation Ready", "Sent", "", message],
+            )
+            .map_err(|e| format!("log reservation sms success failed: {e}"))?,
+            Err(error) => conn.execute(
+                "INSERT INTO sms_logs (borrower_name, phone_number, book_title, sms_type, status, sent_at, error_message, message_body) VALUES (?1, ?2, ?3, ?4, ?5, datetime('now', 'localtime'), ?6, ?7)",
+                params![member_name, recipient, book_title, "Reservation Ready", "Failed", error, message],
+            )
+            .map_err(|e| format!("log reservation sms failure failed: {e}"))?,
+        };
     }
     recalculate_reservation_positions(conn, Some(book_id))?;
     emit_notifications_refresh(app);

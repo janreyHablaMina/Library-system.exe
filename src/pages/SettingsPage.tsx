@@ -194,6 +194,12 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
   const [autoNotifyNextUser, setAutoNotifyNextUser] = useState(true)
   const [autoExpireUnclaimed, setAutoExpireUnclaimed] = useState(true)
   const [reservationEmailNotifications, setReservationEmailNotifications] = useState(true)
+  const [overdueEmails, setOverdueEmails] = useState(true)
+  const [borrowReceiptEmails, setBorrowReceiptEmails] = useState(true)
+  const [smsNotifications, setSmsNotifications] = useState(false)
+  const [reservationSmsNotifications, setReservationSmsNotifications] = useState(false)
+  const [overdueSms, setOverdueSms] = useState(false)
+  const [borrowReceiptSms, setBorrowReceiptSms] = useState(false)
   const [libraryName, setLibraryName] = useState('City Central School Library')
   const [libraryContactNumber, setLibraryContactNumber] = useState('(02) 8123-4567')
   const [libraryEmail, setLibraryEmail] = useState('library@citycentralschool.edu.ph')
@@ -887,60 +893,146 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
           </div>
         </section>
 
-        <section className={`rounded-2xl border p-6 ${cardClass}`}>
+        <section className={`rounded-2xl border p-6 flex flex-col ${cardClass}`}>
           <div className="mb-6">
             <h3 className={`text-lg font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>System Preferences</h3>
-            <p className={`mt-1 text-sm ${subLabelClass}`}>Control automatic email and reservation behavior for library operations.</p>
+            <p className={`mt-1 text-sm ${subLabelClass}`}>Control automatic email and SMS behavior for library operations.</p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              const next = !notifications
-              setNotifications(next)
-              void saveGeneralSetting('general.email_notifications', String(next))
-            }}
-            className={`flex w-full items-center justify-between rounded-xl border p-4 text-left transition-colors ${
-              isDarkMode ? 'border-zinc-700 bg-[#27272A] hover:bg-zinc-800' : 'border-zinc-200 bg-white hover:bg-zinc-50'
-            }`}
-          >
-            <div>
-              <p className={`text-sm font-bold ${labelClass}`}>Email Notifications</p>
-              <p className={`mt-1 text-xs ${subLabelClass}`}>{notifications ? 'Enabled for automatic email notifications.' : 'Disabled for automatic email notifications.'}</p>
+          <div className="mb-8 border-b border-zinc-100 pb-8 dark:border-zinc-800">
+            <h4 className={`mb-4 text-xs font-bold tracking-wider uppercase ${subLabelClass}`}>Reservation Rules</h4>
+            <div className="grid gap-4 md:grid-cols-1">
+              {[
+                { label: 'Enable Reservation Queue', helper: 'Allow multiple members to line up for the same book.', value: reservationQueueEnabled, setter: setReservationQueueEnabled, key: 'reservations.enable_queue' },
+                { label: 'Auto Notify Next User', helper: 'Promote the first queued member when a copy is available.', value: autoNotifyNextUser, setter: setAutoNotifyNextUser, key: 'reservations.auto_notify_next_user' },
+                { label: 'Auto Expire Unclaimed', helper: 'Move to the next member after the claim deadline.', value: autoExpireUnclaimed, setter: setAutoExpireUnclaimed, key: 'reservations.auto_expire_unclaimed' },
+              ].map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => {
+                    const next = !item.value
+                    item.setter(next)
+                    void saveGeneralSetting(item.key, String(next))
+                  }}
+                  className={`flex w-full items-center justify-between rounded-xl border p-4 text-left transition-colors ${
+                    isDarkMode ? 'border-zinc-700 bg-[#27272A] hover:bg-zinc-800' : 'border-zinc-200 bg-white hover:bg-zinc-50'
+                  }`}
+                >
+                  <div>
+                    <p className={`text-sm font-bold ${labelClass}`}>{item.label}</p>
+                    <p className={`mt-1 text-xs ${subLabelClass}`}>{item.helper}</p>
+                  </div>
+                  <span className={`inline-flex h-6 w-11 shrink-0 items-center rounded-full p-1 transition-colors ${item.value ? 'bg-emerald-600' : isDarkMode ? 'bg-zinc-700' : 'bg-zinc-200'}`}>
+                    <span className={`h-4 w-4 rounded-full bg-white transition-transform ${item.value ? 'translate-x-5' : 'translate-x-0'}`} />
+                  </span>
+                </button>
+              ))}
             </div>
-            <span className={`inline-flex h-6 w-11 items-center rounded-full p-1 transition-colors ${notifications ? 'bg-emerald-600' : isDarkMode ? 'bg-zinc-700' : 'bg-zinc-200'}`}>
-              <span className={`h-4 w-4 rounded-full bg-white transition-transform ${notifications ? 'translate-x-5' : 'translate-x-0'}`} />
-            </span>
-          </button>
+          </div>
 
-          <div className="mt-3 space-y-3">
-            {[
-              { label: 'Enable Reservation Queue', helper: 'Allow multiple members to line up for the same book.', value: reservationQueueEnabled, setter: setReservationQueueEnabled, key: 'reservations.enable_queue' },
-              { label: 'Auto Notify Next User', helper: 'Promote the first queued member when a copy is available.', value: autoNotifyNextUser, setter: setAutoNotifyNextUser, key: 'reservations.auto_notify_next_user' },
-              { label: 'Auto Expire Unclaimed', helper: 'Move to the next member after the claim deadline.', value: autoExpireUnclaimed, setter: setAutoExpireUnclaimed, key: 'reservations.auto_expire_unclaimed' },
-              { label: 'Reservation Emails', helper: 'Send ready-for-pickup email notifications.', value: reservationEmailNotifications, setter: setReservationEmailNotifications, key: 'reservations.send_email_notifications' },
-            ].map((item) => (
+          <div className="grid flex-1 gap-6 xl:grid-cols-2">
+            {/* Email Column */}
+            <div className="space-y-3">
+              <h4 className={`mb-3 text-xs font-bold tracking-wider uppercase ${subLabelClass}`}>Email Notifications</h4>
               <button
-                key={item.key}
                 type="button"
                 onClick={() => {
-                  const next = !item.value
-                  item.setter(next)
-                  void saveGeneralSetting(item.key, String(next))
+                  const next = !notifications
+                  setNotifications(next)
+                  void saveGeneralSetting('general.email_notifications', String(next))
                 }}
                 className={`flex w-full items-center justify-between rounded-xl border p-4 text-left transition-colors ${
                   isDarkMode ? 'border-zinc-700 bg-[#27272A] hover:bg-zinc-800' : 'border-zinc-200 bg-white hover:bg-zinc-50'
                 }`}
               >
                 <div>
-                  <p className={`text-sm font-bold ${labelClass}`}>{item.label}</p>
-                  <p className={`mt-1 text-xs ${subLabelClass}`}>{item.helper}</p>
+                  <p className={`text-sm font-bold ${labelClass}`}>Email Notifications</p>
+                  <p className={`mt-1 text-xs ${subLabelClass}`}>{notifications ? 'Enabled for automatic email notifications.' : 'Disabled for automatic email notifications.'}</p>
                 </div>
-                <span className={`inline-flex h-6 w-11 items-center rounded-full p-1 transition-colors ${item.value ? 'bg-emerald-600' : isDarkMode ? 'bg-zinc-700' : 'bg-zinc-200'}`}>
-                  <span className={`h-4 w-4 rounded-full bg-white transition-transform ${item.value ? 'translate-x-5' : 'translate-x-0'}`} />
+                <span className={`inline-flex h-6 w-11 shrink-0 items-center rounded-full p-1 transition-colors ${notifications ? 'bg-emerald-600' : isDarkMode ? 'bg-zinc-700' : 'bg-zinc-200'}`}>
+                  <span className={`h-4 w-4 rounded-full bg-white transition-transform ${notifications ? 'translate-x-5' : 'translate-x-0'}`} />
                 </span>
               </button>
-            ))}
+
+              {[
+                { label: 'Reservation Alerts', helper: 'Send ready-for-pickup email notifications.', value: reservationEmailNotifications, setter: setReservationEmailNotifications, key: 'reservations.send_email_notifications' },
+                { label: 'Overdue Reminders', helper: 'Send email reminders for overdue books.', value: overdueEmails, setter: setOverdueEmails, key: 'general.overdue_emails' },
+                { label: 'Borrow Receipts', helper: 'Send email receipts when a book is borrowed.', value: borrowReceiptEmails, setter: setBorrowReceiptEmails, key: 'general.borrow_receipt_emails' },
+              ].map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => {
+                    const next = !item.value
+                    item.setter(next)
+                    void saveGeneralSetting(item.key, String(next))
+                  }}
+                  className={`flex w-full items-center justify-between rounded-xl border p-4 text-left transition-colors ${
+                    isDarkMode ? 'border-zinc-700 bg-[#27272A] hover:bg-zinc-800' : 'border-zinc-200 bg-white hover:bg-zinc-50'
+                  }`}
+                >
+                  <div>
+                    <p className={`text-sm font-bold ${labelClass}`}>{item.label}</p>
+                    <p className={`mt-1 text-xs ${subLabelClass}`}>{item.helper}</p>
+                  </div>
+                  <span className={`inline-flex h-6 w-11 shrink-0 items-center rounded-full p-1 transition-colors ${item.value ? 'bg-emerald-600' : isDarkMode ? 'bg-zinc-700' : 'bg-zinc-200'}`}>
+                    <span className={`h-4 w-4 rounded-full bg-white transition-transform ${item.value ? 'translate-x-5' : 'translate-x-0'}`} />
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {/* SMS Column */}
+            <div className="space-y-3">
+              <h4 className={`mb-3 text-xs font-bold tracking-wider uppercase ${subLabelClass}`}>SMS Notifications</h4>
+              <button
+                type="button"
+                onClick={() => {
+                  const next = !smsNotifications
+                  setSmsNotifications(next)
+                  void saveGeneralSetting('general.sms_notifications', String(next))
+                }}
+                className={`flex w-full items-center justify-between rounded-xl border p-4 text-left transition-colors ${
+                  isDarkMode ? 'border-zinc-700 bg-[#27272A] hover:bg-zinc-800' : 'border-zinc-200 bg-white hover:bg-zinc-50'
+                }`}
+              >
+                <div>
+                  <p className={`text-sm font-bold ${labelClass}`}>SMS Notifications</p>
+                  <p className={`mt-1 text-xs ${subLabelClass}`}>{smsNotifications ? 'Enabled for automatic SMS notifications.' : 'Disabled for automatic SMS notifications.'}</p>
+                </div>
+                <span className={`inline-flex h-6 w-11 shrink-0 items-center rounded-full p-1 transition-colors ${smsNotifications ? 'bg-emerald-600' : isDarkMode ? 'bg-zinc-700' : 'bg-zinc-200'}`}>
+                  <span className={`h-4 w-4 rounded-full bg-white transition-transform ${smsNotifications ? 'translate-x-5' : 'translate-x-0'}`} />
+                </span>
+              </button>
+
+              {[
+                { label: 'Reservation Alerts', helper: 'Send ready-for-pickup SMS notifications.', value: reservationSmsNotifications, setter: setReservationSmsNotifications, key: 'reservations.send_sms_notifications' },
+                { label: 'Overdue Reminders', helper: 'Send SMS reminders for overdue books.', value: overdueSms, setter: setOverdueSms, key: 'general.overdue_sms' },
+                { label: 'Borrow Receipts', helper: 'Send SMS receipts when a book is borrowed.', value: borrowReceiptSms, setter: setBorrowReceiptSms, key: 'general.borrow_receipt_sms' },
+              ].map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => {
+                    const next = !item.value
+                    item.setter(next)
+                    void saveGeneralSetting(item.key, String(next))
+                  }}
+                  className={`flex w-full items-center justify-between rounded-xl border p-4 text-left transition-colors ${
+                    isDarkMode ? 'border-zinc-700 bg-[#27272A] hover:bg-zinc-800' : 'border-zinc-200 bg-white hover:bg-zinc-50'
+                  }`}
+                >
+                  <div>
+                    <p className={`text-sm font-bold ${labelClass}`}>{item.label}</p>
+                    <p className={`mt-1 text-xs ${subLabelClass}`}>{item.helper}</p>
+                  </div>
+                  <span className={`inline-flex h-6 w-11 shrink-0 items-center rounded-full p-1 transition-colors ${item.value ? 'bg-emerald-600' : isDarkMode ? 'bg-zinc-700' : 'bg-zinc-200'}`}>
+                    <span className={`h-4 w-4 rounded-full bg-white transition-transform ${item.value ? 'translate-x-5' : 'translate-x-0'}`} />
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
         </section>
       </div>
