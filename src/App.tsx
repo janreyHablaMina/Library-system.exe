@@ -282,7 +282,7 @@ function DashboardShell({ onLogout, licenseStatus, trialSeconds }: { onLogout: (
   const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [globalSearchData, setGlobalSearchData] = useState<{
     books: { id: number; title: string; author: string; cover: string | null; category: string | null; available: boolean }[]
-    members: { id: number; fullName: string; memberId: string }[]
+    members: { id: number; fullName: string; memberId: string; profilePhotoData: string | null }[]
     authors: { id: number; name: string; profilePhotoData: string | null }[]
   }>({ books: [], members: [], authors: [] })
 
@@ -305,7 +305,7 @@ function DashboardShell({ onLogout, licenseStatus, trialSeconds }: { onLogout: (
           if (mounted) {
             setGlobalSearchData({
               books: books.map(b => ({ id: b.id, title: b.title, author: b.author, cover: b.coverData || '📖', category: b.category, available: b.available })),
-              members: members.map(m => ({ id: m.id, fullName: m.fullName, memberId: m.memberId })),
+              members: members.map(m => ({ id: m.id, fullName: m.fullName, memberId: m.memberId, profilePhotoData: m.profilePhotoData })),
               authors: authors.map(a => ({ id: a.id, name: a.name, profilePhotoData: a.profilePhotoData }))
             })
           }
@@ -1076,7 +1076,7 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
                                   <button
                                     key={`member-${m.id}`}
                                     type="button"
-                                    className={`w-full text-left px-4 py-2 text-sm flex flex-col transition-colors ${isDarkMode ? 'hover:bg-zinc-800/60' : 'hover:bg-zinc-50'}`}
+                                    className={`w-full text-left px-4 py-2 text-sm flex gap-3 items-center transition-colors ${isDarkMode ? 'hover:bg-zinc-800/60' : 'hover:bg-zinc-50'}`}
                                     onClick={() => {
                                       setIsSearchFocused(false);
                                       setSearchQuery('');
@@ -1086,8 +1086,19 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
                                       setIsMemberDetailOpen(true);
                                     }}
                                   >
-                                    <span className={`font-semibold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{m.fullName}</span>
-                                    <span className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>ID: {m.memberId}</span>
+                                    <span className={`grid h-8 w-8 place-items-center overflow-hidden rounded-full shrink-0 ${isDarkMode ? 'bg-zinc-800' : 'bg-zinc-100'}`}>
+                                      {m.profilePhotoData ? (
+                                        <img src={m.profilePhotoData} alt={`${m.fullName} profile`} className="h-full w-full object-cover" />
+                                      ) : (
+                                        <span className={`text-xs font-bold ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                                          {m.fullName.trim().slice(0, 1).toUpperCase()}
+                                        </span>
+                                      )}
+                                    </span>
+                                    <span className="min-w-0">
+                                      <span className={`block truncate font-semibold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{m.fullName}</span>
+                                      <span className={`block text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>ID: {m.memberId}</span>
+                                    </span>
                                   </button>
                                 ))}
                               </div>
@@ -1862,7 +1873,7 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
                   <button type="button" onClick={() => setActivePage('Notifications')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all &rarr;</button>
                 </div>
                 <div className="space-y-0">
-                  {notifications.slice(0, 6).map((item, idx) => {
+                  {notifications.slice(0, 4).map((item, idx) => {
                     const dt = new Date(item.createdAt)
                     const dateText = Number.isNaN(dt.getTime()) ? '-' : dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
                     const timeText = Number.isNaN(dt.getTime()) ? '-' : dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
@@ -1870,7 +1881,7 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
                       <div
                         key={item.id}
                         className={`-mx-4 grid grid-cols-[1fr_auto] items-start gap-2 px-4 py-2.5 transition-colors duration-150 hover:bg-zinc-50 ${
-                          idx < Math.min(6, notifications.length) - 1 ? 'border-b border-zinc-100' : ''
+                          idx < Math.min(4, notifications.length) - 1 ? 'border-b border-zinc-100' : ''
                         }`}
                       >
                         <div>
