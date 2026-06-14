@@ -33,10 +33,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="px-4 mt-4">
           <button
             onClick={() => setActivePage('Dashboard')}
-            className={`group flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200 ${
+            className={`group flex w-full items-center gap-3 py-3 rounded-r-xl transition-all duration-200 ${
               activePage === 'Dashboard'
-                ? 'bg-emerald-600/20 text-emerald-400 shadow-[inset_0_0_12px_rgba(16,185,129,0.1)]'
-                : 'text-zinc-400 hover:bg-zinc-800/50 hover:text-emerald-300'
+                ? 'border-l-[3px] border-emerald-500 bg-emerald-500/10 text-emerald-400 pl-[13px] pr-4 shadow-[inset_0_0_12px_rgba(16,185,129,0.05)]'
+                : 'border-l-[3px] border-transparent text-zinc-400 hover:bg-zinc-800/50 hover:text-emerald-300 pl-[13px] pr-4'
             }`}
           >
             {React.createElement(navItems[0].icon, { 
@@ -61,10 +61,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <button
                   key={item.id}
                   onClick={() => setActivePage(item.id)}
-                  className={`group flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200 ${
+                  className={`group flex w-full items-center gap-3 py-3 rounded-r-xl transition-all duration-200 ${
                     activePage === item.id
-                      ? 'bg-emerald-600/20 text-emerald-400 shadow-[inset_0_0_12px_rgba(16,185,129,0.1)]'
-                      : 'text-zinc-400 hover:bg-zinc-800/50 hover:text-emerald-300'
+                      ? 'border-l-[3px] border-emerald-500 bg-emerald-500/10 text-emerald-400 pl-[13px] pr-4 shadow-[inset_0_0_12px_rgba(16,185,129,0.05)]'
+                      : 'border-l-[3px] border-transparent text-zinc-400 hover:bg-zinc-800/50 hover:text-emerald-300 pl-[13px] pr-4'
                   }`}
                 >
                   <item.icon size={20} className={activePage === item.id ? 'text-emerald-400' : ''} />
@@ -87,10 +87,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 setActivePage('Settings');
                 setActiveSettingsTab('Overview');
               }}
-              className={`group flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200 ${
+              className={`group flex w-full items-center gap-3 py-3 rounded-r-xl transition-all duration-200 ${
                 activePage === 'Settings'
-                  ? 'bg-emerald-600/20 text-emerald-400 shadow-[inset_0_0_12px_rgba(16,185,129,0.1)]'
-                  : 'text-zinc-400 hover:bg-zinc-800/50 hover:text-emerald-300'
+                  ? 'border-l-[3px] border-emerald-500 bg-emerald-500/10 text-emerald-400 pl-[13px] pr-4 shadow-[inset_0_0_12px_rgba(16,185,129,0.05)]'
+                  : 'border-l-[3px] border-transparent text-zinc-400 hover:bg-zinc-800/50 hover:text-emerald-300 pl-[13px] pr-4'
               }`}
             >
               <Settings2 size={20} className={activePage === 'Settings' ? 'text-emerald-400' : ''} />

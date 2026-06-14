@@ -6,7 +6,7 @@ import { SendSmsModal } from '../components/modals/SendSmsModal'
 import { AlertTriangle, Mail, ChevronDown, ChevronLeft, ChevronRight, Download, Eye, Grid2x2, List, MoreHorizontal, Pencil, Phone, RotateCcw, Search, Trash2, UserPlus, Users, X } from 'lucide-react'
 import { createMember, listMembers, type Member } from '../lib/tauriApi'
 
-type MemberType = 'Student' | 'Teacher' | 'Staff' | 'Visitor'
+type MemberType = 'Student' | 'Teacher' | 'Staff'
 type MemberStatus = 'Active' | 'Suspended' | 'Inactive'
 
 type MemberRow = {
@@ -255,7 +255,7 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
 
-  const [activeStatTab, setActiveStatTab] = useState<'All Members' | 'Students' | 'Teachers' | 'Staff' | 'Visitors'>('All Members')
+  const [activeStatTab, setActiveStatTab] = useState<'All Members' | 'Students' | 'Teachers' | 'Staff'>('All Members')
 
   useEffect(() => {
     setCurrentPage(1)
@@ -267,10 +267,10 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
   }, [memberList])
 
   const toMemberRow = (member: Member): MemberRow => {
-    const memberType = member.memberType as MemberType
-    const safeType: MemberType = ['Student', 'Teacher', 'Staff', 'Visitor'].includes(memberType)
-      ? memberType
-      : 'Visitor'
+    const memberType = member.memberType
+    const safeType: MemberType = ['Student', 'Teacher', 'Staff'].includes(memberType)
+      ? (memberType as MemberType)
+      : 'Student'
     const memberStatus = member.status as MemberStatus
     const safeStatus: MemberStatus = ['Active', 'Suspended', 'Inactive'].includes(memberStatus)
       ? memberStatus
@@ -322,7 +322,6 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
     if (activeStatTab === 'Students' && member.type !== 'Student') return false
     if (activeStatTab === 'Teachers' && member.type !== 'Teacher') return false
     if (activeStatTab === 'Staff' && member.type !== 'Staff') return false
-    if (activeStatTab === 'Visitors' && member.type !== 'Visitor') return false
 
     // 2. Status Dropdown
     if (selectedStatus !== 'All' && member.status !== selectedStatus) return false
@@ -700,7 +699,6 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
               { label: 'Students', value: String(memberList.filter(m => m.type === 'Student').length) },
               { label: 'Teachers', value: String(memberList.filter(m => m.type === 'Teacher').length) },
               { label: 'Staff', value: String(memberList.filter(m => m.type === 'Staff').length) },
-              { label: 'Visitors', value: String(memberList.filter(m => m.type === 'Visitor').length) },
             ].map((item) => {
               const isActive = activeStatTab === item.label
               return (
@@ -1041,7 +1039,6 @@ export function MembersPage({ isDarkMode, onOpenMemberDetail, openAddModalTrigge
                       <option value="Student">Student</option>
                       <option value="Teacher">Teacher</option>
                       <option value="Staff">Staff</option>
-                      <option value="Visitor">Visitor</option>
                     </select>
                     <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`} />
                   </div>

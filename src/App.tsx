@@ -847,7 +847,7 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
                        <button
                         key={navItems[0].id}
                         onClick={() => setActivePage(navItems[0].id as any)}
-                        className={`group flex w-full items-center gap-3 rounded-xl py-2.5 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-1' : 'px-3'} ${
+                        className={`group flex w-full items-center gap-3 rounded-r-xl py-2.5 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-1' : 'px-3'} ${
                           activePage === navItems[0].id
                             ? dashboardTheme.asideActive
                             : `${dashboardTheme.asideIdle} ${dashboardTheme.asideHover}`
@@ -877,7 +877,7 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
                           if (item.id === 'Books') setBooksInitialCategory(null)
                           if (item.id === 'Members') setMemberAddModalTrigger(0)
                         }}
-                        className={`group flex w-full items-center gap-3 rounded-xl py-2.5 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-1' : 'px-3'} ${
+                        className={`group flex w-full items-center gap-3 rounded-r-xl py-2.5 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-1' : 'px-3'} ${
                           activePage === item.id
                             ? dashboardTheme.asideActive
                             : `${dashboardTheme.asideIdle} ${dashboardTheme.asideHover}`
@@ -901,7 +901,7 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
                           setActivePage(item.id as any)
                           if (item.id === 'Members') setMemberAddModalTrigger(0)
                         }}
-                        className={`group flex w-full items-center gap-3 rounded-xl py-2.5 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-1' : 'px-3'} ${
+                        className={`group flex w-full items-center gap-3 rounded-r-xl py-2.5 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-1' : 'px-3'} ${
                           activePage === item.id
                             ? dashboardTheme.asideActive
                             : `${dashboardTheme.asideIdle} ${dashboardTheme.asideHover}`
@@ -925,7 +925,7 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
                           setActivePage(item.id as any)
                           if (item.id === 'Members') setMemberAddModalTrigger(0)
                         }}
-                        className={`group flex w-full items-center gap-3 rounded-xl py-2.5 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-1' : 'px-3'} ${
+                        className={`group flex w-full items-center gap-3 rounded-r-xl py-2.5 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-1' : 'px-3'} ${
                           activePage === item.id
                             ? dashboardTheme.asideActive
                             : `${dashboardTheme.asideIdle} ${dashboardTheme.asideHover}`
@@ -945,7 +945,7 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
                 setActivePage('Settings')
                 setActiveSettingsTab('Overview')
               }}
-              className={`group flex w-full items-center gap-3 rounded-xl py-2.5 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-1' : 'px-3'} ${
+              className={`group flex w-full items-center gap-3 rounded-r-xl py-2.5 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-1' : 'px-3'} ${
                 activePage === 'Settings'
                   ? dashboardTheme.asideActive
                   : `${dashboardTheme.asideIdle} ${dashboardTheme.asideHover}`

@@ -98,53 +98,51 @@ export function ProfilePage({ isDarkMode, activeUsername, onProfileUpdate, onOpe
   }
 
   return (
-    <div className={`min-h-0 flex-1 overflow-auto p-4 lg:p-8 ${isDarkMode ? 'bg-transparent text-zinc-100' : 'bg-[#f8fafc] text-zinc-900'}`}>
+    <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[transparent] text-zinc-100' : 'bg-[#f8fafc] text-zinc-900'}`}>
       
       <Toast message={showToast} onClose={() => setShowToast(null)} isDarkMode={isDarkMode} />
 
-      <div className="mx-auto max-w-[1200px] space-y-6">
+      <section className="p-5">
         
         {/* Header */}
-        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-8">
           <div>
-            <h1 className={`text-3xl font-black tracking-tight ${textPrimary}`}>My Profile</h1>
-            <div className="mt-2 flex items-center gap-2 text-sm font-medium">
-              <span className={textSecondary}>Dashboard</span>
-              <ChevronRight size={14} className={textSecondary} />
-              <span className={textPrimary}>My Profile</span>
-            </div>
+            <h2 className={`text-4xl font-black ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>My Profile</h2>
+            <p className={`mt-1 text-base font-medium ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Manage your account settings and personal information.</p>
           </div>
-          <div>
+          <div className="flex flex-wrap gap-2">
             {!isEditing ? (
               <button 
                 onClick={() => setIsEditing(true)}
-                className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-semibold transition-colors duration-150 ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}
+                className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white hover:bg-emerald-700 transition-all shadow-sm"
               >
-                <Pencil size={15} /> Edit Profile
+                <Pencil size={18} /> Edit Profile
               </button>
             ) : (
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2">
                 <button 
                   onClick={() => {
                     setIsEditing(false)
                     if (profile) loadProfile(profile.username) // reset
                   }}
-                  className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-semibold transition-colors duration-150 ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}
+                  className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-bold transition-colors ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}
                 >
-                  <X size={15} /> Cancel
+                  <X size={16} /> Cancel
                 </button>
                 <button 
                   onClick={handleSave}
                   disabled={isSaving}
-                  className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-semibold text-white transition-colors duration-150 hover:bg-emerald-700 disabled:opacity-70"
+                  className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white hover:bg-emerald-700 transition-all shadow-sm disabled:opacity-70 disabled:hover:bg-emerald-600"
                 >
-                  {isSaving ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" /> : <Save size={15} />}
+                  {isSaving ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" /> : <Save size={18} />}
                   Save Changes
                 </button>
               </div>
             )}
           </div>
         </header>
+
+        <div className="space-y-6">
 
         {/* Top Profile Card */}
         <div className={`flex flex-col lg:flex-row rounded-2xl border ${cardClass}`}>
@@ -340,7 +338,8 @@ export function ProfilePage({ isDarkMode, activeUsername, onProfileUpdate, onOpe
           </div>
         </div>
 
-      </div>
+        </div>
+      </section>
     </div>
   )
 }
