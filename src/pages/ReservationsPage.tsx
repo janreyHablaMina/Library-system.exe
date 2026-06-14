@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { Calendar, Clock3, CheckCircle2, XCircle, Eye, Trash2, Download, Plus, Search, ChevronDown, Filter, ChevronLeft, ChevronRight, MoreHorizontal, BookOpen, UserRound, ArrowLeft, Info, X, Check, Mail, Smartphone, Pencil, AlertTriangle, RotateCcw, Zap } from 'lucide-react'
-import { createReservation, deleteReservation, getSetting, listBooks, listMembers, listReservations, updateReservation, updateReservationStatus } from '../lib/tauriApi'
+import { createReservation, deleteReservation, getSetting, listBooks, listMembers, listReservations, updateReservation, updateReservationStatus, listCategories } from '../lib/tauriApi'
+import { DynamicBookCover } from '../components/ui/DynamicBookCover'
 import { SendEmailModal } from '../components/modals/SendEmailModal'
 import { SendSmsModal } from '../components/modals/SendSmsModal'
 
@@ -30,6 +31,7 @@ type ReservationRow = {
     isbn: string
     availableCopies: number
     totalCopies: number
+    categoryColor?: string
   }
   member: {
     name: string
@@ -80,8 +82,9 @@ type BookItem = {
   shelfLocation: string
   category: string
   publisher: string
-  coverUrl: string
+  coverUrl: string | null
   copyId: string
+  categoryColor?: string
 }
 
 type ReservationActionsMenuProps = {
@@ -387,7 +390,15 @@ function ReservationDetailsViewNew({ reservation, isDarkMode, onBack, onCheckOut
           <div className="p-5">
             <div className="flex flex-col gap-5 sm:flex-row">
               <div className={`shrink-0 rounded-xl border p-2 ${isDarkMode ? 'border-zinc-700 bg-zinc-800/50' : 'border-zinc-100 bg-zinc-50'}`}>
-                <img src={book.coverUrl || 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=150&auto=format&fit=crop&q=80'} alt={`${book.title} cover`} className="aspect-[2/3] w-full max-w-[120px] rounded-lg object-cover shadow-sm" />
+                {book.coverUrl ? (
+                  <div className="relative w-[145px] h-[195px] rounded-lg shadow-sm overflow-hidden shrink-0">
+                    <img src={book.coverUrl} alt={`${book.title} cover`} className="w-full h-full object-cover" />
+                  </div>
+                ) : (
+                  <div className="w-[145px] h-[195px] rounded-lg shadow-sm overflow-hidden shrink-0">
+                    <DynamicBookCover title={book.title} author={book.author} seed={reservation.bookId} baseColor={book.categoryColor} />
+                  </div>
+                )}
               </div>
               <div className="min-w-0 flex-1">
                 <h4 className={`text-xl font-black leading-tight ${primaryText}`}>{book.title}</h4>
@@ -692,11 +703,19 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail: _onOpenT
 
     const loadData = async () => {
       try {
-        const [bookRows, memberRows, reservationRows] = await Promise.all([
+        const [bookRows, memberRows, reservationRows, categories] = await Promise.all([
           listBooks(1000),
           listMembers(1000),
           listReservations('All', 1000),
+          listCategories(1000),
         ])
+
+        const catMap: Record<string, string> = {}
+        for (const cat of categories) {
+          if (cat.color) {
+            catMap[cat.name] = cat.color
+          }
+        }
 
         setBooks(
           bookRows.map((book) => ({
@@ -709,8 +728,9 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail: _onOpenT
             shelfLocation: book.shelfLocation || 'Central Library - Fiction Section',
             category: book.category ?? 'General',
             publisher: 'N/A',
-            coverUrl: book.coverData ?? 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=150&auto=format&fit=crop&q=80',
+            coverUrl: book.coverData ?? null,
             copyId: `BK-${String(book.id).padStart(6, '0')}`,
+            categoryColor: catMap[book.category ?? 'General'] || undefined,
           })),
         )
 
@@ -757,6 +777,7 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail: _onOpenT
               isbn: matchedBook?.isbn ?? 'Not provided',
               availableCopies: matchedBook?.available ?? 0,
               totalCopies: matchedBook?.totalCopies ?? 0,
+              categoryColor: catMap[matchedBook?.category ?? 'Uncategorized'] || undefined,
             },
             member: {
               name: reservation.memberName,
@@ -1749,7 +1770,13 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail: _onOpenT
                               }}
                               className={`flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left text-xs font-semibold transition-colors ${isDarkMode ? 'hover:bg-zinc-800' : 'hover:bg-zinc-50'}`}
                             >
-                              <img src={b.coverUrl} alt={b.title} className="w-8 h-11 rounded object-cover border shrink-0" />
+                              {b.coverUrl ? (
+                                <img src={b.coverUrl} alt={b.title} className="w-8 h-11 rounded object-cover border shrink-0" />
+                              ) : (
+                                <div className="w-8 h-11 rounded shrink-0 overflow-hidden">
+                                  <DynamicBookCover title={b.title} author={b.author} seed={b.id} baseColor={b.categoryColor} compact />
+                                </div>
+                              )}
                               <div className="flex-1">
                                 <p className={isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}>{b.title}</p>
                                 <p className={`text-[10px] ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{b.author} • {b.isbn}</p>
@@ -1766,7 +1793,13 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail: _onOpenT
                       <div className={`relative rounded-xl border p-3 animate-[fadeIn_0.15s_ease-out] ${isDarkMode ? 'border-zinc-700 bg-[#27272A]' : 'border-zinc-200 bg-zinc-50/40'}`}>
                         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                           <div className="flex items-center gap-3">
-                            <img src={selectedBook.coverUrl} alt={selectedBook.title} className="w-11 h-16 rounded object-cover border border-zinc-200 dark:border-zinc-800 shrink-0" />
+                            {selectedBook.coverUrl ? (
+                              <img src={selectedBook.coverUrl} alt={selectedBook.title} className="w-11 h-16 rounded object-cover border border-zinc-200 dark:border-zinc-800 shrink-0" />
+                            ) : (
+                              <div className="w-11 h-16 rounded shrink-0 overflow-hidden">
+                                <DynamicBookCover title={selectedBook.title} author={selectedBook.author} seed={selectedBook.id} baseColor={selectedBook.categoryColor} compact />
+                              </div>
+                            )}
                             <div>
                               <p className={`font-semibold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{selectedBook.title}</p>
                               <p className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Author: {selectedBook.author}</p>
@@ -1878,18 +1911,24 @@ export function ReservationsPage({ isDarkMode, onOpenTransactionDetail: _onOpenT
                     </div>
                     {isBookSelected ? (
                       <div className="p-4 grid grid-cols-10 gap-4">
-                        <div className="col-span-3 flex flex-col items-center justify-start shrink-0">
-                          <div className="relative group w-full aspect-[2/3] max-w-[120px]">
-                            <img 
-                              src={selectedBook?.coverUrl} 
-                              alt={`${selectedBook?.title} cover`} 
-                              className={`w-full h-full object-cover border transition-transform duration-300 group-hover:scale-[1.03] ${
-                                isDarkMode ? 'border-zinc-700/60' : 'border-zinc-200'
-                              }`} 
-                            />
+                        <div className="col-span-4 flex flex-col items-center justify-start shrink-0">
+                          <div className="relative group w-[145px] h-[195px]">
+                            {selectedBook?.coverUrl ? (
+                              <img 
+                                src={selectedBook.coverUrl} 
+                                alt={`${selectedBook.title} cover`} 
+                                className={`w-full h-full object-cover border rounded-lg transition-transform duration-300 group-hover:scale-[1.03] ${
+                                  isDarkMode ? 'border-zinc-700/60' : 'border-zinc-200'
+                                }`} 
+                              />
+                            ) : (
+                              <div className={`w-full h-full rounded-lg overflow-hidden border transition-transform duration-300 group-hover:scale-[1.03] ${isDarkMode ? 'border-zinc-700/60' : 'border-zinc-200'}`}>
+                                <DynamicBookCover title={selectedBook?.title || ''} author={selectedBook?.author || ''} seed={selectedBook?.id} baseColor={selectedBook?.categoryColor} />
+                              </div>
+                            )}
                           </div>
                         </div>
-                        <div className="col-span-7 min-w-0 flex flex-col justify-between">
+                        <div className="col-span-6 min-w-0 flex flex-col justify-between">
                           <div>
                             <h4 className={`font-bold text-xs sm:text-sm leading-tight truncate ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{selectedBook?.title}</h4>
                             <p className="text-[11px] font-semibold text-zinc-400 mt-0.5">{selectedBook?.author}</p>

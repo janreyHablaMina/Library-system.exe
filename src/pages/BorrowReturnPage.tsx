@@ -4,6 +4,7 @@ import { Check, ChevronDown, Search, X } from 'lucide-react'
 import {
   createBorrowTransaction,
   listBooks,
+  listCategories,
   listBorrowTransactions,
   listMembers,
   returnBorrowTransaction,
@@ -12,6 +13,7 @@ import {
   type BorrowTransaction,
   type Member,
 } from '../lib/tauriApi'
+import { DynamicBookCover } from '../components/ui/DynamicBookCover'
 
 type BorrowReturnPageProps = {
   isDarkMode: boolean
@@ -43,6 +45,7 @@ type BookItem = {
   available: boolean
   icon: string
   coverData: string | null
+  categoryColor?: string
 }
 
 type BorrowedRow = {
@@ -140,7 +143,7 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 
     profilePhotoData: m.profilePhotoData || null,
   }))
 
-  const mapBooks = (rows: Book[]): BookItem[] => rows.map((b) => ({
+  const mapBooks = (rows: Book[], catMap: Record<string, string>): BookItem[] => rows.map((b) => ({
     id: b.id,
     title: b.title,
     author: b.author,
@@ -151,6 +154,7 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 
     available: b.available > 0,
     icon: '📘',
     coverData: b.coverData || null,
+    categoryColor: catMap[b.category || ''],
   }))
 
   const mapActiveRows = (rows: BorrowTransaction[], memberMap: Map<string, MemberItem>): BorrowedRow[] => rows.map((t) => {
@@ -192,17 +196,26 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 
 
   const loadData = async () => {
     try {
-      const [mRows, bRows, activeTx, returnedTx, loanPeriodStr] = await Promise.all([
+      const [mRows, bRows, activeTx, returnedTx, loanPeriodStr, categories] = await Promise.all([
         listMembers(1000),
         listBooks(2000),
         listBorrowTransactions('Active', 500),
         listBorrowTransactions('Returned', 500),
         getSetting('general.default_loan_period'),
+        listCategories(1000),
       ])
       const mappedMembers = mapMembers(mRows)
       const memberMap = new Map(mappedMembers.map((m) => [m.memberId, m]))
+      
+      const catMap: Record<string, string> = {}
+      for (const cat of categories) {
+        if (cat.color) {
+          catMap[cat.name] = cat.color
+        }
+      }
+
       setMembers(mappedMembers)
-      setBooks(mapBooks(bRows))
+      setBooks(mapBooks(bRows, catMap))
       setActiveRows(mapActiveRows(activeTx, memberMap))
       setReturnedRows(mapReturnedRows(returnedTx, memberMap))
       const loanDays = loanPeriodStr ? parseInt(loanPeriodStr, 10) : 14
@@ -452,7 +465,7 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 
                           {getBookCoverSrc(b.coverData) ? (
                             <img src={getBookCoverSrc(b.coverData) as string} alt={`${b.title} cover`} className="h-full w-full object-cover" />
                           ) : (
-                            <span className="text-xs">{b.icon}</span>
+                            <DynamicBookCover title={b.title} author={b.author} seed={b.id} baseColor={b.categoryColor} compact />
                           )}
                         </span>
                         <div className="flex-1">
@@ -475,9 +488,9 @@ export function BorrowReturnPage({ isDarkMode, onOpenTransactions, initialTab = 
                         {getBookCoverSrc(selectedBook.coverData) ? (
                           <img src={getBookCoverSrc(selectedBook.coverData) as string} alt={selectedBook.title} className="w-11 h-16 rounded object-cover border border-zinc-200 dark:border-zinc-800 shrink-0" />
                         ) : (
-                          <span className={`grid w-11 h-16 place-items-center overflow-hidden rounded border shrink-0 ${isDarkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-white border-zinc-200'}`}>
-                            {selectedBook.icon}
-                          </span>
+                          <div className={`w-11 h-16 rounded border shrink-0 ${isDarkMode ? 'border-zinc-700' : 'border-zinc-200'} overflow-hidden`}>
+                            <DynamicBookCover title={selectedBook.title} author={selectedBook.author} seed={selectedBook.id} baseColor={selectedBook.categoryColor} compact />
+                          </div>
                         )}
                         <div>
                           <p className={`font-semibold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{selectedBook.title}</p>
