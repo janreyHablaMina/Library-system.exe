@@ -74,7 +74,7 @@ export function DynamicBookCover({ title, author, seed, compact = false, baseCol
 
   return (
     <div
-      className="relative flex h-full w-full select-none flex-col justify-between overflow-hidden rounded-[inherit] border shadow-sm"
+      className="relative flex h-full w-full select-none flex-col justify-between overflow-hidden rounded-[inherit] border"
       style={{ backgroundColor: palette.background, borderColor: palette.border, color: palette.text }}
       aria-label={`Generated cover for ${title}`}
       role="img"
@@ -82,12 +82,12 @@ export function DynamicBookCover({ title, author, seed, compact = false, baseCol
       <div className="absolute inset-y-0 left-0 w-[7%] bg-gradient-to-r from-black/10 to-transparent" />
       <div className="absolute inset-y-0 left-[7%] w-px bg-white/40" />
 
-      <div className={`relative z-10 font-black uppercase tracking-[0.16em] opacity-65 ${compact ? 'px-1.5 pt-1 text-[3px]' : 'px-4 pt-4 text-[7px]'}`}>
+      <div className={`relative z-10 font-black uppercase tracking-[0.16em] opacity-75 ${compact ? 'px-1.5 pt-1.5 text-[5px]' : 'px-4 pt-4 text-[7px]'}`}>
         {libraryName}
       </div>
 
       <div className={`relative z-10 flex flex-1 flex-col items-center justify-center text-center ${compact ? 'px-1' : 'px-4'}`}>
-        <h4 className={`font-serif font-black leading-tight ${compact ? 'line-clamp-2 text-[6px]' : 'line-clamp-4 text-[12px]'}`}>
+        <h4 className={`font-serif font-black leading-tight ${compact ? 'line-clamp-2 text-[8px]' : 'line-clamp-4 text-[12px]'}`}>
           {title || 'Untitled Book'}
         </h4>
 

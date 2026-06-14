@@ -30,7 +30,8 @@ import NotificationsPage from './pages/NotificationsPage'
 import { Toast } from './components/ui/Toast'
 import { ChangePasswordModal } from './components/ChangePasswordModal'
 import { ForgotPasswordModal } from './components/ForgotPasswordModal'
-import { getSetting, getTrialSecondsRemaining, verifyLicenseKey, getLicenseStatus, createBook, deleteBook, updateBook, expandMainWindow, getActiveSession, getEmailLogStats, listAuthors, listBooks, listBorrowTransactions, listMembers, listNotifications, listEmailLogs, listSmsLogs, login as loginWithDb, logout as logoutFromDb, markAllNotificationsRead, restoreLoginWindow, runAutomaticEmailReminders, searchAuthors, searchBooks, searchMembers, syncNotifications, getUserProfile, type UserProfile, type NotificationItem, type EmailLog, type SmsLog } from './lib/tauriApi'
+import { getSetting, getTrialSecondsRemaining, verifyLicenseKey, getLicenseStatus, createBook, deleteBook, updateBook, expandMainWindow, getActiveSession, getEmailLogStats, listAuthors, listBooks, listBorrowTransactions, listMembers, listNotifications, listEmailLogs, listSmsLogs, login as loginWithDb, logout as logoutFromDb, markAllNotificationsRead, restoreLoginWindow, runAutomaticEmailReminders, searchAuthors, searchBooks, searchMembers, syncNotifications, getUserProfile, listCategories, type UserProfile, type NotificationItem, type EmailLog, type SmsLog } from './lib/tauriApi'
+import { DynamicBookCover } from './components/ui/DynamicBookCover'
 
 
 type LoginFormState = {
@@ -498,13 +499,14 @@ function DashboardShell({ onLogout, licenseStatus, trialSeconds }: { onLogout: (
 
     const loadDashboardStats = async () => {
       try {
-        const [books, members, authors, transactions, emailStats, smsLogs] = await Promise.all([
+        const [books, members, authors, transactions, emailStats, smsLogs, categories] = await Promise.all([
           listBooks(5000),
           listMembers(5000),
           listAuthors(5000),
           listBorrowTransactions(undefined, 5000),
           getEmailLogStats(),
           listSmsLogs(undefined, undefined, 1000),
+          listCategories(),
         ])
         const now = Date.now()
         const today = new Date()
@@ -592,11 +594,15 @@ function DashboardShell({ onLogout, licenseStatus, trialSeconds }: { onLogout: (
               percent: total > 0 ? (count / total) * 100 : 0,
             }))
         )
-        const byTitle = new Map<string, { title: string; coverData: string | null; available: number; total: number }>()
+        const categoryColorMap = new Map<string, string>()
+        for (const cat of categories) {
+          categoryColorMap.set(cat.name, cat.color)
+        }
+        const byTitle = new Map<string, { title: string; author: string; categoryColor: string | undefined; coverData: string | null; available: number; total: number }>()
         for (const book of books) {
           const key = `${book.title.trim().toLowerCase()}|${book.author.trim().toLowerCase()}`
           const fallbackCover = txCoverByTitle.get(book.title.trim().toLowerCase()) ?? null
-          const row = byTitle.get(key) ?? { title: book.title, coverData: book.coverData ?? fallbackCover, available: 0, total: 0 }
+          const row = byTitle.get(key) ?? { title: book.title, author: book.author, categoryColor: book.category ? categoryColorMap.get(book.category) : undefined, coverData: book.coverData ?? fallbackCover, available: 0, total: 0 }
           if (!row.coverData && book.coverData) row.coverData = book.coverData
           if (!row.coverData && fallbackCover) row.coverData = fallbackCover
           row.total += book.totalCopies
@@ -608,6 +614,8 @@ function DashboardShell({ onLogout, licenseStatus, trialSeconds }: { onLogout: (
             .map(([key, row]) => ({
               key,
               title: row.title,
+              author: row.author,
+              categoryColor: row.categoryColor,
               coverData: row.coverData,
               available: row.available,
               total: row.total,
@@ -1942,23 +1950,23 @@ const greetingName = userProfile?.fullName?.trim() || formatDisplayName(activeUs
               </article>
               <article className={`rounded-xl border p-4 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_30px_-18px_rgba(16,185,129,0.55)] ${dashboardTheme.cardPanel}`}>
                 <div className="mb-3 flex items-center justify-between">
-                  <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Low Stock / Missing Copies</h3>
+                  <h3 className={`text-base font-bold ${dashboardTheme.cardTitle}`}>Low Stock</h3>
                   <button type="button" onClick={() => setActivePage('Books')} className="text-xs font-semibold text-emerald-700 transition-all duration-150 hover:text-emerald-800 hover:underline">View all &rarr;</button>
                 </div>
                 <div className="space-y-0 text-xs">
                   {lowStockItems.map((item, idx) => (
                     <div key={item.key} className={`flex items-start justify-between gap-3 rounded-md px-1 py-2 transition-colors duration-150 hover:bg-zinc-50 ${idx < lowStockItems.length - 1 ? 'border-b border-zinc-100' : ''}`}>
                       <div className="min-w-0 flex items-start gap-2.5">
-                        <div className="grid h-11 w-8 place-items-center overflow-hidden rounded-md border border-zinc-200 bg-zinc-50 text-base text-zinc-600">
+                        <div className={`grid h-[72px] w-[50px] place-items-center overflow-hidden rounded-md border ${isDarkMode ? 'border-zinc-700 bg-zinc-800' : 'border-zinc-200 bg-zinc-50'} text-base text-zinc-600 shrink-0`}>
                           {item.coverData ? (
                             <img src={item.coverData} alt={`${item.title} cover`} className="h-full w-full object-cover" />
                           ) : (
-                            'B'
+                            <DynamicBookCover title={item.title} author={item.author} seed={item.key} baseColor={item.categoryColor} compact />
                           )}
                         </div>
                         <div>
-                        <p className="flex items-center gap-2 text-sm font-semibold text-zinc-800"><span className={`h-2.5 w-2.5 rounded-full ${item.level === 'Out' ? 'bg-rose-500' : 'bg-amber-500'}`} />{item.title}</p>
-                        <p className="pl-4 text-xs text-zinc-500">Available: {item.available} / Total: {item.total}</p>
+                        <p className="flex items-center gap-2 text-sm font-semibold text-zinc-800">{item.title}</p>
+                        <p className="text-xs text-zinc-500">Available: {item.available} / Total: {item.total}</p>
                         </div>
                       </div>
                       <span className={`rounded-md px-2.5 py-1 text-xs font-semibold ${item.level === 'Out' ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'}`}>{item.level}</span>
