@@ -1,8 +1,12 @@
+import { useState, useEffect } from 'react'
+import { getSetting } from '../../lib/tauriApi'
+
 type DynamicBookCoverProps = {
   title: string
   author: string
   seed?: string | number
   compact?: boolean
+  baseColor?: string | null
 }
 
 const coverPalettes = [
@@ -24,8 +28,49 @@ function hashSeed(value: string) {
   return Math.abs(hash)
 }
 
-export function DynamicBookCover({ title, author, seed, compact = false }: DynamicBookCoverProps) {
-  const palette = coverPalettes[hashSeed(String(seed ?? `${title}|${author}`)) % coverPalettes.length]
+let libraryNamePromise: Promise<string | null> | null = null
+let cachedLibraryName = 'InfoLib Collection'
+
+export function DynamicBookCover({ title, author, seed, compact = false, baseColor }: DynamicBookCoverProps) {
+  const defaultPalette = coverPalettes[hashSeed(String(seed ?? `${title}|${author}`)) % coverPalettes.length]
+  const palette = { ...defaultPalette }
+  if (baseColor) {
+    palette.jewel = baseColor
+    palette.accent = baseColor
+    palette.text = baseColor
+    palette.border = `${baseColor}60`
+    palette.background = `${baseColor}1A`
+  }
+  const [libraryName, setLibraryName] = useState(cachedLibraryName)
+
+  useEffect(() => {
+    let isMounted = true
+
+    if (!libraryNamePromise) {
+      libraryNamePromise = getSetting('library.name')
+    }
+
+    libraryNamePromise.then(name => {
+      if (isMounted && name) {
+        cachedLibraryName = name
+        setLibraryName(name)
+      }
+    })
+
+    const handleSettingUpdate = (e: any) => {
+      if (e.detail?.key === 'library.name') {
+        const newName = e.detail.value || 'InfoLib Collection'
+        cachedLibraryName = newName
+        if (isMounted) setLibraryName(newName)
+      }
+    }
+    
+    window.addEventListener('setting-updated', handleSettingUpdate)
+    return () => {
+      isMounted = false
+      window.removeEventListener('setting-updated', handleSettingUpdate)
+    }
+  }, [])
 
   return (
     <div
@@ -38,7 +83,7 @@ export function DynamicBookCover({ title, author, seed, compact = false }: Dynam
       <div className="absolute inset-y-0 left-[7%] w-px bg-white/40" />
 
       <div className={`relative z-10 font-black uppercase tracking-[0.16em] opacity-65 ${compact ? 'px-1.5 pt-1 text-[3px]' : 'px-4 pt-4 text-[7px]'}`}>
-        InfoLib Collection
+        {libraryName}
       </div>
 
       <div className={`relative z-10 flex flex-1 flex-col items-center justify-center text-center ${compact ? 'px-1' : 'px-4'}`}>

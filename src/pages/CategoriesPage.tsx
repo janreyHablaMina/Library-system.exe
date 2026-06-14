@@ -24,12 +24,17 @@ type CategoriesPageProps = {
 type CategoryFormState = {
   name: string
   description: string
+  color: string
 }
 
-const initialFormState: CategoryFormState = {
+const CATEGORY_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316']
+const getRandomColor = () => CATEGORY_COLORS[Math.floor(Math.random() * CATEGORY_COLORS.length)]
+
+const getInitialFormState = (): CategoryFormState => ({
   name: '',
   description: '',
-}
+  color: getRandomColor(),
+})
 
 const stats = [
   { label: 'Total Categories', value: '24', subValue: '↑ 3 this month', icon: Layers, color: 'text-emerald-600', bg: 'bg-emerald-50' },
@@ -148,7 +153,7 @@ function CategoryActionsMenu({ category, onEdit, onDelete, onViewBooks, isDarkMo
 
 export function CategoriesPage({ isDarkMode, onViewBooks }: CategoriesPageProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
-  const [categoryForm, setCategoryForm] = useState<CategoryFormState>(initialFormState)
+  const [categoryForm, setCategoryForm] = useState<CategoryFormState>(getInitialFormState)
   const [categoryToEdit, setCategoryToEdit] = useState<CategoryRow | null>(null)
   const [categoryToDelete, setCategoryToDelete] = useState<CategoryRow | null>(null)
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false)
@@ -181,7 +186,7 @@ export function CategoriesPage({ isDarkMode, onViewBooks }: CategoriesPageProps)
       books: count,
       createdOn: created.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       createdTime: created.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-      color: 'text-emerald-600',
+      color: category.color || '#10b981',
     }
   }
 
@@ -274,7 +279,7 @@ export function CategoriesPage({ isDarkMode, onViewBooks }: CategoriesPageProps)
 
   const closeAddModal = () => {
     setIsAddModalOpen(false)
-    setCategoryForm(initialFormState)
+    setCategoryForm(getInitialFormState())
     setCategoryToEdit(null)
   }
 
@@ -283,6 +288,7 @@ export function CategoriesPage({ isDarkMode, onViewBooks }: CategoriesPageProps)
     setCategoryForm({
       name: category.name,
       description: category.description,
+      color: category.color,
     })
     setIsAddModalOpen(true)
   }
@@ -296,6 +302,7 @@ export function CategoriesPage({ isDarkMode, onViewBooks }: CategoriesPageProps)
           name: categoryForm.name.trim(),
           description: categoryForm.description.trim() || null,
           status: 'Active',
+          color: categoryForm.color,
         } as any)
         setShowToast(`Successfully updated ${categoryForm.name}!`)
       } else {
@@ -303,6 +310,7 @@ export function CategoriesPage({ isDarkMode, onViewBooks }: CategoriesPageProps)
           name: categoryForm.name.trim(),
           description: categoryForm.description.trim() || null,
           status: 'Active',
+          color: categoryForm.color,
         })
         setShowToast(`Successfully added ${categoryForm.name}!`)
       }
@@ -365,7 +373,7 @@ export function CategoriesPage({ isDarkMode, onViewBooks }: CategoriesPageProps)
             <p className={`mt-1 text-base font-medium ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Manage and organize all book categories in your library.</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={() => setIsAddModalOpen(true)} className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white hover:bg-emerald-700 transition-all shadow-sm">
+            <button type="button" onClick={() => { setCategoryForm(getInitialFormState()); setIsAddModalOpen(true) }} className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white hover:bg-emerald-700 transition-all shadow-sm">
               <Plus size={18} />
               Add Category
             </button>
@@ -494,7 +502,10 @@ export function CategoriesPage({ isDarkMode, onViewBooks }: CategoriesPageProps)
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className={`grid h-9 w-9 place-items-center rounded-lg ${isDarkMode ? 'bg-zinc-800/40' : 'bg-zinc-100/50'} ${cat.color}`}>
+                          <div
+                            className={`grid h-9 w-9 place-items-center rounded-lg ${isDarkMode ? 'bg-zinc-800/40' : 'bg-zinc-100/50'}`}
+                            style={{ color: cat.color }}
+                          >
                              <CatIcon size={18} />
                           </div>
                           <p className={`font-semibold text-sm ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>{cat.name}</p>
@@ -614,6 +625,19 @@ export function CategoriesPage({ isDarkMode, onViewBooks }: CategoriesPageProps)
                   }`}
                 />
                 <p className={`mt-1 text-right text-xs ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>{categoryForm.description.length} / 400</p>
+              </div>
+
+              <div>
+                <label className={`mb-1 block text-sm font-semibold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>Category Color</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={categoryForm.color}
+                    onChange={(e) => handleFormChange('color', e.target.value)}
+                    className="h-9 w-14 cursor-pointer rounded bg-transparent p-1 border-none outline-none"
+                  />
+                  <span className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{categoryForm.color.toUpperCase()}</span>
+                </div>
               </div>
 
               <div className="grid gap-3 pt-1 sm:grid-cols-2">

@@ -25,6 +25,7 @@ import {
  renewBorrowTransaction,
  getSetting
 } from '../lib/tauriApi'
+import { Toast } from '../components/ui/Toast'
 
 type TransactionDetailPageProps = {
  isDarkMode: boolean
@@ -42,6 +43,14 @@ export function TransactionDetailPage({ isDarkMode, onBack, transactionId }: Tra
  const [gracePeriod, setGracePeriod] = useState(0)
  const [showEmailModal, setShowEmailModal] = useState(false)
  const [showSmsModal, setShowSmsModal] = useState(false)
+ const [toastMessage, setToastMessage] = useState<string | null>(null)
+
+ useEffect(() => {
+   if (toastMessage) {
+     const timer = setTimeout(() => setToastMessage(null), 3000)
+     return () => clearTimeout(timer)
+   }
+ }, [toastMessage])
 
  useEffect(() => {
  async function loadData() {
@@ -109,7 +118,7 @@ export function TransactionDetailPage({ isDarkMode, onBack, transactionId }: Tra
  setLoading(false)
  } catch (e) {
  console.error(e)
- alert(typeof e === 'string' ? e : 'Failed to renew this book.')
+ setToastMessage(typeof e === 'string' ? e : 'Failed to renew this book.')
  }
  }
 
@@ -391,7 +400,7 @@ export function TransactionDetailPage({ isDarkMode, onBack, transactionId }: Tra
  type="button"
  onClick={() => {
  if (!member?.email) {
- alert('This member does not have an email address.')
+ setToastMessage('This member does not have an email address.')
  return
  }
  setShowEmailModal(true)
@@ -415,7 +424,7 @@ export function TransactionDetailPage({ isDarkMode, onBack, transactionId }: Tra
  type="button"
  onClick={() => {
  if (!member?.contactNumber) {
- alert('This member does not have a phone number.')
+ setToastMessage('This member does not have a phone number.')
  return
  }
  setShowSmsModal(true)
@@ -494,7 +503,7 @@ export function TransactionDetailPage({ isDarkMode, onBack, transactionId }: Tra
  isDarkMode={isDarkMode}
  initialSubject={reminderSubject}
  initialBody={reminderBody}
- onSuccess={() => alert(`Email sent to ${member.fullName}.`)}
+ onSuccess={() => setToastMessage(`Email sent to ${member.fullName}.`)}
  />
  )}
 
@@ -505,9 +514,11 @@ export function TransactionDetailPage({ isDarkMode, onBack, transactionId }: Tra
  member={{ id: member.id, fullName: member.fullName, phone: member.contactNumber }}
  isDarkMode={isDarkMode}
  initialBody={smsBody}
- onSuccess={() => alert(`SMS sent to ${member.fullName}.`)}
+ onSuccess={() => setToastMessage(`SMS sent to ${member.fullName}.`)}
  />
  )}
+
+ {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage(null)} isDarkMode={isDarkMode} />}
  </div>
  )
 }

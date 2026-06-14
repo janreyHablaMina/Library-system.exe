@@ -68,6 +68,7 @@ import {
   type SettingActivityRow,
   type SystemUser as ApiSystemUser,
 } from '../lib/tauriApi'
+import { Toast } from '../components/ui/Toast'
 
 type SettingsPageProps = {
   isDarkMode: boolean
@@ -247,6 +248,14 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
   const [txtboxApiKey, setTxtboxApiKey] = useState('')
   const [smsTestTo, setSmsTestTo] = useState('')
   const [smsTestStatus, setSmsTestStatus] = useState<{ type: 'idle' | 'success' | 'error'; message: string }>({ type: 'idle', message: '' })
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (toastMessage) {
+      const timer = setTimeout(() => setToastMessage(null), 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [toastMessage])
 
   const cardClass = isDarkMode ? 'border-zinc-800 bg-[#18181B]' : 'border-zinc-200 bg-white'
   const iconBoxBg = isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-[#f0fdf4] text-emerald-600'
@@ -717,7 +726,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
                       <UserRowActionsMenu
                         isDarkMode={isDarkMode}
                         isActive={user.status === 'Active'}
-                        onView={() => alert(`Viewing ${user.name} profile...`)}
+                        onView={() => setToastMessage(`Viewing ${user.name} profile...`)}
                         onEdit={() => openEditUserModal(user)}
                         onResetPassword={() => {
                           void resetSystemUserPassword(user.id, 'password123').then(loadSystemUsers).catch((error) => {
@@ -1838,7 +1847,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
             {activeMenu === 'Overview' ? null : activeMenu === 'Users & Roles' ? (
               <div className="flex gap-3">
                 <button 
-                  onClick={() => alert('Exporting user data...')}
+                  onClick={() => setToastMessage('Exporting user data...')}
                   className={`inline-flex items-center gap-2 rounded-xl border px-5 py-3 text-sm font-bold ${inputClass}`}
                 >
                   <Download size={16} /> Export
@@ -1852,7 +1861,7 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
               </div>
             ) : (
               <button 
-                onClick={() => alert('Settings saved successfully!')}
+                onClick={() => setToastMessage('Settings saved successfully!')}
                 className="inline-flex items-center gap-2 rounded-xl bg-[#059669] px-6 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-emerald-700 active:scale-[0.98]"
               >
                 <Check size={18} strokeWidth={3} />
@@ -2012,6 +2021,8 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
           </section>
         </div>
       ) : null}
+
+      {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage(null)} isDarkMode={isDarkMode} />}
     </div>
   )
 }

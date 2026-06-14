@@ -235,6 +235,7 @@ struct Category {
     name: String,
     description: Option<String>,
     status: String,
+    color: Option<String>,
     created_at: String,
 }
 
@@ -244,6 +245,7 @@ struct CreateCategoryPayload {
     name: String,
     description: Option<String>,
     status: Option<String>,
+    color: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -253,6 +255,7 @@ struct UpdateCategoryPayload {
     name: String,
     description: Option<String>,
     status: String,
+    color: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -636,6 +639,7 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
         name TEXT NOT NULL UNIQUE,
         description TEXT,
         status TEXT NOT NULL DEFAULT 'Active',
+        color TEXT,
         created_at TEXT NOT NULL
       );
       CREATE TABLE IF NOT EXISTS borrow_transactions (
@@ -763,6 +767,7 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
     .map_err(|e| format!("init schema failed: {e}"))?;
 
     // Schema migrations
+    let _ = conn.execute("ALTER TABLE categories ADD COLUMN color TEXT", []);
     let _ = conn.execute("ALTER TABLE books ADD COLUMN shelf_location TEXT", []);
     let _ = conn.execute("ALTER TABLE books ADD COLUMN publisher TEXT", []);
     let _ = conn.execute("ALTER TABLE sms_logs ADD COLUMN message_body TEXT", []);
@@ -2286,8 +2291,8 @@ fn create_category(app: tauri::AppHandle, payload: CreateCategoryPayload) -> Res
     init_schema(&conn)?;
     conn.execute(
         "
-      INSERT INTO categories (name, description, status, created_at)
-      VALUES (?1, ?2, ?3, ?4)
+      INSERT INTO categories (name, description, status, color, created_at)
+      VALUES (?1, ?2, ?3, ?4, ?5)
       ",
         params![
             name,
@@ -2296,6 +2301,10 @@ fn create_category(app: tauri::AppHandle, payload: CreateCategoryPayload) -> Res
                 .map(|v| v.trim().to_string())
                 .filter(|v| !v.is_empty()),
             payload.status.unwrap_or_else(|| "Active".to_string()),
+            payload
+                .color
+                .map(|v| v.trim().to_string())
+                .filter(|v| !v.is_empty()),
             Utc::now().to_rfc3339(),
         ],
     )
@@ -2311,7 +2320,7 @@ fn list_categories(app: tauri::AppHandle, limit: Option<i64>) -> Result<Vec<Cate
     let mut stmt = conn
         .prepare(
             "
-      SELECT id, name, description, status, created_at
+      SELECT id, name, description, status, color, created_at
       FROM categories
       ORDER BY id DESC
       LIMIT ?1
@@ -2326,7 +2335,8 @@ fn list_categories(app: tauri::AppHandle, limit: Option<i64>) -> Result<Vec<Cate
                 name: row.get(1)?,
                 description: row.get(2)?,
                 status: row.get(3)?,
-                created_at: row.get(4)?,
+                color: row.get(4)?,
+                created_at: row.get(5)?,
             })
         })
         .map_err(|e| format!("list categories failed: {e}"))?;
@@ -2349,8 +2359,9 @@ fn update_category(app: tauri::AppHandle, payload: UpdateCategoryPayload) -> Res
       UPDATE categories
       SET name = ?1,
           description = ?2,
-          status = ?3
-      WHERE id = ?4
+          status = ?3,
+          color = ?4
+      WHERE id = ?5
       ",
         params![
             name,
@@ -2359,6 +2370,10 @@ fn update_category(app: tauri::AppHandle, payload: UpdateCategoryPayload) -> Res
                 .map(|v| v.trim().to_string())
                 .filter(|v| !v.is_empty()),
             payload.status,
+            payload
+                .color
+                .map(|v| v.trim().to_string())
+                .filter(|v| !v.is_empty()),
             payload.id
         ],
     )

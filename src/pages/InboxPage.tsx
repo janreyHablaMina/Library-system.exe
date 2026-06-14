@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { RefreshCw, Mail, Phone, Search, Reply } from 'lucide-react'
+import { Toast } from '../components/ui/Toast'
 
 export type InboxMessage = {
   id: number
@@ -19,6 +20,14 @@ export default function InboxPage({ isDarkMode }: { isDarkMode: boolean }) {
   const [loading, setLoading] = useState(false)
   const [selectedMsg, setSelectedMsg] = useState<InboxMessage | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (toastMessage) {
+      const timer = setTimeout(() => setToastMessage(null), 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [toastMessage])
 
   const loadMessages = async () => {
     try {
@@ -35,8 +44,8 @@ export default function InboxPage({ isDarkMode }: { isDarkMode: boolean }) {
     try {
       const newCount: number = await invoke('sync_inbox')
       await loadMessages()
-      if (newCount > 0) alert(`Synced ${newCount} new messages!`)
-      else alert('No new messages found.')
+      if (newCount > 0) setToastMessage(`Synced ${newCount} new messages!`)
+      else setToastMessage('No new messages found.')
     } catch (e: any) {
       setError(e.toString())
     } finally {
@@ -125,6 +134,7 @@ export default function InboxPage({ isDarkMode }: { isDarkMode: boolean }) {
           )}
         </div>
       </div>
+      {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage(null)} isDarkMode={isDarkMode} />}
     </div>
   )
 }

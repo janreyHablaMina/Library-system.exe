@@ -65,6 +65,7 @@ type CategoryOption = {
   id: number
   name: string
   status: string
+  color?: string | null
 }
 
 const DESCRIPTION_MAX = 1000
@@ -136,6 +137,11 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
   const [newAuthorPhotoName, setNewAuthorPhotoName] = useState('')
   const [newCategoryName, setNewCategoryName] = useState('')
   const [newCategoryDescription, setNewCategoryDescription] = useState('')
+
+  const CATEGORY_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316']
+  const getRandomColor = () => CATEGORY_COLORS[Math.floor(Math.random() * CATEGORY_COLORS.length)]
+  const [newCategoryColor, setNewCategoryColor] = useState(getRandomColor())
+
   const [isCreatingAuthor, setIsCreatingAuthor] = useState(false)
   const [isCreatingCategory, setIsCreatingCategory] = useState(false)
   const [authorCreateError, setAuthorCreateError] = useState('')
@@ -215,6 +221,7 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
           id: row.id,
           name: row.name,
           status: row.status,
+          color: row.color,
         })))
       } catch {
         setCategories([])
@@ -375,17 +382,19 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
         name,
         description: newCategoryDescription.trim() || null,
         status: 'Active',
+        color: newCategoryColor,
       })
       const rows = await listCategories(1000)
       const nextCategories = rows
         .filter((row) => row.status !== 'Inactive')
-        .map((row) => ({ id: row.id, name: row.name, status: row.status }))
+        .map((row) => ({ id: row.id, name: row.name, status: row.status, color: row.color }))
       setCategories(nextCategories)
       setField('category', name)
       setIsAddCategoryOpen(false)
       setCategoryDropdownOpen(false)
       setNewCategoryName('')
       setNewCategoryDescription('')
+      setNewCategoryColor(getRandomColor())
     } catch (error) {
       setCategoryCreateError(error instanceof Error ? error.message : 'Failed to create category.')
     } finally {
@@ -580,7 +589,7 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
                               className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm ${isDarkMode ? 'text-zinc-200 hover:bg-zinc-800' : 'text-zinc-700 hover:bg-zinc-50'}`}
                             >
                               <span className="inline-flex items-center gap-2 min-w-0">
-                                <BookOpen size={14} className={isDarkMode ? 'text-emerald-400' : 'text-emerald-600'} />
+                                <BookOpen size={14} style={{ color: category.color || (isDarkMode ? '#34d399' : '#059669') }} />
                                 <span className="truncate">{category.name}</span>
                               </span>
                               <span className={`ml-2 rounded-md px-2 py-0.5 text-[10px] font-semibold ${isDarkMode ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-100 text-zinc-600'}`}>
@@ -599,7 +608,10 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
                         <div className={`mt-2 border-t pt-2 ${isDarkMode ? 'border-zinc-700' : 'border-zinc-200'}`}>
                           <button
                             type="button"
-                            onClick={() => setIsAddCategoryOpen(true)}
+                            onClick={() => {
+                              setNewCategoryColor(getRandomColor())
+                              setIsAddCategoryOpen(true)
+                            }}
                             className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-3 text-sm font-semibold text-white hover:bg-emerald-700"
                           >
                             <Tag size={14} />
@@ -661,9 +673,14 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
                     <img src={coverPreviewUrl} alt="Cover preview" className="w-full h-full object-cover" />
                   </div>
                 ) : (
-                  <div className="h-[195px] w-[145px] shrink-0 rounded-lg shadow-md overflow-hidden">
-                    <DynamicBookCover title={form.title || 'Unknown Title'} author={form.author || 'Unknown Author'} seed="preview-seed" />
-                  </div>
+                  (() => {
+                    const selectedCategoryObj = categories.find((c) => c.name === form.category)
+                    return (
+                      <div className="h-[195px] w-[145px] shrink-0 rounded-lg shadow-md overflow-hidden">
+                        <DynamicBookCover title={form.title || 'Unknown Title'} author={form.author || 'Unknown Author'} seed="preview-seed" baseColor={selectedCategoryObj?.color} />
+                      </div>
+                    )
+                  })()
                 )}
                 
                 {/* Upload zone */}
@@ -923,6 +940,18 @@ export function AddBookPage({ isDarkMode, onBack, onSave }: AddBookPageProps) {
                   className={`mt-1 min-h-[90px] w-full rounded-lg border px-3 py-2 outline-none focus:border-emerald-500 ${inputClass}`}
                   placeholder="Short description (optional)"
                 />
+              </div>
+              <div>
+                <label className={`text-sm font-semibold ${labelClass}`}>Category Color</label>
+                <div className="mt-1 flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={newCategoryColor}
+                    onChange={(e) => setNewCategoryColor(e.target.value)}
+                    className="h-9 w-14 cursor-pointer rounded bg-transparent p-1 border-none outline-none"
+                  />
+                  <span className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{newCategoryColor.toUpperCase()}</span>
+                </div>
               </div>
               {categoryCreateError ? <p className="text-xs font-semibold text-rose-600">{categoryCreateError}</p> : null}
               <div className="grid grid-cols-2 gap-2 pt-1">

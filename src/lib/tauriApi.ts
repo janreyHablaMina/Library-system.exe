@@ -216,6 +216,7 @@ export type Category = {
   name: string
   description: string | null
   status: string
+  color: string | null
   createdAt: string
 }
 
@@ -223,6 +224,7 @@ export type CreateCategoryPayload = {
   name: string
   description?: string | null
   status?: string | null
+  color?: string | null
 }
 
 export type UpdateCategoryPayload = {
@@ -230,6 +232,7 @@ export type UpdateCategoryPayload = {
   name: string
   description?: string | null
   status: string
+  color?: string | null
 }
 
 export type BorrowTransaction = {
