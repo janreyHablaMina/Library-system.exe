@@ -26,6 +26,7 @@ type BookRow = {
   publisher: string
   status: BookStatus
   available: string
+  categoryColor?: string
 }
 
 type EditBookPageProps = {
@@ -48,6 +49,7 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
   const [isbn, setIsbn] = useState(book.isbn)
   const [category, setCategory] = useState(book.category)
   const [categories, setCategories] = useState<string[]>(() => book.category ? [book.category] : [])
+  const [categoriesMap, setCategoriesMap] = useState<Record<string, string>>({})
   const [categoriesLoading, setCategoriesLoading] = useState(true)
   const [status, setStatus] = useState<BookStatus>(book.status)
   const [publisher, setPublisher] = useState(book.publisher)
@@ -78,6 +80,14 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
         const uniqueNames = Array.from(
           new Map(categoryNames.map((name) => [name.trim().toLocaleLowerCase(), name.trim()])).values(),
         )
+
+        const map: Record<string, string> = {}
+        for (const row of rows) {
+          if (row.name && row.color) {
+            map[row.name] = row.color
+          }
+        }
+        setCategoriesMap(map)
 
         setCategories(uniqueNames)
       } catch {
@@ -289,7 +299,7 @@ export function EditBookPage({ book, isDarkMode, onBack, onSave }: EditBookPageP
                   </div>
                 ) : (
                   <div className="h-[195px] w-[145px] shrink-0 rounded-lg shadow-md">
-                    <DynamicBookCover title={title} author={author} seed={book.id} />
+                    <DynamicBookCover title={title} author={author} seed={book.id} baseColor={categoriesMap[category] || book.categoryColor} />
                   </div>
                 )}
                 

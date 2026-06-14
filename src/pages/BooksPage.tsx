@@ -6,7 +6,7 @@ import {
   Eye, Pencil, BookMarked, Trash2, AlertTriangle, X, Archive
 } from 'lucide-react'
 import { EditBookPage } from './EditBookPage'
-import { deleteBook, listBooks, updateBook } from '../lib/tauriApi'
+import { deleteBook, listBooks, updateBook, listCategories } from '../lib/tauriApi'
 import { DynamicBookCover } from '../components/ui/DynamicBookCover'
 
 type BookStatus = 'Available' | 'Borrowed' | 'Overdue' | 'Archived'
@@ -25,6 +25,7 @@ type BookRow = {
   available: string
   borrowedCopies?: number
   isArchived?: boolean
+  categoryColor?: string
 }
 
 export type BookDetailData = BookRow
@@ -251,11 +252,23 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, onReser
   const [bookToEdit, setBookToEdit] = useState<BookRow | null>(null)
 
   const [showToast, setShowToast] = useState<string | null>(null)
+  const [categoryColors, setCategoryColors] = useState<Record<string, string>>({})
 
   useEffect(() => {
     const loadBooksFromDb = async () => {
       try {
-        const rows = await listBooks(500)
+        const [rows, catRows] = await Promise.all([
+          listBooks(500),
+          listCategories(1000).catch(() => [])
+        ])
+        const catMap: Record<string, string> = {}
+        catRows.forEach((c) => {
+          if (c.name && c.color) {
+            catMap[c.name] = c.color
+          }
+        })
+        setCategoryColors(catMap)
+
         const mapped: BookRow[] = rows.map((row) => ({
           id: row.id,
           cover: row.coverData || '',
@@ -270,6 +283,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, onReser
           available: `${row.available} / ${row.totalCopies}`,
           borrowedCopies: Math.max(0, row.totalCopies - row.available),
           isArchived: row.isArchived,
+          categoryColor: catMap[row.category ?? '']
         }))
         setBookList(mapped.length > 0 ? mapped : [])
       } catch (error) {
@@ -868,7 +882,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, onReser
                             {book.cover.startsWith('data:') || book.cover.startsWith('http') || book.cover.startsWith('blob:') ? (
                               <img src={book.cover} alt="" className="h-full w-full object-cover" />
                             ) : (
-                              <DynamicBookCover title={book.title} author={book.author} seed={book.id} compact />
+                              <DynamicBookCover title={book.title} author={book.author} seed={book.id} compact baseColor={categoryColors[book.category]} />
                             )}
                           </span>
                           <div>
@@ -931,7 +945,7 @@ export function BooksPage({ isDarkMode, onOpenBookDetail, onOpenAddBook, onReser
                       {book.cover.startsWith('data:') || book.cover.startsWith('http') || book.cover.startsWith('blob:') ? (
                         <img src={book.cover} alt="" className="h-full w-full object-cover" />
                       ) : (
-                        <DynamicBookCover title={book.title} author={book.author} seed={book.id} />
+                        <DynamicBookCover title={book.title} author={book.author} seed={book.id} baseColor={categoryColors[book.category]} />
                       )}
                     </span>
                     <div className="flex flex-col items-end gap-2">

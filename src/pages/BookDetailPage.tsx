@@ -109,7 +109,7 @@ export function BookDetailPage({
               {hasRealCover && book ? (
                 <img src={book.cover} alt={`${bookTitle} cover`} className="h-full w-full object-cover" />
               ) : (
-                <DynamicBookCover title={bookTitle} author={book?.author ?? 'Unknown Author'} seed={book?.id} />
+                <DynamicBookCover title={bookTitle} author={book?.author ?? 'Unknown Author'} seed={book?.id} baseColor={book?.categoryColor} />
               )}
             </div>
 
