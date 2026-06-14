@@ -63,9 +63,34 @@ export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMember
   const computed = useMemo(() => {
     const now = Date.now()
     const oneDayMs = 24 * 60 * 60 * 1000
-    const daysCount = timeRange === '1month' ? 30 : 7
-    const cutoffMs = now - (daysCount * oneDayMs)
-    const prevCutoffMs = cutoffMs - (daysCount * oneDayMs)
+    
+    let cutoffMs = 0
+    let prevCutoffMs = 0
+    let daysCountForChart = 7
+
+    if (timeRange === '1day') {
+      daysCountForChart = 1
+      cutoffMs = now - oneDayMs
+      prevCutoffMs = cutoffMs - oneDayMs
+    } else if (timeRange === '7days') {
+      daysCountForChart = 7
+      cutoffMs = now - (7 * oneDayMs)
+      prevCutoffMs = cutoffMs - (7 * oneDayMs)
+    } else if (timeRange === '1month') {
+      daysCountForChart = 30
+      cutoffMs = now - (30 * oneDayMs)
+      prevCutoffMs = cutoffMs - (30 * oneDayMs)
+    } else {
+      cutoffMs = 0
+      prevCutoffMs = 0
+      if (transactions.length > 0) {
+        const earliest = Math.min(...transactions.filter(t => t.borrowDate).map(t => new Date(t.borrowDate).getTime() || now))
+        daysCountForChart = Math.max(1, Math.ceil((now - earliest) / oneDayMs))
+        if (daysCountForChart > 365) daysCountForChart = 365
+      } else {
+        daysCountForChart = 30
+      }
+    }
 
     const currentTx = transactions.filter(tx => {
       const ts = new Date(tx.borrowDate).getTime()
@@ -111,9 +136,9 @@ export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMember
        const ts = new Date(m.createdAt).getTime()
        return ts >= prevCutoffMs && ts < cutoffMs
     }).length
-    const membersTrend = newMembersPrev === 0 ? null : ((newMembersCurrent - newMembersPrev) / newMembersPrev) * 100
-    const dayBuckets = Array.from({ length: daysCount }, (_, i) => {
-      const d = new Date(now - (daysCount - 1 - i) * oneDayMs)
+    const membersTrend = timeRange === 'all' ? null : (newMembersPrev === 0 ? null : ((newMembersCurrent - newMembersPrev) / newMembersPrev) * 100)
+    const dayBuckets = Array.from({ length: daysCountForChart }, (_, i) => {
+      const d = new Date(now - (daysCountForChart - 1 - i) * oneDayMs)
       const key = d.toISOString().slice(0, 10)
       const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
       return { key, name: label, borrowed: 0, returned: 0 }
@@ -201,6 +226,40 @@ export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMember
     }
   }, [books, members, transactions, timeRange])
 
+  const handleExportReports = () => {
+    const headers = ['Metric', 'Value']
+    const escapeCsvValue = (val: string | number | undefined | null) => {
+      if (val === null || val === undefined) return '""'
+      const str = String(val)
+      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        return `"${str.replace(/"/g, '""')}"`
+      }
+      return str
+    }
+
+    const rows = [
+      ['Report Time Range', timeRange],
+      ['Total Borrowed', computed.borrowedTotal],
+      ['Active Members', computed.activeMembers],
+      ['Overdue Books', computed.overdueTotal],
+      ['Returned Books', computed.returnedTotal],
+      ['Fines Collected', `PHP ${computed.fines.toFixed(2)}`],
+    ].map(row => row.map(escapeCsvValue).join(','))
+
+    const csv = `\uFEFF${headers.map(escapeCsvValue).join(',')}\r\n${rows.join('\r\n')}`
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    const date = new Date().toISOString().slice(0, 10)
+
+    link.href = url
+    link.download = `reports-export-${date}.csv`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div className={`min-h-0 flex-1 overflow-auto p-4 ${isDarkMode ? 'bg-[transparent] text-zinc-100' : 'bg-[#f8fafc] text-zinc-900'}`}>
       <section className="p-5">
@@ -224,13 +283,15 @@ export function ReportsPage({ isDarkMode, onViewOverdueActivity, onViewTopMember
                 onChange={(e) => setTimeRange(e.target.value)}
                 className="appearance-none flex h-[42px] w-40 items-center gap-2 rounded-xl bg-emerald-600 pl-11 pr-10 text-sm font-bold text-white shadow-sm outline-none transition-all hover:bg-emerald-700 cursor-pointer"
               >
-                <option value="7days">Last 7 Days</option>
-                <option value="1month">Last 1 Month</option>
+                <option value="1day" className={isDarkMode ? 'bg-[#27272A] text-zinc-100' : 'bg-white text-zinc-900'}>Last 1 Day</option>
+                <option value="7days" className={isDarkMode ? 'bg-[#27272A] text-zinc-100' : 'bg-white text-zinc-900'}>Last 7 Days</option>
+                <option value="1month" className={isDarkMode ? 'bg-[#27272A] text-zinc-100' : 'bg-white text-zinc-900'}>Last 1 Month</option>
+                <option value="all" className={isDarkMode ? 'bg-[#27272A] text-zinc-100' : 'bg-white text-zinc-900'}>All Time</option>
               </select>
               <Calendar size={18} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-100" />
               <ChevronDown size={16} className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-emerald-100" />
             </div>
-            <button className={`flex items-center gap-2 h-[42px] rounded-xl border px-4 text-sm font-bold transition-all hover:bg-zinc-50 dark:hover:bg-zinc-800 ${cardClass}`}>
+            <button type="button" onClick={handleExportReports} className={`flex items-center gap-2 h-[42px] rounded-xl border px-4 text-sm font-bold transition-all hover:bg-zinc-50 dark:hover:bg-zinc-800 ${cardClass}`}>
               <Download size={15} />
               Export
             </button>

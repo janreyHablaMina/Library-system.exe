@@ -228,6 +228,19 @@ struct CreateAuthorPayload {
     biography: Option<String>,
 }
 
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct UpdateAuthorPayload {
+    id: i64,
+    name: String,
+    email: Option<String>,
+    nationality: Option<String>,
+    dob: Option<String>,
+    profile_photo_data: Option<String>,
+    status: Option<String>,
+    biography: Option<String>,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct Category {
@@ -2191,6 +2204,38 @@ fn create_author(app: tauri::AppHandle, payload: CreateAuthorPayload) -> Result<
     )
     .map_err(|e| format!("create author failed: {e}"))?;
     Ok(conn.last_insert_rowid())
+}
+
+#[tauri::command]
+fn update_author(app: tauri::AppHandle, payload: UpdateAuthorPayload) -> Result<(), String> {
+    let conn = open_db(&database_path(&app)?)?;
+    init_schema(&conn)?;
+    
+    let name = payload.name.trim();
+    if name.is_empty() {
+        return Err("name is required".to_string());
+    }
+
+    conn.execute(
+        "
+        UPDATE authors 
+        SET name = ?1, email = ?2, nationality = ?3, dob = ?4, profile_photo_data = ?5, status = ?6, biography = ?7 
+        WHERE id = ?8
+        ",
+        params![
+            name,
+            payload.email.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
+            payload.nationality.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
+            payload.dob.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
+            payload.profile_photo_data,
+            payload.status.unwrap_or_else(|| "Active".to_string()),
+            payload.biography.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()),
+            payload.id
+        ],
+    )
+    .map_err(|e| format!("update author failed: {e}"))?;
+    
+    Ok(())
 }
 
 #[tauri::command]
@@ -5153,6 +5198,7 @@ pub fn run() {
             search_members,
             update_member,
             create_author,
+            update_author,
             list_authors,
             search_authors,
             delete_author,

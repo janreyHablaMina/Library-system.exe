@@ -211,6 +211,17 @@ export type CreateAuthorPayload = {
   biography?: string | null
 }
 
+export type UpdateAuthorPayload = {
+  id: number
+  name: string
+  email?: string | null
+  nationality?: string | null
+  dob?: string | null
+  profilePhotoData?: string | null
+  status?: string | null
+  biography?: string | null
+}
+
 export type Category = {
   id: number
   name: string
@@ -465,6 +476,10 @@ export async function updateMember(payload: UpdateMemberPayload): Promise<void> 
 
 export async function createAuthor(payload: CreateAuthorPayload): Promise<number> {
   return invoke<number>('create_author', { payload })
+}
+
+export async function updateAuthor(payload: UpdateAuthorPayload): Promise<void> {
+  return invoke<void>('update_author', { payload })
 }
 
 export async function listAuthors(limit?: number): Promise<Author[]> {

@@ -2,7 +2,7 @@ import { Toast } from '../components/ui/Toast'
 import { useState, useRef, useEffect, useMemo } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 import { ChevronDown, Download, Eye, Pencil, Plus, Search, Trash2, Users, X, BookOpen, Star, Calendar, Filter, ChevronLeft, ChevronRight, MoreHorizontal, AlertTriangle, Mail, Globe } from 'lucide-react'
-import { createAuthor, deleteAuthor, listAuthors, listBooks, type Author as DbAuthor, type Book } from '../lib/tauriApi'
+import { createAuthor, deleteAuthor, listAuthors, listBooks, updateAuthor, type Author as DbAuthor, type Book } from '../lib/tauriApi'
 
 type AuthorRow = {
   id: number
@@ -306,17 +306,27 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
   const handleSave = async (e: FormEvent) => {
     e.preventDefault()
     if (authorToEdit) {
-      setAuthorsList(prev => prev.map(a => a.id === authorToEdit.id ? {
-        ...a,
-        name: authorForm.name,
-        email: authorForm.email,
-        nationality: authorForm.nationality,
-        dob: authorForm.dob ? new Date(authorForm.dob).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '',
-        status: authorForm.status as any,
-        biography: authorForm.biography,
-        profilePhotoData: authorPhotoPreview || a.profilePhotoData || null,
-      } : a))
-      setShowToast(`Successfully updated ${authorForm.name}'s profile!`)
+      try {
+        await updateAuthor({
+          id: authorToEdit.id,
+          name: authorForm.name.trim(),
+          email: authorForm.email.trim() || null,
+          nationality: authorForm.nationality.trim() || null,
+          dob: authorForm.dob || null,
+          profilePhotoData: authorPhotoPreview || authorToEdit.profilePhotoData || null,
+          status: authorForm.status || 'Active',
+          biography: authorForm.biography.trim() || null,
+        })
+        const [rows, books] = await Promise.all([listAuthors(500), listBooks(2000)])
+        const booksCountByAuthorId = getBookCountsByAuthorId(rows, books)
+        setAllBooksCount(books.length)
+        setAuthorsList(rows.map((row) => toAuthorRow(row, booksCountByAuthorId)))
+        setShowToast(`Successfully updated ${authorForm.name}'s profile!`)
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to update author.'
+        setShowToast(message)
+        return
+      }
     } else {
       try {
         await createAuthor({
@@ -403,6 +413,49 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
     })
   }, [authorsList])
 
+  const handleExportAuthors = () => {
+    if (filteredAuthors.length === 0) {
+      setShowToast('No authors to export.')
+      return
+    }
+
+    const headers = ['ID', 'Name', 'Email', 'Nationality', 'Date of Birth', 'Status', 'Books Count']
+    const escapeCsvValue = (val: string | number | undefined | null) => {
+      if (val === null || val === undefined) return '""'
+      const str = String(val)
+      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        return `"${str.replace(/"/g, '""')}"`
+      }
+      return str
+    }
+
+    const rows = filteredAuthors.map((author) => {
+      return [
+        author.id,
+        author.name,
+        author.email || '',
+        author.nationality || '',
+        author.dob || '',
+        author.status,
+        author.books
+      ].map(escapeCsvValue).join(',')
+    })
+
+    const csv = `\uFEFF${headers.map(escapeCsvValue).join(',')}\r\n${rows.join('\r\n')}`
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    const date = new Date().toISOString().slice(0, 10)
+
+    link.href = url
+    link.download = `authors-export-${date}.csv`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+    setShowToast(`Exported ${filteredAuthors.length} author${filteredAuthors.length === 1 ? '' : 's'} to CSV.`)
+  }
+
   const handleTogglePageSelection = () => {
     setSelectedAuthorIds((prev) => {
       const next = new Set(prev)
@@ -486,7 +539,7 @@ export function AuthorsPage({ isDarkMode, onOpenAuthorDetail }: AuthorsPageProps
               <Plus size={18} />
               Add Author
             </button>
-            <button type="button" className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-bold transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
+            <button type="button" onClick={handleExportAuthors} className={`inline-flex h-11 items-center gap-2 rounded-xl border px-5 text-sm font-bold transition-all ${isDarkMode ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'}`}>
               <Download size={16} />
               Export
             </button>
