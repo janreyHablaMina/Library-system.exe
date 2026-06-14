@@ -63,6 +63,8 @@ import {
   setSetting,
   testEmailConfiguration,
   updateSystemUser,
+  exportDatabase,
+  importDatabase,
   type EmailLog,
   type LoginTrailRow,
   type SettingActivityRow,
@@ -567,6 +569,29 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
     }
   }
 
+  const handleExportDatabase = async () => {
+    try {
+      await exportDatabase()
+      Toast.success('Database exported successfully.')
+    } catch (error) {
+      if (error && typeof error === 'string' && error.includes('cancelled')) return
+      Toast.error(typeof error === 'string' ? error : 'Failed to export database.')
+    }
+  }
+
+  const handleImportDatabase = async () => {
+    try {
+      await importDatabase()
+      Toast.success('Database imported successfully. Reloading...')
+      setTimeout(() => {
+        window.location.reload()
+      }, 1500)
+    } catch (error) {
+      if (error && typeof error === 'string' && error.includes('cancelled')) return
+      Toast.error(typeof error === 'string' ? error : 'Failed to import database.')
+    }
+  }
+
   const handleSavePassword = async () => {
     if (!currentPassword.trim() || !newPassword.trim() || !confirmPassword.trim()) {
       setPasswordStatus({ type: 'error', message: 'Please fill out all password fields.' })
@@ -876,8 +901,9 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
     ]
 
     return (
-      <div className="grid gap-6 xl:grid-cols-[1fr_0.85fr]">
-        <section className={`rounded-2xl border p-6 ${cardClass}`}>
+      <div className="space-y-6">
+        <div className="grid gap-6 xl:grid-cols-[1fr_0.85fr]">
+          <section className={`rounded-2xl border p-6 ${cardClass}`}>
           <div className="mb-6">
             <h3 className={`text-lg font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Circulation Rules</h3>
             <p className={`mt-1 text-sm ${subLabelClass}`}>Configure the default borrowing and reservation behavior.</p>
@@ -1043,6 +1069,42 @@ export function SettingsPage({ isDarkMode, activeTab, onTabChange }: SettingsPag
               ))}
             </div>
           </div>
+        </section>
+        </div>
+
+        <section className={`rounded-2xl border p-6 ${cardClass}`}>
+          <div className="mb-6 flex items-center gap-4">
+            <div className={`grid h-12 w-12 place-items-center rounded-2xl ${isDarkMode ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600'}`}>
+              <Download size={24} />
+            </div>
+            <div>
+              <h3 className={`text-lg font-bold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>Data Management</h3>
+              <p className={`mt-1 text-sm ${subLabelClass}`}>Export or import your library database.</p>
+            </div>
+          </div>
+          
+          <div className="flex flex-wrap gap-4">
+            <button
+              onClick={() => void handleExportDatabase()}
+              className="flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white transition-all hover:bg-emerald-700 active:scale-95"
+            >
+              <Download size={18} /> Export Database
+            </button>
+            <button
+              onClick={() => void handleImportDatabase()}
+              className={`flex items-center gap-2 rounded-xl border px-5 py-3 text-sm font-bold transition-all active:scale-95 ${
+                isDarkMode 
+                  ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' 
+                  : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'
+              }`}
+            >
+              <Upload size={18} /> Import Database
+            </button>
+          </div>
+          <p className="mt-4 text-xs font-semibold text-rose-500 flex items-center gap-2">
+            <AlertCircle size={14} /> 
+            Warning: Importing a database will overwrite all your current data, and the application will reload automatically.
+          </p>
         </section>
       </div>
     )

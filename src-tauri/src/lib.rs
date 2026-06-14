@@ -5158,6 +5158,31 @@ fn list_inbox_messages(app: tauri::AppHandle) -> Result<Vec<InboxMessage>, Strin
     Ok(messages)
 }
 
+#[tauri::command]
+fn export_database(app: tauri::AppHandle) -> Result<(), String> {
+    let db_path = database_path(&app)?;
+    if let Some(target_path) = rfd::FileDialog::new()
+        .add_filter("SQLite Database", &["db"])
+        .set_file_name("library_system_backup.db")
+        .save_file()
+    {
+        std::fs::copy(&db_path, &target_path).map_err(|e| format!("Failed to export database: {}", e))?;
+    }
+    Ok(())
+}
+
+#[tauri::command]
+fn import_database(app: tauri::AppHandle) -> Result<(), String> {
+    let db_path = database_path(&app)?;
+    if let Some(source_path) = rfd::FileDialog::new()
+        .add_filter("SQLite Database", &["db"])
+        .pick_file()
+    {
+        std::fs::copy(&source_path, &db_path).map_err(|e| format!("Failed to import database: {}", e))?;
+    }
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -5248,7 +5273,9 @@ pub fn run() {
             sync_notifications,
             list_notifications,
             mark_notification_as_read,
-            mark_all_notifications_read
+            mark_all_notifications_read,
+            export_database,
+            import_database
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

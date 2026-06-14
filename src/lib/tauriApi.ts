@@ -711,3 +711,11 @@ export async function getTrialDaysRemaining(): Promise<number> {
 export async function getTrialSecondsRemaining(): Promise<number> {
   return invoke<number>('get_trial_seconds_remaining')
 }
+
+export async function exportDatabase(): Promise<void> {
+  return invoke<void>('export_database')
+}
+
+export async function importDatabase(): Promise<void> {
+  return invoke<void>('import_database')
+}
